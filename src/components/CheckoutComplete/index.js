@@ -10,8 +10,8 @@ const CheckoutComplete = ({ className, title, parameters, options, items, paymen
       <div className={styles.head}>
         {paymentFailed ? (
           <>
-            <div className={cn("h2", styles.title)} style={{ color: "#e74c3c" }}>Payment Failed</div>
-            <div className={styles.info} style={{ color: "#e74c3c" }}>
+            <div className={cn("h2", styles.title)} style={{ color: "#0097B2" }}>Payment Failed</div>
+            <div className={styles.info} style={{ color: "#0097B2" }}>
               Your payment could not be processed. Please try again.
             </div>
           </>

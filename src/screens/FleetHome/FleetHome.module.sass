@@ -2,19 +2,20 @@
 
 .section
     padding-top: 40px
-    padding-bottom: 80px
+    padding-bottom: 0
     +m
         padding-top: 24px
-        padding-bottom: 80px
+        padding-bottom: 0
 
 .container
-    max-width: 1440px
-    +w
-        padding: 0 40px
+    max-width: 1280px
+    width: 100%
+    margin: 0 auto
+    padding: 0 80px
     +t
-        padding: 0 24px
+        padding: 0 40px
     +m
-        padding: 0 20px
+        padding: 0 32px
 
 .searchBar
     display: flex
@@ -93,7 +94,7 @@
 .searchButton
     padding: 16px 40px
     border-radius: 16px
-    background: #FF6B35
+    background: #0097B2
     border: none
     +body-bold-2
     color: $n8
@@ -103,7 +104,7 @@
     +m
         width: 100%
     &:hover
-        background: darken(#FF6B35, 5%)
+        background: darken(#0097B2, 5%)
         transform: translateY(-2px)
     &:active
         transform: translateY(0)
@@ -115,8 +116,8 @@
     right: 0
     z-index: 100
     +m
-        left: -20px
-        right: -20px
+        left: -32px
+        right: -32px
 
 .guestPicker
     position: absolute
@@ -125,8 +126,8 @@
     right: 0
     z-index: 100
     +m
-        left: -20px
-        right: -20px
+        left: -32px
+        right: -32px
 
 .filtersContainer
     margin-bottom: 64px
@@ -281,7 +282,7 @@
     right: -15px
     padding: 3px 10px
     border-radius: 8px
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)
+    background: linear-gradient(135deg, #0097B2 0%, darken(#0097B2, 10%) 100%)
     color: $n8
     font-weight: 600
     font-size: 8px
@@ -290,7 +291,7 @@
     z-index: 1
     transform: rotate(45deg)
     transform-origin: center
-    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)
+    box-shadow: 0 2px 6px rgba(0, 151, 178, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)
     white-space: nowrap
     +m
         top: 8px
@@ -300,13 +301,19 @@
         letter-spacing: 0.2px
 
 .categorySection
+    // All sections have consistent spacing
     margin-bottom: 80px
     +d
         margin-bottom: 64px
     +m
         margin-bottom: 48px
+    // Ensure last section also has spacing before footer
     &:last-child
-        margin-bottom: 0
+        margin-bottom: 80px
+        +d
+            margin-bottom: 64px
+        +m
+            margin-bottom: 48px
 
 .sectionHeader
     margin-bottom: 32px
@@ -329,10 +336,23 @@
         font-size: 14px
 
 .browseWrapper
+    margin-left: -32px
+    margin-right: -32px
+    padding-left: 32px
+    padding-right: 32px
+    +m
+        margin-left: -32px
+        margin-right: -32px
+        padding-left: 32px
+        padding-right: 32px
     :global
         .section
             padding: 0
             margin: 0
+        .container
+            padding: 0
+        .headSmall
+            margin-bottom: 0
 
 // Destination Scroll Wrapper
 .destinationScrollWrapper
@@ -341,14 +361,14 @@
     -webkit-overflow-scrolling: touch
     scrollbar-width: none
     -ms-overflow-style: none
-    margin-left: -20px
-    margin-right: -20px
-    padding: 20px 20px 30px
+    margin-left: -32px
+    margin-right: -32px
+    padding: 20px 32px 30px
     position: relative
     +m
-        margin-left: -20px
-        margin-right: -20px
-        padding: 20px 20px 20px
+        margin-left: -32px
+        margin-right: -32px
+        padding: 20px 32px 20px
     &::-webkit-scrollbar
         display: none
     &::-webkit-scrollbar-track

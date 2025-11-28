@@ -3,6 +3,7 @@ import cn from "classnames";
 import OutsideClickHandler from "react-outside-click-handler";
 import styles from "./GuestPicker.module.sass";
 import Icon from "../Icon";
+import Counter from "../Counter";
 
 const GuestPicker = ({
   visible,
@@ -14,7 +15,7 @@ const GuestPicker = ({
     infants: 0,
     pets: 0,
   },
-  maxGuests = 4,
+  maxGuests,
   maxSeats,
   allowPets = false,
   childrenAllowed = true,
@@ -24,8 +25,8 @@ const GuestPicker = ({
 }) => {
   const [guests, setGuests] = useState(initialGuests);
 
-  // Use maxSeats if provided, otherwise fall back to maxGuests
-  const maxAllowed = maxSeats !== undefined ? maxSeats : maxGuests;
+  // Use maxSeats if provided, otherwise fall back to maxGuests, or undefined (no limit)
+  const maxAllowed = maxSeats !== undefined ? maxSeats : (maxGuests !== undefined ? maxGuests : undefined);
 
   const totalGuests = useMemo(() => {
     // Infants don't count toward maximum (matching Airbnb style)
@@ -40,76 +41,6 @@ const GuestPicker = ({
     return `${total} guests`;
   }, [guests]);
 
-  const handleIncrement = (type) => {
-    setGuests((prev) => {
-      const newGuests = { ...prev };
-      
-      if (type === "adults") {
-        newGuests.adults = Math.min(newGuests.adults + 1, maxAllowed);
-      } else if (type === "children") {
-        const total = newGuests.adults + newGuests.children;
-        if (total < maxAllowed) {
-          newGuests.children = newGuests.children + 1;
-        }
-      } else if (type === "infants") {
-        newGuests.infants = newGuests.infants + 1;
-      } else if (type === "pets" && allowPets) {
-        newGuests.pets = newGuests.pets + 1;
-      }
-      
-      onGuestChange?.(newGuests);
-      return newGuests;
-    });
-  };
-
-  const handleDecrement = (type) => {
-    setGuests((prev) => {
-      const newGuests = { ...prev };
-      
-      if (type === "adults" && newGuests.adults > 0) {
-        newGuests.adults = Math.max(0, newGuests.adults - 1);
-        // Ensure at least 1 adult if there are children
-        if (newGuests.children > 0 && newGuests.adults === 0) {
-          newGuests.adults = 1;
-        }
-      } else if (type === "children" && newGuests.children > 0) {
-        newGuests.children = newGuests.children - 1;
-      } else if (type === "infants" && newGuests.infants > 0) {
-        newGuests.infants = newGuests.infants - 1;
-      } else if (type === "pets" && newGuests.pets > 0) {
-        newGuests.pets = newGuests.pets - 1;
-      }
-      
-      onGuestChange?.(newGuests);
-      return newGuests;
-    });
-  };
-
-  const canIncrement = (type) => {
-    if (type === "adults") {
-      return guests.adults < maxAllowed;
-    } else if (type === "children") {
-      return totalGuests < maxAllowed;
-    } else if (type === "infants") {
-      return true; // No limit on infants
-    } else if (type === "pets") {
-      return allowPets;
-    }
-    return false;
-  };
-
-  const canDecrement = (type) => {
-    if (type === "adults") {
-      return guests.adults > 1 || (guests.adults === 1 && guests.children === 0);
-    } else if (type === "children") {
-      return guests.children > 0;
-    } else if (type === "infants") {
-      return guests.infants > 0;
-    } else if (type === "pets") {
-      return guests.pets > 0;
-    }
-    return false;
-  };
 
   const guestCategories = [
     {
@@ -178,29 +109,46 @@ const GuestPicker = ({
                     </a>
                   )}
                 </div>
-                <div className={styles.counter}>
-                  <button
-                    type="button"
-                    className={cn(styles.counterButton, {
-                      [styles.disabled]: !canDecrement(category.type),
-                    })}
-                    onClick={() => handleDecrement(category.type)}
-                    disabled={!canDecrement(category.type)}
-                  >
-                    <Icon name="minus" size="16" />
-                  </button>
-                  <div className={styles.counterValue}>{category.value}</div>
-                  <button
-                    type="button"
-                    className={cn(styles.counterButton, {
-                      [styles.disabled]: !canIncrement(category.type),
-                    })}
-                    onClick={() => handleIncrement(category.type)}
-                    disabled={!canIncrement(category.type)}
-                  >
-                    <Icon name="plus" size="16" />
-                  </button>
-                </div>
+                <Counter
+                  className={styles.counter}
+                  value={category.value}
+                  setValue={(newValue) => {
+                    setGuests((prev) => {
+                      const newGuests = { ...prev };
+                      
+                      if (category.type === "adults") {
+                        // Ensure at least 1 adult if there are children
+                        if (newValue === 0 && prev.children > 0) {
+                          newValue = 1;
+                        }
+                        newGuests.adults = newValue;
+                      } else if (category.type === "children") {
+                        newGuests.children = newValue;
+                        // Ensure at least 1 adult if there are children
+                        if (newValue > 0 && newGuests.adults === 0) {
+                          newGuests.adults = 1;
+                        }
+                      } else if (category.type === "infants") {
+                        newGuests.infants = newValue;
+                      } else if (category.type === "pets") {
+                        newGuests.pets = newValue;
+                      }
+                      
+                      onGuestChange?.(newGuests);
+                      return newGuests;
+                    });
+                  }}
+                  iconMinus="minus"
+                  iconPlus="plus"
+                  min={category.type === "adults" ? 1 : 0}
+                  max={
+                    category.type === "adults" 
+                      ? (maxAllowed !== undefined && maxAllowed > 0 ? maxAllowed : undefined)
+                      : category.type === "children" 
+                        ? (maxAllowed !== undefined && maxAllowed > 0 ? Math.max(0, maxAllowed - guests.adults) : undefined)
+                        : undefined
+                  }
+                />
               </div>
             );
           })}
@@ -208,7 +156,7 @@ const GuestPicker = ({
 
         <div className={styles.footer}>
           <div className={styles.rules}>
-            {maxAllowed > 0 && (
+            {maxAllowed !== undefined && maxAllowed > 0 && (
               <div className={styles.ruleText}>
                 This place has a maximum of {maxAllowed} guests, not including infants.
                 {!allowPets && " Pets aren't allowed."}

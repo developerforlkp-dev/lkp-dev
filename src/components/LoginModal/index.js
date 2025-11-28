@@ -7,27 +7,84 @@ import { sendPhoneOTP, verifyPhoneOTP } from "../../utils/api";
 
 const LoginModal = ({ visible, onClose, onGoogleLogin, onPhoneLogin }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // 6-digit OTP
+  const [activeInput, setActiveInput] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [otpStep, setOtpStep] = useState("phone"); // "phone" or "otp"
+  const [step, setStep] = useState("phone"); // "phone", "otp"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedGoogleAccount, setSelectedGoogleAccount] = useState(null);
   const countryCode = "+91";
 
   // Reset form when modal closes
   useEffect(() => {
     if (!visible) {
       setPhoneNumber("");
-      setOtp("");
+      setOtp(["", "", "", "", "", ""]);
       setFirstName("");
       setLastName("");
-      setOtpStep("phone");
+      setStep("phone");
+      setActiveInput(0);
       setError("");
       setLoading(false);
     }
   }, [visible]);
+
+  // Auto-focus first OTP input when OTP step is shown
+  useEffect(() => {
+    if (step === "otp" && visible) {
+      const firstInput = document.getElementById(`otp-0`);
+      if (firstInput) {
+        setTimeout(() => firstInput.focus(), 100);
+      }
+    }
+  }, [step, visible]);
+
+  // Handle OTP input change
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) {
+      // Handle paste
+      const pasteValue = value.replace(/\D/g, "").slice(0, 6);
+      const newOtp = [...otp];
+      pasteValue.split("").forEach((char, i) => {
+        if (index + i < 6) {
+          newOtp[index + i] = char;
+        }
+      });
+      setOtp(newOtp);
+      const nextIndex = Math.min(index + pasteValue.length, 5);
+      setActiveInput(nextIndex);
+      const nextInput = document.getElementById(`otp-${nextIndex}`);
+      if (nextInput) nextInput.focus();
+    } else {
+      // Single character input
+      const newOtp = [...otp];
+      newOtp[index] = value.replace(/\D/g, "");
+      setOtp(newOtp);
+      if (value && index < 5) {
+        setActiveInput(index + 1);
+        const nextInput = document.getElementById(`otp-${index + 1}`);
+        if (nextInput) nextInput.focus();
+      }
+    }
+  };
+
+  // Handle OTP key down (backspace, arrow keys)
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      setActiveInput(index - 1);
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      setActiveInput(index - 1);
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      setActiveInput(index + 1);
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
 
   // Render Google Sign-In button when modal is visible
   useEffect(() => {
@@ -66,8 +123,10 @@ const LoginModal = ({ visible, onClose, onGoogleLogin, onPhoneLogin }) => {
     setLoading(true);
     try {
       await sendPhoneOTP(phoneNumber.trim(), countryCode);
-      setOtpStep("otp");
+      setStep("otp");
       setError("");
+      setOtp(["", "", "", "", "", ""]);
+      setActiveInput(0);
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to send OTP. Please try again.");
     } finally {
@@ -80,8 +139,9 @@ const LoginModal = ({ visible, onClose, onGoogleLogin, onPhoneLogin }) => {
     e.preventDefault();
     setError("");
     
-    if (!otp || otp.trim() === "") {
-      setError("Please enter the OTP");
+    const otpString = otp.join("");
+    if (otpString.length !== 6) {
+      setError("Please enter the complete 6-digit OTP");
       return;
     }
 
@@ -89,7 +149,7 @@ const LoginModal = ({ visible, onClose, onGoogleLogin, onPhoneLogin }) => {
     try {
       const response = await verifyPhoneOTP(
         phoneNumber.trim(),
-        otp.trim(),
+        otpString,
         countryCode,
         firstName.trim(),
         lastName.trim()
@@ -141,8 +201,9 @@ const LoginModal = ({ visible, onClose, onGoogleLogin, onPhoneLogin }) => {
 
   // Go back to phone input
   const handleBackToPhone = () => {
-    setOtpStep("phone");
-    setOtp("");
+    setStep("phone");
+    setOtp(["", "", "", "", "", ""]);
+    setActiveInput(0);
     setError("");
   };
 
@@ -155,177 +216,128 @@ const LoginModal = ({ visible, onClose, onGoogleLogin, onPhoneLogin }) => {
           <Icon name="close" size="24" />
         </button>
         
-        <div className={styles.header}>
-          <div className={styles.illustration}>
-            <img src="/images/content/login-illustration.svg" alt="Login" />
-          </div>
-          <h2 className={styles.title}>LOGIN</h2>
-          <p className={styles.subtitle}>
-            Login with your phone number or Google account
-          </p>
-        </div>
-
-        <div className={styles.loginOptions}>
-          {/* Phone Number Login */}
-          <div className={styles.optionBox}>
-            {otpStep === "phone" ? (
-              <>
-                <h3 className={styles.optionTitle}>
-                  Continue with your phone number
-                </h3>
-                <form onSubmit={handlePhoneSubmit} className={styles.phoneForm}>
-                  <div className={styles.phoneInput}>
-                    <div className={styles.countryCode}>
-                      <img
-                        src="/images/flags/in.svg"
-                        alt="India"
-                        className={styles.flag}
-                      />
-                      <span className={styles.code}>+91</span>
-                      <span className={styles.phoneSeparator}>|</span>
-                    </div>
-                    <input
-                      type="tel"
-                      className={styles.input}
-                      placeholder="Enter your phone number"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      disabled={loading}
-                      required
+        <div className={styles.login}>
+          {/* Step 1: Phone Number Input */}
+          {step === "phone" && (
+            <div className={styles.item}>
+              <div className={cn("h3", styles.title)}>Sign up on Fleet</div>
+              <div className={styles.info}>Use Your OpenID to Sign up</div>
+              <div className={styles.btns}>
+                <button 
+                  type="button"
+                  className={cn("button", styles.button)}
+                  onClick={handleGoogleLogin}
+                >
+                  <Icon name="google" size="16" />
+                  <span>Google</span>
+                </button>
+                <button type="button" className={cn("button-black", styles.button)}>
+                  <Icon name="apple" size="16" />
+                  <span>Apple</span>
+                </button>
+              </div>
+              <div className={styles.note}>Or continue with phone number</div>
+              <form onSubmit={handlePhoneSubmit} className={styles.form}>
+                <div className={styles.phoneInput}>
+                  <div className={styles.countryCode}>
+                    <img
+                      src="/images/flags/in.svg"
+                      alt="India"
+                      className={styles.flag}
                     />
+                    <span className={styles.countryCodeText}>+91</span>
                   </div>
-                  {error && <div className={styles.error}>{error}</div>}
+                  <input
+                    type="tel"
+                    className={styles.input}
+                    placeholder="Enter your phone number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                    disabled={loading}
+                    required
+                  />
                   <button 
                     type="submit" 
-                    className={styles.continueBtn}
-                    disabled={loading}
+                    className={styles.btn}
+                    disabled={loading || !phoneNumber.trim()}
                   >
-                    {loading ? "Sending..." : "Continue"}
+                    <Icon name="arrow-next" size="14" />
                   </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <h3 className={styles.optionTitle}>
-                  Enter OTP
-                </h3>
-                <p className={styles.otpInfo}>
-                  We sent a verification code to +91 {phoneNumber}
-                </p>
-                <form onSubmit={handleOtpSubmit} className={styles.phoneForm}>
-                  <div className={styles.otpInput}>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="Enter 6-digit OTP"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      maxLength={6}
-                      disabled={loading}
-                      required
-                    />
-                  </div>
-                  <div className={styles.nameInputs}>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="First Name (Optional)"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      disabled={loading}
-                    />
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="Last Name (Optional)"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      disabled={loading}
-                    />
-                  </div>
-                  {error && <div className={styles.error}>{error}</div>}
-                  <div className={styles.otpActions}>
-                    <button
-                      type="button"
-                      className={styles.backBtn}
-                      onClick={handleBackToPhone}
-                      disabled={loading}
-                    >
-                      Back
-                    </button>
-                    <button 
-                      type="submit" 
-                      className={styles.continueBtn}
-                      disabled={loading || otp.length !== 6}
-                    >
-                      {loading ? "Verifying..." : "Verify OTP"}
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-
-          {/* Separator */}
-          <div className={styles.separator}>
-            <div className={styles.separatorLine}></div>
-            <span className={styles.separatorText}>OR</span>
-            <div className={styles.separatorLine}></div>
-          </div>
-
-          {/* Google Login */}
-          <div className={styles.optionBox}>
-            <h3 className={styles.optionTitle}>
-              Continue with your Google account
-            </h3>
-            <button
-              className={styles.googleBtn}
-              onClick={handleGoogleLogin}
-              type="button"
-            >
-              <div className={styles.googleAccount}>
-                {selectedGoogleAccount ? (
-                  <>
-                    <div className={styles.googleInfo}>
-                      <div className={styles.googleName}>
-                        {selectedGoogleAccount.name}
-                      </div>
-                      <div className={styles.googleEmail}>
-                        {selectedGoogleAccount.email}
-                      </div>
-                    </div>
-                    <Icon name="arrow-bottom" size="16" className={styles.arrow} />
-                  </>
-                ) : (
-                  <>
-                    <div className={styles.googleInfo}>
-                      <div className={styles.googleName}>Sign in with Google</div>
-                    </div>
-                  </>
-                )}
-                <img
-                  src="/images/content/google-logo.svg"
-                  alt="Google"
-                  className={styles.googleLogo}
-                  onError={(e) => {
-                    // Fallback if image doesn't exist
-                    e.target.style.display = "none";
-                  }}
-                />
+                </div>
+                {error && <div className={styles.error}>{error}</div>}
+              </form>
+              <div className={styles.foot}>
+                Already have an account?{" "}
+                <button type="button" className={styles.link} onClick={onClose}>
+                  Login
+                </button>
               </div>
-            </button>
-            {/* Google Sign-In Button Container */}
-            <div id="google-signin-button" className={styles.googleSignInContainer}></div>
-          </div>
-        </div>
+            </div>
+          )}
 
-        <div className={styles.footer}>
-          <p className={styles.terms}>
-            By continuing, you agree to our{" "}
-            <a href="/terms" className={styles.link}>
-              Terms of Service
-            </a>
-          </p>
+          {/* Step 2: OTP Verification */}
+          {step === "otp" && (
+            <div className={styles.item}>
+              <div className={cn("h3", styles.title)}>Enter your security code</div>
+              <div className={styles.info}>We texted your code to +91 {phoneNumber}</div>
+              <form onSubmit={handleOtpSubmit} className={styles.form}>
+                <div className={styles.code}>
+                  {otp.map((digit, index) => (
+                    <div key={index} className={styles.number}>
+                      <input
+                        id={`otp-${index}`}
+                        type="tel"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        onFocus={() => setActiveInput(index)}
+                        disabled={loading}
+                        autoFocus={index === 0}
+                        required
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.nameFields}>
+                  <input
+                    type="text"
+                    className={styles.nameInput}
+                    placeholder="First Name (Optional)"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={loading}
+                  />
+                  <input
+                    type="text"
+                    className={styles.nameInput}
+                    placeholder="Last Name (Optional)"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                {error && <div className={styles.error}>{error}</div>}
+                <button 
+                  type="submit" 
+                  className={cn("button", styles.button)}
+                  disabled={loading || otp.join("").length !== 6}
+                >
+                  {loading ? "Verifying..." : "Continue"}
+                </button>
+              </form>
+              <div className={styles.foot}>
+                <button
+                  type="button"
+                  className={styles.password}
+                  onClick={handleBackToPhone}
+                  disabled={loading}
+                >
+                  Back to phone number
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>,

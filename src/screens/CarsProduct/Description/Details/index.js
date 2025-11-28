@@ -7,22 +7,22 @@ const options = [
   {
     title: "Put your car feature",
     icon: "stopwatch",
-    color: "#92A5EF",
+    color: "#0097B2",
   },
   {
     title: "Put your car feature",
     icon: "car",
-    color: "#8BC5E5",
+    color: "#0097B2",
   },
   {
     title: "Up to 6 people",
     icon: "user",
-    color: "#FA8F54",
+    color: "#0097B2",
   },
   {
     title: "Put your car feature",
     icon: "candlesticks",
-    color: "#58C27D",
+    color: "#0097B2",
   },
 ];
 

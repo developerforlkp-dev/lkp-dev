@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import cn from "classnames";
 import styles from "./StaysProduct.module.sass";
@@ -33,35 +33,135 @@ const formatImageUrl = (url) => {
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
 };
 
-const options = [
-  {
-    title: "Superhost",
-    icon: "home",
-  },
-  {
-    title: "Queenstown, Otago, New Zealand",
-    icon: "flag",
-  },
-  {
-    title: "Nature & Adventure",
-    icon: "route",
-  },
-  {
-    title: "Off-road Jeep Safari",
-    icon: "car",
-  },
-];
+// Helper function to build options from listing data
+const buildOptionsFromListing = (listing, hostData) => {
+  const options = [];
+  
+  // 1. Superhost - check if host is superhost
+  if (hostData?.isSuperhost || listing?.host?.isSuperhost) {
+    options.push({
+      title: "Superhost",
+      icon: "home",
+    });
+  }
+  
+  // 2. Location - prioritize meeting location fields, then fallback to other location fields
+  const locationParts = [];
+  
+  // First try meeting location fields (meetingCity, meetingState, meetingCountry)
+  if (listing?.meetingCity) locationParts.push(listing.meetingCity);
+  if (listing?.meetingState) locationParts.push(listing.meetingState);
+  if (listing?.meetingCountry) locationParts.push(listing.meetingCountry);
+  
+  // If no meeting location, try regular location fields
+  if (locationParts.length === 0) {
+    if (listing?.city) locationParts.push(listing.city);
+    if (listing?.state) locationParts.push(listing.state);
+    if (listing?.country) locationParts.push(listing.country);
+  }
+  
+  // If still no location, try location field or meetingAddress
+  if (locationParts.length === 0) {
+    if (listing?.location) {
+      locationParts.push(listing.location);
+    } else if (listing?.meetingAddress) {
+      locationParts.push(listing.meetingAddress);
+    }
+  }
+  
+  if (locationParts.length > 0) {
+    options.push({
+      title: locationParts.join(", "),
+      icon: "flag",
+    });
+  }
+  
+  // 3. Category/Tags - use category, tags, or categoryName
+  if (listing?.category) {
+    options.push({
+      title: listing.category,
+      icon: "route",
+    });
+  } else if (listing?.categoryName) {
+    options.push({
+      title: listing.categoryName,
+      icon: "route",
+    });
+  } else if (Array.isArray(listing?.tags) && listing.tags.length > 0) {
+    // Use first tag as category
+    options.push({
+      title: listing.tags[0],
+      icon: "route",
+    });
+  }
+  
+  // 4. Activity/Experience type - from keyActivities or activityType
+  if (listing?.activityType) {
+    options.push({
+      title: listing.activityType,
+      icon: "car",
+    });
+  } else if (Array.isArray(listing?.keyActivities) && listing.keyActivities.length > 0) {
+    // Use first key activity
+    const firstActivity = listing.keyActivities[0];
+    if (firstActivity?.title) {
+      options.push({
+        title: firstActivity.title,
+        icon: "car",
+      });
+    }
+  }
+  
+  // Return default options if no listing data
+  if (options.length === 0) {
+    return [
+      {
+        title: "Superhost",
+        icon: "home",
+      },
+      {
+        title: "Location",
+        icon: "flag",
+      },
+    ];
+  }
+  
+  return options;
+};
 
-const parametersUser = [
-  {
-    title: "Superhost",
-    icon: "home",
-  },
-  {
-    title: "256 reviews",
-    icon: "star-outline",
-  },
-];
+// Build parametersUser dynamically from listing data
+const buildParametersUser = (listing, hostData) => {
+  const params = [];
+  
+  // Add Superhost if applicable
+  if (hostData?.isSuperhost || listing?.host?.isSuperhost) {
+    params.push({
+      title: "Superhost",
+      icon: "home",
+    });
+  }
+  
+  // Add reviews count if available
+  const reviewCount = listing?.totalReviews || listing?.reviewCount || listing?.reviews || 0;
+  if (reviewCount > 0) {
+    params.push({
+      title: `${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}`,
+      icon: "star-outline",
+    });
+  }
+  
+  // Return default if no data
+  if (params.length === 0) {
+    return [
+      {
+        title: "Superhost",
+        icon: "home",
+      },
+    ];
+  }
+  
+  return params;
+};
 
 const socials = [
   {
@@ -160,15 +260,53 @@ useEffect(() => {
   };
 }, [id]);
 
+  // Build options dynamically from listing and host data
+  const listingOptions = useMemo(() => {
+    return buildOptionsFromListing(listing, hostData);
+  }, [listing, hostData]);
+  
+  // Build parametersUser dynamically from listing and host data
+  const parametersUser = useMemo(() => {
+    return buildParametersUser(listing, hostData);
+  }, [listing, hostData]);
+
+  // Get rating and reviews from listing
+  const rating = listing?.averageRating || listing?.rating || null;
+  const reviews = listing?.totalReviews || listing?.reviewCount || listing?.reviews || null;
+  
+  // Get host avatar - try multiple possible fields and format URL
+  const getHostAvatar = () => {
+    const avatarUrl = hostData?.profilePhotoUrl || 
+                      hostData?.avatar || 
+                      hostData?.profileImage ||
+                      hostData?.image ||
+                      listing?.host?.profilePhotoUrl ||
+                      listing?.host?.avatar ||
+                      listing?.host?.profileImage ||
+                      listing?.host?.image ||
+                      null;
+    
+    // Format the avatar URL if it exists
+    if (avatarUrl) {
+      return formatImageUrl(avatarUrl);
+    }
+    
+    return null;
+  };
+  
+  const hostAvatar = getHostAvatar();
 
   return (
     <>
 <Product
   classSection="section-mb64"
   title={listing?.title || "Spectacular views of Queenstown"}
-  options={options}
+  options={listingOptions}
   gallery={galleryItems && galleryItems.length > 0 ? galleryItems : []}
   type="stays"
+  rating={rating}
+  reviews={reviews}
+  hostAvatar={hostAvatar}
 />
 
       <Description classSection="section" listing={listing} hostData={hostData} />

@@ -60,7 +60,7 @@ const transformMultipleBookings = async (bookingsArray) => {
     });
     
     await Promise.all(listingPromises);
-  }
+    }
 
   // Step 3: Transform bookings using cached listing data
   return bookingsArray.map((apiBooking) => {
@@ -125,32 +125,32 @@ const transformBookingData = (apiBooking, listingData = null) => {
   // Priority 1: Check listing data first (most accurate)
   if (listingData) {
     if (listingData.meetingAddress) {
-      location = listingData.meetingAddress;
+    location = listingData.meetingAddress;
     } else if (listingData.meetingLocationName) {
-      location = listingData.meetingLocationName;
+    location = listingData.meetingLocationName;
     } else if (listingData.location) {
-      location = listingData.location;
+    location = listingData.location;
     } else if (listingData.city && listingData.state) {
-      location = `${listingData.city}, ${listingData.state}`;
+    location = `${listingData.city}, ${listingData.state}`;
     } else if (listingData.city) {
-      location = listingData.city;
+    location = listingData.city;
     } else if (listingData.address) {
-      location = listingData.address;
-    }
+    location = listingData.address;
+  }
   }
   
   // Priority 2: Check booking data if listing data not available
   if (location === "Location TBD") {
     if (apiBooking?.meetingAddress) {
-      location = apiBooking.meetingAddress;
-    } else if (apiBooking?.meetingLocationName) {
-      location = apiBooking.meetingLocationName;
+    location = apiBooking.meetingAddress;
+  } else if (apiBooking?.meetingLocationName) {
+    location = apiBooking.meetingLocationName;
     } else if (apiBooking?.location) {
       location = apiBooking.location;
-    } else if (apiBooking?.city && apiBooking?.state) {
-      location = `${apiBooking.city}, ${apiBooking.state}`;
-    } else if (apiBooking?.city) {
-      location = apiBooking.city;
+  } else if (apiBooking?.city && apiBooking?.state) {
+    location = `${apiBooking.city}, ${apiBooking.state}`;
+  } else if (apiBooking?.city) {
+    location = apiBooking.city;
     } else if (apiBooking?.address) {
       location = apiBooking.address;
     } else if (apiBooking?.listing?.meetingAddress) {
@@ -250,9 +250,9 @@ const Main = ({
 
   // Transform booking data when propBookingData is provided
   useEffect(() => {
-    const transformBookings = async () => {
-      setLoading(true);
-      try {
+      const transformBookings = async () => {
+        setLoading(true);
+        try {
         let regularTransformed = [];
         let completedTransformed = [];
         
@@ -295,8 +295,8 @@ const Main = ({
         } else {
           setTransformedCompletedBookings([]);
         }
-
-        // Set the correct tab based on first booking status (or most common status)
+          
+          // Set the correct tab based on first booking status (or most common status)
         // Only set default tab on initial load - never override user's manual selection
         if (!initialTabSet && (regularTransformed.length > 0 || completedTransformed.length > 0)) {
           const statusCounts = {
@@ -304,27 +304,27 @@ const Main = ({
             completed: completedTransformed.length,
             cancelled: regularTransformed.filter(b => b.statusTone === "cancelled").length,
           };
-          
-          // Set tab to the one with most bookings, defaulting to upcoming
-          const defaultTab = Object.keys(statusCounts).reduce((a, b) => 
-            statusCounts[a] > statusCounts[b] ? a : b, "upcoming"
-          );
-          
-          setActiveTab(defaultTab);
-          setDisplayedTab(defaultTab);
+            
+            // Set tab to the one with most bookings, defaulting to upcoming
+            const defaultTab = Object.keys(statusCounts).reduce((a, b) => 
+              statusCounts[a] > statusCounts[b] ? a : b, "upcoming"
+            );
+            
+            setActiveTab(defaultTab);
+            setDisplayedTab(defaultTab);
           setInitialTabSet(true); // Mark that initial tab has been set - prevent future auto-switching
-        }
-      } catch (error) {
-        console.error("Error transforming booking data:", error);
+          }
+        } catch (error) {
+          console.error("Error transforming booking data:", error);
         // Fallback: transform with empty arrays on error
         setTransformedBookings([]);
         setTransformedCompletedBookings([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+        } finally {
+          setLoading(false);
+        }
+      };
     
-    transformBookings();
+      transformBookings();
   }, [propBookingData, propCompletedOrders]);
 
   const countsByTab = useMemo(() => {

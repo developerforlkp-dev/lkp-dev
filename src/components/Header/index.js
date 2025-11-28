@@ -3,36 +3,12 @@ import cn from "classnames";
 import styles from "./Header.module.sass";
 import { Link, NavLink } from "react-router-dom";
 import Image from "../Image";
-import Dropdown from "./Dropdown";
 import Language from "./Language";
 import Notification from "./Notification";
 import User from "./User";
 import Icon from "../Icon";
 import Modal from "../Modal";
 import Login from "../Login";
-
-const travelers = [
-  {
-    title: "Stays",
-    url: "/",
-    icon: "comment",
-  },
-  {
-    title: "Flights",
-    url: "/flights",
-    icon: "email",
-  },
-  {
-    title: "Things to do",
-    url: "/things-to-do",
-    icon: "home",
-  },
-  {
-    title: "Cars",
-    url: "/cars",
-    icon: "email",
-  },
-];
 
 const languages = [
   {
@@ -96,6 +72,17 @@ const items = [
 const Header = ({ separatorHeader, wide, notAuthorized }) => {
   const [visibleNav, setVisibleNav] = useState(false);
   const [visible, setVisible] = useState(false);
+  
+  // Check if user is authenticated (has JWT token)
+  const isAuthenticated = () => {
+    if (typeof window === "undefined") return false;
+    const token = localStorage.getItem("jwtToken");
+    return !!token;
+  };
+  
+  // Determine if we should show login button (if notAuthorized prop is true OR user is not authenticated)
+  const shouldShowLogin = notAuthorized || !isAuthenticated();
+
   return (
     <>
       <div
@@ -115,11 +102,6 @@ const Header = ({ separatorHeader, wide, notAuthorized }) => {
             />
           </Link>
           <div className={cn(styles.wrapper, { [styles.active]: visibleNav })}>
-            <Dropdown
-              className={styles.drowdown}
-              items={travelers}
-              setValue={setVisibleNav}
-            />
             <NavLink
               className={styles.link}
               to="/support"
@@ -137,7 +119,7 @@ const Header = ({ separatorHeader, wide, notAuthorized }) => {
             </NavLink>
           </div>
           <Notification className={styles.notification} />
-          {notAuthorized ? (
+          {shouldShowLogin ? (
             <button className={styles.login} onClick={() => setVisible(true)}>
               <Icon name="user" size="24" />
             </button>
@@ -151,7 +133,7 @@ const Header = ({ separatorHeader, wide, notAuthorized }) => {
         </div>
       </div>
       <Modal visible={visible} onClose={() => setVisible(false)}>
-        <Login />
+        <Login onClose={() => setVisible(false)} />
       </Modal>
     </>
   );

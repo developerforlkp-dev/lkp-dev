@@ -44,7 +44,19 @@ const User = ({ className, items }) => {
             >
               Account
             </NavLink>
-            <button className={cn("button-stroke button-small", styles.button)}>
+            <button 
+              className={cn("button-stroke button-small", styles.button)}
+              onClick={(e) => {
+                e.preventDefault();
+                // Clear authentication data
+                localStorage.removeItem("jwtToken");
+                localStorage.removeItem("userInfo");
+                // Close the menu
+                setVisible(false);
+                // Reload the page to update the header
+                window.location.reload();
+              }}
+            >
               Log out
             </button>
           </div>

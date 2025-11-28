@@ -153,16 +153,17 @@
 
 .addOnCard
     display: flex
-    align-items: flex-start
+    align-items: stretch
     justify-content: space-between
-    padding: 16px
+    padding: 0
     background: $n8
     border: 1px solid $n6
-    border-radius: 12px
+    border-radius: 16px
     transition: all .2s
     cursor: pointer
     overflow: hidden
     min-width: 0
+    gap: 0
     +dark
         background: $n2
         border-color: $n3
@@ -170,9 +171,69 @@
         border-color: $n5
         box-shadow: 0 2px 8px -2px rgba(15, 15, 15, 0.06)
     +m
-        padding: 14px 12px
+        padding: 0
         flex-direction: column
-        gap: 12px
+        gap: 0
+
+.addOnCardRow
+    flex-direction: row
+    border-radius: 16px
+    padding: 0
+    +m
+        flex-direction: column
+
+.addOnPreview
+    flex-shrink: 0
+    width: 160px
+    overflow: hidden
+    background: $n7
+    position: relative
+    +dark
+        background: $n3
+    +m
+        width: 100%
+        border-radius: 16px 16px 0 0
+    &:before
+        content: ""
+        display: block
+        padding-bottom: 75%
+        +m
+            padding-bottom: 56.25%
+            display: none
+
+.addOnImg
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    object-fit: cover
+    display: block
+    transition: transform 1s
+    +m
+        position: relative
+        height: auto
+
+.addOnPreviewPlaceholder
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    display: flex
+    align-items: center
+    justify-content: center
+    background: $n7
+    color: $n4
+    +dark
+        background: $n3
+        color: $n5
+    svg
+        fill: currentColor
+        opacity: 0.5
+    +m
+        position: relative
+        height: 200px
 
 .addOnCardSelected
     border-color: $p1
@@ -187,12 +248,22 @@
     +m
         width: 100%
 
+.addOnBody
+    display: flex
+    flex-direction: column
+    flex: 1
+    padding: 12px
+    min-width: 0
+    min-height: 100%
+    +m
+        padding: 10px
+
 .addOnHeader
     display: flex
     align-items: flex-start
     justify-content: space-between
     margin-bottom: 8px
-    gap: 12px
+    gap: 8px
     min-width: 0
     width: 100%
     +m
@@ -211,8 +282,8 @@
     +body-bold-2
     color: $n2
     margin: 0
-    font-size: 14px
-    line-height: 1.4
+    font-size: 13px
+    line-height: 1.3
     overflow: hidden
     text-overflow: ellipsis
     white-space: nowrap
@@ -239,30 +310,23 @@
     color: $n2
     white-space: nowrap
     flex-shrink: 0
-    font-size: 14px
+    font-size: 13px
     +dark
         color: $n8
 
-.addOnDescription
-    +body-2
-    color: $n4
-    line-height: 1.5
-    margin: 0
-    font-size: 13px
-    display: -webkit-box
-    -webkit-line-clamp: 2
-    -webkit-box-orient: vertical
-    overflow: hidden
-    text-overflow: ellipsis
+.addOnFoot
+    display: flex
+    align-items: center
+    justify-content: flex-end
+    margin-top: auto
+    padding-top: 12px
 
 .addOnControls
     flex-shrink: 0
-    margin-left: 16px
     display: flex
     align-items: center
     cursor: default
     +m
-        margin-left: 0
         align-self: flex-end
 
 .addOnSwitch

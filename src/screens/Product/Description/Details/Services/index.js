@@ -10,28 +10,28 @@ const services = [
     content:
       "Delicious picnic lunch. Please let us know if you have any dietary requirem...",
     icon: "pizza-slice",
-    color: "#E0EEF7",
+    color: "rgba(0, 151, 178, 0.1)",
   },
   {
     title: "Drinks",
     content:
       "Delicious picnic lunch. Please let us know if you have any dietary requirem...",
     icon: "glass",
-    color: "#D3EEDC",
+    color: "rgba(0, 151, 178, 0.1)",
   },
   {
     title: "Food",
     content:
       "Delicious picnic lunch. Please let us know if you have any dietary requirem...",
     icon: "pizza-slice",
-    color: "#fff4d9",
+    color: "rgba(0, 151, 178, 0.1)",
   },
   {
     title: "Drinks",
     content:
       "Delicious picnic lunch. Please let us know if you have any dietary requirem...",
     icon: "glass",
-    color: "#D3EEDC",
+    color: "rgba(0, 151, 178, 0.1)",
   },
 ];
 

@@ -144,6 +144,35 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
         pricingType: "Individual", // Default for static addons
       }));
 
+  // Helper function to format image URLs (from Azure blob storage or full URLs)
+  const formatImageUrl = (url) => {
+    if (!url) return null;
+    
+    // Already a full URL with SAS token - use directly
+    if ((url.startsWith("http://") || url.startsWith("https://")) && 
+        (url.includes("sig=") || url.includes("sv="))) {
+      return url;
+    }
+    
+    // Already a full URL without SAS token
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    
+    // Azure blob storage path (e.g., "leads/3/listings/6/cover-photo/image.jpg")
+    if (url.startsWith("leads/")) {
+      return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
+    }
+    
+    // Relative path - prepend base URL if needed
+    if (url.startsWith("/")) {
+      return url;
+    }
+    
+    // Otherwise assume it's a blob storage path
+    return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
+  };
+
   // Helper function to get addon image URL
   const getAddonImageUrl = (addon) => {
     if (!addon?.originalAddon) return null;
@@ -153,42 +182,17 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
     
     // Try imageUrls array first (from API)
     if (Array.isArray(addonDetails.imageUrls) && addonDetails.imageUrls.length > 0) {
-      let imageUrl = addonDetails.imageUrls[0];
-      // If it starts with /api/, it's already a valid relative path
-      // If it's a relative path without /api/, prepend /api
-      if (imageUrl && !imageUrl.startsWith("http")) {
-        if (imageUrl.startsWith("/api/")) {
-          return imageUrl; // Already correct
-        } else if (imageUrl.startsWith("/")) {
-          return imageUrl; // Absolute path, use as is
-        } else {
-          // Relative path, try blob storage first, then /api/
-          return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${imageUrl}`;
-        }
-      }
-      return imageUrl;
+      return formatImageUrl(addonDetails.imageUrls[0]);
     }
     
     // Fallback to other image fields
-    let imageUrl = addonDetails.imageUrl || 
+    const imageUrl = addonDetails.imageUrl || 
                    addonDetails.image || 
                    addonDetails.photoUrl ||
                    (addonDetails.images && addonDetails.images[0]?.url) ||
                    (addonDetails.images && addonDetails.images[0]?.imageUrl);
     
-    // Handle blob storage URLs or relative paths
-    if (imageUrl && !imageUrl.startsWith("http")) {
-      if (imageUrl.startsWith("/api/")) {
-        return imageUrl; // API path, use as is
-      } else if (imageUrl.startsWith("/")) {
-        return imageUrl; // Absolute path, use as is
-      } else {
-        // Relative path, assume blob storage
-        imageUrl = `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${imageUrl}`;
-      }
-    }
-    
-    return imageUrl;
+    return formatImageUrl(imageUrl);
   };
 
   const handleAddonCardClick = (addon, e) => {
@@ -306,15 +310,37 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
             const isGroupPricing = addOn.pricingType === "Group";
             const quantity = isGroupPricing ? (addOnQuantities?.[addOn.id] || 1) : 1;
             
+            const addonImageUrl = getAddonImageUrl(addOn);
+            
             return (
               <div
                 key={addOn.id}
-                className={cn(styles.addOnCard, {
+                className={cn(styles.addOnCard, styles.addOnCardRow, {
                   [styles.addOnCardSelected]: isSelected,
                 })}
                 onClick={(e) => handleAddonCardClick(addOn, e)}
               >
-                <div className={styles.addOnContent}>
+                <div className={styles.addOnPreview}>
+                  {addonImageUrl ? (
+                    <img 
+                      src={addonImageUrl} 
+                      alt={addOn.title}
+                      className={styles.addOnImg}
+                      onError={(e) => {
+                        // Fallback to placeholder if image fails to load
+                        if (!e.target.src.includes("/images/content/card-pic-13.jpg")) {
+                          e.target.src = "/images/content/card-pic-13.jpg";
+                          e.target.onerror = null;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className={styles.addOnPreviewPlaceholder}>
+                      <Icon name="image" size="48" />
+                    </div>
+                  )}
+                </div>
+                <div className={styles.addOnBody}>
                   <div className={styles.addOnHeader}>
                     <div className={styles.addOnTitleRow}>
                       <h5 className={styles.addOnTitle}>{addOn.title}</h5>
@@ -324,25 +350,27 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
                     </div>
                     <div className={styles.addOnPrice}>{addOn.price}</div>
                   </div>
-                </div>
-                <div className={styles.addOnControls}>
-                  {isGroupPricing && isSelected ? (
-                    <Counter
-                      className={styles.addOnCounter}
-                      value={quantity}
-                      setValue={(newValue) => onAddOnQuantityChange(addOn.id, newValue)}
-                      iconMinus="minus"
-                      iconPlus="plus"
-                      min={0}
-                    />
-                  ) : (
-                    <div className={styles.addOnSwitch}>
-                      <Switch
-                        value={isSelected}
-                        onChange={() => onToggleAddOn(addOn.id, addOn.pricingType)}
-                      />
+                  <div className={styles.addOnFoot}>
+                    <div className={styles.addOnControls}>
+                      {isGroupPricing && isSelected ? (
+                        <Counter
+                          className={styles.addOnCounter}
+                          value={quantity}
+                          setValue={(newValue) => onAddOnQuantityChange(addOn.id, newValue)}
+                          iconMinus="minus"
+                          iconPlus="plus"
+                          min={0}
+                        />
+                      ) : (
+                        <div className={styles.addOnSwitch}>
+                          <Switch
+                            value={isSelected}
+                            onChange={() => onToggleAddOn(addOn.id, addOn.pricingType)}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             );

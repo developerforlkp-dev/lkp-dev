@@ -69,13 +69,13 @@ const items = [
     title: "Dates",
     content: "May 15 - 22, 2021",
     icon: "clock",
-    color: "#92A5EF",
+    color: "#0097B2",
   },
   {
     title: "Guests",
     content: "2 guest",
     icon: "user",
-    color: "#FA8F54",
+    color: "#0097B2",
   },
 ];
 

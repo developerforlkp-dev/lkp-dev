@@ -8,22 +8,22 @@ const options = [
   {
     title: "12 hours",
     icon: "clock",
-    color: "#92A5EF",
+    color: "#0097B2",
   },
   {
     title: "Includes food, drinks and tickets",
     icon: "glass",
-    color: "#8BC5E5",
+    color: "#0097B2",
   },
   {
     title: "Up to 10 people",
     icon: "user",
-    color: "#FA8F54",
+    color: "#0097B2",
   },
   {
     title: "Hosted in English, Vietnamese",
     icon: "at",
-    color: "#58C27D",
+    color: "#0097B2",
   },
 ];
 

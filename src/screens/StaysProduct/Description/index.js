@@ -1213,8 +1213,8 @@ const Description = ({ classSection, listing, hostData }) => {
     if (selectedTimeSlotData?.maxSeats !== undefined && selectedTimeSlotData?.maxSeats > 0) {
       return selectedTimeSlotData.maxSeats;
     }
-    // Priority 4: Fallback to listing maxGuests
-    return listing?.maxGuests || 4;
+    // Priority 4: Fallback to listing maxGuests (or undefined for no limit)
+    return listing?.maxGuests || undefined;
   }, [selectedDateAvailability, selectedTimeSlotData, listing?.maxGuests]);
 
   // Fetch slots data when listing is available
@@ -1558,11 +1558,11 @@ const Description = ({ classSection, listing, hostData }) => {
                           infants: 0,
                           pets: 0,
                         }}
-                        maxGuests={listing?.maxGuests || 4}
+                        maxGuests={listing?.maxGuests || undefined}
                         maxSeats={maxSeats}
                         allowPets={listing?.allowPets || false}
-                        childrenAllowed={false}
-                        infantsAllowed={false}
+                        childrenAllowed={listing?.childrenAllowed !== false}
+                        infantsAllowed={listing?.infantsAllowed === true}
                         adultsLabel="Guests"
                       />
                     </div>

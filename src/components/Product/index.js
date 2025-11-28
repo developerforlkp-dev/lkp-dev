@@ -11,7 +11,20 @@ const Product = ({
   options,
   gallery,
   type,
+  rating,
+  reviews,
+  hostAvatar,
 }) => {
+  // Format rating to 1 decimal place if provided
+  const displayRating = rating !== null && rating !== undefined 
+    ? parseFloat(rating).toFixed(1) 
+    : null;
+  
+  // Format reviews count
+  const displayReviews = reviews !== null && reviews !== undefined && reviews > 0
+    ? `(${reviews} ${reviews === 1 ? 'review' : 'reviews'})`
+    : null;
+
   return (
     <div className={cn(classSection, styles.section)}>
       <div className={cn("container", styles.container)}>
@@ -19,14 +32,30 @@ const Product = ({
           <div className={styles.box}>
             <h1 className={cn("h2", styles.title)}>{title}</h1>
             <div className={styles.line}>
-              <div className={styles.avatar}>
-                <img src="/images/content/avatar-1.jpg" alt="Avatar" />
-              </div>
-              <div className={styles.rating}>
-                <Icon name="star" size="20" />
-                <div className={styles.number}>4.8</div>
-                <div className={styles.reviews}>(256 reviews)</div>
-              </div>
+              {hostAvatar && (
+                <div className={styles.avatar}>
+                  <img src={hostAvatar} alt="Host" onError={(e) => {
+                    // Fallback to default avatar if image fails to load
+                    if (!e.target.src.includes("/images/content/avatar-1.jpg")) {
+                      e.target.src = "/images/content/avatar-1.jpg";
+                      e.target.onerror = null;
+                    }
+                  }} />
+                </div>
+              )}
+              {(displayRating !== null || displayReviews !== null) && (
+                <div className={styles.rating}>
+                  {displayRating !== null && (
+                    <>
+                      <Icon name="star" size="20" />
+                      <div className={styles.number}>{displayRating}</div>
+                    </>
+                  )}
+                  {displayReviews && (
+                    <div className={styles.reviews}>{displayReviews}</div>
+                  )}
+                </div>
+              )}
               <div className={styles.options}>
                 {options.map((x, index) => (
                   <div className={styles.option} key={index}>

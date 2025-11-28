@@ -1096,7 +1096,7 @@ const ViewDetails = () => {
                 </div>
               )}
               {booking.pricing.discountAmount && (
-                <div className={styles.paymentRow} style={{ color: '#58C27D' }}>
+                <div className={styles.paymentRow} style={{ color: '#0097B2' }}>
                   <span>Discount</span>
                   <span>-{booking.pricing.discountAmount}</span>
                 </div>

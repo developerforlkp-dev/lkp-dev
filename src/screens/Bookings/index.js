@@ -25,6 +25,18 @@ const Bookings = ({ bookingData = null }) => {
       setLoading(true);
       setError(null);
       
+      // Check if user is authenticated before making API calls
+      const isAuthenticated = typeof window !== "undefined" && !!localStorage.getItem("jwtToken");
+      
+      if (!isAuthenticated) {
+        // If not authenticated, show empty state instead of error
+        setOrders([]);
+        setCompletedOrders([]);
+        setCompletedCount(0);
+        setLoading(false);
+        return;
+      }
+      
       // Fetch both APIs in parallel for better performance
       // Handle errors independently so one failure doesn't block the other
       const [ordersResult, completedCountResult] = await Promise.allSettled([
@@ -38,8 +50,22 @@ const Bookings = ({ bookingData = null }) => {
         fetchedOrders = ordersResult.value;
         console.log("✅ Fetched orders:", fetchedOrders);
       } else {
-        console.error("❌ Error fetching regular orders:", ordersResult.reason);
-        setError(ordersResult.reason?.message || "Failed to fetch orders");
+        const errorReason = ordersResult.reason;
+        // Check if it's an authentication error (401/403)
+        const isAuthError = errorReason?.response?.status === 401 || errorReason?.response?.status === 403;
+        
+        if (isAuthError) {
+          // For auth errors, clear token and show empty state
+          console.warn("⚠️ Authentication error - showing empty state");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("jwtToken");
+          }
+          setOrders([]);
+        } else {
+          console.error("❌ Error fetching regular orders:", errorReason);
+          // Only show error for non-auth errors
+          setError(errorReason?.message || "Failed to fetch orders");
+        }
       }
       setOrders(Array.isArray(fetchedOrders) ? fetchedOrders : []);
 
@@ -50,7 +76,13 @@ const Bookings = ({ bookingData = null }) => {
         fetchedCompletedCount = countData?.completedCount || 0;
         console.log("✅ Fetched completed orders count:", fetchedCompletedCount);
       } else {
-        console.warn("⚠️ Failed to fetch completed orders count:", completedCountResult.reason);
+        const errorReason = completedCountResult.reason;
+        // Check if it's an authentication error
+        const isAuthError = errorReason?.response?.status === 401 || errorReason?.response?.status === 403;
+        
+        if (!isAuthError) {
+          console.warn("⚠️ Failed to fetch completed orders count:", errorReason);
+        }
         fetchedCompletedCount = 0;
       }
       setCompletedCount(fetchedCompletedCount);
@@ -74,9 +106,10 @@ const Bookings = ({ bookingData = null }) => {
 
   // Always render Main component, even if there are errors
   // This ensures the page is not blocked by API failures
+  // Don't show error banner for empty bookings - let the empty state handle it
   return (
     <>
-      {error && (
+      {error && error !== "" && (
         <div style={{ padding: "1rem", textAlign: "center", backgroundColor: "#fee", color: "#c33" }}>
           <p>⚠️ {error}</p>
         </div>

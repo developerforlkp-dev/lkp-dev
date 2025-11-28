@@ -34,11 +34,11 @@ const gallery = [
 const items = [
   {
     title: "Get more discount",
-    color: "#58C27D",
+    color: "#0097B2",
   },
   {
     title: "Get premium travel magazine",
-    color: "#92A5EF",
+    color: "#0097B2",
   },
 ];
 

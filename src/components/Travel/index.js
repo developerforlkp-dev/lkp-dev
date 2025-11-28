@@ -11,19 +11,19 @@ const items = [
     title: "Find trips that fit a flexible lifestyle",
     content:
       "Stacks is a production-ready library of stackable content blocks built in React Native",
-    color: "#8BC5E5",
+    color: "#0097B2",
   },
   {
     title: "Travel with more confidence",
     content:
       "Stacks is a production-ready library of stackable content blocks built in React Native",
-    color: "#92A5EF",
+    color: "#0097B2",
   },
   {
     title: "See what’s really included",
     content:
       "Stacks is a production-ready library of stackable content blocks built in React Native",
-    color: "#58C27D",
+    color: "#0097B2",
   },
 ];
 
