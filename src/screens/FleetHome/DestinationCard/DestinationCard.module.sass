@@ -10,6 +10,7 @@
     text-decoration: none
     padding: 20px 0
     margin: -20px 0
+    overflow: visible
     +m
         padding: 10px 0
         margin: -10px 0
@@ -18,6 +19,9 @@
         .imageWrapper
             transform: scale(1.05)
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12)
+            border-radius: 72px
+            +m
+                border-radius: 60px
     +dark
         color: $n8
         &:hover
@@ -32,6 +36,10 @@
     border-radius: 72px
     overflow: hidden
     transition: all .3s cubic-bezier(0.4, 0, 0.2, 1)
+    will-change: transform
+    transform-origin: center center
+    backface-visibility: hidden
+    -webkit-backface-visibility: hidden
     +m
         max-width: 120px
         height: 156px
@@ -49,14 +57,16 @@
     flex-direction: column
     align-items: center
     gap: 4px
+    width: 100%
+    max-width: 100%
 
 .title
     +body-bold-2
-    font-size: 19px
-    line-height: 1.4
     margin: 0
-    +m
-        font-size: 17px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    max-width: 100%
 
 .location
     +caption-2

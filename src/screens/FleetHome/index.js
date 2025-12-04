@@ -7,6 +7,7 @@ import { getHomepageSections, getHomepageSectionListings } from "../../utils/api
 import { HomepageSectionCard } from "./CardStyles";
 import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
+import HeroSection from "./HeroSection";
 
 const filterOptions = [
   { id: "experience", label: "Experience", icon: "star" },
@@ -94,9 +95,17 @@ const FleetHome = () => {
         const sectionPromises = sortedSections.map(async (section) => {
           try {
             const sectionData = await getHomepageSectionListings(section.sectionId, 12, 0);
+            console.log(`✅ Section ${section.sectionId} data:`, sectionData);
+            
+            // Handle different response structures
+            const listings = sectionData?.listings || sectionData?.data?.listings || [];
+            const sectionInfo = sectionData?.section || section;
+            
+            console.log(`✅ Section ${section.sectionId} has ${listings.length} listings`);
+            
             return {
-              section: sectionData.section || section,
-              listings: sectionData.listings || [],
+              section: sectionInfo,
+              listings: listings,
             };
           } catch (err) {
             console.warn(`⚠️ Failed to fetch listings for section ${section.sectionId}:`, err);
@@ -112,11 +121,14 @@ const FleetHome = () => {
           if (result.status === "fulfilled") {
             return result.value;
           }
+          console.warn("⚠️ Section promise rejected:", result.reason);
           return { section: {}, listings: [] };
         });
         
-        setSectionsData(resolvedSections);
         console.log("✅ Loaded all sections with listings:", resolvedSections);
+        console.log(`✅ Total sections: ${resolvedSections.length}, Sections with listings: ${resolvedSections.filter(s => s.listings && s.listings.length > 0).length}`);
+        
+        setSectionsData(resolvedSections);
         
       } catch (err) {
         console.error("❌ Error loading homepage data:", err);
@@ -131,90 +143,97 @@ const FleetHome = () => {
 
   return (
     <div className={cn("section", styles.section)}>
+      {/* Hero Section */}
+      <div className={styles.heroSection}>
+        <HeroSection />
+      </div>
+      
       <div className={cn("container", styles.container)}>
-        <div className={styles.searchBar}>
-          <div className={styles.searchField}>
-            <Icon name="arrow-right" size="20" />
-            <div className={styles.searchFieldContent}>
-              <div className={styles.searchLabel}>Where to?</div>
-              <input type="text" placeholder="Search Destination" className={styles.searchInput} />
-            </div>
-          </div>
-          {showCalendar && (
-            <>
-              <div className={styles.searchDivider}></div>
-              <div 
-                className={styles.searchField}
-                ref={dateItemRef}
-                style={{ position: "relative" }}
-              >
-                <Icon name="calendar" size="20" />
-                <div 
-                  className={styles.searchFieldContent}
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className={styles.searchLabel}>Check-in</div>
-                  <div className={styles.searchInput}>
-                    {formattedDate}
-                  </div>
-                </div>
-                <InlineDatePicker
-                  visible={showDatePicker}
-                  onClose={() => setShowDatePicker(false)}
-                  onDateSelect={handleDateSelect}
-                  selectedDate={selectedDate}
-                  className={styles.datePicker}
-                />
+        <div className={styles.glassContainer}>
+          <div className={styles.searchBar}>
+            <div className={styles.searchField}>
+              <Icon name="arrow-right" size="16" />
+              <div className={styles.searchFieldContent}>
+                <div className={styles.searchLabel}>Where to?</div>
+                <input type="text" placeholder="Search Destination" className={styles.searchInput} />
               </div>
-            </>
-          )}
-          <div className={styles.searchDivider}></div>
-          <div 
-            className={styles.searchField}
-            ref={guestItemRef}
-            style={{ position: "relative" }}
-          >
-            <Icon name="user" size="20" />
-            <div 
-              className={styles.searchFieldContent}
-              onClick={() => setShowGuestPicker(!showGuestPicker)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className={styles.searchLabel}>Guest Count</div>
-              <div className={styles.searchInput}>{guestCountText}</div>
             </div>
-            <GuestPicker
-              visible={showGuestPicker}
-              onClose={() => setShowGuestPicker(false)}
-              onGuestChange={handleGuestChange}
-              initialGuests={guests}
-              className={styles.guestPicker}
-            />
-          </div>
-          <button className={styles.searchButton}>Search</button>
-        </div>
-
-        <div className={styles.filtersContainer}>
-          <div className={styles.filtersGrid}>
-            {filterOptions.map((filter) => (
-              <button
-                key={filter.id}
-                type="button"
-                className={cn(styles.filterCard, {
-                  [styles.filterCardActive]: activeFilter === filter.id,
-                })}
-                onClick={() => setActiveFilter(filter.id)}
-              >
-                <div className={styles.filterCardContent}>
-                  <Icon name={filter.icon} size="20" />
-                  <span>{filter.label}</span>
+            {showCalendar && (
+              <>
+                <div className={styles.searchDivider}></div>
+                <div 
+                  className={styles.searchField}
+                  ref={dateItemRef}
+                  style={{ position: "relative" }}
+                >
+                  <Icon name="calendar" size="16" />
+                  <div 
+                    className={styles.searchFieldContent}
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className={styles.searchLabel}>Check-in</div>
+                    <div className={styles.searchInput}>
+                      {formattedDate}
+                    </div>
+                  </div>
+                  <InlineDatePicker
+                    visible={showDatePicker}
+                    onClose={() => setShowDatePicker(false)}
+                    onDateSelect={handleDateSelect}
+                    selectedDate={selectedDate}
+                    className={styles.datePicker}
+                  />
                 </div>
-                {filter.id !== "experience" && (
-                  <div className={styles.comingSoonBadge}>Coming Soon</div>
-                )}
-              </button>
-            ))}
+              </>
+            )}
+            <div className={styles.searchDivider}></div>
+            <div 
+              className={styles.searchField}
+              ref={guestItemRef}
+              style={{ position: "relative" }}
+            >
+              <Icon name="user" size="16" />
+              <div 
+                className={styles.searchFieldContent}
+                onClick={() => setShowGuestPicker(!showGuestPicker)}
+                style={{ cursor: "pointer" }}
+              >
+                <div className={styles.searchLabel}>Guest Count</div>
+                <div className={styles.searchInput}>{guestCountText}</div>
+              </div>
+              <GuestPicker
+                visible={showGuestPicker}
+                onClose={() => setShowGuestPicker(false)}
+                onGuestChange={handleGuestChange}
+                initialGuests={guests}
+                className={styles.guestPicker}
+              />
+            </div>
+            <button className={styles.searchButton}>Search</button>
+          </div>
+
+          <div className={styles.filtersContainer}>
+            <div className={styles.filtersGrid}>
+              {filterOptions.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  className={cn(styles.filterCard, {
+                    [styles.filterCardActive]: activeFilter === filter.id,
+                  })}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  <div className={styles.filterCardContent}>
+                    <Icon name={filter.icon} size="18" />
+                    <span>{filter.label}</span>
+                  </div>
+                  {filter.id !== "experience" && (
+                    <div className={styles.comingSoonBadge}>Coming Soon</div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -234,12 +253,30 @@ const FleetHome = () => {
         {!loading && !error && sectionsData.length === 0 && (
           <div style={{ padding: "3rem", textAlign: "center" }}>
             <p>No sections available</p>
+            <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+              Check browser console for API response details
+            </p>
+          </div>
+        )}
+        
+        {!loading && !error && sectionsData.length > 0 && sectionsData.every(s => !s.listings || s.listings.length === 0) && (
+          <div style={{ padding: "3rem", textAlign: "center" }}>
+            <p>Sections loaded but no listings found</p>
+            <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+              {sectionsData.length} section(s) found. Check browser console for details.
+            </p>
           </div>
         )}
         
         {!loading &&
           sectionsData.map((sectionData, index) => {
-            if (!sectionData.section || !sectionData.listings || sectionData.listings.length === 0) {
+            if (!sectionData || !sectionData.section) {
+              console.warn(`⚠️ Skipping invalid section data at index ${index}:`, sectionData);
+              return null;
+            }
+            
+            if (!sectionData.listings || sectionData.listings.length === 0) {
+              console.log(`ℹ️ Section "${sectionData.section.sectionTitle || sectionData.section.sectionId}" has no listings, skipping`);
               return null; // Skip sections with no listings
             }
             

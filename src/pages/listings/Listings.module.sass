@@ -1,0 +1,268 @@
+@import ../../styles/helpers
+
+.section
+    padding-bottom: 80px
+    +m
+        padding-bottom: 64px
+
+.container
+    position: relative
+    +m
+        padding: 0 16px
+
+.searchBar
+    display: flex
+    align-items: center
+    gap: 0
+    max-width: 1000px
+    margin: 0 auto 48px
+    background: $n8
+    border-radius: 20px
+    padding: 24px
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1)
+    +dark
+        background: $n1
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3)
+    +m
+        flex-direction: column
+        gap: 16px
+        padding: 20px
+        margin-bottom: 40px
+
+.searchField
+    flex: 1
+    display: flex
+    align-items: center
+    gap: 16px
+    padding: 0 20px
+    +m
+        padding: 0
+        width: 100%
+    svg
+        fill: $n4
+        flex-shrink: 0
+        +dark
+            fill: $n5
+
+.searchFieldContent
+    flex: 1
+    display: flex
+    flex-direction: column
+    gap: 4px
+
+.searchLabel
+    +caption-2
+    font-weight: 600
+    color: $n3
+    +dark
+        color: $n5
+
+.searchInput
+    border: none
+    background: transparent
+    +body-2
+    color: $n2
+    outline: none
+    padding: 0
+    &::placeholder
+        color: $n4
+        +dark
+            color: $n5
+    +dark
+        color: $n8
+    // For date and guest picker display
+    &:not(input)
+        cursor: pointer
+        user-select: none
+
+.searchDivider
+    width: 1px
+    height: 40px
+    background: $n6
+    +dark
+        background: $n3
+    +m
+        display: none
+
+.searchButton
+    padding: 16px 40px
+    border-radius: 16px
+    background: #0097B2
+    border: none
+    +body-bold-2
+    color: $n8
+    cursor: pointer
+    transition: all .2s ease
+    white-space: nowrap
+    +m
+        width: 100%
+    &:hover
+        background: darken(#0097B2, 5%)
+        transform: translateY(-2px)
+    &:active
+        transform: translateY(0)
+
+.datePicker
+    position: absolute
+    top: calc(100% + 8px)
+    left: 0
+    right: 0
+    z-index: 100
+    +m
+        left: -32px
+        right: -32px
+
+.guestPicker
+    position: absolute
+    top: calc(100% + 8px)
+    left: 0
+    right: 0
+    z-index: 100
+    +m
+        left: -32px
+        right: -32px
+
+.body
+    margin-top: 24px
+    +m
+        margin-top: 16px
+
+.layout
+    display: grid
+    grid-template-columns: 280px 1fr
+    gap: 32px
+    +t
+        grid-template-columns: 1fr
+        gap: 24px
+    +m
+        grid-template-columns: 1fr
+        gap: 0
+        width: 100%
+    &.withMap
+        grid-template-columns: 280px 1fr 400px
+        +t
+            grid-template-columns: 1fr
+            gap: 24px
+        +m
+            grid-template-columns: 1fr
+            gap: 0
+
+.sidebar
+    position: sticky
+    top: 100px
+    align-self: start
+    display: block
+    +t
+        display: none !important
+
+.main
+    min-width: 0
+    width: 100%
+    display: flex
+    flex-direction: column
+    gap: 24px
+    +m
+        gap: 16px
+        padding: 0
+        width: 100%
+
+.mobileFilterButton
+    width: 100%
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 8px
+    margin-bottom: 0
+    +d
+        display: none
+
+.mapToggleButton
+    display: inline-flex
+    align-items: center
+    gap: 8px
+    align-self: flex-start
+    +m
+        display: none
+
+.mapSidebar
+    width: 400px
+    position: sticky
+    top: 100px
+    align-self: start
+    max-height: calc(100vh - 120px)
+    +t
+        display: none
+
+.mapContainer
+    width: 100%
+    height: 100%
+    min-height: 600px
+    border-radius: 16px
+    overflow: hidden
+    border: 1px solid $n6
+    +dark
+        border-color: $n3
+    iframe
+        width: 100%
+        height: 100%
+        border: 0
+
+// Mobile Map View
+.mobileMap
+    position: fixed
+    top: 0
+    left: 0
+    right: 0
+    bottom: 0
+    z-index: 200
+    background: $n8
+    display: flex
+    flex-direction: column
+    +dark
+        background: $n1
+    +d
+        display: none
+
+.mobileMapHeader
+    display: flex
+    align-items: center
+    justify-content: space-between
+    padding: 16px
+    border-bottom: 1px solid $n6
+    background: $n8
+    +dark
+        background: $n1
+        border-color: $n3
+    span
+        +body-bold-2
+
+.mobileMapClose
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 40px
+    height: 40px
+    border-radius: 50%
+    background: $n7
+    border: none
+    cursor: pointer
+    transition: background .2s
+    +dark
+        background: $n2
+    svg
+        fill: $n2
+        +dark
+            fill: $n7
+    &:hover
+        background: $n6
+        +dark
+            background: $n3
+
+.mobileMapContainer
+    flex: 1
+    width: 100%
+    height: 100%
+    iframe
+        width: 100%
+        height: 100%
+        border: 0

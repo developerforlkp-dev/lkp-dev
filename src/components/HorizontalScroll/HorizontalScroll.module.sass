@@ -1,35 +1,12 @@
 @import ../../styles/helpers
 
-.container
-    max-width: 1200px
-
-.inner
-    position: relative
-
-.head
-    margin-bottom: 80px
-    padding-right: 120px
-    +d
-        margin-bottom: 64px
-    +m
-        margin-bottom: 40px
-        padding: 0
-
-.headSmall
-    margin-bottom: 48px
-    +m
-        margin-bottom: 40px
-
-.info
-    margin-top: 12px
-
 .scrollContainer
     position: relative
     width: 100%
 
 .scrollWrapper
     display: flex
-    gap: 16px
+    gap: 24px
     overflow-x: auto
     overflow-y: hidden
     scroll-behavior: smooth
@@ -42,20 +19,16 @@
     margin: 0
     cursor: grab
     user-select: none
+    flex-wrap: nowrap
     &:active
         cursor: grabbing
     &::-webkit-scrollbar
         display: none
     +m
-        gap: 12px
+        gap: 16px
         cursor: default
         &:active
             cursor: default
-
-.item
-    flex: 0 0 auto
-    scroll-snap-align: start
-    scroll-snap-stop: always
 
 .arrowButton
     position: absolute
@@ -71,11 +44,12 @@
     align-items: center
     justify-content: center
     cursor: pointer
-    z-index: 3
+    z-index: 20
     opacity: 0
     visibility: hidden
     transition: all .3s ease
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1)
+    pointer-events: auto
     +t
         width: 44px
         height: 44px
@@ -132,3 +106,4 @@
         right: 12px
     +m
         right: 8px
+

@@ -135,35 +135,6 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
     return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
   };
 
-  // Helper function to format image URLs (from Azure blob storage or full URLs)
-  const formatImageUrl = (url) => {
-    if (!url) return null;
-    
-    // Already a full URL with SAS token - use directly
-    if ((url.startsWith("http://") || url.startsWith("https://")) && 
-        (url.includes("sig=") || url.includes("sv="))) {
-      return url;
-    }
-    
-    // Already a full URL without SAS token
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-    
-    // Azure blob storage path (e.g., "leads/3/listings/6/cover-photo/image.jpg")
-    if (url.startsWith("leads/")) {
-      return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
-    }
-    
-    // Relative path - prepend base URL if needed
-    if (url.startsWith("/")) {
-      return url;
-    }
-    
-    // Otherwise assume it's a blob storage path
-    return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
-  };
-
   // Helper function to get addon image URL
   const getAddonImageUrl = (addon) => {
     if (!addon?.originalAddon) return null;

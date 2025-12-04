@@ -1,0 +1,169 @@
+@import ../../../styles/helpers
+
+.sidebar
+    width: 280px
+    padding: 20px
+    background: $n8
+    border-radius: 16px
+    border: 1px solid $n6
+    overflow: visible
+    +dark
+        background: $n1
+        border-color: $n3
+
+.header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 20px
+    padding-bottom: 16px
+    border-bottom: 1px solid $n6
+    +dark
+        border-color: $n3
+
+.title
+    margin: 0
+
+.resetButton
+    display: inline-flex
+    align-items: center
+    gap: 6px
+    +button-2
+    color: $n4
+    transition: color .2s
+    svg
+        fill: $n4
+        transition: fill .2s
+    &:hover
+        color: $n2
+        svg
+            fill: $n2
+        +dark
+            color: $n6
+            svg
+                fill: $n6
+
+.content
+    display: flex
+    flex-direction: column
+    gap: 24px
+
+.section
+    display: flex
+    flex-direction: column
+    gap: 12px
+
+.label
+    +hairline-2
+    color: $n5
+    margin-bottom: 0
+
+.sortDropdown
+    width: 100%
+
+.priceRange
+    padding: 8px 0
+
+.priceScale
+    display: flex
+    justify-content: space-between
+    margin-top: 8px
+    +caption-2
+    color: $n4
+
+.checkboxList
+    display: flex
+    flex-direction: column
+    gap: 10px
+
+.checkbox
+    width: 100%
+
+.amenitiesGrid
+    display: grid
+    grid-template-columns: repeat(2, 1fr)
+    gap: 8px
+
+.amenityChip
+    padding: 8px 12px
+    border-radius: 8px
+    border: 1px solid $n6
+    background: $n8
+    +caption-2
+    color: $n2
+    text-align: center
+    transition: all .2s
+    +dark
+        background: $n1
+        border-color: $n3
+        color: $n7
+    &:hover
+        border-color: $p4
+    &.active
+        background: $p4
+        border-color: $p4
+        color: $n8
+        +dark
+            color: $n8
+
+.ratingsList
+    display: flex
+    flex-direction: column
+    gap: 8px
+
+.ratingChip
+    display: inline-flex
+    align-items: center
+    gap: 8px
+    padding: 8px 12px
+    border-radius: 8px
+    border: 1px solid $n6
+    background: $n8
+    +caption-2
+    color: $n2
+    transition: all .2s
+    +dark
+        background: $n1
+        border-color: $n3
+        color: $n7
+    svg
+        fill: $s3
+    &:hover
+        border-color: $p4
+    &.active
+        background: $p4
+        border-color: $p4
+        color: $n8
+        +dark
+            color: $n8
+        svg
+            fill: $n8
+
+.categoriesScroll
+    display: flex
+    flex-wrap: wrap
+    gap: 8px
+    overflow: visible
+
+.categoryChip
+    padding: 8px 16px
+    border-radius: 24px
+    border: 1px solid $n6
+    background: $n8
+    +caption-2
+    color: $n2
+    white-space: nowrap
+    transition: all .2s
+    +dark
+        background: $n1
+        border-color: $n3
+        color: $n7
+    &:hover
+        border-color: $p4
+    &.active
+        background: $p4
+        border-color: $p4
+        color: $n8
+        +dark
+            color: $n8
+

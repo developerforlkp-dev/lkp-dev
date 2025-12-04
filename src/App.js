@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import "react-dates/lib/css/_datepicker.css";
 import "./styles/app.sass";
 import Page from "./components/Page";
-import Stays from "./screens/Stays";
 import StaysCategory from "./screens/StaysCategory";
 import StaysProduct from "./screens/StaysProduct";
 import StaysCheckout from "./screens/StaysCheckout";
@@ -33,6 +32,7 @@ import Bookings from "./screens/Bookings";
 import ViewDetails from "./screens/ViewDetails";
 import ListYourProperty from "./screens/ListYourProperty";
 import FleetHome from "./screens/FleetHome";
+import Listings from "./pages/listings";
 
 function App() {
   return (
@@ -302,10 +302,10 @@ function App() {
         <Route exact path="/pagelist" component={PageList} />
         <Route
           exact
-          path="/fleethome"
+          path="/listings"
           render={() => (
             <Page>
-              <FleetHome />
+              <Listings />
             </Page>
           )}
         />

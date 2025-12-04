@@ -1,8 +1,11 @@
 import React from "react";
 import cn from "classnames";
+import { Link } from "react-router-dom";
 import Card from "../../../components/Card";
-import Browse from "../../../components/Browse";
+import BrowseItem from "../../../components/Browse/Item";
 import DestinationCard from "../DestinationCard";
+import Destination from "../../../components/Destination";
+import HorizontalScroll from "../../../components/HorizontalScroll";
 import styles from "../FleetHome.module.sass";
 
 /**
@@ -111,8 +114,25 @@ const transformListingToDestination = (listing) => {
   };
 };
 
+// Transform API listing to Destination component format (for horizontal rectangular cards)
+const transformListingToDestinationHorizontal = (listing) => {
+  const coverPhotoUrl = formatImageUrl(listing.coverPhotoUrl);
+
+  return {
+    id: `listing-${listing.listingId}`,
+    listingId: listing.listingId,
+    title: listing.title || "Destination",
+    content: "", // Not displayed - matches other card styles
+    src: coverPhotoUrl,
+    srcSet: coverPhotoUrl,
+    url: `/stays-product?id=${listing.listingId}`,
+    categoryText: null, // Optional category badge
+    category: null,
+  };
+};
+
 /**
- * CARD_CAROUSEL - Horizontal scrolling carousel
+ * CARD_SQUARE_HORIZONTAL_NODETAIL - Square image cards with horizontal scrolling, no detailed info
  */
 export const CardCarousel = ({ section, listings, className }) => {
   const browseItems = listings.map(transformListingToBrowse);
@@ -120,26 +140,30 @@ export const CardCarousel = ({ section, listings, className }) => {
   return (
     <section className={cn(styles.categorySection, className)}>
       <div className={styles.sectionHeader}>
-        <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        <Link to="/listings" className={styles.sectionTitleLink}>
+          <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        </Link>
         {section.description && (
           <p className={styles.sectionSubtitle}>{section.description}</p>
         )}
       </div>
-      <div className={styles.browseWrapper}>
-        <Browse
-          classSection=""
-          headSmall
-          classTitle="h4"
-          title=""
-          items={browseItems}
-        />
+      <div className={styles.horizontalScrollWrapper}>
+        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+          {browseItems.map((item) => (
+            <BrowseItem
+              className={styles.browseCardSquare}
+              item={item}
+              key={item.id}
+            />
+          ))}
+        </HorizontalScroll>
       </div>
     </section>
   );
 };
 
 /**
- * CARD_GRID - Standard grid layout
+ * CARD_RECT_VERTICAL_DETAIL - Rectangular vertical cards with detailed information
  */
 export const CardGrid = ({ section, listings, className }) => {
   const cardItems = listings.map(transformListingToCard);
@@ -147,107 +171,81 @@ export const CardGrid = ({ section, listings, className }) => {
   return (
     <section className={cn(styles.categorySection, className)}>
       <div className={styles.sectionHeader}>
-        <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        <Link to="/listings" className={styles.sectionTitleLink}>
+          <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        </Link>
         {section.description && (
           <p className={styles.sectionSubtitle}>{section.description}</p>
         )}
       </div>
-      <div className={styles.gridList}>
-        {cardItems.map((item) => (
-          <Card className={styles.gridCard} item={item} key={item.id} />
-        ))}
+      <div className={styles.horizontalScrollWrapper}>
+        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+          {cardItems.map((item) => (
+            <Card className={styles.gridCardHorizontal} item={item} key={item.id} />
+          ))}
+        </HorizontalScroll>
       </div>
     </section>
   );
 };
 
 /**
- * CARD_ROW - Row layout (horizontal cards)
- */
-export const CardRow = ({ section, listings, className }) => {
-  const cardItems = listings.map(transformListingToCard);
-
-  return (
-    <section className={cn(styles.categorySection, className)}>
-      <div className={styles.sectionHeader}>
-        <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
-        {section.description && (
-          <p className={styles.sectionSubtitle}>{section.description}</p>
-        )}
-      </div>
-      <div className={styles.rowList}>
-        {cardItems.map((item) => (
-          <Card className={styles.rowCard} item={item} key={item.id} row />
-        ))}
-      </div>
-    </section>
-  );
-};
-
-/**
- * CARD_DESTINATION - Circular destination cards (Today's Special style)
+ * CARD_OVAL_VERTICAL_NODETAIL - Oval/circular image cards with vertical layout, minimal details
  */
 export const CardDestination = ({ section, listings, className }) => {
   const destinationItems = listings.map(transformListingToDestination);
-  
-  // Split cards into two rows with equal distribution
-  const totalCards = destinationItems.length;
-  const cardsPerRow = Math.ceil(totalCards / 2);
-  const firstRowCards = destinationItems.slice(0, cardsPerRow);
-  const secondRowCards = destinationItems.slice(cardsPerRow);
 
   return (
     <section className={cn(styles.categorySection, className)}>
       <div className={styles.sectionHeader}>
-        <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        <Link to="/listings" className={styles.sectionTitleLink}>
+          <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        </Link>
         {section.description && (
           <p className={styles.sectionSubtitle}>{section.description}</p>
         )}
       </div>
-      <div className={styles.destinationScrollWrapper}>
-        <div className={styles.destinationGrid}>
-          <div className={styles.destinationRow}>
-            {firstRowCards.map((item) => (
-              <DestinationCard
-                className={styles.destinationCard}
-                item={item}
-                key={item.id}
-              />
-            ))}
-          </div>
-          <div className={styles.destinationRow}>
-            {secondRowCards.map((item) => (
-              <DestinationCard
-                className={styles.destinationCard}
-                item={item}
-                key={item.id}
-              />
-            ))}
-          </div>
-        </div>
+      <div className={styles.horizontalScrollWrapper}>
+        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+          {destinationItems.map((item) => (
+            <DestinationCard
+              className={styles.destinationCard}
+              item={item}
+              key={item.id}
+            />
+          ))}
+        </HorizontalScroll>
       </div>
     </section>
   );
 };
 
 /**
- * CARD_PREMIUM - Premium grid layout
+ * CARD_RECT_HORIZONTAL_NODETAIL - Rectangular horizontal cards with image, title, and content, no detailed info
  */
-export const CardPremium = ({ section, listings, className }) => {
-  const cardItems = listings.map(transformListingToCard);
+export const CardDestinationHorizontal = ({ section, listings, className }) => {
+  const destinationItems = listings.map(transformListingToDestinationHorizontal);
 
   return (
     <section className={cn(styles.categorySection, className)}>
       <div className={styles.sectionHeader}>
-        <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        <Link to="/listings" className={styles.sectionTitleLink}>
+          <h2 className={cn("h2", styles.sectionTitle)}>{section.sectionTitle}</h2>
+        </Link>
         {section.description && (
           <p className={styles.sectionSubtitle}>{section.description}</p>
         )}
       </div>
-      <div className={styles.premiumGrid}>
-        {cardItems.map((item) => (
-          <Card className={styles.premiumCard} item={item} key={item.id} />
-        ))}
+      <div className={styles.horizontalScrollWrapper}>
+        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+          {destinationItems.map((item) => (
+            <Destination
+              className={styles.destinationCardHorizontal}
+              item={item}
+              key={item.id}
+            />
+          ))}
+        </HorizontalScroll>
       </div>
     </section>
   );
@@ -256,10 +254,15 @@ export const CardPremium = ({ section, listings, className }) => {
 /**
  * Main component that renders the appropriate card style based on cardStyle prop
  * Maps API cardStyle values (uppercase format) to frontend card components:
- * - "CARD_GRID" → CardGrid component
- * - "CARD_CAROUSEL" → CardCarousel component
- * - "CARD_LIST" → CardDestination component
- * - "CARD_ROW" → CardRow component
+ * - "CARD_RECT_VERTICAL_DETAIL" → CardGrid component (rectangular vertical cards with details)
+ * - "CARD_SQUARE_HORIZONTAL_NODETAIL" → CardCarousel component (square image cards, no details)
+ * - "CARD_OVAL_VERTICAL_NODETAIL" → CardDestination component (oval/circular cards, minimal details)
+ * - "CARD_RECT_HORIZONTAL_NODETAIL" → CardDestinationHorizontal component (rectangular horizontal cards, no details)
+ * 
+ * Backward compatibility: Also supports old names:
+ * - "CARD_GRID" → CARD_RECT_VERTICAL_DETAIL
+ * - "CARD_CAROUSEL" → CARD_SQUARE_HORIZONTAL_NODETAIL
+ * - "CARD_LIST" → CARD_OVAL_VERTICAL_NODETAIL
  */
 export const HomepageSectionCard = ({ section, listings, className }) => {
   if (!section || !listings || listings.length === 0) {
@@ -267,11 +270,28 @@ export const HomepageSectionCard = ({ section, listings, className }) => {
   }
 
   // Use cardStyle exactly as provided by API (case-sensitive)
-  const cardStyle = section.cardStyle || "CARD_GRID";
+  const cardStyle = section.cardStyle || "CARD_RECT_VERTICAL_DETAIL";
+
+  // Log section card style for debugging
+  console.log(`📋 Section: "${section.sectionTitle}" → Card Style: ${cardStyle}`);
 
   // Map API cardStyle values to component card styles (case-sensitive matching)
-  // API returns uppercase format: CARD_GRID, CARD_CAROUSEL, CARD_LIST, CARD_ROW
+  // Supports both new descriptive names and old names for backward compatibility
   switch (cardStyle) {
+    // New descriptive names
+    case "CARD_RECT_VERTICAL_DETAIL":
+      return <CardGrid section={section} listings={listings} className={className} />;
+    
+    case "CARD_SQUARE_HORIZONTAL_NODETAIL":
+      return <CardCarousel section={section} listings={listings} className={className} />;
+    
+    case "CARD_OVAL_VERTICAL_NODETAIL":
+      return <CardDestination section={section} listings={listings} className={className} />;
+    
+    case "CARD_RECT_HORIZONTAL_NODETAIL":
+      return <CardDestinationHorizontal section={section} listings={listings} className={className} />;
+    
+    // Backward compatibility: Old names
     case "CARD_GRID":
       return <CardGrid section={section} listings={listings} className={className} />;
     
@@ -281,14 +301,12 @@ export const HomepageSectionCard = ({ section, listings, className }) => {
     case "CARD_LIST":
       return <CardDestination section={section} listings={listings} className={className} />;
     
-    case "CARD_ROW":
-      return <CardRow section={section} listings={listings} className={className} />;
-    
     default:
-      // Default to grid layout
+      // Default to rectangular vertical detail layout
       return <CardGrid section={section} listings={listings} className={className} />;
   }
 };
 
 // Export helper functions for use in other components
-export { transformListingToCard, transformListingToBrowse, transformListingToDestination, formatImageUrl };
+export { transformListingToCard, transformListingToBrowse, transformListingToDestination, transformListingToDestinationHorizontal, formatImageUrl };
+
