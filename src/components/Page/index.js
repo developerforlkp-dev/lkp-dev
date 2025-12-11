@@ -11,6 +11,7 @@ const Page = ({
   fooferHide,
   wide,
   notAuthorized,
+  hideHeaderOnMobile,
 }) => {
   const { pathname } = useLocation();
 
@@ -26,6 +27,7 @@ const Page = ({
           separatorHeader={separatorHeader}
           wide={wide}
           notAuthorized={notAuthorized}
+          hideOnMobile={hideHeaderOnMobile}
         />
         <div className={styles.inner}>{children}</div>
         {!fooferHide && <Footer />}

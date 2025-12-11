@@ -1,0 +1,31 @@
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+module.exports = function(app) {
+  app.use(
+    '/api',
+    createProxyMiddleware({
+      target: 'http://localhost:5000',
+      changeOrigin: true,
+      secure: false,
+      logLevel: 'debug',
+      // By default, http-proxy-middleware strips the matched path segment
+      // So /api/public/homepage-sections becomes /public/homepage-sections
+      // We need to add /api back to the path
+      pathRewrite: function (path, req) {
+        // Add /api prefix back to the path
+        return '/api' + path;
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log('[Proxy]', req.method, req.url, '->', proxyReq.path);
+      },
+      onProxyRes: (proxyRes, req, res) => {
+        console.log('[Proxy Response]', req.url, '->', proxyRes.statusCode);
+      },
+      onError: (err, req, res) => {
+        console.error('[Proxy Error]', err.message);
+        res.status(500).send('Proxy error: ' + err.message);
+      }
+    })
+  );
+};
+

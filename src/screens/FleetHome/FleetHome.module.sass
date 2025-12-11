@@ -250,9 +250,9 @@
         gap: 10px
     +m
         position: absolute
-        bottom: 16px
-        left: 16px
-        right: 16px
+        bottom: 0
+        left: 0
+        right: 0
         display: flex
         flex-direction: row
         align-items: center
@@ -260,14 +260,15 @@
         gap: 0
         padding: 12px 16px
         background: $n8
-        border-radius: 24px
-        border: 1px solid $n6
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15)
+        border-radius: 0
+        border: none
+        border-top: 1px solid $n6
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1)
         pointer-events: all
         +dark
             background: $n1
-            border: 1px solid $n3
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4)
+            border-top: 1px solid $n3
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3)
 
 .filterCard
     display: flex
@@ -499,7 +500,6 @@
     min-width: 180px
     margin: 0
     position: relative
-    z-index: 1
     scroll-snap-align: start
     scroll-snap-stop: always
     overflow: visible
@@ -513,7 +513,7 @@
         margin-top: -8px
         margin-bottom: -8px
     &:hover
-        z-index: 5
+
 
 // Grid Card - Horizontal scroll version
 .gridCardHorizontal

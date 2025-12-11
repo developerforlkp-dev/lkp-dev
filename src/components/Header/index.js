@@ -69,7 +69,7 @@ const items = [
   },
 ];
 
-const Header = ({ separatorHeader, wide, notAuthorized }) => {
+const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile }) => {
   const [visibleNav, setVisibleNav] = useState(false);
   const [visible, setVisible] = useState(false);
   
@@ -89,7 +89,8 @@ const Header = ({ separatorHeader, wide, notAuthorized }) => {
         className={cn(
           styles.header,
           { [styles.headerBorder]: separatorHeader },
-          { [styles.wide]: wide }
+          { [styles.wide]: wide },
+          { [styles.hideOnMobile]: hideOnMobile }
         )}
       >
         <div className={cn("container", styles.container)}>

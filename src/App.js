@@ -42,7 +42,7 @@ function App() {
           exact
           path="/"
           render={() => (
-            <Page>
+            <Page hideHeaderOnMobile>
               <FleetHome />
             </Page>
           )}
@@ -79,7 +79,7 @@ function App() {
           path="/experience-checkout-complete"
           render={() => (
             <Page separatorHeader>
-              <ExperienceCheckoutComplete />   //experience
+              <ExperienceCheckoutComplete />
             </Page>
           )}
         />

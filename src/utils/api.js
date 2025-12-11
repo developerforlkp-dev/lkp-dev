@@ -3,7 +3,7 @@ import axios from "axios";
 // Get API base URL from environment variable or use default
 // Priority:
 // 1. REACT_APP_API_URL environment variable (for production with custom domain)
-// 2. Relative path "/api" (works with proxy in dev and vercel.json rewrites in production)
+// 2. Relative path "/api" (works with setupProxy.js in dev and vercel.json rewrites in production)
 const getApiBaseURL = () => {
   // Check if environment variable is set
   if (process.env.REACT_APP_API_URL) {
@@ -11,8 +11,8 @@ const getApiBaseURL = () => {
   }
   
   // Use relative path - works with:
-  // - Development: proxy in package.json
-  // - Production: vercel.json rewrites
+  // - Development: setupProxy.js proxies /api to http://localhost:5000/api
+  // - Production: vercel.json rewrites /api to http://69.62.77.33/api
   return "/api";
 };
 
@@ -603,6 +603,26 @@ export const getMyReviews = async () => {
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching user reviews:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ Get homepage hero data
+export const getHomepageHero = async () => {
+  try {
+    const response = await ListingsAPI.get("/homepage/hero");
+    const payload = response.data;
+    console.log("✅ Homepage hero fetched (raw):", payload);
+
+    if (Array.isArray(payload)) return payload;
+    if (payload && typeof payload === "object") {
+      if (Array.isArray(payload.data)) return payload.data;
+      if (Array.isArray(payload.items)) return payload.items;
+      if (Array.isArray(payload.hero)) return payload.hero;
+    }
+    return [];
+  } catch (error) {
+    console.error("❌ Error fetching homepage hero:", error.response?.data || error.message);
     throw error;
   }
 };
