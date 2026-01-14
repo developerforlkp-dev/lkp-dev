@@ -1,10 +1,10 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-module.exports = function(app) {
+module.exports = function (app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://69.62.77.33',
+      target: 'http://62.72.12.51:6000/',
       changeOrigin: true,
       secure: false,
       logLevel: 'debug',

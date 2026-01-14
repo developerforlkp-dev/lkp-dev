@@ -20,22 +20,22 @@ const discount = 125;
 // Helper function to format image URLs (from Azure blob storage or full URLs)
 const formatImageUrl = (url) => {
   if (!url) return null;
-  
+
   // Already a full URL
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  
+
   // Azure blob storage path (e.g., "leads/3/listings/6/cover-photo/image.jpg")
   if (url.startsWith("leads/")) {
     return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
   }
-  
+
   // Relative path - prepend base URL if needed
   if (url.startsWith("/")) {
     return url;
   }
-  
+
   // Otherwise assume it's a blob storage path
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${url}`;
 };
@@ -44,14 +44,14 @@ const Description = ({ classSection, listing, hostData }) => {
   const history = useHistory();
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [addOnQuantities, setAddOnQuantities] = useState({}); // Track quantities for Group pricing addons
-  
+
   // State declarations - must come before they're used
   const [slotsData, setSlotsData] = useState([]); // Store slots from API
   const [transformedTimeSlots, setTransformedTimeSlots] = useState([]); // Transformed timeSlots for components
   const [billingConfig, setBillingConfig] = useState(null);
   const [availabilityData, setAvailabilityData] = useState([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
-  
+
   // Helper function to format time from "HH:mm" to "HH:mm AM/PM"
   const formatTime = (timeString) => {
     if (!timeString) return "";
@@ -74,7 +74,10 @@ const Description = ({ classSection, listing, hostData }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [guests, setGuests] = useState({
-    guests: 1,
+    adults: 1,
+    children: 0,
+    infants: 0,
+    pets: 0,
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimeSlots, setShowTimeSlots] = useState(false);
@@ -100,6 +103,105 @@ const Description = ({ classSection, listing, hostData }) => {
     if (total === 1) return "1 guest";
     return `${total} guests`;
   }, [guests]);
+
+  // Validation helper functions
+  const isPastDate = (date) => {
+    if (!date) return false;
+    const today = moment().tz('Asia/Kolkata').startOf('day');
+    return date.isBefore(today, 'day');
+  };
+
+  const isPastTime = (date, timeString) => {
+    if (!date || !timeString) return false;
+    const now = moment().tz('Asia/Kolkata');
+    const today = moment().tz('Asia/Kolkata').startOf('day');
+
+    // Only check time if date is today
+    if (!date.isSame(today, 'day')) return false;
+
+    // Parse time string (HH:mm or HH:mm:ss)
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const slotTime = moment().tz('Asia/Kolkata').hours(hours).minutes(minutes).seconds(0);
+
+    return slotTime.isBefore(now);
+  };
+
+  const getMaxGuestsForSlot = () => {
+    // First check availability data for the selected date and slot
+    if (selectedDateAvailability) {
+      const maxSeats = selectedDateAvailability.max_seats;
+      if (maxSeats !== undefined && maxSeats !== null) {
+        return maxSeats;
+      }
+    }
+
+    // Fallback to slot data
+    if (selectedTimeSlotData) {
+      const maxSeats = selectedTimeSlotData.maxSeats || selectedTimeSlotData.max_seats;
+      if (maxSeats !== undefined && maxSeats !== null) {
+        return maxSeats;
+      }
+    }
+
+    // No limit found
+    return null;
+  };
+
+  const validateBookingDateTime = () => {
+    if (!selectedDate) {
+      return { valid: false, error: "Please select a booking date" };
+    }
+
+    if (isPastDate(selectedDate)) {
+      return { valid: false, error: "Cannot book for a past date. Please select a future date." };
+    }
+
+    if (!selectedTimeSlot) {
+      return { valid: false, error: "Please select a time slot" };
+    }
+
+    // Get the booking time
+    const bookingTime = selectedDateAvailability?.start_time || selectedTimeSlotData?.startTime;
+    if (!bookingTime) {
+      return { valid: false, error: "Please select a valid time slot" };
+    }
+
+    if (isPastTime(selectedDate, bookingTime)) {
+      return { valid: false, error: "Selected time slot has passed. Please choose a future time." };
+    }
+
+    return { valid: true };
+  };
+
+  const validateGuestCount = () => {
+    const guestCount = getGuestCount(guests);
+
+    if (!guestCount || guestCount < 1) {
+      return { valid: false, error: "Please select at least 1 guest" };
+    }
+
+    const maxGuests = getMaxGuestsForSlot();
+    if (maxGuests !== null && guestCount > maxGuests) {
+      return {
+        valid: false,
+        error: `Maximum ${maxGuests} guest${maxGuests === 1 ? '' : 's'} allowed for this slot. You selected ${guestCount} guest${guestCount === 1 ? '' : 's'}.`
+      };
+    }
+
+    // Also check available seats
+    if (selectedDateAvailability) {
+      const availableSeats = selectedDateAvailability.available_seats;
+      if (availableSeats !== undefined && guestCount > availableSeats) {
+        const slotName = selectedDateAvailability.slot_name || selectedTimeSlotData?.slotName || selectedTimeSlot || "selected slot";
+        return {
+          valid: false,
+          error: `Only ${availableSeats} seat${availableSeats === 1 ? '' : 's'} available for "${slotName}" on ${selectedDate.format("MMM DD, YYYY")}. You requested ${guestCount} seat${guestCount === 1 ? '' : 's'}.`
+        };
+      }
+    }
+
+    return { valid: true };
+  };
 
   // Find the selected timeSlot object to get maxSeats and for display
   const selectedTimeSlotData = useMemo(() => {
@@ -135,17 +237,17 @@ const Description = ({ classSection, listing, hostData }) => {
   // If no slot is selected, show all availability (user can pick date first)
   const filteredAvailabilityData = useMemo(() => {
     if (!availabilityData.length) return [];
-    
+
     // If no slot is selected, show all availability
     if (!selectedTimeSlotData && !selectedTimeSlot) {
       return availabilityData;
     }
-    
+
     const slotId = selectedTimeSlotData?.slotId || selectedTimeSlotData?.slot_id;
     const slotName = selectedTimeSlotData?.slotName || selectedTimeSlot;
-    
+
     // Filter availability to only show dates for the selected slot
-    return availabilityData.filter(av => 
+    return availabilityData.filter(av =>
       slotId ? av.slot_id === slotId : av.slot_name === slotName
     );
   }, [availabilityData, selectedTimeSlotData, selectedTimeSlot]);
@@ -154,7 +256,7 @@ const Description = ({ classSection, listing, hostData }) => {
   const selectedDateAvailability = useMemo(() => {
     if (!selectedDate || !filteredAvailabilityData.length) return null;
     const dateStr = selectedDate.format("YYYY-MM-DD");
-    
+
     // Find availability for the selected date
     return filteredAvailabilityData.find(av => av.date === dateStr);
   }, [selectedDate, filteredAvailabilityData]);
@@ -168,7 +270,7 @@ const Description = ({ classSection, listing, hostData }) => {
         return formatTimeRange(start_time, end_time);
       }
     }
-    
+
     if (!selectedTimeSlotData) {
       return selectedTimeSlot || "Select time";
     }
@@ -259,43 +361,43 @@ const Description = ({ classSection, listing, hostData }) => {
       const listingAddon = listing?.addons?.find(
         (a) => (a?.addon?.addonId ?? a?.addonId ?? a?.assignmentId) === id
       );
-      
+
       if (listingAddon) {
         const price = parseFloat(listingAddon.addon?.price || 0);
         const pricingType = listingAddon.addon?.pricingType || "Individual";
         const quantity = pricingType === "Group" ? (addOnQuantities[id] || 1) : 1;
         return sum + (price * quantity);
       }
-      
+
       // No fallback - only use API addons
       return sum;
     }, 0);
-    
+
     // Calculate base price based on guest count and price type
     const guestCount = getGuestCount(guests);
     // Use availability data if available, then selected slot, then fallback to listing data
     const pricePerPerson = selectedDateAvailability?.price_per_person
       ? parseFloat(selectedDateAvailability.price_per_person)
       : (selectedTimeSlotData?.pricePerPerson
-          ? parseFloat(selectedTimeSlotData.pricePerPerson)
-          : (listing?.timeSlots?.[0]?.pricePerPerson 
-              ? parseFloat(listing.timeSlots[0].pricePerPerson) 
-              : null));
+        ? parseFloat(selectedTimeSlotData.pricePerPerson)
+        : (listing?.timeSlots?.[0]?.pricePerPerson
+          ? parseFloat(listing.timeSlots[0].pricePerPerson)
+          : null));
     const pricePerNight = selectedDateAvailability?.b2b_rate
       ? parseFloat(selectedDateAvailability.b2b_rate)
       : (selectedTimeSlotData?.b2bRate
-          ? parseFloat(selectedTimeSlotData.b2bRate)
-          : (listing?.timeSlots?.[0]?.b2bRate
-              ? parseFloat(listing.timeSlots[0].b2bRate)
-              : 119));
+        ? parseFloat(selectedTimeSlotData.b2bRate)
+        : (listing?.timeSlots?.[0]?.b2bRate
+          ? parseFloat(listing.timeSlots[0].b2bRate)
+          : 119));
     const currency = listing?.currency || "INR";
-    
+
     // Calculate nights (assuming 1 night for now, can be enhanced with date range)
     const nights = 1; // Default to 1 night, can be calculated from date range
-    
+
     let basePriceAmount;
     let priceDescription;
-    
+
     if (pricePerPerson) {
       // Price per person
       basePriceAmount = pricePerPerson * guestCount * nights;
@@ -305,9 +407,9 @@ const Description = ({ classSection, listing, hostData }) => {
       basePriceAmount = pricePerNight * nights;
       priceDescription = `${currency} ${pricePerNight.toFixed(2)}${nights > 1 ? ` × ${nights} nights` : ''}`;
     }
-    
+
     const subtotal = basePriceAmount + addOnsPrice;
-    
+
     const receiptData = [
       {
         title: priceDescription,
@@ -321,14 +423,14 @@ const Description = ({ classSection, listing, hostData }) => {
         const listingAddon = listing?.addons?.find(
           (a) => (a?.addon?.addonId ?? a?.addonId ?? a?.assignmentId) === id
         );
-        
+
         if (listingAddon) {
           const price = parseFloat(listingAddon.addon?.price || 0);
           const pricingType = listingAddon.addon?.pricingType || "Individual";
           const quantity = pricingType === "Group" ? (addOnQuantities[id] || 1) : 1;
           const addonTotal = price * quantity;
           const addonTitle = listingAddon.addon?.title || "Add-on";
-          
+
           if (pricingType === "Group") {
             receiptData.push({
               title: `${addonTitle} × ${quantity}`,
@@ -417,10 +519,10 @@ const Description = ({ classSection, listing, hostData }) => {
       if (listing?.coverPhotoUrl) return listing.coverPhotoUrl;
       if (Array.isArray(listing?.listingMedia) && listing.listingMedia.length > 0) {
         const firstMedia = listing.listingMedia[0];
-        return firstMedia.url || 
-               (firstMedia.fileUrl?.startsWith("http") 
-                 ? firstMedia.fileUrl 
-                 : `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${firstMedia.fileUrl}`);
+        return firstMedia.url ||
+          (firstMedia.fileUrl?.startsWith("http")
+            ? firstMedia.fileUrl
+            : `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${firstMedia.fileUrl}`);
       }
       if (listing?.images?.[0]?.url) return listing.images[0].url;
       if (listing?.coverImage) return listing.coverImage;
@@ -459,15 +561,15 @@ const Description = ({ classSection, listing, hostData }) => {
     if (savedBooking) {
       const bookingData = JSON.parse(savedBooking);
       const selectedAddOnsData = bookingData.selectedAddOns || [];
-      
+
       history.push({
         pathname: "/experience-checkout",
-        state: { 
+        state: {
           addOns: selectedAddOnsData,
           bookingData: bookingData,
         },
       });
-      
+
       // Clear saved booking data after using it
       localStorage.removeItem("pendingBooking");
     } else {
@@ -490,7 +592,7 @@ const Description = ({ classSection, listing, hostData }) => {
           return null;
         })
         .filter(Boolean);
-      
+
       history.push({
         pathname: "/experience-checkout",
         state: { addOns: selectedAddOnsData },
@@ -509,37 +611,51 @@ const Description = ({ classSection, listing, hostData }) => {
   const handleReserveClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Prevent action if validation fails
     if (!isReserveEnabled) {
       return;
     }
-    
+
+    // Validate date and time
+    const dateTimeValidation = validateBookingDateTime();
+    if (!dateTimeValidation.valid) {
+      alert(dateTimeValidation.error);
+      return;
+    }
+
+    // Validate guest count
+    const guestValidation = validateGuestCount();
+    if (!guestValidation.valid) {
+      alert(guestValidation.error);
+      return;
+    }
+
     // Always save booking data first
     saveBookingData();
-    
+
     // Check if user is logged in
     const loggedIn = isLoggedIn();
-    
+
     if (!loggedIn) {
       // Show login modal - prevent any navigation
       setShowLoginModal(true);
       return;
     }
-    
+
     // User is logged in, create order
     try {
       // Get customer info from localStorage or user profile
       const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const customerName = userInfo.name || 
-                           (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") || 
-                           userInfo.customerName || "";
+      const customerName = userInfo.name ||
+        (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") ||
+        userInfo.customerName || "";
       const customerEmail = userInfo.email || userInfo.customerEmail || "";
       // Phone number should include country code if available
-      const customerPhone = userInfo.customerPhone || 
-                           (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") ||
-                           userInfo.phoneNumber || 
-                           userInfo.phone || "";
+      const customerPhone = userInfo.customerPhone ||
+        (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") ||
+        userInfo.phoneNumber ||
+        userInfo.phone || "";
       // Try to derive customerId from stored user info (various possible keys)
       const customerId =
         userInfo.customerId ||
@@ -548,16 +664,16 @@ const Description = ({ classSection, listing, hostData }) => {
         userInfo.userId ||
         userInfo.customerID ||
         null;
-      
+
       // Get special requests (if any input field exists in future)
       const specialRequests = "";
-      
+
       // Get listing ID
       const listingId = listing?.listingId || listing?.id || 0;
-      
+
       // Format booking date (YYYY-MM-DD)
       const bookingDate = selectedDate ? selectedDate.format("YYYY-MM-DD") : new Date().toISOString().split('T')[0];
-      
+
       // Get booking time from availability or timeSlot
       let bookingTime = "00:00";
       if (selectedDateAvailability?.start_time) {
@@ -565,52 +681,52 @@ const Description = ({ classSection, listing, hostData }) => {
       } else if (selectedTimeSlotData?.startTime) {
         bookingTime = selectedTimeSlotData.startTime;
       }
-      
+
       // Get booking slot ID
-      const bookingSlotId = selectedTimeSlotData?.slotId || 
-                            selectedTimeSlotData?.slot_id || 
-                            selectedTimeSlotData?.id || 
-                            0;
-      
+      const bookingSlotId = selectedTimeSlotData?.slotId ||
+        selectedTimeSlotData?.slot_id ||
+        selectedTimeSlotData?.id ||
+        0;
+
       // Get number of guests
       const numberOfGuests = getGuestCount(guests);
-      
+
       // Validate available seats before proceeding
       if (selectedDateAvailability) {
         const availableSeats = selectedDateAvailability.available_seats;
         const slotName = selectedDateAvailability.slot_name || selectedTimeSlotData?.slotName || selectedTimeSlot || "selected slot";
-        
+
         if (availableSeats !== undefined && numberOfGuests > availableSeats) {
           alert(`Sorry, only ${availableSeats} seat(s) available for "${slotName}" on ${bookingDate}. You requested ${numberOfGuests} seat(s).`);
           return;
         }
       }
-      
+
       // Calculate base price amount
       const guestCount = getGuestCount(guests);
       const pricePerPerson = selectedDateAvailability?.price_per_person
         ? parseFloat(selectedDateAvailability.price_per_person)
-        : (listing?.timeSlots?.[0]?.pricePerPerson 
-            ? parseFloat(listing.timeSlots[0].pricePerPerson) 
-            : null);
+        : (listing?.timeSlots?.[0]?.pricePerPerson
+          ? parseFloat(listing.timeSlots[0].pricePerPerson)
+          : null);
       const pricePerNight = selectedDateAvailability?.b2b_rate
         ? parseFloat(selectedDateAvailability.b2b_rate)
         : (listing?.timeSlots?.[0]?.b2bRate
-            ? parseFloat(listing.timeSlots[0].b2bRate)
-            : 0);
+          ? parseFloat(listing.timeSlots[0].b2bRate)
+          : 0);
       const nights = 1; // Default to 1 night
-      
+
       let pricingBaseAmount = 0;
       if (pricePerPerson) {
         pricingBaseAmount = pricePerPerson * guestCount * nights;
       } else {
         pricingBaseAmount = pricePerNight * nights;
       }
-      
+
       // Calculate pricing values
       const pricingAddonsTotal = addOnsTotal || 0;
       const pricingSubtotal = pricingBaseAmount + pricingAddonsTotal;
-      
+
       // Calculate platform commission (from billing config)
       let pricingPlatformCommission = 0;
       if (billingConfig?.commissions && Array.isArray(billingConfig.commissions)) {
@@ -619,7 +735,7 @@ const Description = ({ classSection, listing, hostData }) => {
           pricingPlatformCommission = (pricingSubtotal * parseFloat(platformFee.currentRate || 0)) / 100;
         }
       }
-      
+
       // Calculate tax amount
       let pricingTaxAmount = 0;
       if (billingConfig?.taxes && Array.isArray(billingConfig.taxes)) {
@@ -629,33 +745,33 @@ const Description = ({ classSection, listing, hostData }) => {
           pricingTaxAmount += taxAmount;
         });
       }
-      
+
       // Calculate discount (from billing config or default 0)
       const pricingDiscountAmount = 0; // Can be enhanced with discount codes
-      
+
       // Calculate total price (subtotal + taxes - discounts, excluding platform commission)
       const pricingTotal = pricingSubtotal + pricingTaxAmount - pricingDiscountAmount;
-      
+
       // Calculate host earnings (what the host receives: subtotal - platform commission)
       const calculatedHostEarnings = (pricingSubtotal || 5500) - (pricingPlatformCommission || 550);
       const hostEarnings = isNaN(calculatedHostEarnings) ? 4950 : calculatedHostEarnings;
-      
+
       // Calculate price per unit (price per person or price per night)
       const pricePerUnit = pricePerPerson || pricePerNight || 0;
-      
+
       // Order ID for new order (0 indicates new order, will be set by backend)
       // Note: orderId will be extracted from orderResponse after order creation
-      
+
       // Build addons array per new API: [{ addonId, quantity }]
       const addonsArray = selectedAddOns.map((id) => {
         const listingAddon = listing?.addons?.find(
           (a) => (a?.addon?.addonId ?? a?.addonId ?? a?.assignmentId) === id
         );
-        
+
         if (listingAddon) {
           const pricingType = listingAddon.addon?.pricingType || "Individual";
           const quantity = pricingType === "Group" ? (addOnQuantities[id] || 1) : 1;
-          
+
           return {
             addonId: listingAddon.addon?.addonId ?? listingAddon.addonId ?? listingAddon.assignmentId,
             quantity: quantity,
@@ -670,22 +786,22 @@ const Description = ({ classSection, listing, hostData }) => {
         alert("Please select a booking date.");
         return;
       }
-      
+
       if (!selectedTimeSlot || !bookingSlotId || bookingSlotId === 0) {
         alert("Please select a time slot.");
         return;
       }
-      
+
       if (!numberOfGuests || numberOfGuests < 1) {
         alert("Please select at least 1 guest.");
         return;
       }
-      
+
       if (!bookingTime || bookingTime === "00:00") {
         alert("Please select a valid time slot.");
         return;
       }
-      
+
       // Build order data - new API format
       const orderData = {
         listingId: listingId || 0,
@@ -704,29 +820,29 @@ const Description = ({ classSection, listing, hostData }) => {
         guestAnswers: guestAnswers,
         paymentMethod: "razorpay",
       };
-      
+
       console.log("📦 Creating order:", orderData);
-      
+
       // Create the order
       console.log("📤 Sending order data:", JSON.stringify(orderData, null, 2));
       const orderResponse = await createOrder(orderData);
       console.log("✅ Order created:", orderResponse);
-      
+
       // Extract and save orderId from order response
-      const createdOrderId = orderResponse?.orderId || 
-                             orderResponse?.data?.orderId || 
-                             orderResponse?.order?.orderId || 
-                             null;
+      const createdOrderId = orderResponse?.orderId ||
+        orderResponse?.data?.orderId ||
+        orderResponse?.order?.orderId ||
+        null;
       if (createdOrderId) {
         localStorage.setItem("pendingOrderId", String(createdOrderId));
         console.log("💾 Saved pending orderId:", createdOrderId);
       }
-      
+
       // Save payment details for checkout (e.g., Razorpay) - handle multiple response shapes
       try {
         // Log the full order response to debug structure
         console.log("📋 Full order response:", JSON.stringify(orderResponse, null, 2));
-        
+
         const payment =
           orderResponse?.payment ||
           orderResponse?.data?.payment ||
@@ -741,21 +857,21 @@ const Description = ({ classSection, listing, hostData }) => {
           null;
         if (payment) {
           // Get discount from multiple possible locations
-          const discount = 
-            orderResponse?.discount || 
-            orderResponse?.data?.discount || 
-            orderResponse?.order?.discount || 
+          const discount =
+            orderResponse?.discount ||
+            orderResponse?.data?.discount ||
+            orderResponse?.order?.discount ||
             orderResponse?.payment?.discount ||
             payment.discount ||
             orderResponse?.totalDiscount ||
             orderResponse?.data?.totalDiscount ||
             undefined;
-          
+
           // Get final/paid amount from multiple possible locations
-          const finalAmount = 
-            orderResponse?.finalAmount || 
-            orderResponse?.data?.finalAmount || 
-            orderResponse?.order?.finalAmount || 
+          const finalAmount =
+            orderResponse?.finalAmount ||
+            orderResponse?.data?.finalAmount ||
+            orderResponse?.order?.finalAmount ||
             orderResponse?.payment?.finalAmount ||
             payment.finalAmount ||
             orderResponse?.paidAmount ||
@@ -764,16 +880,16 @@ const Description = ({ classSection, listing, hostData }) => {
             orderResponse?.payment?.paidAmount ||
             payment.paidAmount ||
             undefined;
-          
+
           // The Razorpay order amount is what was actually sent to Razorpay (the paid amount)
           // This might be different from orderResponse.amount (which could be total)
-          const razorpayOrderAmount = 
+          const razorpayOrderAmount =
             orderResponse?.payment?.amount ||
             orderResponse?.payment?.razorpayOrderAmount ||
             orderResponse?.razorpayOrderAmount ||
             orderResponse?.data?.razorpayOrderAmount ||
             (orderResponse?.razorpayOrderId && orderResponse?.amount ? orderResponse.amount : undefined);
-          
+
           // If we have a finalAmount, that's the paid amount
           // Otherwise, if we have discount, calculate: amount - discount = paid amount
           // Otherwise, use razorpayOrderAmount if available
@@ -784,7 +900,7 @@ const Description = ({ classSection, listing, hostData }) => {
           } else if (!paidAmount && razorpayOrderAmount) {
             paidAmount = razorpayOrderAmount;
           }
-          
+
           const paymentWithDiscount = {
             ...payment,
             discount: discount,
@@ -795,7 +911,7 @@ const Description = ({ classSection, listing, hostData }) => {
             // Store Razorpay order amount if different
             razorpayOrderAmount: razorpayOrderAmount,
           };
-          
+
           console.log("💳 Payment data to save:", paymentWithDiscount);
           localStorage.setItem("pendingPayment", JSON.stringify(paymentWithDiscount));
         } else {
@@ -804,19 +920,19 @@ const Description = ({ classSection, listing, hostData }) => {
       } catch (e) {
         console.warn("Failed to persist payment payload:", e);
       }
-      
+
       // Redirect to checkout or success page
       proceedToCheckout();
-      
+
     } catch (error) {
       console.error("❌ Error creating order:", error);
-      
+
       // Extract detailed error message from API response
       let errorMessage = "Failed to create order. Please try again.";
-      
+
       if (error.response?.data) {
         const errorData = error.response.data;
-        
+
         // Try to extract meaningful error message
         if (errorData.message) {
           errorMessage = errorData.message;
@@ -831,7 +947,7 @@ const Description = ({ classSection, listing, hostData }) => {
           errorMessage = "Invalid booking data. Please check that date, time slot, and guests are selected correctly.";
         }
       }
-      
+
       alert(errorMessage);
     }
   };
@@ -854,10 +970,10 @@ const Description = ({ classSection, listing, hostData }) => {
 
       localStorage.setItem("jwtToken", token);
       console.log("✅ JWT token stored in localStorage");
-      
+
       // Extract customer data from response
       const customer = apiResponse?.customer || {};
-      
+
       // Store user info: firstName, lastName, email
       const userInfo = {
         firstName: customer?.firstName || "",
@@ -868,7 +984,7 @@ const Description = ({ classSection, listing, hostData }) => {
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       console.log("✅ User info stored from Google login:", userInfo);
-      
+
       // Also store individual values for easy access
       if (customer?.firstName) {
         localStorage.setItem("firstName", customer.firstName);
@@ -879,10 +995,10 @@ const Description = ({ classSection, listing, hostData }) => {
       if (customer?.email) {
         localStorage.setItem("email", customer.email);
       }
-      
+
       // Close modal
       setShowLoginModal(false);
-      
+
       // Check if we have pending booking data and create order
       const savedBooking = localStorage.getItem("pendingBooking");
       if (savedBooking) {
@@ -965,17 +1081,17 @@ const Description = ({ classSection, listing, hostData }) => {
     }
 
     const bookingData = JSON.parse(savedBooking);
-    
+
     // Get customer info from localStorage
     const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const customerName = userInfo.name || 
-                         (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") || 
-                         userInfo.customerName || "";
+    const customerName = userInfo.name ||
+      (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") ||
+      userInfo.customerName || "";
     const customerEmail = userInfo.email || userInfo.customerEmail || "";
-    const customerPhone = userInfo.customerPhone || 
-                         (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") ||
-                         userInfo.phoneNumber || 
-                         userInfo.phone || "";
+    const customerPhone = userInfo.customerPhone ||
+      (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") ||
+      userInfo.phoneNumber ||
+      userInfo.phone || "";
     const customerId =
       userInfo.customerId ||
       userInfo.customer_id ||
@@ -983,17 +1099,17 @@ const Description = ({ classSection, listing, hostData }) => {
       userInfo.userId ||
       userInfo.customerID ||
       null;
-    
+
     // Get special requests (if any input field exists in future)
     const specialRequests = "";
 
     // Get listing ID
     const listingId = bookingData.listingId || listing?.listingId || listing?.id || 0;
-    
+
     // Format booking date
-    const bookingDate = bookingData.selectedDate || 
-                       (selectedDate ? selectedDate.format("YYYY-MM-DD") : new Date().toISOString().split('T')[0]);
-    
+    const bookingDate = bookingData.selectedDate ||
+      (selectedDate ? selectedDate.format("YYYY-MM-DD") : new Date().toISOString().split('T')[0]);
+
     // Get booking time
     let bookingTime = "00:00";
     if (selectedDateAvailability?.start_time) {
@@ -1001,40 +1117,40 @@ const Description = ({ classSection, listing, hostData }) => {
     } else if (selectedTimeSlotData?.startTime) {
       bookingTime = selectedTimeSlotData.startTime;
     }
-    
+
     // Get booking slot ID
-    const bookingSlotId = selectedTimeSlotData?.slotId || 
-                          selectedTimeSlotData?.slot_id || 
-                          selectedTimeSlotData?.id || 
-                          bookingData.selectedTimeSlot || 
-                          0;
-    
+    const bookingSlotId = selectedTimeSlotData?.slotId ||
+      selectedTimeSlotData?.slot_id ||
+      selectedTimeSlotData?.id ||
+      bookingData.selectedTimeSlot ||
+      0;
+
     // Get number of guests
-    const numberOfGuests = bookingData.guests ? 
-                          getGuestCount(bookingData.guests) : 
-                          getGuestCount(guests);
-    
+    const numberOfGuests = bookingData.guests ?
+      getGuestCount(bookingData.guests) :
+      getGuestCount(guests);
+
     // Calculate base price amount
     const guestCount = numberOfGuests;
     const pricePerPerson = selectedDateAvailability?.price_per_person
       ? parseFloat(selectedDateAvailability.price_per_person)
-      : (listing?.timeSlots?.[0]?.pricePerPerson 
-          ? parseFloat(listing.timeSlots[0].pricePerPerson) 
-          : null);
+      : (listing?.timeSlots?.[0]?.pricePerPerson
+        ? parseFloat(listing.timeSlots[0].pricePerPerson)
+        : null);
     const pricePerNight = selectedDateAvailability?.b2b_rate
       ? parseFloat(selectedDateAvailability.b2b_rate)
       : (listing?.timeSlots?.[0]?.b2bRate
-          ? parseFloat(listing.timeSlots[0].b2bRate)
-          : 0);
+        ? parseFloat(listing.timeSlots[0].b2bRate)
+        : 0);
     const nights = 1;
-    
+
     let pricingBaseAmount = 0;
     if (pricePerPerson) {
       pricingBaseAmount = pricePerPerson * guestCount * nights;
     } else {
       pricingBaseAmount = pricePerNight * nights;
     }
-    
+
     // Calculate addons total - simplified structure matching API format
     let pricingAddonsTotal = 0;
     const addonsArray = [];
@@ -1049,9 +1165,9 @@ const Description = ({ classSection, listing, hostData }) => {
         });
       });
     }
-    
+
     const pricingSubtotal = pricingBaseAmount + pricingAddonsTotal;
-    
+
     // Calculate platform commission
     let pricingPlatformCommission = 0;
     if (billingConfig?.commissions && Array.isArray(billingConfig.commissions)) {
@@ -1060,7 +1176,7 @@ const Description = ({ classSection, listing, hostData }) => {
         pricingPlatformCommission = (pricingSubtotal * parseFloat(platformFee.currentRate || 0)) / 100;
       }
     }
-    
+
     // Calculate tax amount
     let pricingTaxAmount = 0;
     if (billingConfig?.taxes && Array.isArray(billingConfig.taxes)) {
@@ -1070,18 +1186,18 @@ const Description = ({ classSection, listing, hostData }) => {
         pricingTaxAmount += taxAmount;
       });
     }
-    
+
     const pricingDiscountAmount = 0;
     // Calculate total price (subtotal + taxes - discounts, excluding platform commission)
     const pricingTotal = pricingSubtotal + pricingTaxAmount - pricingDiscountAmount;
-    
+
     // Calculate host earnings (what the host receives: subtotal - platform commission)
     const calculatedHostEarnings = (pricingSubtotal || 5500) - (pricingPlatformCommission || 550);
     const hostEarnings = isNaN(calculatedHostEarnings) ? 4950 : calculatedHostEarnings;
-    
+
     // Guest answers placeholder (extend when questions UI exists)
     const guestAnswers = [];
-    
+
     // Build order data - new API format
     const orderData = {
       listingId: listingId || 0,
@@ -1100,13 +1216,13 @@ const Description = ({ classSection, listing, hostData }) => {
       guestAnswers: guestAnswers,
       paymentMethod: "razorpay",
     };
-    
+
     console.log("📦 Creating order after login:", orderData);
-    
+
     // Create the order
     const orderResponse = await createOrder(orderData);
     console.log("✅ Order created:", orderResponse);
-    
+
     // Save payment details for checkout (e.g., Razorpay)
     try {
       const payment =
@@ -1129,10 +1245,10 @@ const Description = ({ classSection, listing, hostData }) => {
     } catch (e) {
       console.warn("Failed to persist payment payload:", e);
     }
-    
+
     // Clear pending booking data
     localStorage.removeItem("pendingBooking");
-    
+
     // Redirect to checkout
     proceedToCheckout();
   };
@@ -1152,7 +1268,7 @@ const Description = ({ classSection, listing, hostData }) => {
 
   // Track if login modal was previously open to detect when it closes
   const prevLoginModalRef = useRef(false);
-  
+
   // Check for successful login after modal closes (for Google login fallback)
   useEffect(() => {
     // Only proceed if modal was JUST closed (was open, now closed) AND user is now logged in AND we have saved booking
@@ -1160,7 +1276,7 @@ const Description = ({ classSection, listing, hostData }) => {
     // This is a fallback for Google login if createOrderFromPendingBooking wasn't called
     const wasModalOpen = prevLoginModalRef.current;
     const isModalNowClosed = !showLoginModal;
-    
+
     // Only run if modal was open and is now closed (user just logged in)
     if (wasModalOpen && isModalNowClosed && isLoggedIn()) {
       const savedBooking = localStorage.getItem("pendingBooking");
@@ -1179,7 +1295,7 @@ const Description = ({ classSection, listing, hostData }) => {
         }, 100);
       }
     }
-    
+
     // Update ref for next render
     prevLoginModalRef.current = showLoginModal;
   }, [showLoginModal]);
@@ -1243,28 +1359,28 @@ const Description = ({ classSection, listing, hostData }) => {
     if (!listing || (typeof listing === 'object' && Object.keys(listing).length === 0)) {
       return;
     }
-    
+
     // Try multiple possible property names for listingId
     const listingId = listing?.listingId || listing?.listing_id || listing?.id;
-    
+
     // Early return if no valid listingId found
     if (!listingId) {
       return;
     }
-    
+
     // Ensure listingId is a valid number or string
     const listingIdNum = Number(listingId);
     const validListingId = (!isNaN(listingIdNum) && listingIdNum > 0) ? listingIdNum : String(listingId);
-    
+
     if (!validListingId || validListingId === "undefined" || validListingId === "null" || validListingId === "NaN" || validListingId === 0) {
       return;
     }
-    
+
     // Reset initial values flag when listing changes
     initialValuesSetRef.current = false;
-    
+
     const fetchSlots = async () => {
-      
+
       try {
         // Calculate date range (current month + next month)
         // Use local date to avoid timezone issues
@@ -1273,7 +1389,7 @@ const Description = ({ classSection, listing, hostData }) => {
         const month = now.getMonth();
         const startDate = new Date(year, month, 1);
         const endDate = new Date(year, month + 2, 0);
-        
+
         // Format dates as YYYY-MM-DD using local date (avoid timezone issues)
         const formatDate = (date) => {
           const y = date.getFullYear();
@@ -1281,112 +1397,112 @@ const Description = ({ classSection, listing, hostData }) => {
           const d = String(date.getDate()).padStart(2, '0');
           return `${y}-${m}-${d}`;
         };
-        
+
         const startDateStr = formatDate(startDate);
         const endDateStr = formatDate(endDate);
-        
+
         if (!startDateStr || !endDateStr) {
           console.error("❌ Invalid date range:", { startDateStr, endDateStr });
           return;
         }
-        
+
         console.log("📅 Fetching slots:", {
           listingId: validListingId,
           startDate: startDateStr,
           endDate: endDateStr
         });
-        
+
         const slotsResponse = await getListingSlots(validListingId, startDateStr, endDateStr);
-          console.log("✅ Slots data received:", slotsResponse);
-          
-          // Extract slots array from response
-          const slots = slotsResponse?.slots || [];
-          setSlotsData(slots);
-          
-          // Transform slots to match expected timeSlots format
-          const transformed = slots.map((slot) => {
-            // Convert selected_days array to day flags for compatibility
-            const selectedDays = slot.schedule?.selected_days || [];
-            const dayFlags = {
-              isMonday: selectedDays.includes('MON'),
-              isTuesday: selectedDays.includes('TUE'),
-              isWednesday: selectedDays.includes('WED'),
-              isThursday: selectedDays.includes('THU'),
-              isFriday: selectedDays.includes('FRI'),
-              isSaturday: selectedDays.includes('SAT'),
-              isSunday: selectedDays.includes('SUN'),
-            };
-            
-            return {
-              slotId: slot.slot_id,
-              slot_id: slot.slot_id,
-              slotName: slot.slot_name,
-              startTime: slot.schedule?.start_time,
-              endTime: slot.schedule?.end_time,
-              startDate: slot.schedule?.start_date,
-              endDate: slot.schedule?.end_date,
-              selected_days: selectedDays,
-              ...dayFlags,
-              maxSeats: slot.capacity?.max_seats,
-              pricePerPerson: slot.pricing?.price_per_person,
-              b2bRate: slot.pricing?.b2b_rate,
-              corporateRate: slot.pricing?.corporate_rate,
-              isActive: true, // Assume active if returned from API
-            };
-          });
-          setTransformedTimeSlots(transformed);
-          
-          // Flatten availability data from all slots
-          // The API already provides the correct available dates, so we use all of them
-          const allAvailability = [];
-          slots.forEach((slot) => {
-            if (Array.isArray(slot.availability)) {
-              slot.availability.forEach((av) => {
-                // Include all dates from the API - they're already filtered by the backend
-                allAvailability.push({
-                  date: av.date, // Format: YYYY-MM-DD
-                  booked_seats: av.booked_seats || 0,
-                  available_seats: av.available_seats || 0,
-                  is_available: av.is_available !== false,
-                  max_seats: slot.capacity?.max_seats || 0,
-                  start_time: slot.schedule?.start_time, // Format: HH:mm
-                  end_time: slot.schedule?.end_time, // Format: HH:mm
-                  price_per_person: slot.pricing?.price_per_person,
-                  b2b_rate: slot.pricing?.b2b_rate,
-                  slot_id: slot.slot_id,
-                  slot_name: slot.slot_name,
-                });
+        console.log("✅ Slots data received:", slotsResponse);
+
+        // Extract slots array from response
+        const slots = slotsResponse?.slots || [];
+        setSlotsData(slots);
+
+        // Transform slots to match expected timeSlots format
+        const transformed = slots.map((slot) => {
+          // Convert selected_days array to day flags for compatibility
+          const selectedDays = slot.schedule?.selected_days || [];
+          const dayFlags = {
+            isMonday: selectedDays.includes('MON'),
+            isTuesday: selectedDays.includes('TUE'),
+            isWednesday: selectedDays.includes('WED'),
+            isThursday: selectedDays.includes('THU'),
+            isFriday: selectedDays.includes('FRI'),
+            isSaturday: selectedDays.includes('SAT'),
+            isSunday: selectedDays.includes('SUN'),
+          };
+
+          return {
+            slotId: slot.slot_id,
+            slot_id: slot.slot_id,
+            slotName: slot.slot_name,
+            startTime: slot.schedule?.start_time,
+            endTime: slot.schedule?.end_time,
+            startDate: slot.schedule?.start_date,
+            endDate: slot.schedule?.end_date,
+            selected_days: selectedDays,
+            ...dayFlags,
+            maxSeats: slot.capacity?.max_seats,
+            pricePerPerson: slot.pricing?.price_per_person,
+            b2bRate: slot.pricing?.b2b_rate,
+            corporateRate: slot.pricing?.corporate_rate,
+            isActive: true, // Assume active if returned from API
+          };
+        });
+        setTransformedTimeSlots(transformed);
+
+        // Flatten availability data from all slots
+        // The API already provides the correct available dates, so we use all of them
+        const allAvailability = [];
+        slots.forEach((slot) => {
+          if (Array.isArray(slot.availability)) {
+            slot.availability.forEach((av) => {
+              // Include all dates from the API - they're already filtered by the backend
+              allAvailability.push({
+                date: av.date, // Format: YYYY-MM-DD
+                booked_seats: av.booked_seats || 0,
+                available_seats: av.available_seats || 0,
+                is_available: av.is_available !== false,
+                max_seats: slot.capacity?.max_seats || 0,
+                start_time: slot.schedule?.start_time, // Format: HH:mm
+                end_time: slot.schedule?.end_time, // Format: HH:mm
+                price_per_person: slot.pricing?.price_per_person,
+                b2b_rate: slot.pricing?.b2b_rate,
+                slot_id: slot.slot_id,
+                slot_name: slot.slot_name,
               });
-            }
-          });
-          setAvailabilityData(allAvailability);
-          
-          // Don't pre-select date or time slot - let user choose
-          // Just mark that we've loaded the slots data
-          if (slots.length > 0 && !initialValuesSetRef.current) {
-            initialValuesSetRef.current = true;
-          }
-        } catch (error) {
-          // Handle 400 errors gracefully - they might be expected for some listings
-          if (error.response?.status === 400) {
-            console.warn("⚠️ 400 Bad Request for slots (listing might not have slots configured):", {
-              listingId: validListingId,
-              message: error.response?.data?.message || error.message,
-              response: error.response?.data
-            });
-          } else {
-            console.error("❌ Failed to fetch slots:", {
-              error: error.message,
-              response: error.response?.data,
-              status: error.response?.status,
-              listingId: validListingId
             });
           }
-          // Don't show error to user, just set empty arrays
-          setSlotsData([]);
-          setTransformedTimeSlots([]);
-          setAvailabilityData([]);
+        });
+        setAvailabilityData(allAvailability);
+
+        // Don't pre-select date or time slot - let user choose
+        // Just mark that we've loaded the slots data
+        if (slots.length > 0 && !initialValuesSetRef.current) {
+          initialValuesSetRef.current = true;
         }
+      } catch (error) {
+        // Handle 400 errors gracefully - they might be expected for some listings
+        if (error.response?.status === 400) {
+          console.warn("⚠️ 400 Bad Request for slots (listing might not have slots configured):", {
+            listingId: validListingId,
+            message: error.response?.data?.message || error.message,
+            response: error.response?.data
+          });
+        } else {
+          console.error("❌ Failed to fetch slots:", {
+            error: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            listingId: validListingId
+          });
+        }
+        // Don't show error to user, just set empty arrays
+        setSlotsData([]);
+        setTransformedTimeSlots([]);
+        setAvailabilityData([]);
+      }
     };
 
     fetchSlots();
@@ -1398,25 +1514,25 @@ const Description = ({ classSection, listing, hostData }) => {
     if (!listing || (typeof listing === 'object' && Object.keys(listing).length === 0)) {
       return;
     }
-    
+
     // Try multiple possible property names for listingId
     const listingId = listing?.listingId || listing?.listing_id || listing?.id;
-    
+
     // Early return if no valid listingId found
     if (!listingId) {
       return;
     }
-    
+
     // Ensure listingId is a valid number or string
     const listingIdNum = Number(listingId);
     const validListingId = (!isNaN(listingIdNum) && listingIdNum > 0) ? listingIdNum : String(listingId);
-    
+
     if (!validListingId || validListingId === "undefined" || validListingId === "null" || validListingId === "NaN" || validListingId === 0) {
       return;
     }
-    
+
     const fetchBillingConfig = async () => {
-      
+
       try {
         const config = await getBillingConfiguration(validListingId);
         setBillingConfig(config);
@@ -1453,18 +1569,36 @@ const Description = ({ classSection, listing, hostData }) => {
       const currentTotal = getGuestCount(guests);
       if (currentTotal > maxSeats) {
         // Adjust guests to not exceed available seats
-        setGuests({ guests: Math.max(1, maxSeats) });
+        // We reduce children first, then adults
+        const newGuests = { ...guests };
+        if (newGuests.children > 0) {
+          const overage = currentTotal - maxSeats;
+          newGuests.children = Math.max(0, newGuests.children - overage);
+          const newTotal = (newGuests.adults || 0) + (newGuests.children || 0);
+          if (newTotal > maxSeats) {
+            newGuests.adults = maxSeats;
+          }
+        } else {
+          newGuests.adults = maxSeats;
+        }
+
+        // Also check if infants still fit (infants <= adults)
+        if (newGuests.infants > newGuests.adults) {
+          newGuests.infants = newGuests.adults;
+        }
+
+        setGuests(newGuests);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxSeats, selectedDateAvailability]);
+  }, [maxSeats, selectedDateAvailability, guests]);
 
   return (
     <>
       <div className={cn(classSection, styles.section)}>
         <div className={cn("container", styles.container)}>
           <div className={styles.wrapper}>
-            <Details 
+            <Details
               className={styles.details}
               listing={listing}
               selectedAddOns={selectedAddOns}
@@ -1480,12 +1614,12 @@ const Description = ({ classSection, listing, hostData }) => {
                 selectedTimeSlotData?.pricePerPerson
                   ? `${listing?.currency || "INR"} ${selectedTimeSlotData.pricePerPerson}`
                   : selectedTimeSlotData?.b2bRate
-                  ? `${listing?.currency || "INR"} ${selectedTimeSlotData.b2bRate}`
-                  : listing?.timeSlots?.[0]?.pricePerPerson
-                  ? `${listing?.currency || "INR"} ${listing.timeSlots[0].pricePerPerson}`
-                  : listing?.timeSlots?.[0]?.b2bRate
-                  ? `${listing?.currency || "INR"} ${listing.timeSlots[0].b2bRate}`
-                  : "$119"
+                    ? `${listing?.currency || "INR"} ${selectedTimeSlotData.b2bRate}`
+                    : listing?.timeSlots?.[0]?.pricePerPerson
+                      ? `${listing?.currency || "INR"} ${listing.timeSlots[0].pricePerPerson}`
+                      : listing?.timeSlots?.[0]?.b2bRate
+                        ? `${listing?.currency || "INR"} ${listing.timeSlots[0].b2bRate}`
+                        : "$119"
               }
               time={
                 selectedTimeSlotData?.pricePerPerson || listing?.timeSlots?.[0]?.pricePerPerson
@@ -1568,16 +1702,9 @@ const Description = ({ classSection, listing, hostData }) => {
                         visible={showGuestPicker}
                         onClose={() => setShowGuestPicker(false)}
                         onGuestChange={(guestData) => {
-                          // Convert from { adults, children, ... } to { guests }
-                          const totalGuests = (guestData.adults || 0) + (guestData.children || 0);
-                          setGuests({ guests: totalGuests });
+                          setGuests(guestData);
                         }}
-                        initialGuests={{
-                          adults: getGuestCount(guests),
-                          children: 0,
-                          infants: 0,
-                          pets: 0,
-                        }}
+                        initialGuests={guests}
                         maxGuests={listing?.maxGuests || undefined}
                         maxSeats={maxSeats}
                         allowPets={listing?.allowPets || false}

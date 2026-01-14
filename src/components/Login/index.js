@@ -24,7 +24,7 @@ const Login = ({ onClose }) => {
         setTimeout(() => firstInput.focus(), 100);
       }
     }
-   }, [step]);
+  }, [step]);
 
   // Handle OTP input change
   const handleOtpChange = (index, value) => {
@@ -77,14 +77,14 @@ const Login = ({ onClose }) => {
     try {
       setLoading(true);
       setError("");
-      
+
       console.log("🔵 Google OAuth credential received:", {
         credential: credentialResponse.credential ? `${credentialResponse.credential.substring(0, 20)}...` : "null",
         select_by: credentialResponse.select_by
       });
-      
+
       const response = await loginWithGoogle(credentialResponse.credential);
-      
+
       // Store JWT token from response
       const token = response?.token;
       if (token) {
@@ -93,10 +93,10 @@ const Login = ({ onClose }) => {
       } else {
         console.warn("⚠️ No JWT token found in response:", response);
       }
-      
+
       // Extract customer data from response
       const customer = response?.customer || {};
-      
+
       // Store user info: firstName, lastName, email
       const userInfo = {
         firstName: customer?.firstName || "",
@@ -107,7 +107,7 @@ const Login = ({ onClose }) => {
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       console.log("✅ User info stored in localStorage:", userInfo);
-      
+
       // Also store individual values for easy access
       if (customer?.firstName) {
         localStorage.setItem("firstName", customer.firstName);
@@ -118,7 +118,7 @@ const Login = ({ onClose }) => {
       if (customer?.email) {
         localStorage.setItem("email", customer.email);
       }
-      
+
       // Close modal and reload to update header
       if (onClose) {
         onClose();
@@ -141,7 +141,7 @@ const Login = ({ onClose }) => {
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
+
     if (!phoneNumber || phoneNumber.trim() === "") {
       setError("Please enter a valid phone number");
       return;
@@ -165,7 +165,7 @@ const Login = ({ onClose }) => {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
+
     const otpString = otp.join("");
     if (otpString.length !== 6) {
       setError("Please enter the complete 6-digit OTP");
@@ -181,23 +181,23 @@ const Login = ({ onClose }) => {
         firstName.trim(),
         lastName.trim()
       );
-      
+
       // Store JWT token if provided in response
-      const token = 
-        response.token || 
-        response.jwtToken || 
+      const token =
+        response.token ||
+        response.jwtToken ||
         response.accessToken ||
         response.data?.token ||
         response.data?.jwtToken ||
         response.data?.accessToken;
-      
+
       if (token) {
         localStorage.setItem("jwtToken", token);
         console.log("✅ JWT token stored in localStorage");
       } else {
         console.warn("⚠️ No JWT token found in response:", response);
       }
-      
+
       // Store phone number and user info in localStorage
       const userInfo = {
         phone: phoneNumber.trim(),
@@ -210,7 +210,7 @@ const Login = ({ onClose }) => {
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       console.log("✅ User info stored in localStorage:", userInfo);
-      
+
       // Close modal and reload to update header
       if (onClose) {
         onClose();
@@ -239,34 +239,51 @@ const Login = ({ onClose }) => {
           <div className={cn("h3", styles.title)}>Sign up on Fleet</div>
           <div className={styles.info}>Use Your OpenID to Sign up</div>
           <div className={styles.btns}>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap={false}
-              theme="outline"
-              size="large"
-              text="signin_with"
-              shape="rectangular"
-              logo_alignment="left"
-              width="100%"
-              locale="en"
-              render={({ onClick, disabled }) => (
-                <button 
-                  type="button"
-                  className={cn("button", styles.button)}
-                  onClick={onClick}
-                  disabled={disabled || loading}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  <Icon name="google" size="16" />
-                  <span>Google</span>
-                </button>
-              )}
-            />
+            <div className={styles.googleWrapper}>
+              <button
+                type="button"
+                className={cn("button-black", styles.button, styles.googleButton)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                onClick={() => {
+                  // Trigger the Google login by clicking the hidden button
+                  const googleBtn = document.querySelector('[role="button"][aria-labelledby]');
+                  if (googleBtn) googleBtn.click();
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.64 9.20454C17.64 8.56636 17.5827 7.95272 17.4764 7.36363H9V10.845H13.8436C13.635 11.97 13.0009 12.9231 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9454 17.64 9.20454Z" fill="#4285F4" />
+                  <path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5613C11.2418 14.1013 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8372 3.96409 10.71H0.957275V13.0418C2.43818 15.9831 5.48182 18 9 18Z" fill="#34A853" />
+                  <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.82999 3.96409 7.28999V4.95818H0.957275C0.347727 6.17318 0 7.54772 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC04" />
+                  <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335" />
+                </svg>
+                <span style={{ display: 'flex', gap: '0' }}>
+                  <span style={{ color: '#4285F4' }}>G</span>
+                  <span style={{ color: '#EA4335' }}>o</span>
+                  <span style={{ color: '#FBBC04' }}>o</span>
+                  <span style={{ color: '#4285F4' }}>g</span>
+                  <span style={{ color: '#34A853' }}>l</span>
+                  <span style={{ color: '#EA4335' }}>e</span>
+                </span>
+              </button>
+            </div>
             <button type="button" className={cn("button-black", styles.button)}>
               <Icon name="apple" size="16" />
               <span>Apple</span>
             </button>
+            {/* Hidden Google OAuth button */}
+            <div style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                theme="outline"
+                size="medium"
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
+                locale="en"
+              />
+            </div>
           </div>
           <div className={styles.note}>Or continue with phone number</div>
           <form onSubmit={handlePhoneSubmit} className={styles.form}>
@@ -275,11 +292,11 @@ const Login = ({ onClose }) => {
                 <div className={styles.flag}>
                   <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                     {/* Saffron stripe */}
-                    <rect width="24" height="6" fill="#FF9933"/>
+                    <rect width="24" height="6" fill="#FF9933" />
                     {/* White stripe with Ashoka Chakra */}
-                    <rect y="6" width="24" height="6" fill="#FFFFFF"/>
+                    <rect y="6" width="24" height="6" fill="#FFFFFF" />
                     {/* Ashoka Chakra circle */}
-                    <circle cx="12" cy="9" r="2.5" fill="none" stroke="#000080" strokeWidth="0.35"/>
+                    <circle cx="12" cy="9" r="2.5" fill="none" stroke="#000080" strokeWidth="0.35" />
                     {/* 24 spokes of Ashoka Chakra - using simpler approach */}
                     {[...Array(24)].map((_, i) => {
                       const angle = (i * 15) - 90; // Start from top, 15 degrees apart
@@ -302,7 +319,7 @@ const Login = ({ onClose }) => {
                       );
                     })}
                     {/* Green stripe */}
-                    <rect y="12" width="24" height="6" fill="#138808"/>
+                    <rect y="12" width="24" height="6" fill="#138808" />
                   </svg>
                 </div>
                 <span className={styles.countryCodeText}>+91</span>
@@ -316,8 +333,8 @@ const Login = ({ onClose }) => {
                 disabled={loading}
                 required
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className={styles.btn}
                 disabled={loading || !phoneNumber.trim()}
               >
@@ -378,8 +395,8 @@ const Login = ({ onClose }) => {
               />
             </div>
             {error && <div className={styles.error}>{error}</div>}
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className={cn("button", styles.button)}
               disabled={loading || otp.join("").length !== 6}
             >
