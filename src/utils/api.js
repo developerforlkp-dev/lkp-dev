@@ -651,7 +651,7 @@ export const getCompletedOrders = async (page = 1, limit = 20) => {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
-      url: error.config?.url,
+      url: error.config?.url,       
     });
     
     // Return empty array on error
