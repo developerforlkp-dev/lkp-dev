@@ -17,6 +17,13 @@ const filterOptions = [
   { id: "places", label: "Places", icon: "marker" },
 ];
 
+// Experience → 1, Events → 2. Stays/Food/Places have no ID yet (Coming Soon).
+const getBusinessInterestId = (filterId) => {
+  if (filterId === "experience") return 1;
+  if (filterId === "events") return 2;
+  return null;
+};
+
 const FleetHome = () => {
   const [activeFilter, setActiveFilter] = useState("experience");
   const [sectionsData, setSectionsData] = useState([]); // Array of { section, listings }
@@ -73,16 +80,23 @@ const FleetHome = () => {
     setShowGuestPicker(false);
   }, [activeFilter]);
   
-  // Fetch homepage sections and their listings
+  // Fetch homepage sections and their listings (by business interest: 1=Experience, 2=Events)
+  // On refresh, Experience is selected by default → always call with businessInterestId=1
   useEffect(() => {
+    const businessInterestId = getBusinessInterestId(activeFilter) ?? (activeFilter === "experience" ? 1 : null);
+    if (businessInterestId == null) {
+      // Stays, Food, Places: don't refetch, keep current sectionsData
+      return;
+    }
+
     const loadHomepageData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
-        // Step 1: Fetch all sections
-        const fetchedSections = await getHomepageSections();
-        console.log("✅ Fetched homepage sections:", fetchedSections);
+        // Step 1: Fetch sections for the selected business interest (1=Experience, 2=Events)
+        const fetchedSections = await getHomepageSections(businessInterestId);
+        console.log("✅ Fetched homepage sections (businessInterestId=" + businessInterestId + "):", fetchedSections);
         
         // Sort sections by sortOrder
         const sortedSections = [...fetchedSections].sort((a, b) => {
@@ -162,9 +176,9 @@ const FleetHome = () => {
         setLoading(false);
       }
     };
-    
+
     loadHomepageData();
-  }, []);
+  }, [activeFilter]);
 
   return (
     <div className={cn("section", styles.section)}>
@@ -253,7 +267,7 @@ const FleetHome = () => {
                     <Icon name={filter.icon} size="18" />
                     <span>{filter.label}</span>
                   </div>
-                  {filter.id !== "experience" && (
+                  {!["experience", "events"].includes(filter.id) && (
                     <div className={styles.comingSoonBadge}>Coming Soon</div>
                   )}
                 </button>

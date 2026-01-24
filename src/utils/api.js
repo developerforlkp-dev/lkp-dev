@@ -33,6 +33,9 @@ ListingsAPI.interceptors.request.use((config) => {
     console.log("  - Base URL:", config.baseURL);
     console.log("  - URL:", config.url);
     console.log("  - Full URL:", fullURL);
+    if (config.params && Object.keys(config.params).length > 0) {
+      console.log("  - Params:", config.params);
+    }
     console.log("  - Data:", config.data);
     console.log("  - Headers:", config.headers);
     
@@ -201,6 +204,7 @@ export const getEventListings = async (limit, offset) => {
   }
 };
 
+// Event details: GET /api/events/{id}/public → proxied to http://62.72.12.51:8080
 export const getEventDetails = async (id) => {
   try {
     if (!id) {
@@ -210,51 +214,18 @@ export const getEventDetails = async (id) => {
     const idNum = Number(id);
     const idStr = (!isNaN(idNum) && idNum > 0) ? String(idNum) : String(id);
 
-    // Use the backend public event details route (swagger: GET /events/{id}).
-    // With baseURL "/api", this becomes a call to "/api/events/{id}".
-    const endpointsToTry = [`/events/${idStr}`];
+    // Call /api/events/{id}/public (proxied to http://62.72.12.51:8080)
+    const response = await ListingsAPI.get(`/events/${idStr}/public`);
+    const payload = response.data;
+    console.log("✅ Event details fetched (raw):", payload);
 
-    let lastError;
-    for (const endpoint of endpointsToTry) {
-      try {
-        const response = await ListingsAPI.get(endpoint);
-        const payload = response.data;
-        console.log("✅ Event details fetched (raw):", payload);
-
-        if (payload && typeof payload === "object") {
-          if (payload.event && typeof payload.event === "object") return payload.event;
-          if (payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)) return payload.data;
-          if (payload.item && typeof payload.item === "object") return payload.item;
-        }
-
-        return payload;
-      } catch (e) {
-        lastError = e;
-        const status = e?.response?.status;
-        // If this endpoint is missing (404), try the next one. For auth errors (401/403), also try the next.
-        if (status === 404 || status === 401 || status === 403) {
-          continue;
-        }
-        throw e;
-      }
+    if (payload && typeof payload === "object") {
+      if (payload.event && typeof payload.event === "object") return payload.event;
+      if (payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)) return payload.data;
+      if (payload.item && typeof payload.item === "object") return payload.item;
     }
 
-    // Fallback: if the public details endpoints are unavailable but listings are public,
-    // fetch event listings and find the matching event by id.
-    try {
-      const list = await getEventListings(200, 0);
-      const match = Array.isArray(list)
-        ? list.find((e) => {
-            const candidateId = e?.eventId ?? e?.event_id ?? e?.id ?? e?._id;
-            return String(candidateId) === String(idStr);
-          })
-        : null;
-      if (match) return match;
-    } catch (fallbackErr) {
-      // Ignore fallback failures and throw the original error below.
-    }
-
-    throw lastError || new Error("Failed to load event details");
+    return payload;
   } catch (error) {
     console.error("❌ Error fetching event details:", error.response?.data || error.message);
     throw error;
@@ -784,11 +755,16 @@ export const getHomepageHero = async () => {
 };
 
 // ✅ Get homepage sections
-export const getHomepageSections = async () => {
+// @param {number|null} businessInterestId - Optional. 1 = Experiences, 2 = Events. Omit for unfiltered.
+export const getHomepageSections = async (businessInterestId = null) => {
   try {
-    const response = await ListingsAPI.get("/public/homepage-sections");
+    const url =
+      businessInterestId != null && businessInterestId !== undefined
+        ? `/public/homepage-sections?businessInterestId=${encodeURIComponent(Number(businessInterestId))}`
+        : "/public/homepage-sections";
+    const response = await ListingsAPI.get(url);
     const payload = response.data;
-    console.log("✅ Homepage sections fetched (raw):", payload);
+    console.log("✅ Homepage sections fetched (businessInterestId=" + businessInterestId + "):", payload);
 
     if (Array.isArray(payload)) return payload;
     if (payload && typeof payload === "object") {
