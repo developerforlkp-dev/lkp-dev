@@ -17,6 +17,8 @@ const filterOptions = [
   { id: "places", label: "Places", icon: "marker" },
 ];
 
+
+/// Business Interest IDs
 // Experience → 1, Events → 2. Stays/Food/Places have no ID yet (Coming Soon).
 const getBusinessInterestId = (filterId) => {
   if (filterId === "experience") return 1;
