@@ -5,7 +5,7 @@ import styles from "./Main.module.sass";
 import Icon from "../../../components/Icon";
 import Modal from "../../../components/Modal";
 import { emptyStateCopy } from "../../../mocks/bookings";
-import { cancelOrder, getListing, getCompletedOrders } from "../../../utils/api";
+import { cancelOrder, getEventDetails, getListing, getCompletedOrders } from "../../../utils/api";
 
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
@@ -44,8 +44,16 @@ const transformMultipleBookings = async (bookingsArray) => {
       .filter(id => id != null && id !== undefined)
   )];
 
+  // Step 1b: Collect unique eventIds for event orders
+  const uniqueEventIds = [...new Set(
+    bookingsArray
+      .map((booking) => booking?.eventId)
+      .filter((id) => id != null && id !== undefined)
+  )];
+
   // Step 2: Fetch all unique listings in parallel (cached)
   const listingCache = new Map();
+  const eventCache = new Map();
   
   if (uniqueListingIds.length > 0) {
     const listingPromises = uniqueListingIds.map(async (listingId) => {
@@ -62,15 +70,31 @@ const transformMultipleBookings = async (bookingsArray) => {
     await Promise.all(listingPromises);
     }
 
+  if (uniqueEventIds.length > 0) {
+    const eventPromises = uniqueEventIds.map(async (eventId) => {
+      try {
+        const eventData = await getEventDetails(eventId);
+        eventCache.set(eventId, eventData);
+        console.log(`✅ Fetched event ${eventId} (cached for reuse)`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to fetch event ${eventId}:`, error.message);
+        eventCache.set(eventId, null);
+      }
+    });
+
+    await Promise.all(eventPromises);
+  }
+
   // Step 3: Transform bookings using cached listing data
   return bookingsArray.map((apiBooking) => {
     const listingData = apiBooking.listingId ? listingCache.get(apiBooking.listingId) : null;
-    return transformBookingData(apiBooking, listingData);
+    const eventData = apiBooking?.eventId ? eventCache.get(apiBooking.eventId) : null;
+    return transformBookingData(apiBooking, listingData, eventData);
   });
 };
 
 // Transform API booking data to component format
-const transformBookingData = (apiBooking, listingData = null) => {
+const transformBookingData = (apiBooking, listingData = null, eventData = null) => {
   // Format date from "2025-11-19" to "Fri, 21 Nov 2025" format
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -136,7 +160,15 @@ const transformBookingData = (apiBooking, listingData = null) => {
   
   // For event orders, check event location first
   if (isEventOrder) {
-    if (apiBooking?.eventDetails?.venueFullAddress) {
+    if (eventData?.fullVenueAddress) {
+      location = eventData.fullVenueAddress;
+    } else if (eventData?.venueFullAddress) {
+      location = eventData.venueFullAddress;
+    } else if (eventData?.venueSearchLocation) {
+      location = eventData.venueSearchLocation;
+    } else if (eventData?.venueName) {
+      location = eventData.venueName;
+    } else if (apiBooking?.eventDetails?.venueFullAddress) {
       location = apiBooking.eventDetails.venueFullAddress;
     } else if (apiBooking?.eventDetails?.venueName) {
       location = apiBooking.eventDetails.venueName;
@@ -210,7 +242,11 @@ const transformBookingData = (apiBooking, listingData = null) => {
   
   if (isEventOrder) {
     // For event orders, prioritize event-specific cover images
-    coverPhotoUrl = apiBooking?.eventCoverImageUrl ||
+    coverPhotoUrl = eventData?.coverImage ||
+                    eventData?.coverImageUrl ||
+                    eventData?.coverPhotoUrl ||
+                    eventData?.imageUrl ||
+                    apiBooking?.eventCoverImageUrl ||
                     apiBooking?.eventDetails?.eventCoverImageUrl ||
                     apiBooking?.listing?.eventCoverImageUrl ||
                     apiBooking?.coverPhotoUrl ||
