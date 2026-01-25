@@ -4,7 +4,7 @@ import cn from "classnames";
 import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
 import { getBookingDetails } from "../../mocks/bookings";
-import { getListing, getCustomerOrders, getAvailability, getOrderDetails, submitOrderReview } from "../../utils/api";
+import { getListing, getCustomerOrders, getAvailability, getOrderDetails, getEventOrderDetails, submitOrderReview } from "../../utils/api";
 import Rating from "../../components/Rating";
 
 // Helper function to format image URLs
@@ -348,6 +348,7 @@ const ViewDetails = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const bookingId = params.get("id") || "bk-up-001";
+  const bookingType = params.get("type"); // "event" for event orders
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -464,9 +465,17 @@ const ViewDetails = () => {
         let slotDetails = null;
 
         // Fetch order details directly from API
+        // Use event-specific API if type=event
         try {
-          orderResponse = await getOrderDetails(orderId);
-          console.log("✅ Order details fetched from API:", orderResponse);
+          if (bookingType === "event") {
+            console.log("📦 Fetching EVENT order details for orderId:", orderId);
+            orderResponse = await getEventOrderDetails(orderId);
+            console.log("✅ Event order details fetched from API:", orderResponse);
+          } else {
+            console.log("📦 Fetching regular order details for orderId:", orderId);
+            orderResponse = await getOrderDetails(orderId);
+            console.log("✅ Order details fetched from API:", orderResponse);
+          }
           
           // The response structure can be:
           // Option 1: { order: {...}, addons: [], guestAnswers: [], history: [] }
@@ -666,7 +675,7 @@ const ViewDetails = () => {
     };
 
     loadBooking();
-  }, [bookingId]);
+  }, [bookingId, bookingType]);
   
   const getInitialTab = () => {
     if (!booking) return "cancellation";
