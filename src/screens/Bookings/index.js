@@ -39,7 +39,6 @@ const Bookings = ({ bookingData = null }) => {
       
       // Fetch both APIs in parallel for better performance
       // Handle errors independently so one failure doesn't block the other
-      // getCustomerOrders(limit, page) - calls /orders?page=1&limit=20
       const [ordersResult, completedCountResult] = await Promise.allSettled([
         getCustomerOrders(20, 1),
         getCompleteExpiredOrders()

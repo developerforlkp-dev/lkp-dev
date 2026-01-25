@@ -150,10 +150,6 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null) 
        "Event Booking")
     : (listingData?.title || apiBooking?.listingTitle || "Booking");
   
-  const category = isEventOrder
-    ? (eventData?.category || eventData?.eventCategory || "Event")
-    : (listingData?.category || listingData?.categoryName || "Experience");
-  
   // Extract location from listing data or event data
   let location = { 
     address: "TBD", 
@@ -429,7 +425,6 @@ const ViewDetails = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [slotData, setSlotData] = useState(null);
   
   // Review form state
   const [reviewRating, setReviewRating] = useState(0);
@@ -437,70 +432,6 @@ const ViewDetails = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [reviewError, setReviewError] = useState(null);
-
-  // Example booking data - in production, this would come from an API
-  const exampleBookingData = {
-    orderId: 11,
-    customerId: 2,
-    listingId: 3,
-    bookingSlotId: 1,
-    bookingDate: "2025-11-19",
-    bookingTime: "05:44:00",
-    numberOfGuests: 5,
-    basePrice: "2500.00",
-    addonsTotal: "3000.00",
-    subtotal: "5500.00",
-    discountAmount: "2750.00",
-    taxAmount: "0.00",
-    platformFee: "0.00",
-    totalPrice: "2750.00",
-    hostEarnings: "5500.00",
-    currency: "INR",
-    razorpayOrderId: "order_RgJSVwEusi8MHT",
-    razorpayPaymentId: null,
-    razorpaySignature: null,
-    paymentStatus: "PENDING",
-    orderStatus: "PENDING",
-    customerName: "Guest User",
-    customerEmail: "guest@example.com",
-    customerPhone: "+919744003284",
-    specialRequests: null,
-    paymentMethod: null,
-    cancellationReason: null,
-    cancelledAt: null,
-    cancelledByCustomer: null,
-    cancelledByEmployee: null,
-    createdAt: "2025-11-16T06:29:11.565Z",
-    updatedAt: "2025-11-16T06:29:11.565Z",
-    confirmedAt: null,
-    completedAt: null,
-    addons: [
-      {
-        addonRecordId: 12,
-        orderId: 11,
-        addonId: 2,
-        addonName: "Safari",
-        addonPrice: 1000,
-        quantity: 3,
-        createdAt: "2025-11-16T06:29:11.565Z",
-      },
-    ],
-    guestAnswers: [],
-    discounts: [
-      {
-        orderDiscountId: 6,
-        orderId: 11,
-        discountId: null,
-        listingDiscountId: null,
-        discountName: "Early Bird Discount (0+ days)",
-        appliedPercentage: 50,
-        discountAmount: 2750,
-        sponsor: "PLATFORM",
-        createdAt: "2025-11-16T06:29:11.565Z",
-      },
-    ],
-    taxes: [],
-  };
 
   useEffect(() => {
     const loadBooking = async () => {
@@ -633,7 +564,6 @@ const ViewDetails = () => {
             endTime: apiBookingData.timeSlotEndTime,
             maxSeats: apiBookingData.timeSlotMaxSeats,
           };
-          setSlotData(slotDetails);
           console.log("✅ Using time slot from order data:", slotDetails);
         }
 
@@ -778,7 +708,7 @@ const ViewDetails = () => {
     };
 
     loadBooking();
-  }, [bookingId, bookingType]);
+  }, [bookingId, bookingType]); // eslint-disable-line react-hooks/exhaustive-deps
   
   const getInitialTab = () => {
     if (!booking) return "cancellation";
