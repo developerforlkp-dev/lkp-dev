@@ -5,7 +5,7 @@ import styles from "./Main.module.sass";
 import Icon from "../../../components/Icon";
 import Modal from "../../../components/Modal";
 import { emptyStateCopy } from "../../../mocks/bookings";
-import { cancelOrder, getEventDetails, getListing, getCompletedOrders } from "../../../utils/api";
+import { cancelOrder, cancelEventOrder, getEventDetails, getListing, getCompletedOrders, getOrderCancelPreview } from "../../../utils/api";
 
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
@@ -326,6 +326,7 @@ const Main = ({
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState(null);
+  const [cancelPreview, setCancelPreview] = useState(null);
   const [transformedBookings, setTransformedBookings] = useState([]);
   const [transformedCompletedBookings, setTransformedCompletedBookings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -522,10 +523,27 @@ const Main = ({
     }
   };
 
-  const handleCancelBookingClick = (booking) => {
+  const handleCancelBookingClick = async (booking) => {
     setBookingToCancel(booking);
     setCancelReason("");
     setCancelError(null);
+    setCancelPreview(null);
+
+    const isEventOrder = booking?.category === "EVENTS" || booking?.bookingData?.eventId != null;
+    if (isEventOrder && booking?.orderId) {
+      try {
+        const preview = await getOrderCancelPreview(booking.orderId);
+        console.log("🧾 Event cancel preview:", {
+          orderId: booking.orderId,
+          preview,
+          booking,
+        });
+        setCancelPreview(preview);
+      } catch (e) {
+        console.warn("⚠️ Failed to fetch cancel preview:", e?.response?.data || e?.message || e);
+      }
+    }
+
     setCancelModalVisible(true);
   };
 
@@ -539,11 +557,28 @@ const Main = ({
     setCancelError(null);
 
     try {
-      // Call the cancel API - adminOverride is always false by default
-      await cancelOrder(bookingToCancel.orderId, {
+      const cancelRequestBody = {
         reason: cancelReason.trim(),
-        adminOverride: false, // Always false by default
+        adminOverride: false,
+      };
+
+      const orderIdForCancel = bookingToCancel.orderId;
+      const cancelUrl = `/api/orders/${orderIdForCancel}/cancel`;
+      console.log("🧾 Cancel booking request:", {
+        url: cancelUrl,
+        orderId: orderIdForCancel,
+        body: cancelRequestBody,
+        bookingToCancel,
       });
+
+      const isEventOrder = bookingToCancel?.category === "EVENTS" || bookingToCancel?.bookingData?.eventId != null;
+
+      // Call the correct cancel API
+      if (isEventOrder) {
+        await cancelEventOrder(orderIdForCancel, cancelRequestBody);
+      } else {
+        await cancelOrder(orderIdForCancel, cancelRequestBody);
+      }
 
       // Update the booking status in the transformed bookings
       setTransformedBookings((prevBookings) => {
@@ -593,6 +628,7 @@ const Main = ({
     setBookingToCancel(null);
     setCancelReason("");
     setCancelError(null);
+    setCancelPreview(null);
   };
 
   // Show loading state while fetching/transforming data
