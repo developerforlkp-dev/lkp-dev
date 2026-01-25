@@ -103,21 +103,24 @@ const transformBookingData = (apiBooking, listingData = null) => {
 
   const status = statusMap[apiBooking.orderStatus] || "Upcoming";
 
-  // Get title - prefer listing data, then booking data
+  // Get title - prefer listing data, then booking data, then event details
   const title = listingData?.title || 
                 apiBooking?.listingTitle || 
                 apiBooking?.listing?.title || 
+                apiBooking?.eventDetails?.eventTitle || // Event order
                 apiBooking?.title || 
                 "Booking";
   
-  // Get category - prefer listing data, then booking data
-  const category = listingData?.category || 
-                   listingData?.categoryName ||
-                   apiBooking?.listingCategory || 
-                   apiBooking?.listing?.category || 
-                   apiBooking?.category || 
-                   apiBooking?.categoryName || 
-                   "Experience";
+  // Get category - use businessInterestCode (like "EXPERIENCE", "EVENTS")
+  // This shows the service type after "SERVICE •"
+  const category = 
+    listingData?.businessInterestCode ||
+    listingData?.businessInterest ||
+    apiBooking?.businessInterestCode ||
+    apiBooking?.businessInterest ||
+    apiBooking?.listing?.businessInterestCode ||
+    apiBooking?.listing?.businessInterest ||
+    (apiBooking?.eventId || apiBooking?.eventDetails ? "EVENTS" : "EXPERIENCE");
   
   // Extract location - prefer listing data, then booking data
   let location = "Location TBD";
@@ -160,9 +163,19 @@ const transformBookingData = (apiBooking, listingData = null) => {
     } else if (apiBooking?.listing?.city && apiBooking?.listing?.state) {
       location = `${apiBooking.listing.city}, ${apiBooking.listing.state}`;
     }
+    // Check event details for location
+    else if (apiBooking?.eventDetails?.venueFullAddress) {
+      location = apiBooking.eventDetails.venueFullAddress;
+    } else if (apiBooking?.eventDetails?.venueName) {
+      location = apiBooking.eventDetails.venueName;
+    } else if (apiBooking?.eventDetails?.venueDistrict && apiBooking?.eventDetails?.venueState) {
+      location = `${apiBooking.eventDetails.venueDistrict}, ${apiBooking.eventDetails.venueState}`;
+    } else if (apiBooking?.eventDetails?.venueDistrict) {
+      location = apiBooking.eventDetails.venueDistrict;
+    }
   }
   
-  // Get cover photo - prefer listing data, then booking data
+  // Get cover photo - prefer listing data, then booking data, then event details
   let coverPhotoUrl = null;
   
   if (listingData?.coverPhotoUrl) {
@@ -173,17 +186,16 @@ const transformBookingData = (apiBooking, listingData = null) => {
     coverPhotoUrl = apiBooking.listing.coverPhotoUrl;
   } else if (apiBooking?.coverPhotoUrl) {
     coverPhotoUrl = apiBooking.coverPhotoUrl;
+  } else if (apiBooking?.eventDetails?.eventCoverImageUrl) {
+    // Event order - get cover image from event details
+    coverPhotoUrl = apiBooking.eventDetails.eventCoverImageUrl;
   }
   
   // Format the image URL to ensure it's a valid full URL
   coverPhotoUrl = formatImageUrl(coverPhotoUrl);
 
-  // Determine type - prefer listing data, then booking data
-  const type = listingData?.businessInterest === "EXPERIENCE" ||
-               apiBooking?.businessInterest === "EXPERIENCE" || 
-               apiBooking?.listing?.businessInterest === "EXPERIENCE" 
-               ? "EXPERIENCE" 
-               : "SERVICE";
+  // Type is always "SERVICE" as the label
+  const type = "SERVICE";
 
   return {
     id: `bk-${apiBooking.orderId}`,
@@ -613,10 +625,17 @@ const Main = ({
                       <div className={styles.actions}>
                         {(actionsByStatus[booking.status] || []).map((action) => {
                           if (action.label === "View Details") {
+                            // Pass businessInterestCode (category) to determine which API to use
+                            const isEvent = booking.category === "EVENTS" || 
+                                          booking.bookingData?.eventId || 
+                                          booking.bookingData?.businessInterestCode === "EVENTS";
+                            const viewUrl = isEvent 
+                              ? `/viewdetails?id=${booking.id}&type=event`
+                              : `/viewdetails?id=${booking.id}`;
                             return (
                               <Link
                                 key={`${booking.id}-${action.label}`}
-                                to={`/viewdetails?id=${booking.id}`}
+                                to={viewUrl}
                                 className={getButtonClassName(action.variant)}
                               >
                                 {action.label}

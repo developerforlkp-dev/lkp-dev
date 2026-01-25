@@ -613,6 +613,35 @@ export const getOrderDetails = async (orderId) => {
   }
 };
 
+// ✅ Get event order details by ID
+// Used when businessInterestCode is "EVENTS"
+// Endpoint: /api/orders/{orderId}/event-details (proxied to port 8080)
+export const getEventOrderDetails = async (orderId) => {
+  try {
+    // Validate parameter
+    if (!orderId) {
+      throw new Error("orderId is required");
+    }
+    
+    // Ensure orderId is a string (URL parameter)
+    const orderIdNum = Number(orderId);
+    const orderIdStr = (!isNaN(orderIdNum) && orderIdNum > 0) ? String(orderIdNum) : String(orderId);
+    
+    const response = await ListingsAPI.get(`/orders/${orderIdStr}/event-details`);
+    const payload = response.data;
+    console.log("✅ Event order details fetched (raw):", payload);
+    
+    if (payload && typeof payload === "object") {
+      return payload;
+    }
+    
+    return payload;
+  } catch (error) {
+    console.error("❌ Error fetching event order details:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // ✅ Get completed and expired orders count
 export const getCompleteExpiredOrders = async () => {
   try {

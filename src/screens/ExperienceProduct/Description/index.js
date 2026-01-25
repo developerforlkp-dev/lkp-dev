@@ -894,6 +894,12 @@ const Description = ({ classSection, listing, hostData }) => {
 
           console.log("💳 Payment data to save:", paymentWithDiscount);
           localStorage.setItem("pendingPayment", JSON.stringify(paymentWithDiscount));
+          
+          // Cache Razorpay key for use by other booking types (e.g., events)
+          if (paymentWithDiscount.razorpayKeyId) {
+            localStorage.setItem("lastRazorpayKeyId", paymentWithDiscount.razorpayKeyId);
+            console.log("🔑 Cached Razorpay key for future use");
+          }
         } else {
           console.warn("No payment payload found on orderResponse:", orderResponse);
         }
@@ -1229,6 +1235,12 @@ const Description = ({ classSection, listing, hostData }) => {
         null;
       if (payment) {
         localStorage.setItem("pendingPayment", JSON.stringify(payment));
+        
+        // Cache Razorpay key for use by other booking types (e.g., events)
+        if (payment.razorpayKeyId) {
+          localStorage.setItem("lastRazorpayKeyId", payment.razorpayKeyId);
+          console.log("🔑 Cached Razorpay key for future use");
+        }
       } else {
         console.warn("No payment payload found on orderResponse:", orderResponse);
       }

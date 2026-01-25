@@ -10,7 +10,7 @@ import CommentsProduct from "../../components/CommentsProduct";
 import Browse from "../../components/Browse";
 import GuestPicker from "../../components/GuestPicker";
 import { browse2 } from "../../mocks/browse";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import { createEventOrder, getEventDetails } from "../../utils/api";
 
 const asNonEmptyString = (value) => {
@@ -102,6 +102,38 @@ const normalizeTicketTypes = (rawTypes, fallbackCurrency) => {
         currency,
         applicableSlots,
       };
+    })
+    .filter(Boolean);
+};
+
+// Normalize slots array to extract slot IDs and names
+const normalizeSlots = (rawSlots) => {
+  if (!Array.isArray(rawSlots)) return [];
+  return rawSlots
+    .map((s, idx) => {
+      if (typeof s === "string") {
+        return { id: null, name: s };
+      }
+      if (s && typeof s === "object") {
+        const slotId =
+          asNumber(s?.id) ??
+          asNumber(s?.slotId) ??
+          asNumber(s?.slot_id) ??
+          asNumber(s?.eventSlotId) ??
+          asNumber(s?.event_slot_id);
+        const slotName =
+          asNonEmptyString(s?.name) ||
+          asNonEmptyString(s?.slotName) ||
+          asNonEmptyString(s?.title) ||
+          `Slot ${idx + 1}`;
+        return {
+          id: slotId,
+          name: slotName,
+          date: asNonEmptyString(s?.date) || asNonEmptyString(s?.slotDate),
+          time: asNonEmptyString(s?.time) || asNonEmptyString(s?.slotTime),
+        };
+      }
+      return null;
     })
     .filter(Boolean);
 };
@@ -202,6 +234,7 @@ const dummyEventData = {
 
 const EventProduct = () => {
   const location = useLocation();
+  const history = useHistory();
   const searchParams = new URLSearchParams(location.search);
   const eventIdFromQuery =
     searchParams.get("id") ||
@@ -332,18 +365,13 @@ const EventProduct = () => {
         const rawSlots =
           payload?.applicableSlots ||
           payload?.slots ||
+          payload?.eventSlots ||
+          payload?.event_slots ||
           normalizedTicketTypes.flatMap((t) => t.applicableSlots || []);
-        const slotNames = Array.isArray(rawSlots)
-          ? rawSlots
-              .map((s) => {
-                if (typeof s === "string") return asNonEmptyString(s);
-                if (s && typeof s === "object") {
-                  return asNonEmptyString(s?.name) || asNonEmptyString(s?.title);
-                }
-                return null;
-              })
-              .filter(Boolean)
-          : [];
+        
+        // Normalize slots to get full slot objects with IDs
+        const normalizedSlots = normalizeSlots(rawSlots);
+        const slotNames = normalizedSlots.map((s) => s.name).filter(Boolean);
 
         const backendArtists = normalizeArtists(payload?.artists, derivedGallery.length > 0 ? derivedGallery : dummyEventData.gallery);
         const derivedArtists = backendArtists.length > 0
@@ -404,6 +432,8 @@ const EventProduct = () => {
           termsAndPolicies: payload?.termsAndPolicies || payload?.terms || dummyEventData.termsAndPolicies,
           artists: derivedArtists,
           whatYoullDo: Array.isArray(payload?.whatYoullDo) ? payload.whatYoullDo : [],
+          // Store normalized slots with IDs for booking
+          slots: normalizedSlots,
         };
 
         if (!mounted) return;
@@ -482,15 +512,65 @@ const EventProduct = () => {
   };
 
   const getEventSlotIdForBooking = () => {
-    const raw =
-      event?.eventSlotId ??
-      event?.event_slot_id ??
-      event?.slotId ??
-      event?.slot_id ??
-      event?.defaultSlotId ??
-      event?.default_slot_id;
-    const parsed = asNumber(raw);
-    return parsed ?? 0;
+    // First try to get from direct event properties
+    const directSlotId =
+      asNumber(event?.eventSlotId) ??
+      asNumber(event?.event_slot_id) ??
+      asNumber(event?.slotId) ??
+      asNumber(event?.slot_id) ??
+      asNumber(event?.defaultSlotId) ??
+      asNumber(event?.default_slot_id);
+    
+    if (directSlotId && directSlotId > 0) {
+      console.log("📍 Using direct eventSlotId:", directSlotId);
+      return directSlotId;
+    }
+    
+    // Try to get from the slots array (first available slot)
+    if (Array.isArray(event?.slots) && event.slots.length > 0) {
+      const firstSlot = event.slots[0];
+      const slotIdFromArray = 
+        asNumber(firstSlot?.id) ?? 
+        asNumber(firstSlot?.slotId) ?? 
+        asNumber(firstSlot?.eventSlotId);
+      if (slotIdFromArray && slotIdFromArray > 0) {
+        console.log("📍 Using slotId from slots array:", slotIdFromArray);
+        return slotIdFromArray;
+      }
+    }
+    
+    // Try to get from ticket types' applicable slots
+    if (Array.isArray(event?.ticketTypes)) {
+      for (const ticketType of event.ticketTypes) {
+        if (Array.isArray(ticketType?.applicableSlots) && ticketType.applicableSlots.length > 0) {
+          const slot = ticketType.applicableSlots[0];
+          // Check all possible slot ID field names
+          const slotId = 
+            asNumber(slot?.eventSlotId) ?? 
+            asNumber(slot?.event_slot_id) ??
+            asNumber(slot?.slotId) ?? 
+            asNumber(slot?.slot_id) ??
+            asNumber(slot?.id);
+          if (slotId && slotId > 0) {
+            console.log("📍 Using slotId from ticketType applicableSlots:", slotId, "slot:", slot);
+            return slotId;
+          }
+        }
+      }
+    }
+    
+    // Log warning if no slot ID found
+    console.warn("⚠️ Could not find eventSlotId in event data:", {
+      eventSlotId: event?.eventSlotId,
+      slotId: event?.slotId,
+      slots: event?.slots,
+      ticketTypes: event?.ticketTypes?.map(t => ({ 
+        id: t.id, 
+        applicableSlots: t.applicableSlots 
+      }))
+    });
+    
+    return 0;
   };
 
   const getTicketTypeIdForBooking = (ticketType) => {
@@ -514,14 +594,33 @@ const EventProduct = () => {
 
     const quantity = Math.max(1, (guests?.adults || 0) + (guests?.children || 0));
     const pricePerTicket = asNumber(selectedType?.price) ?? asNumber(event.ticketPrice) ?? 0;
+    
+    // Calculate total number of guests (required by backend)
+    const numberOfGuests = quantity;
+    
+    // Get booking date - use event start date or today's date
+    const bookingDate = event?.startDate || moment().format("YYYY-MM-DD");
+    
+    // Get ticket type name (required by backend)
+    const ticketTypeName = selectedType?.name || selectedType?.ticketTypeName || "General Admission";
+
+    // Validate slot ID before creating payload
+    if (!eventSlotIdNum || eventSlotIdNum <= 0) {
+      console.error("❌ Cannot book: eventSlotId is missing or invalid. Check event details API response.");
+      alert("Unable to book: Event slot information is missing. Please try again later.");
+      return;
+    }
 
     const payload = {
       eventId: eventIdNum,
-      eventSlotId: eventSlotIdNum,
+      eventSlotId: eventSlotIdNum, // From event details API
+      bookingDate: bookingDate, // Required: YYYY-MM-DD format
+      numberOfGuests: numberOfGuests, // Required: must be a number > 0
       customerDetails,
       tickets: [
         {
           ticketTypeId: getTicketTypeIdForBooking(selectedType),
+          ticketTypeName: ticketTypeName, // Required by backend
           quantity,
           pricePerTicket: Number(pricePerTicket.toFixed(2)),
         },
@@ -535,9 +634,178 @@ const EventProduct = () => {
     try {
       setBookingLoading(true);
       const res = await createEventOrder(payload);
-      console.log("✅ Event booking response:", res);
+      console.log("✅ Event booking response (full):", JSON.stringify(res, null, 2));
+
+      // Extract order and payment info from response (same pattern as experience)
+      const order = res?.order || res;
+      console.log("📋 Order object:", order);
+      
+      // Extract payment object (same as experience checkout)
+      const payment =
+        res?.payment ||
+        res?.data?.payment ||
+        res?.order?.payment ||
+        order?.payment ||
+        null;
+      console.log("💳 Payment object:", payment);
+      
+      const orderId = order?.orderId || order?.id || res?.orderId || res?.id;
+      const razorpayOrderId = 
+        payment?.razorpayOrderId ||
+        order?.razorpayOrderId || 
+        res?.razorpayOrderId || 
+        order?.razorpay_order_id || 
+        res?.razorpay_order_id;
+      
+      console.log("🔑 Extracted orderId:", orderId);
+      console.log("🔑 Extracted razorpayOrderId:", razorpayOrderId);
+      
+      // Calculate total amount (in paise for Razorpay)
+      const totalAmount = quantity * pricePerTicket;
+      // Use amount from payment response if available, otherwise calculate
+      const amountInPaise = payment?.amount || Math.round(totalAmount * 100);
+      
+      // Get currency from event or default to INR
+      const currency = event?.currency || "INR";
+
+      // Prepare booking data for checkout page
+      const bookingDataForCheckout = {
+        // Event details
+        eventId: eventIdNum,
+        eventSlotId: eventSlotIdNum,
+        listingTitle: event?.title || "Event Booking",
+        listingImage: event?.coverImage || event?.gallery?.[0],
+        
+        // Booking summary
+        bookingSummary: {
+          date: moment(bookingDate).format("MMM DD, YYYY"),
+          time: event?.startTime || "",
+          guestCount: numberOfGuests,
+        },
+        
+        // Guest details
+        guests: guests,
+        
+        // Price details
+        priceDetails: {
+          pricePerPerson: pricePerTicket,
+          totalPrice: totalAmount,
+        },
+        
+        // Receipt for display
+        receipt: [
+          {
+            title: `${currency} ${pricePerTicket.toFixed(2)} x ${numberOfGuests} ${numberOfGuests === 1 ? 'ticket' : 'tickets'}`,
+            content: `${currency} ${totalAmount.toFixed(2)}`,
+          },
+          {
+            title: "Total",
+            content: `${currency} ${totalAmount.toFixed(2)}`,
+          },
+        ],
+        
+        // Currency
+        currency: currency,
+        finalTotal: totalAmount,
+        
+        // Ticket info
+        ticketType: ticketTypeName,
+        ticketTypeId: getTicketTypeIdForBooking(selectedType),
+      };
+
+      // Get Razorpay key from response (same pattern as experience checkout)
+      // Check payment object first, then order, then response root
+      // Also check localStorage for cached key from previous experience booking
+      const getCachedRazorpayKey = () => {
+        try {
+          // Try to get from a previous successful payment
+          const cachedPayment = localStorage.getItem("lastRazorpayKeyId");
+          if (cachedPayment) return cachedPayment;
+          
+          // Try to get from pending payment (if experience was booked before)
+          const pendingPayment = localStorage.getItem("pendingPayment");
+          if (pendingPayment) {
+            const parsed = JSON.parse(pendingPayment);
+            if (parsed?.razorpayKeyId) return parsed.razorpayKeyId;
+          }
+        } catch (e) {
+          console.warn("Could not get cached Razorpay key:", e);
+        }
+        return null;
+      };
+
+      const razorpayKeyId = 
+        payment?.razorpayKeyId ||
+        payment?.razorpay_key_id ||
+        payment?.keyId ||
+        order?.razorpayKeyId || 
+        res?.razorpayKeyId || 
+        order?.razorpay_key_id || 
+        res?.razorpay_key_id ||
+        order?.razorpayKey ||
+        res?.razorpayKey ||
+        order?.keyId ||
+        res?.keyId ||
+        process.env.REACT_APP_RAZORPAY_KEY_ID || // Fallback to env variable
+        getCachedRazorpayKey(); // Fallback to cached key from experience
+      
+      console.log("🔑 Extracted razorpayKeyId:", razorpayKeyId);
+      
+      // Save the key for future use if we got it
+      if (razorpayKeyId) {
+        try {
+          localStorage.setItem("lastRazorpayKeyId", razorpayKeyId);
+        } catch (e) {}
+      }
+      
+      // Warn if missing critical payment data
+      if (!razorpayOrderId) {
+        console.warn("⚠️ razorpayOrderId is missing from API response!");
+      }
+      if (!razorpayKeyId) {
+        console.error("❌ razorpayKeyId is missing from API response!");
+        console.error("💡 Book an experience first to cache the Razorpay key, OR add REACT_APP_RAZORPAY_KEY_ID to .env file");
+        alert("Payment configuration error: Razorpay key is missing. Please book an experience first or contact support.");
+        return;
+      }
+
+      // Prepare payment data for Razorpay (same structure as experience checkout)
+      const paymentData = {
+        orderId: orderId,
+        razorpayOrderId: razorpayOrderId,
+        razorpayKeyId: razorpayKeyId,
+        amount: amountInPaise,
+        currency: payment?.currency || currency,
+        paymentMethod: "razorpay", // Required to trigger Razorpay checkout
+        eventId: eventIdNum,
+        eventSlotId: eventSlotIdNum,
+        // Include discount info if available
+        discount: payment?.discount || res?.discount || 0,
+        finalAmount: payment?.finalAmount || amountInPaise,
+      };
+
+      // Save to localStorage for checkout page
+      localStorage.setItem("pendingBooking", JSON.stringify(bookingDataForCheckout));
+      localStorage.setItem("pendingPayment", JSON.stringify(paymentData));
+      localStorage.setItem("pendingOrderId", String(orderId));
+      
+      // Clear any previous payment status
+      localStorage.removeItem("razorpayPaymentSuccess");
+      localStorage.removeItem("paymentFailed");
+
+      console.log("📦 Booking data saved:", bookingDataForCheckout);
+      console.log("💳 Payment data saved:", paymentData);
+
+      // Redirect to checkout page
+      history.push("/experience-checkout", {
+        bookingData: bookingDataForCheckout,
+        paymentData: paymentData,
+      });
+
     } catch (e) {
       console.error("❌ Event booking failed:", e?.response?.data || e?.message || e);
+      const errorMessage = e?.response?.data?.message || e?.response?.data?.error || e?.message || "Booking failed. Please try again.";
+      alert(errorMessage);
     } finally {
       setBookingLoading(false);
     }

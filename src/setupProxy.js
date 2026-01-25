@@ -1,6 +1,32 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function (app) {
+  // Event order details: /api/orders/*/event-details → http://62.72.12.51:8080/api/orders/*/event-details
+  app.use(
+    '/api/orders',
+    createProxyMiddleware({
+      target: 'http://62.72.12.51:8080/',
+      changeOrigin: true,
+      secure: false,
+      // Only proxy requests that end with /event-details
+      pathFilter: (path) => path.includes('/event-details'),
+      pathRewrite: (path) => `/api/orders${path}`,
+      logLevel: 'debug',
+      proxyTimeout: 60000,
+      timeout: 60000,
+      onProxyReq: (proxyReq, req, res) => {
+        console.log('[Proxy Event Order Details]', req.method, req.url, '->', proxyReq.path);
+      },
+      onProxyRes: (proxyRes, req, res) => {
+        console.log('[Proxy Event Order Details Response]', req.url, '->', proxyRes.statusCode);
+      },
+      onError: (err, req, res) => {
+        console.error('[Proxy Event Order Details Error]', err.message);
+        res.status(500).send('Proxy error: ' + err.message);
+      }
+    })
+  );
+
   // Event details: /api/events/* → http://62.72.12.51:8080/api/events/* (must be before /api)
   app.use(
     '/api/events',
