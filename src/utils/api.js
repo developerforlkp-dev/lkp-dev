@@ -150,79 +150,19 @@ export const getListings = async (
   }
 };
 
-// ✅ Get public event listings
-export const getEventListings = async (limit, offset) => {
+export const getOrderCancelPreview = async (orderId) => {
   try {
-    const params = {};
-    if (limit !== undefined) params.limit = limit;
-    if (offset !== undefined) params.offset = offset;
-
-    const response = await ListingsAPI.get("/public/events", {
-      params: Object.keys(params).length > 0 ? params : undefined,
-    });
-    const payload = response.data;
-    console.log("✅ Event listings fetched (raw):", payload);
-
-    if (Array.isArray(payload)) return payload;
-
-    if (payload && typeof payload === "object") {
-      if (Array.isArray(payload.data)) return payload.data;
-      if (Array.isArray(payload.items)) return payload.items;
-      if (Array.isArray(payload.listings)) return payload.listings;
-      if (Array.isArray(payload.events)) return payload.events;
-
-      if (payload.listingId || payload.listing_id || payload.id) return [payload];
-
-      const firstCandidate = Object.values(payload).find(
-        (v) =>
-          Array.isArray(v) &&
-          v.length > 0 &&
-          (v[0].listingId || v[0].listing_id || v[0].id)
-      );
-      if (Array.isArray(firstCandidate)) return firstCandidate;
+    if (!orderId) {
+      throw new Error("orderId is required");
     }
 
-    return [];
+    const orderIdNum = Number(orderId);
+    const orderIdStr = (!isNaN(orderIdNum) && orderIdNum > 0) ? String(orderIdNum) : String(orderId);
+
+    const response = await ListingsAPI.get(`/orders/${orderIdStr}/cancel-preview`);
+    return response.data;
   } catch (error) {
-    console.error("❌ Error fetching event listings:", error.response?.data || error.message);
-    throw error;
-  }
-};
-
-// Event details: GET /api/events/{id}/public → proxied to http://62.72.12.51:8080
-export const getEventDetails = async (id) => {
-  try {
-    if (!id) {
-      throw new Error("id is required");
-    }
-
-    const idNum = Number(id);
-    const idStr = (!isNaN(idNum) && idNum > 0) ? String(idNum) : String(id);
-
-    // Call /api/events/{id}/public (proxied in dev via setupProxy.js)
-    const response = await ListingsAPI.get(`/events/${idStr}/public`, {
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-    });
-    const payload = response.data;
-    console.log("✅ Event details fetched (raw):", payload);
-
-    const contentType = response?.headers?.["content-type"];
-    if (typeof contentType === "string" && contentType.toLowerCase().includes("text/html")) {
-      throw new Error("Event details API returned HTML instead of JSON");
-    }
-    if (typeof payload === "string" && /<!doctype html/i.test(payload)) {
-      throw new Error("Event details API returned HTML instead of JSON");
-    }
-
-    if (payload && typeof payload === "object") {
-      if (payload.event && typeof payload.event === "object") return payload.event;
-      if (payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)) return payload.data;
-      if (payload.item && typeof payload.item === "object") return payload.item;
-    }
-
-    return payload;
-  } catch (error) {
-    console.error("❌ Error fetching event details:", error.response?.data || error.message);
+    console.error("❌ Error fetching cancel preview:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -478,7 +418,7 @@ export const createOrder = async (orderData) => {
 export const createEventOrder = async (orderData) => {
   try {
     console.log("📤 Creating event order with data:", JSON.stringify(orderData, null, 2));
-    const response = await ListingsAPI.post("/event-orders", orderData);
+    const response = await ListingsAPI.post("/orders/event", orderData);
     console.log("✅ Event order created successfully:", response.data);
     return response.data;
   } catch (error) {
@@ -620,16 +560,67 @@ export const getEventOrderDetails = async (orderId) => {
     const orderIdNum = Number(orderId);
     const orderIdStr = (!isNaN(orderIdNum) && orderIdNum > 0) ? String(orderIdNum) : String(orderId);
     
-    const response = await ListingsAPI.get(`/orders/${orderIdStr}/event-details`);
+    // Prefer Swagger endpoint: GET /api/orders/{orderId}/event-details
+    // Keep fallback to legacy endpoint for compatibility.
+    let response;
+    try {
+      response = await ListingsAPI.get(`/orders/${orderIdStr}/event-details`);
+    } catch (err) {
+      response = await ListingsAPI.get(`/event-orders/${orderIdStr}`);
+    }
+
     const payload = response.data;
     console.log("✅ Event order details fetched (raw):", payload);
-    
+
+    // Normalize common wrappers
     if (payload && typeof payload === "object") {
       return payload;
     }
     return payload;
   } catch (error) {
     console.error("❌ Error fetching event order details:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEventDetails = async (eventId) => {
+  try {
+    // Validate parameter
+    if (!eventId) {
+      throw new Error("eventId is required");
+    }
+    
+    // Ensure eventId is a string (URL parameter)
+    const eventIdNum = Number(eventId);
+    const eventIdStr = (!isNaN(eventIdNum) && eventIdNum > 0) ? String(eventIdNum) : String(eventId);
+    
+    // Prefer Swagger "public event details" route: GET /api/events/{id}
+    // Keep fallback to legacy public suffix route for compatibility.
+    const primaryUrl = `/events/${eventIdStr}`;
+    const fallbackUrl = `/events/${eventIdStr}/public`;
+
+    let response;
+    try {
+      response = await ListingsAPI.get(primaryUrl);
+    } catch (err) {
+      response = await ListingsAPI.get(fallbackUrl);
+    }
+    const payload = response.data;
+    console.log("✅ Event details fetched (raw):", payload);
+
+    // Backend may wrap the event in an envelope shape like { event: {...} }
+    // Unwrap so callers receive the actual event object.
+    const unwrapped =
+      (payload && typeof payload === "object" &&
+        (payload.event || payload.data?.event || payload.data || payload.result)) ||
+      payload;
+
+    if (unwrapped && typeof unwrapped === "object" && unwrapped.event) {
+      return unwrapped.event;
+    }
+    return unwrapped;
+  } catch (error) {
+    console.error("❌ Error fetching event details:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -803,17 +794,17 @@ export const getHomepageHero = async () => {
   }
 };
 
-// ✅ Get homepage sections
-// @param {number|null} businessInterestId - Optional. 1 = Experiences, 2 = Events. Omit for unfiltered.
-export const getHomepageSections = async (businessInterestId = null) => {
+// ✅ Get homepage sections (requires businessInterestId: 1=Experience, 2=Events)
+export const getHomepageSections = async (businessInterestId) => {
   try {
-    const url =
-      businessInterestId != null && businessInterestId !== undefined
-        ? `/public/homepage-sections?businessInterestId=${encodeURIComponent(Number(businessInterestId))}`
-        : "/public/homepage-sections";
-    const response = await ListingsAPI.get(url);
+    if (!businessInterestId) {
+      throw new Error("businessInterestId is required");
+    }
+    const response = await ListingsAPI.get("/public/homepage-sections", {
+      params: { businessInterestId }
+    });
     const payload = response.data;
-    console.log("✅ Homepage sections fetched (raw):", payload);
+    console.log("✅ Homepage sections fetched (businessInterestId=" + businessInterestId + "):", payload);
 
     if (Array.isArray(payload)) return payload;
     if (payload && typeof payload === "object") {
