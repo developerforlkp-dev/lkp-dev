@@ -51,7 +51,7 @@ const formatImageUrl = (url) => {
 
 const getEntityId = (listing) => {
   if (!listing || typeof listing !== "object") return undefined;
-  return listing.listingId ?? listing.listing_id ?? listing.eventId ?? listing.event_id ?? listing.stayId ?? listing.stay_id ?? listing.foodMenuId ?? listing.placeId ?? listing.id ?? listing._id;
+  return listing.listingId ?? listing.listing_id ?? listing.eventId ?? listing.event_id ?? listing.stayId ?? listing.stay_id ?? listing.id ?? listing._id;
 };
 
 const getEntityImageUrl = (listing) => {
@@ -89,14 +89,8 @@ const getEntityUrl = (listing, id) => {
   if (!listing || typeof listing !== "object") return `/experience-product?id=${id}`;
   const isEvent = listing.eventId !== undefined || listing.event_id !== undefined;
   const isStay = listing.stayId !== undefined || listing.stay_id !== undefined;
-  const isFood = listing.foodMenuId !== undefined;
-  const isPlace = listing.placeId !== undefined;
-
   if (isEvent) return `/event?id=${id}`;
-  if (isStay) return `/stay-details?id=${id}`;
-  if (isFood) return `/food-details?id=${id}`;
-  if (isPlace) return `/place-details?id=${id}`;
-
+  if (isStay) return `/stays?id=${id}`;
   return `/experience-product?id=${id}`;
 };
 
@@ -104,7 +98,7 @@ const getEntityUrl = (listing, id) => {
 const transformListingToCard = (listing) => {
   const id = getEntityId(listing);
   const coverPhotoUrl = formatImageUrl(getEntityImageUrl(listing));
-
+  
   const price = listing.individualPrice ?? listing.startingPrice ?? 0;
   const hasPrice = price > 0;
   const priceDisplay = hasPrice ? `₹${price.toLocaleString("en-IN")}` : null;
@@ -112,7 +106,7 @@ const transformListingToCard = (listing) => {
   return {
     id: `listing-${id}`,
     listingId: id,
-    title: listing.title || listing.propertyName || listing.menuName || listing.placeName || "Listing",
+    title: listing.title || listing.propertyName || "Listing",
     src: coverPhotoUrl,
     srcSet: coverPhotoUrl,
     url: getEntityUrl(listing, id),
@@ -142,7 +136,7 @@ const transformListingToBrowse = (listing) => {
   return {
     id: `listing-${id}`,
     listingId: id,
-    title: listing.title || listing.propertyName || listing.menuName || listing.placeName || "Listing",
+    title: listing.title || listing.propertyName || "Listing",
     src: coverPhotoUrl,
     srcSet: coverPhotoUrl,
     url: getEntityUrl(listing, id),
@@ -160,7 +154,7 @@ const transformListingToDestination = (listing) => {
   return {
     id: `listing-${id}`,
     listingId: id,
-    title: listing.title || listing.propertyName || listing.menuName || listing.placeName || "Destination",
+    title: listing.title || listing.propertyName || "Destination",
     location: null, // Remove location/address from destination cards
     src: coverPhotoUrl,
     srcSet: coverPhotoUrl,
@@ -176,7 +170,7 @@ const transformListingToDestinationHorizontal = (listing) => {
   return {
     id: `listing-${id}`,
     listingId: id,
-    title: listing.title || listing.propertyName || listing.menuName || listing.placeName || "Destination",
+    title: listing.title || listing.propertyName || "Destination",
     content: "", // Not displayed - matches other card styles
     src: coverPhotoUrl,
     srcSet: coverPhotoUrl,
