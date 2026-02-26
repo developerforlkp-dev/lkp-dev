@@ -20,11 +20,9 @@ const filterOptions = [
 
 /// Business Interest IDs
 // Experience → 1, Events → 2, Stays → 4
-// Experience → 1, Events → 2, Stays → 4
 const getBusinessInterestId = (filterId) => {
   if (filterId === "experience") return 1;
   if (filterId === "events") return 2;
-  if (filterId === "stays") return 4;
   if (filterId === "stays") return 4;
   return null;
 };
@@ -53,9 +51,6 @@ const FleetHome = () => {
   // Determine if calendar should be shown (for Experience and Events)
   const showCalendar = activeFilter === "experience" || activeFilter === "events" || activeFilter === "stays";
 
-  // Format selected date for display
-  const formattedDate = selectedDate
-    ? moment(selectedDate).format("MMM DD, YYYY")
   const formattedDate = selectedDate
     ? moment(selectedDate).format("MMM DD, YYYY")
     : "Select date";
@@ -192,7 +187,6 @@ const FleetHome = () => {
     const businessInterestId = getBusinessInterestId(activeFilter) ?? (activeFilter === "experience" ? 1 : null);
     if (businessInterestId == null) {
       // Any other filter that doesn't have a dedicated fetch block or businessInterestId
-      // Any other filter that doesn't have a dedicated fetch block or businessInterestId
       return;
     }
 
@@ -283,11 +277,6 @@ const FleetHome = () => {
           err.message?.includes("504") ||
           err.code === "ECONNREFUSED";
 
-        const isConnectionError = err.message?.includes("proxy") ||
-          err.message?.includes("ECONNREFUSED") ||
-          err.message?.includes("504") ||
-          err.code === "ECONNREFUSED";
-
         if (isConnectionError) {
           setError("Backend server is not running. Please start the backend server on port 5000.");
         } else {
@@ -323,13 +312,11 @@ const FleetHome = () => {
               <>
                 <div className={styles.searchDivider}></div>
                 <div
-                <div
                   className={styles.searchField}
                   ref={dateItemRef}
                   style={{ position: "relative" }}
                 >
                   <Icon name="calendar" size="16" />
-                  <div
                   <div
                     className={styles.searchFieldContent}
                     onClick={() => setShowDatePicker(!showDatePicker)}
@@ -352,13 +339,11 @@ const FleetHome = () => {
             )}
             <div className={styles.searchDivider}></div>
             <div
-            <div
               className={styles.searchField}
               ref={guestItemRef}
               style={{ position: "relative" }}
             >
               <Icon name="user" size="16" />
-              <div
               <div
                 className={styles.searchFieldContent}
                 onClick={() => setShowGuestPicker(!showGuestPicker)}
