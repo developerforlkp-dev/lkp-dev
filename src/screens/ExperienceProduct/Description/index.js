@@ -1071,6 +1071,7 @@ const Description = ({ classSection, listing, hostData }) => {
       null;
 
     const bookingData = {
+      stayId: isStay ? (listing?.stayId || listing?.stay_id || listing?.id) : null,
       listingId: listing?.listingId || listing?.id,
       listingTitle: listing?.title || listing?.name || listing?.listingTitle || "",
       listingImage: getFirstListingImage(),
