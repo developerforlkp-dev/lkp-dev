@@ -223,8 +223,10 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       apiBooking?.eventTitle ||
       apiBooking?.eventDetails?.eventTitle ||
       "Event Booking")
-    : (stayData?.title ||
+    : (stayData?.propertyName ||
+      stayData?.title ||
       stayData?.name ||
+      apiBooking?.stayOrderRooms?.[0]?.propertyName ||
       listingData?.title ||
       apiBooking?.listingTitle ||
       apiBooking?.stayTitle ||
@@ -425,12 +427,28 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       asNonEmptyString(apiBooking?.coverPhotoUrl) ||
       "/images/content/card-pic-13.jpg";
   } else {
+    let stayCoverPhoto = null;
+    if (stayData) {
+      stayCoverPhoto =
+        stayData.coverImageUrl ||
+        stayData.coverPhotoUrl ||
+        (Array.isArray(stayData.listingMedia) && stayData.listingMedia[0]
+          ? (stayData.listingMedia[0].url || stayData.listingMedia[0].blobName || stayData.listingMedia[0].fileUrl)
+          : null) ||
+        (Array.isArray(stayData.media) && stayData.media[0]
+          ? (stayData.media[0].url || stayData.media[0].blobName || stayData.media[0].fileUrl)
+          : null) ||
+        (Array.isArray(stayData.images) ? stayData.images[0] : null) ||
+        (Array.isArray(stayData.propertyImages) ? stayData.propertyImages[0] : null);
+    }
+
     coverPhotoUrl = listingData?.coverPhotoUrl ||
-      stayData?.coverPhotoUrl ||
+      stayCoverPhoto ||
       apiBooking?.listingCoverPhoto ||
       apiBooking?.coverPhotoUrl ||
       "/images/content/card-pic-13.jpg";
   }
+
 
   // Format the image URL to ensure it's a valid full URL
   coverPhotoUrl = formatImageUrl(coverPhotoUrl);
@@ -831,10 +849,40 @@ const ViewDetails = () => {
               coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || "/images/content/card-pic-13.jpg",
             };
           }
-        } else if (!isEventOrder) {
+        }
+        // Fetch stay data if stayId is available
+        let stayData = null;
+        const resolvedStayId = (() => {
+          if (apiBookingData?.stayId != null) return apiBookingData.stayId;
+          const rooms = orderResponse?.stayOrderRooms || apiBookingData?.stayOrderRooms || apiBookingData?.rooms || apiBookingData?.room || [];
+          if (Array.isArray(rooms) && rooms.length > 0) {
+            const id = rooms[0]?.stayId ?? rooms[0]?.stay_id ?? rooms[0]?.propertyId;
+            if (id != null) return id;
+          }
+          return apiBookingData?.propertyId ?? apiBookingData?.stay_id ?? null;
+        })();
+
+        if (resolvedStayId != null) {
+          try {
+            stayData = await getStayDetails(resolvedStayId);
+            console.log(`✅ Fetched stay ${resolvedStayId} for order details`);
+          } catch (error) {
+            console.warn(`⚠️ Failed to fetch stay data for order ${apiBookingData.orderId}:`, error.message);
+          }
+        }
+
+        const isStayOrder = apiBookingData?.businessInterestCode === "STAYS" || resolvedStayId != null;
+
+        if (!isEventOrder) {
           // Create listingData from order fields if no listingId
-          listingData = {
-            title: apiBookingData.listingTitle || apiBookingData.title || "Booking",
+          const fallbackRooms = orderResponse?.stayOrderRooms || apiBookingData?.stayOrderRooms || [];
+          const categoryName = isStayOrder ? "Stays" : "Experience";
+          const title = isStayOrder
+            ? (stayData?.propertyName || stayData?.name || fallbackRooms[0]?.propertyName || "Stay Booking")
+            : (apiBookingData.listingTitle || apiBookingData.title || "Booking");
+
+          listingData = listingData || {
+            title: title,
             description: apiBookingData.listingDescription || apiBookingData.description || "",
             location: apiBookingData.listingLocation || apiBookingData.location || "",
             address: apiBookingData.listingAddress || apiBookingData.address || "",
@@ -842,24 +890,14 @@ const ViewDetails = () => {
             longitude: apiBookingData.listingLongitude ? parseFloat(apiBookingData.listingLongitude) : null,
             meetingLatitude: apiBookingData.listingLatitude ? parseFloat(apiBookingData.listingLatitude) : null,
             meetingLongitude: apiBookingData.listingLongitude ? parseFloat(apiBookingData.listingLongitude) : null,
-            category: apiBookingData.listingCategory || apiBookingData.category || "Experience",
-            categoryName: apiBookingData.listingCategory || apiBookingData.category || "Experience",
+            category: apiBookingData.listingCategory || apiBookingData.category || categoryName,
+            categoryName: apiBookingData.listingCategory || apiBookingData.category || categoryName,
             maxGuests: apiBookingData.listingMaxGuests || apiBookingData.maxGuests || null,
             status: apiBookingData.listingStatus || apiBookingData.status || "",
-            coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || "/images/content/card-pic-13.jpg",
+            coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || stayData?.coverImageUrl || "/images/content/card-pic-13.jpg",
           };
         }
 
-        // Fetch stay data if stayId is available
-        let stayData = null;
-        if (apiBookingData.stayId) {
-          try {
-            stayData = await getStayDetails(apiBookingData.stayId);
-            console.log(`✅ Fetched stay ${apiBookingData.stayId} for order details`);
-          } catch (error) {
-            console.warn(`⚠️ Failed to fetch stay data for order ${apiBookingData.orderId}:`, error.message);
-          }
-        }
 
         console.log("✅ Using data:", isEventOrder ? "eventData" : (listingData ? "listingData from API" : "listingData from order fields"));
 

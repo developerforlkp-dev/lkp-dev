@@ -59,8 +59,8 @@ const transformMultipleBookings = async (bookingsArray) => {
       .map((booking) => {
         // Try top-level stayId first
         if (booking?.stayId != null) return booking.stayId;
-        // Try rooms array (each room might have stayId)
-        const rooms = booking?.rooms || booking?.room || [];
+        // Try rooms array (each room might have stayId) - note it's `stayOrderRooms` in API
+        const rooms = booking?.stayOrderRooms || booking?.rooms || booking?.room || [];
         if (Array.isArray(rooms) && rooms.length > 0) {
           const roomStayId = rooms[0]?.stayId ?? rooms[0]?.stay_id ?? rooms[0]?.propertyId;
           if (roomStayId != null) return roomStayId;
@@ -128,7 +128,7 @@ const transformMultipleBookings = async (bookingsArray) => {
     // Resolve stayId using same multi-path logic as uniqueStayIds extraction above
     const resolvedStayId = (() => {
       if (apiBooking?.stayId != null) return apiBooking.stayId;
-      const rooms = apiBooking?.rooms || apiBooking?.room || [];
+      const rooms = apiBooking?.stayOrderRooms || apiBooking?.rooms || apiBooking?.room || [];
       if (Array.isArray(rooms) && rooms.length > 0) {
         const id = rooms[0]?.stayId ?? rooms[0]?.stay_id ?? rooms[0]?.propertyId;
         if (id != null) return id;
