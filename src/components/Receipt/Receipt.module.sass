@@ -253,9 +253,14 @@
 
 .guestCentered
     justify-content: center
+    +m
+        justify-content: flex-start
     .box
         flex: 0 1 auto
         text-align: center
+        +m
+            flex: 1
+            text-align: left
 
 .icon
     display: flex
