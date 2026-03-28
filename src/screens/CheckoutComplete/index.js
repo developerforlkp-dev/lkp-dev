@@ -153,26 +153,20 @@ const CheckoutComplete = () => {
   // Format amount - amounts from Razorpay (via pendingPayment/actualPaidAmount) are in paise
   // so we always divide by 100 for those. For values that might already be in rupees
   // (e.g. from receipt total strings), we keep the >100000 heuristic as a guard.
+  // Format amount - amounts from Razorpay (via pendingPayment/actualPaidAmount) are in paise
+  // so we always divide by 100 for those. For values that might already be in rupees
+  // (e.g. from receipt total strings), we keep the >100000 heuristic as a guard.
   const formatAmount = (amount, currency = "INR", alreadyInPaise = false) => {
-    // Format amount - amounts from Razorpay (via pendingPayment/actualPaidAmount) are in paise
-    // so we always divide by 100 for those. For values that might already be in rupees
-    // (e.g. from receipt total strings), we keep the >100000 heuristic as a guard.
-    const formatAmount = (amount, currency = "INR", alreadyInPaise = false) => {
-      if (amount === undefined || amount === null || isNaN(amount)) return null;
-      const numAmount = typeof amount === 'number' ? amount : parseFloat(amount);
-      if (isNaN(numAmount) || numAmount <= 0) return null;
-      // Razorpay amounts are always in paise. Anything over 100 that looks like paise:
-      // treat amounts > 100 and they came from Razorpay as paise → divide by 100
-      const amountInRupees = (alreadyInPaise || numAmount > 100000)
-        ? (numAmount / 100).toFixed(2)
-        : numAmount.toFixed(2);
-      // Razorpay amounts are always in paise. Anything over 100 that looks like paise:
-      // treat amounts > 100 and they came from Razorpay as paise → divide by 100
-      const amountInRupees = (alreadyInPaise || numAmount > 100000)
-        ? (numAmount / 100).toFixed(2)
-        : numAmount.toFixed(2);
-      return `${currency} ${amountInRupees}`;
-    };
+    if (amount === undefined || amount === null || isNaN(amount)) return null;
+    const numAmount = typeof amount === 'number' ? amount : parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) return null;
+    // Razorpay amounts are always in paise. Anything over 100 that looks like paise:
+    // treat amounts > 100 and they came from Razorpay as paise → divide by 100
+    const amountInRupees = (alreadyInPaise || numAmount > 100000)
+      ? (numAmount / 100).toFixed(2)
+      : numAmount.toFixed(2);
+    return `${currency} ${amountInRupees}`;
+  };
 
 
 
@@ -206,25 +200,19 @@ const CheckoutComplete = () => {
       }
 
       // Priority 1: Use paidAmount from paymentData — this is in paise from Razorpay
-      // Priority 1: Use paidAmount from paymentData — this is in paise from Razorpay
       if (paymentData?.paidAmount !== undefined && paymentData.paidAmount !== null) {
-        const formatted = formatAmount(paymentData.paidAmount, paymentData.currency || "INR", true);
         const formatted = formatAmount(paymentData.paidAmount, paymentData.currency || "INR", true);
         if (formatted) {
           amountPaid = formatted;
-          console.log("✅ Using paidAmount from paymentData (paise):", paymentData.paidAmount, "→", formatted);
           console.log("✅ Using paidAmount from paymentData (paise):", paymentData.paidAmount, "→", formatted);
         }
       }
 
       // Priority 2: Check for finalAmount in paymentData (also in paise)
-      // Priority 2: Check for finalAmount in paymentData (also in paise)
       if (amountPaid === "—" && paymentData?.finalAmount !== undefined && paymentData.finalAmount !== null) {
-        const formatted = formatAmount(paymentData.finalAmount, paymentData.currency || "INR", true);
         const formatted = formatAmount(paymentData.finalAmount, paymentData.currency || "INR", true);
         if (formatted) {
           amountPaid = formatted;
-          console.log("✅ Using finalAmount from paymentData (paise):", paymentData.finalAmount, "→", formatted);
           console.log("✅ Using finalAmount from paymentData (paise):", paymentData.finalAmount, "→", formatted);
         }
       }
@@ -417,9 +405,6 @@ const CheckoutComplete = () => {
             content: guestsContent,
           },
           ...(booking?.roomType ? [{ title: "Room type", content: booking.roomType }] : []),
-          ...(booking?.roomsBooked && booking.roomsBooked > 0
-            ? [{ title: "Rooms booked", content: `${booking.roomsBooked} room${booking.roomsBooked > 1 ? "s" : ""}` }]
-            : []),
           ...(booking?.roomsBooked && booking.roomsBooked > 0
             ? [{ title: "Rooms booked", content: `${booking.roomsBooked} room${booking.roomsBooked > 1 ? "s" : ""}` }]
             : []),
