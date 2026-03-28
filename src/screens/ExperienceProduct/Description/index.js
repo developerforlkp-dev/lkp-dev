@@ -259,11 +259,6 @@ const Description = ({ classSection, listing, hostData }) => {
   }
 };
 
-
-    console.log("📦 Creating stay order (updated schema):", orderData);
-    const res = await createStayOrder(orderData);
-    console.log("✅ Stay order created:", res);
-
 // Helper function to format time range with cleaner display
 const formatTimeRange = (startTime, endTime) => {
   if (!startTime || !endTime) return "";
@@ -323,7 +318,6 @@ useEffect(() => {
   setStayAvailabilityResult(null);
   setStaySelectedRoomType("");
   setShowRoomTypePicker(false);
-}, [isStay, selectedDate, selectedEndDate]);
 }, [isStay, selectedDate, selectedEndDate]);
 
 // Helper function to get guest count (supports both old and new format)
@@ -427,57 +421,6 @@ const stayRoomTypeOptions = useMemo(() => {
     })
     .filter(Boolean);
 }, [stayAvailabilityResult, listing, guests]);
-
-  if (!Array.isArray(candidates) || candidates.length === 0) return [];
-
-  const seenIds = new Set();
-  return candidates
-    .map((x) => {
-      if (typeof x === "string") {
-        if (seenIds.has(x)) return null;
-        seenIds.add(x);
-        return { value: x, label: x, raw: x };
-      }
-      const id =
-        x?.roomId ??
-        x?.room_id ??
-        x?.roomTypeId ??
-        x?.room_type_id ??
-        x?.id ??
-        x?.code ??
-        x?.name ??
-        x?.title;
-
-      if (!id || seenIds.has(String(id))) return null;
-      seenIds.add(String(id));
-
-      // Show ALL rooms regardless of guest count.
-      // Extra-room logic / messaging handles cases where guests > room capacity.
-      // Show ALL rooms regardless of guest count.
-      // Extra-room logic / messaging handles cases where guests > room capacity.
-      const maxRoomGuests = x?.maxGuests ?? x?.max_guests ?? x?.capacity ?? x?.maxAdults ?? 0;
-
-      const labelBase =
-        x?.roomName ??
-        x?.room_name ??
-        x?.roomTypeName ??
-        x?.room_type_name ??
-        x?.name ??
-        x?.title ??
-        String(id ?? "Room");
-
-      const availableRooms =
-        x?.availableRooms ?? x?.available_rooms ?? x?.availability ?? x?.available ?? null;
-
-      let label = String(labelBase);
-      if (typeof availableRooms === "number") {
-        label += ` (${availableRooms} available)`;
-      } else if (maxRoomGuests > 0) {
-        label += ` (Max ${maxRoomGuests})`;
-      }
-
-
-
 const guestCountText = useMemo(() => {
   if (!isStay && !hasSelectedGuests) return "Add guests";
   const total = getGuestCount(guests);
@@ -740,14 +683,7 @@ const items = isStay
     {
       title: selectedDate ? selectedDate.format("MMM DD, YYYY") : formattedDefaultDate,
       category: "Select date",
-    {
-      title: selectedDate ? selectedDate.format("MMM DD, YYYY") : formattedDefaultDate,
-      category: "Select date",
       icon: "calendar",
-    },
-    {
-      title: selectedTimeSlotDisplay || "Select time",
-      category: "Time slot",
     },
     {
       title: selectedTimeSlotDisplay || "Select time",
@@ -757,13 +693,7 @@ const items = isStay
     {
       title: guestCountText,
       category: "Guest",
-    },
-    {
-      title: guestCountText,
-      category: "Guest",
       icon: "user",
-    },
-  ];
     },
   ];
 
@@ -851,20 +781,7 @@ const lowestRoomPrice = useMemo(() => {
         minB2cMealPrice = val;
       }
     });
-      if (!isNaN(val) && val > 0 && val < minB2cMealPrice) {
-        minB2cMealPrice = val;
-      }
-    });
 
-    // 3. General b2cPrice (never b2bPrice)
-    const generalB2cPrices = [room.b2cPrice, room.b2c_price, room.price, room.amount];
-    generalB2cPrices.forEach((p) => {
-      const val = parseFloat(p);
-      if (!isNaN(val) && val > 0 && val < minGeneralB2cPrice) {
-        minGeneralB2cPrice = val;
-      }
-    });
-  });
     // 3. General b2cPrice (never b2bPrice)
     const generalB2cPrices = [room.b2cPrice, room.b2c_price, room.price, room.amount];
     generalB2cPrices.forEach((p) => {
@@ -876,9 +793,7 @@ const lowestRoomPrice = useMemo(() => {
   });
 
   const finalPrice = minB2cMealPrice !== Infinity ? minB2cMealPrice : (minGeneralB2cPrice !== Infinity ? minGeneralB2cPrice : null);
-  const finalPrice = minB2cMealPrice !== Infinity ? minB2cMealPrice : (minGeneralB2cPrice !== Infinity ? minGeneralB2cPrice : null);
 
-  if (finalPrice !== null || rooms.length > 0) {
   if (finalPrice !== null || rooms.length > 0) {
       console.log(`📊 API Pricing Debug [Listing: ${listing?.id || listing?.stayId || 'unknown'}]:`, {
         isStay,
@@ -1312,7 +1227,6 @@ const lowestRoomPrice = useMemo(() => {
       checkInDate: isStay && selectedDate ? selectedDate.format("MMM DD, YYYY") : null,
       checkOutDate: isStay && selectedEndDate ? selectedEndDate.format("MMM DD, YYYY") : null,
       roomType: selectedRoomLabel || null,
-      roomsBooked: isStay && !isPropertyBased ? stayRoomsNeeded : null,
       roomsBooked: isStay && !isPropertyBased ? stayRoomsNeeded : null,
       mealPlan: staySelectedRoomType ? (mealPlanLabels[stayMealPlanCode] || stayMealPlanCode) : null,
       timestamp: new Date().toISOString(),
@@ -2568,7 +2482,6 @@ const lowestRoomPrice = useMemo(() => {
     const currency = listing?.stay?.currency || listing?.currency || "INR";
     return price > 0 ? `${currency} ${price.toFixed(2)}` : "";
   }, [listing, isStay, isPropertyBased, slotsData, lowestRoomPrice]);
-  }, [listing, isStay, isPropertyBased, slotsData, lowestRoomPrice]);
 
 const displayTime = isStay ? "night" : "person";
 
@@ -2826,18 +2739,14 @@ return (
                 <div style={{ color: "#FF6A55", marginTop: 12, fontSize: 13, fontWeight: "500", textAlign: "center" }}>
                   This slot is fully booked. Please select another date or time.
                 </div>
-                {isFullyBooked && (
-                  <div style={{ color: "#FF6A55", marginTop: 12, fontSize: 13, fontWeight: "500", textAlign: "center" }}>
-                    This slot is fully booked. Please select another date or time.
-                  </div>
-                )}
-                {!isFullyBooked && selectedDate && selectedTimeSlot && selectedDateAvailability && getGuestCount(guests) > (selectedDateAvailability.available_seats ?? 999) && (
-                  <div style={{ color: "#FF6A55", marginTop: 12, fontSize: 13, fontWeight: "500", textAlign: "center" }}>
-                    Only {selectedDateAvailability.available_seats} seat(s) available for this slot.
-                  </div>
-                )}
+              )}
+              {!isFullyBooked && selectedDate && selectedTimeSlot && selectedDateAvailability && getGuestCount(guests) > (selectedDateAvailability.available_seats ?? 999) && (
+                <div style={{ color: "#FF6A55", marginTop: 12, fontSize: 13, fontWeight: "500", textAlign: "center" }}>
+                  Only {selectedDateAvailability.available_seats} seat(s) available for this slot.
+                </div>
+              )}
 
-                <div className={styles.table}>
+              <div className={styles.table}>
                   {/* For room-based stays: hide receipt until a room type is chosen.
                       For property-based stays: hide until dates are selected.
                       For experiences/other: always show when receipt has items. */}
