@@ -32,6 +32,15 @@ const Event = () => {
         return () => document.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Add a marker class to <body> while this page is mounted so
+    // the eventflow CSS rules can be scoped to this page only.
+    useEffect(() => {
+        document.body.classList.add('eventflow-theme');
+        return () => {
+            document.body.classList.remove('eventflow-theme');
+        };
+    }, []);
+
     useEffect(() => {
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }, [location.pathname, location.search]);
