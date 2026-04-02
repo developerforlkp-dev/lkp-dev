@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '../../assets/css/eventflow.css';
 import { useLocation } from 'react-router-dom';
 import BackToTop from '../../components/elements/BackToTop';
 import Header from '../../components/Layout/Header';
