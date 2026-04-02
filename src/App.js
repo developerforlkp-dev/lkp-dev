@@ -40,7 +40,7 @@ import EventProduct from "./screens/EventProduct";
 import EventFlowHome from "./eventFlowTheme/pages/home";
 import EventDetailsPage from "./eventFlowTheme/pages/event-details";
 import StayProduct from "./screens/StayProduct";
-import StayDetails from "./screens/StayDetails";
+import StayDetails from "./screens/stayDetails/index";
 import FoodDetails from "./screens/FoodDetails";
 import PlaceDetails from "./screens/PlaceDetails";
 
@@ -369,7 +369,7 @@ function App() {
             exact
             path="/stay-details"
             render={() => (
-              <Page separatorHeader>
+              <Page separatorHeader fooferHide>
                 <StayDetails />
               </Page>
             )}
