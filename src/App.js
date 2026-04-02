@@ -352,9 +352,7 @@ function App() {
           <Route
             exact
             path="/event-details"
-            render={() => (
-                <EventDetailsPage />
-            )}
+            render={() => <EventDetailsPage />}
           />
           <Route
             exact
