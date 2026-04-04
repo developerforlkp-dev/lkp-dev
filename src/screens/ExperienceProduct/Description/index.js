@@ -50,6 +50,41 @@ const Description = ({ classSection, listing, hostData }) => {
     return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
   };
 
+  const findMatchingGroupPrice = (groupPricingRules, guestCount) => {
+    if (!Array.isArray(groupPricingRules) || guestCount < 1) return null;
+
+    const matchingTier = groupPricingRules.find((tier) => {
+      const minGuests = Number(tier?.group_count_from ?? tier?.groupCountFrom ?? 0);
+      const maxGuests = Number(tier?.group_count_upto ?? tier?.groupCountUpto ?? Infinity);
+      return guestCount >= minGuests && guestCount <= maxGuests;
+    });
+
+    const tierPrice = matchingTier?.price_per_person ?? matchingTier?.pricePerPerson;
+    const parsedTierPrice = Number(tierPrice);
+    return Number.isFinite(parsedTierPrice) ? parsedTierPrice : null;
+  };
+
+  const getEffectiveExperiencePricePerPerson = (guestCount) => {
+    const basePriceCandidates = [
+      selectedDateAvailability?.price_per_person,
+      selectedTimeSlotData?.pricePerPerson,
+      listing?.timeSlots?.[0]?.pricePerPerson,
+    ];
+
+    const matchedGroupPrice = findMatchingGroupPrice(
+      selectedDateAvailability?.group_booking_pricing || selectedTimeSlotData?.groupBookingPricing,
+      guestCount
+    );
+
+    if (matchedGroupPrice !== null) return matchedGroupPrice;
+
+    const basePrice = basePriceCandidates
+      .map((candidate) => Number(candidate))
+      .find((candidate) => Number.isFinite(candidate) && candidate > 0);
+
+    return basePrice ?? null;
+  };
+
   const handleCheckStayAvailability = async () => {
     try {
       if (!isStay || isPropertyBased) return;
@@ -888,26 +923,7 @@ const lowestRoomPrice = useMemo(() => {
 
     // Total guests drive slot capacity; billable guests drive experience pricing.
     // Use availability data if available, then selected slot, then fallback to listing data
-    let pricePerPerson = selectedDateAvailability?.price_per_person
-      ? parseFloat(selectedDateAvailability.price_per_person)
-      : (selectedTimeSlotData?.pricePerPerson
-        ? parseFloat(selectedTimeSlotData.pricePerPerson)
-        : (listing?.timeSlots?.[0]?.pricePerPerson
-          ? parseFloat(listing.timeSlots[0].pricePerPerson)
-          : null));
-
-    // Handle group pricing: override if guestCount falls in a defined range
-    const groupPricing = selectedDateAvailability?.group_booking_pricing ||
-      selectedTimeSlotData?.groupBookingPricing;
-    if (groupPricing && Array.isArray(groupPricing) && groupPricing.length > 0) {
-      const match = groupPricing.find(p =>
-        guestCount >= (p.group_count_from || p.groupCountFrom || 0) &&
-        guestCount <= (p.group_count_upto || p.groupCountUpto || Infinity)
-      );
-      if (match && (match.price_per_person || match.pricePerPerson)) {
-        pricePerPerson = parseFloat(match.price_per_person || match.pricePerPerson);
-      }
-    }
+    const pricePerPerson = getEffectiveExperiencePricePerPerson(guestCount);
 
     // For stays: calculate actual nights between check-in and check-out
     const nightsCount = (isStay && selectedDate && selectedEndDate)
@@ -1470,25 +1486,7 @@ const lowestRoomPrice = useMemo(() => {
 
       // Calculate base price amount
       const guestCountForPricing = billableGuests;
-      let pricePerPerson = selectedDateAvailability?.price_per_person
-        ? parseFloat(selectedDateAvailability.price_per_person)
-        : (listing?.timeSlots?.[0]?.pricePerPerson
-          ? parseFloat(listing.timeSlots[0].pricePerPerson)
-          : null);
-
-      // Re-apply Group Pricing match logic here
-      const groupPricingRules = selectedDateAvailability?.group_booking_pricing ||
-        selectedTimeSlotData?.groupBookingPricing;
-      if (groupPricingRules && Array.isArray(groupPricingRules) && groupPricingRules.length > 0) {
-        const totalGuests = getGuestCount(guests);
-        const match = groupPricingRules.find(p =>
-          totalGuests >= (p.group_count_from || p.groupCountFrom || 0) &&
-          totalGuests <= (p.group_count_upto || p.groupCountUpto || Infinity)
-        );
-        if (match && (match.price_per_person || match.pricePerPerson)) {
-          pricePerPerson = parseFloat(match.price_per_person || match.pricePerPerson);
-        }
-      }
+      const pricePerPerson = getEffectiveExperiencePricePerPerson(getGuestCount(guests));
 
       const pricePerNight = selectedDateAvailability?.b2b_rate
         ? parseFloat(selectedDateAvailability.b2b_rate)
@@ -1967,11 +1965,10 @@ const lowestRoomPrice = useMemo(() => {
 
     // Calculate base price amount
     const guestCount = billableGuests;
-    const pricePerPerson = selectedDateAvailability?.price_per_person
-      ? parseFloat(selectedDateAvailability.price_per_person)
-      : (listing?.timeSlots?.[0]?.pricePerPerson
-        ? parseFloat(listing.timeSlots[0].pricePerPerson)
-        : null);
+    const totalGuests = bookingData.guests ?
+      getGuestCount(bookingData.guests) :
+      getGuestCount(guests);
+    const pricePerPerson = getEffectiveExperiencePricePerPerson(totalGuests);
     const pricePerNight = selectedDateAvailability?.b2b_rate
       ? parseFloat(selectedDateAvailability.b2b_rate)
       : (listing?.timeSlots?.[0]?.b2bRate
@@ -2364,6 +2361,7 @@ const lowestRoomPrice = useMemo(() => {
             pricePerPerson: slot.pricing?.price_per_person,
             b2bRate: slot.pricing?.b2b_rate,
             corporateRate: slot.pricing?.corporate_rate,
+            groupBookingPricing: slot.group_booking_pricing || [],
             isActive: true, // Assume active if returned from API
           };
         });
@@ -2386,6 +2384,7 @@ const lowestRoomPrice = useMemo(() => {
                 end_time: slot.schedule?.end_time, // Format: HH:mm
                 price_per_person: slot.pricing?.price_per_person,
                 b2b_rate: slot.pricing?.b2b_rate,
+                group_booking_pricing: slot.group_booking_pricing || [],
                 slot_id: slot.slot_id,
                 slot_name: slot.slot_name,
               });
