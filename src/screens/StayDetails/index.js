@@ -60,6 +60,22 @@ const formatGuestLabel = (guests) => {
 };
 
 const formatDateForApi = (date) => (moment.isMoment(date) ? date.format("YYYY-MM-DD") : "");
+const parsePriceValue = (value) => Number(String(value || 0).replace(/,/g, "")) || 0;
+const formatCurrency = (value) => `Rs.${Number(value || 0).toLocaleString("en-IN")}`;
+const getTotalGuests = (guests) => (guests.adults || 0) + (guests.children || 0);
+const getNightCount = (checkInDate, checkOutDate) => {
+  if (!moment.isMoment(checkInDate) || !moment.isMoment(checkOutDate)) return 1;
+  return Math.max(checkOutDate.clone().startOf("day").diff(checkInDate.clone().startOf("day"), "days"), 1);
+};
+const getRoomCapacity = (room) => Math.max(
+  Number(
+    room?.maxGuests ||
+    room?.maxAdults ||
+    ((Number(room?.maxAdults || 0) || 0) + (Number(room?.maxChildren || 0) || 0)) ||
+    1
+  ),
+  1
+);
 
 const getCachedGuestDetails = () => {
   try {
@@ -152,7 +168,7 @@ const RoomCountPicker = ({ visible, maxRooms, value, onIncrement, onDecrement })
         }}
       >+</button>
       <span style={{ fontSize: 12, color: "#8993A7" }}>
-        room{value !== 1 ? "s" : ""}
+        room{value !== 1 ? "s" : ""} of {maxRooms}
       </span>
     </div>
   );
@@ -173,13 +189,20 @@ const BookingCard = ({
   isSubmitting,
   isRoomBased,
   selectedRoom,
-  onRoomsBookedChange,
+  displayPrice,
+  displaySuffix,
+  totalPrice,
+  numberOfNights,
+  totalGuests,
+  capacityMessage,
+  bookingError,
+  isBookingBlocked,
 }) => (
   <aside className={styles.sidebarCard}>
     <div className={styles.bookingHeader}>
       <div>
-        <span className={styles.priceValue}>Rs.{details.price}</span>
-        <span className={styles.priceSuffix}> / night</span>
+        <span className={styles.priceValue}>{displayPrice}</span>
+        <span className={styles.priceSuffix}>{displaySuffix}</span>
       </div>
       <div className={styles.ratingPill}>
         <Star size={14} fill="currentColor" />
@@ -194,11 +217,12 @@ const BookingCard = ({
           <DateSingle
             className={styles.datePicker}
             placeholder="Add date"
-            displayFormat="MMM DD, YYYY"
+            displayFormat="MMM DD"
             date={checkInDate}
             onDateChange={setCheckInDate}
             id="stay-details-check-in"
             plain
+            small
           />
           <CalendarDays size={14} className={styles.fieldIcon} />
         </div>
@@ -212,11 +236,12 @@ const BookingCard = ({
           <DateSingle
             className={styles.datePicker}
             placeholder="Add date"
-            displayFormat="MMM DD, YYYY"
+            displayFormat="MMM DD"
             date={checkOutDate}
             onDateChange={setCheckOutDate}
             id="stay-details-check-out"
             plain
+            small
           />
           <CalendarDays size={14} className={styles.fieldIcon} />
         </div>
@@ -246,15 +271,35 @@ const BookingCard = ({
       </div>
     </div>
 
+    {isRoomBased && selectedRoom ? (
+      <div className={styles.priceSummary}>
+        <div className={styles.priceSummaryRow}>
+          <span>
+            {formatCurrency(parsePriceValue(selectedRoom.price))} x {selectedRoom.roomsBooked} room{selectedRoom.roomsBooked > 1 ? "s" : ""}
+          </span>
+          <strong>{formatCurrency(parsePriceValue(selectedRoom.price) * selectedRoom.roomsBooked)}</strong>
+        </div>
+        <div className={styles.priceSummaryRow}>
+          <span>{numberOfNights} night{numberOfNights > 1 ? "s" : ""}</span>
+          <strong>{formatCurrency(totalPrice)}</strong>
+        </div>
+      </div>
+    ) : null}
+
+    {capacityMessage ? <p className={styles.infoText}>{capacityMessage}</p> : null}
+    {bookingError ? <p className={styles.errorText}>{bookingError}</p> : null}
+
     <button
       type="button"
       className={styles.availabilityButton}
       onClick={!isRoomBased ? onBookNow : (isRoomBased && selectedRoom ? onBookNow : onAvailability)}
-      disabled={isSubmitting}
+      disabled={isSubmitting || isBookingBlocked}
     >
       {isSubmitting ? "Processing..." : !isRoomBased ? "Book Now" : (isRoomBased && selectedRoom ? "Book Now" : "Check Availability")}
     </button>
-    <p className={styles.helperText}>You won't be charged yet</p>
+    <p className={styles.helperText}>
+      {isRoomBased && selectedRoom ? `${totalGuests} guest${totalGuests !== 1 ? "s" : ""} selected` : "You won't be charged yet"}
+    </p>
   </aside>
 );
 
@@ -284,8 +329,10 @@ const ContactCard = ({ manager }) => (
   </aside>
 );
 
-const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roomPickerOpen, setRoomPickerOpen }) => {
+const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roomPickerOpen }) => {
   const isSelected = selectedRoom?.roomId === room.roomId;
+  const roomCount = isSelected ? selectedRoom.roomsBooked : 1;
+  const maxRooms = Math.max(Number(room.availableRooms || 1), 1);
 
   return (
     <article className={styles.roomCard}>
@@ -333,10 +380,10 @@ const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roo
               <div className={styles.roomPickerWrap}>
                 <RoomCountPicker
                   visible={roomPickerOpen}
-                  maxRooms={Number(room.availableRooms || 1)}
-                  value={selectedRoom.roomsBooked}
-                  onSelect={(count) => onRoomsBookedChange(room.roomId, count)}
-                  onClose={() => setRoomPickerOpen(false)}
+                  maxRooms={maxRooms}
+                  value={roomCount}
+                  onIncrement={() => onRoomsBookedChange(room.roomId, roomCount + 1)}
+                  onDecrement={() => onRoomsBookedChange(room.roomId, roomCount - 1)}
                 />
               </div>
             )}
@@ -461,6 +508,54 @@ const StayDetailsPage = () => {
 
   const isRoomBased = details.bookingScope === "Room-Based";
   const history = useHistory();
+  const totalGuests = useMemo(() => getTotalGuests(guests), [guests]);
+  const numberOfNights = useMemo(() => getNightCount(checkInDate, checkOutDate), [checkInDate, checkOutDate]);
+  const selectedRoomPrice = useMemo(() => parsePriceValue(selectedRoom?.price), [selectedRoom]);
+  const roomCapacity = useMemo(() => getRoomCapacity(selectedRoom), [selectedRoom]);
+  const availableRoomCount = useMemo(() => Math.max(Number(selectedRoom?.availableRooms || 1), 1), [selectedRoom]);
+  const requiredRoomCount = useMemo(() => {
+    if (!isRoomBased || !selectedRoom) return 1;
+    return Math.max(Math.ceil(Math.max(totalGuests, 1) / roomCapacity), 1);
+  }, [isRoomBased, roomCapacity, selectedRoom, totalGuests]);
+  const hasInsufficientRooms = Boolean(isRoomBased && selectedRoom && requiredRoomCount > availableRoomCount);
+  const selectedRoomCount = selectedRoom?.roomsBooked || 1;
+  const bookingError = hasInsufficientRooms ? "No rooms available for selected guest count" : "";
+  const capacityMessage = useMemo(() => {
+    if (!isRoomBased || !selectedRoom) return "";
+    if (hasInsufficientRooms) {
+      return `This room fits ${roomCapacity} guest${roomCapacity > 1 ? "s" : ""} per room, but your group needs ${requiredRoomCount} rooms and only ${availableRoomCount} ${availableRoomCount === 1 ? "is" : "are"} available.`;
+    }
+    if (requiredRoomCount > 1) {
+      return `Guest count exceeds one-room capacity, so ${requiredRoomCount} rooms will be booked automatically.`;
+    }
+    return `This room fits up to ${roomCapacity} guest${roomCapacity > 1 ? "s" : ""} per room.`;
+  }, [availableRoomCount, hasInsufficientRooms, isRoomBased, requiredRoomCount, roomCapacity, selectedRoom]);
+  const totalPrice = useMemo(() => {
+    if (isRoomBased && selectedRoom) {
+      return selectedRoomPrice * selectedRoomCount * numberOfNights;
+    }
+
+    return parsePriceValue(details.price) * numberOfNights;
+  }, [details.price, isRoomBased, numberOfNights, selectedRoom, selectedRoomCount, selectedRoomPrice]);
+  const displayPrice = isRoomBased && selectedRoom
+    ? formatCurrency(totalPrice)
+    : formatCurrency(parsePriceValue(details.price));
+  const displaySuffix = isRoomBased && selectedRoom ? " total" : " / night";
+
+  useEffect(() => {
+    if (!isRoomBased || !selectedRoom) return;
+
+    setSelectedRoom((prev) => {
+      if (!prev) return prev;
+      const nextMinimum = Math.max(Math.ceil(Math.max(totalGuests, 1) / getRoomCapacity(prev)), 1);
+      const availableRooms = Math.max(Number(prev.availableRooms || 1), 1);
+      const currentRooms = Math.max(Number(prev.roomsBooked || 1), 1);
+      const nextRooms = Math.min(Math.max(currentRooms, nextMinimum), availableRooms);
+
+      if (nextRooms === currentRooms) return prev;
+      return { ...prev, roomsBooked: nextRooms };
+    });
+  }, [isRoomBased, selectedRoom, totalGuests]);
 
   useEffect(() => {
     let mounted = true;
@@ -539,13 +634,23 @@ const StayDetailsPage = () => {
   };
 
   const handleRoomsBookedChange = (roomId, roomsBooked) => {
-    setSelectedRoom((prev) => (prev && prev.roomId === roomId ? { ...prev, roomsBooked } : prev));
+    setSelectedRoom((prev) => {
+      if (!prev || prev.roomId !== roomId) return prev;
+      const maxRooms = Math.max(Number(prev.availableRooms || 1), 1);
+      const minimumRooms = Math.max(Math.ceil(Math.max(totalGuests, 1) / getRoomCapacity(prev)), 1);
+      const nextCount = Math.min(Math.max(Number(roomsBooked) || minimumRooms, minimumRooms), maxRooms);
+      return { ...prev, roomsBooked: nextCount };
+    });
   };
 
   const handleBookNow = async () => {
     // For room-based bookings require a selected room; for property-based proceed without a room
     if (isRoomBased && !selectedRoom) {
       window.alert("Please select a room first.");
+      return;
+    }
+    if (hasInsufficientRooms) {
+      window.alert("No rooms available for selected guest count");
       return;
     }
     const cachedGuest = getCachedGuestDetails();
@@ -704,7 +809,6 @@ const StayDetailsPage = () => {
                       onToggleSelect={handleToggleSelectRoom}
                       onRoomsBookedChange={handleRoomsBookedChange}
                       roomPickerOpen={roomPickerOpen && selectedRoom?.roomId === room.roomId}
-                      setRoomPickerOpen={setRoomPickerOpen}
                     />
                   ))}
                 </div>
@@ -742,7 +846,14 @@ const StayDetailsPage = () => {
               isSubmitting={isSubmitting}
               isRoomBased={isRoomBased}
               selectedRoom={selectedRoom}
-              onRoomsBookedChange={handleRoomsBookedChange}
+              displayPrice={displayPrice}
+              displaySuffix={displaySuffix}
+              totalPrice={totalPrice}
+              numberOfNights={numberOfNights}
+              totalGuests={totalGuests}
+              capacityMessage={capacityMessage}
+              bookingError={bookingError}
+              isBookingBlocked={hasInsufficientRooms}
             />
             <ContactCard manager={details.manager} />
           </div>

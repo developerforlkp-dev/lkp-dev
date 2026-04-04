@@ -504,17 +504,18 @@
     margin-bottom: 14px
 
 .field
-    padding: 12px 14px
+    padding: 10px 12px
     border: 1px solid #E8ECF3
     border-radius: 14px
     background: #ffffff
-    min-height: 76px
+    min-height: 64px
+    min-width: 0
 
 .field span
     display: block
 
 .field > span
-    margin-bottom: 8px
+    margin-bottom: 6px
     color: #8993A7
     font-size: 10px
     font-weight: 700
@@ -527,32 +528,50 @@
     position: relative
     display: flex
     align-items: center
-    min-height: 22px
+    min-height: 20px
+    width: 100%
+    min-width: 0
+    overflow: visible
 
 .datePicker
     width: 100%
+    min-width: 0
 
 .dateField :global(.SingleDatePicker)
     width: 100%
+    min-width: 0
 
 .dateField :global(.SingleDatePickerInput)
     width: 100%
+    min-width: 0
     border: 0
     background: transparent
+    display: flex
+    align-items: center
 
 .dateField :global(.DateInput)
+    flex: 1 1 auto
     width: 100%
+    min-width: 0
     background: transparent
 
 .dateField :global(.DateInput_input)
     width: 100%
-    padding: 0 24px 0 0
+    min-height: 20px
+    padding: 0 28px 0 0 !important
     border: 0
     background: transparent
     color: #283043 !important
-    font-size: 13px
+    font-size: 12px
     font-weight: 500
     line-height: 1.2
+    caret-color: transparent
+    cursor: pointer
+    user-select: none
+    overflow: visible
+    text-overflow: clip
+    white-space: nowrap
+    text-align: left
 
 .dateField :global(.DateInput_input__focused)
     border: 0
@@ -575,11 +594,53 @@
 
 .fieldIcon
     position: absolute
-    right: 0
+    right: 2px
     top: 50%
     transform: translateY(-50%)
     color: #9AA3B4
     pointer-events: none
+
+.priceSummary
+    margin-bottom: 14px
+    padding: 12px 14px
+    border: 1px solid #E8ECF3
+    border-radius: 14px
+    background: #F8FAFD
+
+.priceSummaryRow
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 12px
+    color: #5E6880
+    font-size: 12px
+
+.priceSummaryRow strong
+    color: #1B2234
+    font-size: 13px
+    font-weight: 700
+
+.priceSummaryRow + .priceSummaryRow
+    margin-top: 8px
+
+.infoText
+    margin-bottom: 10px
+    padding: 10px 12px
+    border-radius: 12px
+    background: #F3F7FF
+    color: #4B628E
+    font-size: 12px
+    line-height: 1.5
+
+.errorText
+    margin-bottom: 10px
+    padding: 10px 12px
+    border-radius: 12px
+    background: #FFF1F1
+    color: #C53A3A
+    font-size: 12px
+    font-weight: 600
+    line-height: 1.5
 
 .guestFieldWrap
     position: relative
@@ -628,6 +689,10 @@
     color: #ffffff !important
     font-size: 14px
     font-weight: 700
+
+.availabilityButton:disabled
+    cursor: not-allowed
+    opacity: .65
 
 .availabilityButton span,
 .availabilityButton svg
