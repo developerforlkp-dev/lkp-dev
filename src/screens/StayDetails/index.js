@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import moment from "moment";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import {
   BedDouble,
   CalendarDays,
@@ -111,34 +111,49 @@ const getCachedGuestDetails = () => {
   }
 };
 
-const RoomCountPicker = ({ visible, maxRooms, value, onSelect, onClose }) => {
+const RoomCountPicker = ({ visible, maxRooms, value, onIncrement, onDecrement }) => {
   if (!visible) return null;
 
   return (
-    <div className={styles.roomPicker}>
-      <div className={styles.roomPickerHeader}>
-        <span>ROOMS</span>
-        <button type="button" className={styles.roomPickerClose} onClick={onClose}>
-          Close
-        </button>
-      </div>
-      <div className={styles.roomPickerList}>
-        {Array.from({ length: Math.max(1, maxRooms) }, (_, index) => index + 1).map((count) => (
-          <button
-            key={count}
-            type="button"
-            className={cn(styles.roomPickerItem, {
-              [styles.roomPickerItemActive]: value === count,
-            })}
-            onClick={() => {
-              onSelect(count);
-              onClose();
-            }}
-          >
-            {count} room{count > 1 ? "s" : ""}
-          </button>
-        ))}
-      </div>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "8px 14px",
+      border: "1px solid #DDE5F1",
+      borderRadius: 12,
+      background: "#fff",
+      marginTop: 8,
+    }}>
+      <span style={{ fontSize: 13, color: "#8993A7", fontWeight: 600 }}>Rooms</span>
+      <button
+        type="button"
+        onClick={onDecrement}
+        disabled={value <= 1}
+        style={{
+          width: 28, height: 28, borderRadius: "50%",
+          border: "1px solid #DDE5F1", background: "#F7F9FC",
+          fontSize: 16, cursor: value <= 1 ? "not-allowed" : "pointer",
+          color: "#283043", display: "flex", alignItems: "center", justifyContent: "center"
+        }}
+      >−</button>
+      <span style={{ minWidth: 20, textAlign: "center", fontWeight: 700, fontSize: 14, color: "#283043" }}>
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={onIncrement}
+        disabled={value >= maxRooms}
+        style={{
+          width: 28, height: 28, borderRadius: "50%",
+          border: "1px solid #DDE5F1", background: "#F7F9FC",
+          fontSize: 16, cursor: value >= maxRooms ? "not-allowed" : "pointer",
+          color: "#283043", display: "flex", alignItems: "center", justifyContent: "center"
+        }}
+      >+</button>
+      <span style={{ fontSize: 12, color: "#8993A7" }}>
+        room{value !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 };
@@ -158,6 +173,7 @@ const BookingCard = ({
   isSubmitting,
   isRoomBased,
   selectedRoom,
+  onRoomsBookedChange,
 }) => (
   <aside className={styles.sidebarCard}>
     <div className={styles.bookingHeader}>
@@ -187,6 +203,8 @@ const BookingCard = ({
           <CalendarDays size={14} className={styles.fieldIcon} />
         </div>
       </div>
+
+      {/* Removed inline sidebar rooms +/- control — moved into each RoomCard */}
 
       <div className={styles.field}>
         <span>CHECK-OUT</span>
@@ -228,8 +246,13 @@ const BookingCard = ({
       </div>
     </div>
 
-    <button type="button" className={styles.availabilityButton} onClick={isRoomBased && selectedRoom ? onBookNow : onAvailability} disabled={isSubmitting}>
-      {isSubmitting ? "Processing..." : isRoomBased && selectedRoom ? "Book Now" : "Check Availability"}
+    <button
+      type="button"
+      className={styles.availabilityButton}
+      onClick={!isRoomBased ? onBookNow : (isRoomBased && selectedRoom ? onBookNow : onAvailability)}
+      disabled={isSubmitting}
+    >
+      {isSubmitting ? "Processing..." : !isRoomBased ? "Book Now" : (isRoomBased && selectedRoom ? "Book Now" : "Check Availability")}
     </button>
     <p className={styles.helperText}>You won't be charged yet</p>
   </aside>
@@ -308,14 +331,6 @@ const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roo
 
             {isSelected && (
               <div className={styles.roomPickerWrap}>
-                <button
-                  type="button"
-                  className={styles.roomPickerTrigger}
-                  onClick={() => setRoomPickerOpen(!roomPickerOpen)}
-                >
-                  <span>{selectedRoom.roomsBooked} room{selectedRoom.roomsBooked > 1 ? "s" : ""}</span>
-                  <ChevronRight size={14} className={cn(styles.roomPickerChevron, roomPickerOpen && styles.roomPickerChevronOpen)} />
-                </button>
                 <RoomCountPicker
                   visible={roomPickerOpen}
                   maxRooms={Number(room.availableRooms || 1)}
@@ -445,6 +460,7 @@ const StayDetailsPage = () => {
   }, [location.search]);
 
   const isRoomBased = details.bookingScope === "Room-Based";
+  const history = useHistory();
 
   useEffect(() => {
     let mounted = true;
@@ -516,15 +532,10 @@ const StayDetailsPage = () => {
   };
 
   const handleToggleSelectRoom = (room) => {
-    setSelectedRoom((prev) =>
-      prev?.roomId === room.roomId
-        ? null
-        : {
-            ...room,
-            roomsBooked: 1,
-          }
-    );
-    setRoomPickerOpen(false);
+    const wasSelected = selectedRoom?.roomId === room.roomId;
+    setSelectedRoom((prev) => (wasSelected ? null : { ...room, roomsBooked: 1 }));
+    // Open the inline room picker when a room is selected, close when deselected
+    setRoomPickerOpen(!wasSelected);
   };
 
   const handleRoomsBookedChange = (roomId, roomsBooked) => {
@@ -532,10 +543,14 @@ const StayDetailsPage = () => {
   };
 
   const handleBookNow = async () => {
-    if (!selectedRoom) return;
+    // For room-based bookings require a selected room; for property-based proceed without a room
+    if (isRoomBased && !selectedRoom) {
+      window.alert("Please select a room first.");
+      return;
+    }
     const cachedGuest = getCachedGuestDetails();
-    if (!cachedGuest.customerPhone) {
-      window.alert("Phone number is not available in cache.");
+    if (!cachedGuest.customerPhone && !cachedGuest.customerEmail) {
+      window.alert("Please provide a phone number or email in your profile before booking.");
       return;
     }
 
@@ -548,22 +563,40 @@ const StayDetailsPage = () => {
       customerEmail: cachedGuest.customerEmail,
       customerPhone: cachedGuest.customerPhone,
       specialRequests: "",
-      rooms: [
-        {
-          roomId: Number(selectedRoom.roomId),
-          roomsBooked: Number(selectedRoom.roomsBooked || 1),
-          adults: Number(guests.adults || 0),
-          children: Number(guests.children || 0),
-          mealPlanCode: selectedRoom.mealPlanCode || "EP",
-          extraBeds: 0,
-        },
-      ],
+      rooms: isRoomBased
+        ? [
+            {
+              roomId: Number(selectedRoom.roomId),
+              roomsBooked: Number(selectedRoom.roomsBooked || 1),
+              adults: Number(guests.adults || 0),
+              children: Number(guests.children || 0),
+              mealPlanCode: selectedRoom.mealPlanCode || "EP",
+              extraBeds: 0,
+            },
+          ]
+        : [],
     };
 
     try {
       setIsSubmitting(true);
-      await createStayBooking(payload);
-      window.alert("Stay booking created successfully.");
+      const response = await createStayBooking(payload);
+      // build bookingData to pass to Checkout page
+      const bookingData = {
+        isStay: true,
+        stayId: payload.stayId,
+        checkInDate: payload.checkInDate,
+        checkOutDate: payload.checkOutDate,
+        guests: { adults: guests.adults || 0, children: guests.children || 0 },
+        roomType: selectedRoom?.title || "",
+        mealPlan: selectedRoom?.mealPlanCode || payload.rooms?.[0]?.mealPlanCode || "",
+        roomImage: selectedRoom?.image || null,
+        // include raw payload and API response for downstream pages
+        pendingBookingRequest: payload,
+        pendingBookingResponse: response,
+      };
+
+      // navigate to checkout/confirm-and-pay with bookingData in location state
+      history.push("/checkout", { bookingData });
     } catch (err) {
       window.alert("Unable to create booking right now.");
     } finally {
@@ -652,29 +685,31 @@ const StayDetailsPage = () => {
             {activeTab === "Amenities" && <AmenitiesPanel details={details} />}
             {activeTab === "Policies" && <PoliciesPanel details={details} />}
 
-            <section className={styles.sectionBlock}>
-              <div className={styles.sectionRow}>
-                <div>
-                  <h2 className={styles.sectionTitle}>Available Rooms</h2>
-                  <p className={styles.sectionSubtitle}>Select your perfect accommodation</p>
+            {isRoomBased && (
+              <section className={styles.sectionBlock}>
+                <div className={styles.sectionRow}>
+                  <div>
+                    <h2 className={styles.sectionTitle}>Available Rooms</h2>
+                    <p className={styles.sectionSubtitle}>Select your perfect accommodation</p>
+                  </div>
+                  <span className={styles.infoBadge}>{details.rooms.length} room types found</span>
                 </div>
-                <span className={styles.infoBadge}>{details.rooms.length} room types found</span>
-              </div>
 
-              <div className={styles.roomList}>
-                {details.rooms.map((room) => (
-                  <RoomCard
-                    key={`${room.roomId}-${room.title}`}
-                    room={room}
-                    selectedRoom={selectedRoom}
-                    onToggleSelect={handleToggleSelectRoom}
-                    onRoomsBookedChange={handleRoomsBookedChange}
-                    roomPickerOpen={roomPickerOpen && selectedRoom?.roomId === room.roomId}
-                    setRoomPickerOpen={setRoomPickerOpen}
-                  />
-                ))}
-              </div>
-            </section>
+                <div className={styles.roomList}>
+                  {details.rooms.map((room) => (
+                    <RoomCard
+                      key={`${room.roomId}-${room.title}`}
+                      room={room}
+                      selectedRoom={selectedRoom}
+                      onToggleSelect={handleToggleSelectRoom}
+                      onRoomsBookedChange={handleRoomsBookedChange}
+                      roomPickerOpen={roomPickerOpen && selectedRoom?.roomId === room.roomId}
+                      setRoomPickerOpen={setRoomPickerOpen}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section className={styles.sectionBlock}>
               <h2 className={styles.sectionTitle}>Where you'll be</h2>
@@ -707,6 +742,7 @@ const StayDetailsPage = () => {
               isSubmitting={isSubmitting}
               isRoomBased={isRoomBased}
               selectedRoom={selectedRoom}
+              onRoomsBookedChange={handleRoomsBookedChange}
             />
             <ContactCard manager={details.manager} />
           </div>

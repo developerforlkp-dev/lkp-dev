@@ -265,8 +265,17 @@ const fetchJson = async (paths, options) => {
         lastError = new Error(`Request failed: ${response.status}`);
         continue;
       }
-      return await response.json();
+      const data = await response.json();
+      try {
+        console.log(`[API] ${options?.method || "GET"} ${path} ->`, data);
+      } catch (e) {
+        // ignore logging errors
+      }
+      return data;
     } catch (error) {
+      try {
+        console.error(`[API] error ${path}`, error);
+      } catch (e) {}
       lastError = error;
     }
   }
@@ -289,12 +298,18 @@ export const fetchRoomAvailability = async (stayId, checkInDate, checkOutDate) =
 };
 
 export const createStayBooking = async (payload) => {
-  return fetchJson(
-    [`${SAME_ORIGIN_API_BASE}/orders/stay`, `${API_BASE}/orders/stay`],
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }
+  try {
+    console.log("[API] POST /api/orders/stay payload ->", payload);
+  } catch (e) {}
+
+  return fetchJson([
+    `${SAME_ORIGIN_API_BASE}/orders/stay`,
+  ],
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  }
   );
 };
