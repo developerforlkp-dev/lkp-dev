@@ -76,6 +76,10 @@ const getRoomCapacity = (room) => Math.max(
   ),
   1
 );
+const getRequiredRoomsForGuests = (room, totalGuests) => {
+  const capacity = getRoomCapacity(room);
+  return Math.max(Math.ceil(Math.max(totalGuests, 1) / capacity), 1);
+};
 
 const getCachedGuestDetails = () => {
   try {
@@ -184,7 +188,6 @@ const BookingCard = ({
   setCheckInDate,
   setCheckOutDate,
   setGuests,
-  onAvailability,
   onBookNow,
   isSubmitting,
   isRoomBased,
@@ -197,6 +200,8 @@ const BookingCard = ({
   capacityMessage,
   bookingError,
   isBookingBlocked,
+  availabilityLoading,
+  ctaLabel,
 }) => (
   <aside className={styles.sidebarCard}>
     <div className={styles.bookingHeader}>
@@ -265,6 +270,7 @@ const BookingCard = ({
             onClose={() => setShowGuestPicker(false)}
             onGuestChange={setGuests}
             initialGuests={guests}
+            maxGuests={isRoomBased && selectedRoom ? getRoomCapacity(selectedRoom) * Math.max(Number(selectedRoom.availableRooms || 1), 1) : undefined}
             className={styles.guestPickerPopover}
           />
         </div>
@@ -292,13 +298,17 @@ const BookingCard = ({
     <button
       type="button"
       className={styles.availabilityButton}
-      onClick={!isRoomBased ? onBookNow : (isRoomBased && selectedRoom ? onBookNow : onAvailability)}
+      onClick={onBookNow}
       disabled={isSubmitting || isBookingBlocked}
     >
-      {isSubmitting ? "Processing..." : !isRoomBased ? "Book Now" : (isRoomBased && selectedRoom ? "Book Now" : "Check Availability")}
+      {isSubmitting ? "Processing..." : availabilityLoading ? "Updating Availability..." : ctaLabel}
     </button>
     <p className={styles.helperText}>
-      {isRoomBased && selectedRoom ? `${totalGuests} guest${totalGuests !== 1 ? "s" : ""} selected` : "You won't be charged yet"}
+      {isRoomBased && selectedRoom
+        ? `${totalGuests} guest${totalGuests !== 1 ? "s" : ""} selected`
+        : availabilityLoading
+          ? "Checking rooms for your dates and guests"
+          : "You won't be charged yet"}
     </p>
   </aside>
 );
@@ -329,10 +339,12 @@ const ContactCard = ({ manager }) => (
   </aside>
 );
 
-const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roomPickerOpen }) => {
+const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roomPickerOpen, totalGuests }) => {
   const isSelected = selectedRoom?.roomId === room.roomId;
   const roomCount = isSelected ? selectedRoom.roomsBooked : 1;
   const maxRooms = Math.max(Number(room.availableRooms || 1), 1);
+  const requiredRooms = getRequiredRoomsForGuests(room, totalGuests);
+  const canAccommodate = requiredRooms <= maxRooms;
 
   return (
     <article className={styles.roomCard}>
@@ -368,10 +380,20 @@ const RoomCard = ({ room, selectedRoom, onToggleSelect, onRoomsBookedChange, roo
               <span className={styles.roomPrice}>Rs.{room.price}</span>
               <span className={styles.roomPriceSuffix}>/ night</span>
             </div>
+            <p className={cn(styles.roomCapacityHint, { [styles.roomCapacityHintError]: !canAccommodate })}>
+              {canAccommodate
+                ? `${requiredRooms} room${requiredRooms > 1 ? "s" : ""} required for ${totalGuests} guest${totalGuests !== 1 ? "s" : ""}`
+                : "No rooms available for selected guest count"}
+            </p>
           </div>
 
           <div className={styles.roomActionGroup}>
-            <button type="button" className={styles.selectButton} onClick={() => onToggleSelect(room)}>
+            <button
+              type="button"
+              className={cn(styles.selectButton, { [styles.selectButtonDisabled]: !canAccommodate })}
+              onClick={() => onToggleSelect(room)}
+              disabled={!canAccommodate}
+            >
               <span>{isSelected ? "Selected Room" : "Select Room"}</span>
               <ChevronRight size={16} />
             </button>
@@ -500,6 +522,8 @@ const StayDetailsPage = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   const stayId = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -515,11 +539,11 @@ const StayDetailsPage = () => {
   const availableRoomCount = useMemo(() => Math.max(Number(selectedRoom?.availableRooms || 1), 1), [selectedRoom]);
   const requiredRoomCount = useMemo(() => {
     if (!isRoomBased || !selectedRoom) return 1;
-    return Math.max(Math.ceil(Math.max(totalGuests, 1) / roomCapacity), 1);
-  }, [isRoomBased, roomCapacity, selectedRoom, totalGuests]);
+    return getRequiredRoomsForGuests(selectedRoom, totalGuests);
+  }, [isRoomBased, selectedRoom, totalGuests]);
   const hasInsufficientRooms = Boolean(isRoomBased && selectedRoom && requiredRoomCount > availableRoomCount);
   const selectedRoomCount = selectedRoom?.roomsBooked || 1;
-  const bookingError = hasInsufficientRooms ? "No rooms available for selected guest count" : "";
+  const bookingError = hasInsufficientRooms ? "No rooms available for selected guest count" : availabilityError;
   const capacityMessage = useMemo(() => {
     if (!isRoomBased || !selectedRoom) return "";
     if (hasInsufficientRooms) {
@@ -541,6 +565,14 @@ const StayDetailsPage = () => {
     ? formatCurrency(totalPrice)
     : formatCurrency(parsePriceValue(details.price));
   const displaySuffix = isRoomBased && selectedRoom ? " total" : " / night";
+  const isBookingBlocked = Boolean(isRoomBased && (availabilityLoading || !selectedRoom || hasInsufficientRooms));
+  const ctaLabel = !isRoomBased
+    ? "Book Now"
+    : !selectedRoom
+      ? "Select Room to Book"
+      : hasInsufficientRooms
+        ? "No Rooms Available"
+        : "Book Now";
 
   useEffect(() => {
     if (!isRoomBased || !selectedRoom) return;
@@ -582,53 +614,97 @@ const StayDetailsPage = () => {
     };
   }, [stayId]);
 
-  const handleCheckAvailability = async () => {
+  useEffect(() => {
     if (!isRoomBased) return;
+
     const checkIn = formatDateForApi(checkInDate);
     const checkOut = formatDateForApi(checkOutDate);
     if (!checkIn || !checkOut) return;
 
-    try {
-      setIsSubmitting(true);
-      const response = await fetchRoomAvailability(stayId, checkIn, checkOut);
-      const availableRooms = (response?.rooms || []).map((room, index) => {
-        const mealPlanCode = Object.keys(room.mealPlanPricing || {})[0] || "EP";
-        const plan = room.mealPlanPricing?.[mealPlanCode] || {};
-        return {
-          roomId: room.roomId,
-          type: `Room ${index + 1}`,
-          title: room.roomName,
-          description: details.rooms[index]?.description || fallbackStayDetails.rooms[0].description,
-          guests: `Max ${room.maxGuests || room.maxAdults || 2} Guests`,
-          units: `${room.availableRooms || room.totalRooms || 1} Units`,
-          price: Number(plan.b2cPrice || room.b2cPrice || 0).toLocaleString("en-IN"),
-          priceLabel: "AVAILABLE RATE",
-          image: details.rooms[index]?.image || fallbackStayDetails.rooms[0].image,
-          amenities: details.rooms[index]?.amenities || fallbackStayDetails.rooms[0].amenities,
-          availableRooms: Number(room.availableRooms || 1),
-          mealPlanCode,
-          maxAdults: Number(room.maxAdults || 0),
-          maxChildren: Number(room.maxChildren || 0),
-          maxGuests: Number(room.maxGuests || room.maxAdults || 2),
-        };
-      });
+    let cancelled = false;
 
-      setDetails((prev) => ({
-        ...prev,
-        rooms: availableRooms.length ? availableRooms : prev.rooms,
-      }));
-      setSelectedRoom(null);
-      setRoomPickerOpen(false);
-    } catch (err) {
-      window.alert("Unable to check room availability right now.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    const syncAvailability = async () => {
+      try {
+        setAvailabilityLoading(true);
+        setAvailabilityError("");
+        const response = await fetchRoomAvailability(stayId, checkIn, checkOut);
+        if (cancelled) return;
+
+        let nextAvailableRooms = [];
+        setDetails((prev) => {
+          nextAvailableRooms = (response?.rooms || []).map((room, index) => {
+            const mealPlanCode = Object.keys(room.mealPlanPricing || {})[0] || "EP";
+            const plan = room.mealPlanPricing?.[mealPlanCode] || {};
+            return {
+              roomId: room.roomId,
+              type: `Room ${index + 1}`,
+              title: room.roomName,
+              description: prev.rooms[index]?.description || fallbackStayDetails.rooms[0].description,
+              guests: `Max ${room.maxGuests || room.maxAdults || 2} Guests`,
+              units: `${room.availableRooms || room.totalRooms || 1} Units`,
+              price: Number(plan.b2cPrice || room.b2cPrice || 0).toLocaleString("en-IN"),
+              priceLabel: "AVAILABLE RATE",
+              image: prev.rooms[index]?.image || fallbackStayDetails.rooms[0].image,
+              amenities: prev.rooms[index]?.amenities || fallbackStayDetails.rooms[0].amenities,
+              availableRooms: Number(room.availableRooms || 1),
+              mealPlanCode,
+              maxAdults: Number(room.maxAdults || 0),
+              maxChildren: Number(room.maxChildren || 0),
+              maxGuests: Number(room.maxGuests || room.maxAdults || 2),
+            };
+          });
+
+          return {
+            ...prev,
+            rooms: nextAvailableRooms.length ? nextAvailableRooms : prev.rooms,
+          };
+        });
+
+        setSelectedRoom((prev) => {
+          if (!prev) return prev;
+          const matchedRoom = nextAvailableRooms.find((room) => room.roomId === prev.roomId);
+          if (!matchedRoom) return null;
+
+          const minimumRooms = getRequiredRoomsForGuests(matchedRoom, totalGuests);
+          return {
+            ...matchedRoom,
+            roomsBooked: Math.min(
+              Math.max(Number(prev.roomsBooked || 1), minimumRooms),
+              Math.max(Number(matchedRoom.availableRooms || 1), 1)
+            ),
+          };
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setAvailabilityError("Unable to update availability right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setAvailabilityLoading(false);
+        }
+      }
+    };
+
+    syncAvailability();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkInDate, checkOutDate, isRoomBased, stayId, totalGuests]);
 
   const handleToggleSelectRoom = (room) => {
     const wasSelected = selectedRoom?.roomId === room.roomId;
-    setSelectedRoom((prev) => (wasSelected ? null : { ...room, roomsBooked: 1 }));
+    setSelectedRoom((prev) => (
+      wasSelected
+        ? null
+        : {
+            ...room,
+            roomsBooked: Math.min(
+              getRequiredRoomsForGuests(room, totalGuests),
+              Math.max(Number(room.availableRooms || 1), 1)
+            ),
+          }
+    ));
     // Open the inline room picker when a room is selected, close when deselected
     setRoomPickerOpen(!wasSelected);
   };
@@ -809,6 +885,7 @@ const StayDetailsPage = () => {
                       onToggleSelect={handleToggleSelectRoom}
                       onRoomsBookedChange={handleRoomsBookedChange}
                       roomPickerOpen={roomPickerOpen && selectedRoom?.roomId === room.roomId}
+                      totalGuests={totalGuests}
                     />
                   ))}
                 </div>
@@ -841,7 +918,6 @@ const StayDetailsPage = () => {
               setCheckInDate={setCheckInDate}
               setCheckOutDate={setCheckOutDate}
               setGuests={setGuests}
-              onAvailability={handleCheckAvailability}
               onBookNow={handleBookNow}
               isSubmitting={isSubmitting}
               isRoomBased={isRoomBased}
@@ -853,7 +929,9 @@ const StayDetailsPage = () => {
               totalGuests={totalGuests}
               capacityMessage={capacityMessage}
               bookingError={bookingError}
-              isBookingBlocked={hasInsufficientRooms}
+              isBookingBlocked={isBookingBlocked}
+              availabilityLoading={availabilityLoading}
+              ctaLabel={ctaLabel}
             />
             <ContactCard manager={details.manager} />
           </div>
