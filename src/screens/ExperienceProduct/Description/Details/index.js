@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import cn from "classnames";
 import styles from "./Details.module.sass";
 import Icon from "../../../../components/Icon";
@@ -168,15 +168,22 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
   };
 
   // Only show the 'What's Included' setting (settingId = 7)
-  const whatsIncludedSetting = Array.isArray(listing?.guestRequirements)
-    ? listing.guestRequirements.find((gr) => gr?.setting?.settingId === 7 && gr?.setting?.isActive)
-    : null;
-
-  const requirementItems = whatsIncludedSetting && Array.isArray(whatsIncludedSetting.questions)
-    ? whatsIncludedSetting.questions
-      .filter((q) => q?.question?.isActive)
-      .map((q) => ({ title: q.question.title, icon: "flag" }))
-    : [];
+  // Aggregate all active guest requirements for the 'What\'s Included' / Rules section
+  const requirementItems = useMemo(() => {
+    if (!Array.isArray(listing?.guestRequirements)) return [];
+    
+    return listing.guestRequirements
+      .filter((gr) => gr?.setting?.isActive && Array.isArray(gr.questions))
+      .flatMap((gr) => {
+        const settingTitle = gr.setting.title || "Requirement";
+        return gr.questions
+          .filter((q) => q?.question?.isActive)
+          .map((q) => ({
+            title: `${settingTitle}: ${q.question.title}`,
+            icon: "check",
+          }));
+      });
+  }, [listing]);
 
   // Determine section title based on listing type
   const isStayLocal = Boolean(listing?.propertyName || listing?.propertyType === "STAY" || listing?.stayId || listing?.stay_id);
@@ -361,19 +368,21 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
           </div>
         </div>
       )}
-      {/* The What's Included section is temporarily hidden 
-      <div className={styles.info}>{whatsIncludedSetting?.setting?.title || "What's Included"}</div>
-      <div className={styles.optionsWrapper}>
-        <div className={styles.options}>
-          {(requirementItems.length ? requirementItems : options).map((x, index) => (
-            <div className={styles.option} key={index}>
-              <Icon name={x.icon} size="24" />
-              {x.title}
+      {requirementItems.length > 0 && (
+        <div className={styles.requirementsSection} style={{ marginTop: "32px", paddingTop: "32px", borderTop: "1px solid #E6E8EC" }}>
+          <div className={styles.info} style={{ marginBottom: "24px" }}>Guest Requirements & Instructions</div>
+          <div className={styles.optionsWrapper}>
+            <div className={styles.options}>
+              {requirementItems.map((x, index) => (
+                <div className={styles.option} key={index}>
+                  <Icon name={x.icon} size="24" />
+                  {x.title}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-      */}
+      )}
 
       {/* Addon Detail Modal */}
       <Modal
