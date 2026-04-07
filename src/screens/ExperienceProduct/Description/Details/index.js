@@ -78,7 +78,7 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
       const price = parseFloat(a?.addon?.price || 0);
       const currency = a?.addon?.currency || "";
       const pricingType = a?.addon?.pricingType || "Individual";
-      const quantity = pricingType === "Group" ? (addOnQuantities?.[addonId] || 1) : 1;
+      const quantity = pricingType === "Individual" ? (addOnQuantities?.[addonId] || 1) : 1;
       const totalPrice = price * quantity;
 
       const isSelected = selectedAddOns?.includes(addonId);
@@ -94,7 +94,7 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
         id: addonId,
         title: a?.addon?.title || "Addon",
         description: description,
-        price: pricingType === "Group" && isSelected
+        price: pricingType === "Individual" && isSelected
           ? `${currency} ${price.toFixed(2)}${quantity > 1 ? ` × ${quantity} = ${currency} ${totalPrice.toFixed(2)}` : ` = ${currency} ${totalPrice.toFixed(2)}`}`
           : `${currency} ${price.toFixed(2)}`,
         priceValue: price,
@@ -290,8 +290,8 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
           <div className={styles.addOnsList}>
             {displayAddOns.map((addOn) => {
               const isSelected = selectedAddOns.includes(addOn.id);
-              const isGroupPricing = addOn.pricingType === "Group";
-              const quantity = isGroupPricing ? (addOnQuantities?.[addOn.id] || 1) : 1;
+              const isIndividualPricing = addOn.pricingType === "Individual";
+              const quantity = isIndividualPricing ? (addOnQuantities?.[addOn.id] || 1) : 1;
 
               const addonImageUrl = getAddonImageUrl(addOn);
 
@@ -335,7 +335,7 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
                     </div>
                     <div className={styles.addOnFoot}>
                       <div className={styles.addOnControls}>
-                        {isGroupPricing && isSelected ? (
+                        {isIndividualPricing && isSelected ? (
                           <Counter
                             className={styles.addOnCounter}
                             value={quantity}
