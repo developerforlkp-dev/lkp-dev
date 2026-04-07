@@ -1,22 +1,18 @@
 import axios from "axios";
 
+export const DEFAULT_API_BASE_URL =
+  "https://salmon-smoke-07a330b00.2.azurestaticapps.net/api";
+
 // Get API base URL from environment variable or use default
 // Priority:
-// 1. REACT_APP_API_URL environment variable (for production with custom domain)
-// 2. Relative path "/api" (works with setupProxy.js in dev and vercel.json rewrites in production)
-// This allows flexibility to point to different backend URLs without changing frontend code
-// For example, in development you can set REACT_APP_API_URL=http://localhost:5000 to bypass the proxy and call backend directly.
-//Change to REACT_APP_ORDERS_API_URL if you want to point orders API to a different backend.
+// 1. REACT_APP_API_URL environment variable
+// 2. Azure Static Apps API base URL
 const getApiBaseURL = () => {
-  // Check if environment variable is set
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
 
-  // Use relative path - works with:
-  // - Development: setupProxy.js proxies /api to http://localhost:5000/api
-  // - Production: vercel.json rewrites /api to http://69.62.77.33/api
-  return "/api";
+  return DEFAULT_API_BASE_URL;
 };
 
 const getOrdersApiBaseURL = () => {
@@ -24,7 +20,7 @@ const getOrdersApiBaseURL = () => {
     return process.env.REACT_APP_ORDERS_API_URL;
   }
 
-  return "/api";
+  return DEFAULT_API_BASE_URL;
 };
 // ✅ Create axios instance with base URL
 export const ListingsAPI = axios.create({
