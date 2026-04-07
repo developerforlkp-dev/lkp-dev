@@ -251,19 +251,33 @@ const EventProduct = () => {
     location?.state?.listingId ??
     location?.state?.listing_id;
   const eventId = eventIdFromQuery ?? eventIdFromState;
+  const preselectedGuestsFromState = location?.state?.preselectedGuests;
+  const preselectedTicketTypeIdFromState =
+    location?.state?.preselectedTicketTypeId != null
+      ? String(location.state.preselectedTicketTypeId)
+      : null;
+  const checkoutAfterGuestSelection = Boolean(location?.state?.checkoutAfterGuestSelection);
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const [guests, setGuests] = useState({ adults: 1, children: 0, infants: 0, pets: 0 });
-  const [showGuestPicker, setShowGuestPicker] = useState(false);
+  const [guests, setGuests] = useState({
+    adults: asNumber(preselectedGuestsFromState?.adults) ?? 1,
+    children: asNumber(preselectedGuestsFromState?.children) ?? 0,
+    infants: asNumber(preselectedGuestsFromState?.infants) ?? 0,
+    pets: asNumber(preselectedGuestsFromState?.pets) ?? 0,
+  });
+  const [showGuestPicker, setShowGuestPicker] = useState(Boolean(location?.state?.openGuestPicker));
   const guestItemRef = useRef(null);
-  const [selectedTicketType, setSelectedTicketType] = useState("general");
+  const [selectedTicketType, setSelectedTicketType] = useState(preselectedTicketTypeIdFromState || "general");
   const [showTicketTypePicker, setShowTicketTypePicker] = useState(false);
   const ticketTypeItemRef = useRef(null);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const autoCheckoutTriggeredRef = useRef(false);
+  const handleBookNowRef = useRef(null);
+  const [bookButtonArmed, setBookButtonArmed] = useState(Boolean(checkoutAfterGuestSelection));
 
   const hasValidJwtToken = () => {
     if (typeof window === "undefined") return false;
@@ -471,8 +485,16 @@ const EventProduct = () => {
 
   useEffect(() => {
     if (!event) return;
-    setSelectedTicketType(event.ticketTypes?.[0]?.id || "general");
-  }, [event]);
+    const selectedTicketExists = event.ticketTypes?.some(
+      (ticketType) => String(ticketType.id) === String(preselectedTicketTypeIdFromState)
+    );
+
+    setSelectedTicketType(
+      selectedTicketExists
+        ? String(preselectedTicketTypeIdFromState)
+        : event.ticketTypes?.[0]?.id || "general"
+    );
+  }, [event, preselectedTicketTypeIdFromState]);
 
   // Format date for display
   const formatDate = (dateStr) => {
@@ -501,6 +523,7 @@ const EventProduct = () => {
   const allImages = [event?.coverImage, ...(event?.gallery || [])].filter(Boolean);
   const selectedHeroImage = allImages[galleryIndex] || allImages[0];
   const displayCurrency = event?.currency === "USD" ? "INR" : event?.currency;
+  const totalGuestsSelected = guests.adults + guests.children;
 
   const minimumAge =
     asNumber(event?.minimumAge) ??
@@ -701,6 +724,7 @@ const EventProduct = () => {
         eventSlotId: eventSlotIdNum,
         listingTitle: event?.title || "Event Booking",
         listingImage: event?.coverImage || event?.gallery?.[0],
+        returnTo: `/event?id=${eventIdNum}`,
         
         // Booking summary
         bookingSummary: {
@@ -760,6 +784,9 @@ const EventProduct = () => {
         return null;
       };
 
+      // Hardcoded fallback key for production (test mode)
+      const RAZORPAY_FALLBACK_KEY = "rzp_test_RaBjdu0Ed3p1gN";
+      
       const razorpayKeyId = 
         payment?.razorpayKeyId ||
         payment?.razorpay_key_id ||
@@ -773,7 +800,8 @@ const EventProduct = () => {
         order?.keyId ||
         res?.keyId ||
         process.env.REACT_APP_RAZORPAY_KEY_ID || // Fallback to env variable
-        getCachedRazorpayKey(); // Fallback to cached key from experience
+        getCachedRazorpayKey() || // Fallback to cached key from experience
+        RAZORPAY_FALLBACK_KEY; // Final fallback - hardcoded key
       
       console.log("🔑 Extracted razorpayKeyId:", razorpayKeyId);
       
@@ -823,7 +851,7 @@ const EventProduct = () => {
       console.log("💳 Payment data saved:", paymentData);
 
       // Redirect to checkout page
-      history.push("/experience-checkout", {
+      history.replace("/experience-checkout", {
         bookingData: bookingDataForCheckout,
         paymentData: paymentData,
       });
@@ -841,6 +869,14 @@ const EventProduct = () => {
       setBookingLoading(false);
     }
   };
+
+  handleBookNowRef.current = handleBookNow;
+
+  useEffect(() => {
+    if (!event || !checkoutAfterGuestSelection || autoCheckoutTriggeredRef.current) return;
+    autoCheckoutTriggeredRef.current = true;
+    handleBookNowRef.current?.();
+  }, [event, checkoutAfterGuestSelection]);
 
   const socials = [
     { title: "twitter", url: "https://twitter.com/ui8" },
@@ -864,6 +900,14 @@ const EventProduct = () => {
         </div>
       </div>
     ) : null;
+  }
+
+  if (checkoutAfterGuestSelection && bookingLoading && !showLoginModal) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+        <Loader />
+      </div>
+    );
   }
 
   return (
@@ -1051,7 +1095,10 @@ const EventProduct = () => {
                   <Icon name="user" size="18" />
                   <div 
                     className={styles.guestSelector}
-                    onClick={() => setShowGuestPicker(!showGuestPicker)}
+                    onClick={() => {
+                      setShowGuestPicker(!showGuestPicker);
+                      setBookButtonArmed(true);
+                    }}
                     role="button"
                   >
                     <span className={styles.guestLabel}>Guest</span>
@@ -1157,10 +1204,24 @@ const EventProduct = () => {
                 </div>
                 <button 
                   className={cn("button", styles.bookButton)}
-                  disabled={!isBookingOpen()}
-                  onClick={handleBookNow}
+                  disabled={!isBookingOpen() || bookingLoading}
+                  onClick={() => {
+                    if (!bookButtonArmed) {
+                      setShowGuestPicker(true);
+                      setBookButtonArmed(true);
+                      return;
+                    }
+                    setShowGuestPicker(false);
+                    handleBookNow();
+                  }}
                 >
-                  <span>Book Now</span>
+                  <span>
+                    {bookingLoading
+                      ? "Processing..."
+                      : bookButtonArmed
+                        ? `Confirm${totalGuestsSelected > 0 ? ` (${totalGuestsSelected})` : ""}`
+                        : "Book Now"}
+                  </span>
                   <Icon name="bag" size="16" />
                 </button>
               </div>

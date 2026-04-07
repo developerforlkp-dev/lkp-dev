@@ -3,7 +3,7 @@ import cn from "classnames";
 import moment from "moment";
 import styles from "./FleetHome.module.sass";
 import Icon from "../../components/Icon";
-import { getHomepageSections, getHomepageSectionListings, getEventListings } from "../../utils/api";
+import { getHomepageSections, getHomepageSectionListings, getEventListings, getStayListings, getFoodMenus, getPlaces } from "../../utils/api";
 import { HomepageSectionCard } from "./CardStyles";
 import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
@@ -19,10 +19,12 @@ const filterOptions = [
 
 
 /// Business Interest IDs
-// Experience → 1, Events → 2. Stays/Food/Places have no ID yet (Coming Soon).
+// Experience → 1, Events → 2, Stays → 3, Places → 4, Food → 5
 const getBusinessInterestId = (filterId) => {
   if (filterId === "experience") return 1;
   if (filterId === "events") return 2;
+  if (filterId === "stays") return 3;
+  if (filterId === "food") return 5;
   return null;
 };
 
@@ -31,7 +33,8 @@ const FleetHome = () => {
   const [sectionsData, setSectionsData] = useState([]); // Array of { section, listings }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
+
   // Search state
   const [selectedDate, setSelectedDate] = useState(null);
   const [guests, setGuests] = useState({
@@ -44,15 +47,16 @@ const FleetHome = () => {
   const [showGuestPicker, setShowGuestPicker] = useState(false);
   const dateItemRef = useRef(null);
   const guestItemRef = useRef(null);
-  
+
+
   // Determine if calendar should be shown (for Experience and Events)
-  const showCalendar = activeFilter === "experience" || activeFilter === "events";
-  
-  // Format selected date for display
-  const formattedDate = selectedDate 
-    ? moment(selectedDate).format("MMM DD, YYYY") 
+  const showCalendar = activeFilter === "experience" || activeFilter === "events" || activeFilter === "stays";
+
+  const formattedDate = selectedDate
+    ? moment(selectedDate).format("MMM DD, YYYY")
     : "Select date";
-  
+
+
   // Format guest count for display
   const guestCountText = (() => {
     const total = guests.adults + guests.children;
@@ -60,7 +64,8 @@ const FleetHome = () => {
     if (total === 1) return "1 guest";
     return `${total} guests`;
   })();
-  
+
+
   // Handle date selection
   const handleDateSelect = (startDateStr, endDateStr) => {
     if (startDateStr) {
@@ -70,24 +75,62 @@ const FleetHome = () => {
       }
     }
   };
-  
+
+
   // Handle guest change
   const handleGuestChange = (newGuests) => {
     setGuests(newGuests);
   };
-  
+
+
   // Close pickers when filter changes
   useEffect(() => {
     setShowDatePicker(false);
     setShowGuestPicker(false);
   }, [activeFilter]);
-  
-  // Fetch homepage sections and their listings (by business interest: 1=Experience, 2=Events)
-  // On refresh, Experience is selected by default → always call with businessInterestId=1
+
+  // Fetch homepage sections and their listings
+  // Business interest IDs: 1=Experience, 2=Events, 3=Stays, 4=Places, 5=Food
   useEffect(() => {
+
+    if (activeFilter === "places") {
+      const loadPlaces = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const result = await getPlaces(20, 0);
+          // result is now { section, listings }; use backend section info if available
+          const backendSection = result?.section;
+          const listings = Array.isArray(result?.listings) ? result.listings : [];
+          console.log("📍 Places result from API:", result);
+          const newSections = [
+            {
+              section: {
+                sectionId: backendSection?.sectionId || backendSection?.id || "places",
+                sectionTitle: backendSection?.sectionTitle || backendSection?.title || backendSection?.name || "Places Nearby",
+              },
+              listings,
+            },
+          ];
+          console.log("📍 Setting sectionsData for places:", newSections);
+          setSectionsData(newSections);
+        } catch (err) {
+          console.error("❌ Error loading places nearby:", err);
+          setSectionsData([]);
+          setError(err.message || "Failed to load places");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadPlaces();
+      return;
+    }
+
     const businessInterestId = getBusinessInterestId(activeFilter) ?? (activeFilter === "experience" ? 1 : null);
     if (businessInterestId == null) {
-      // Stays, Food, Places: don't refetch, keep current sectionsData
+      // Any other filter that doesn't have a dedicated fetch block or businessInterestId
       return;
     }
 
@@ -96,31 +139,35 @@ const FleetHome = () => {
       setError(null);
 
       try {
-        // Step 1: Fetch sections for the selected business interest (1=Experience, 2=Events)
+        // Step 1: Fetch sections for the selected business interest
         const fetchedSections = await getHomepageSections(businessInterestId);
         console.log("✅ Fetched homepage sections (businessInterestId=" + businessInterestId + "):", fetchedSections);
-        
+
+
         // Sort sections by sortOrder
         const sortedSections = [...fetchedSections].sort((a, b) => {
           const orderA = a.sortOrder !== undefined ? a.sortOrder : 999;
           const orderB = b.sortOrder !== undefined ? b.sortOrder : 999;
           return orderA - orderB;
         });
-        
+
+
         // Step 2: Fetch listings for each section in parallel
         const sectionPromises = sortedSections.map(async (section) => {
           try {
             const sectionData = await getHomepageSectionListings(section.sectionId, 12, 0);
             console.log(`✅ Section ${section.sectionId} data:`, sectionData);
-            
+
+
             // Handle different response structures
             let listings = sectionData?.listings || sectionData?.data?.listings || [];
             const sectionInfo = sectionData?.section || section;
-        
-            // Fallback: if this is an Events section and the section listings endpoint returns empty,
-            // fetch from the dedicated public events endpoint.
+
+            // Fallback: if the section listings endpoint returns empty, try the dedicated public endpoints.
             const sectionTitle = sectionInfo?.sectionTitle || section?.sectionTitle || "";
             const isEventsSection = typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("events");
+            const isStaysSection = typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("stay");
+            const isFoodSection = typeof sectionTitle === "string" && (sectionTitle.toLowerCase().includes("food") || sectionTitle.toLowerCase().includes("menu"));
             if (isEventsSection && (!listings || listings.length === 0)) {
               try {
                 const eventListings = await getEventListings(12, 0);
@@ -131,9 +178,66 @@ const FleetHome = () => {
                 console.warn("⚠️ Failed to fetch event listings fallback:", eventErr);
               }
             }
-            
+            if (isStaysSection && (!listings || listings.length === 0)) {
+              try {
+                const stayResult = await getStayListings(12, 0);
+                const stayListings = Array.isArray(stayResult?.listings) ? stayResult.listings : [];
+                if (stayListings.length > 0) {
+                  listings = stayListings;
+                }
+              } catch (stayErr) {
+                console.warn("⚠️ Failed to fetch stay listings fallback:", stayErr);
+              }
+            }
+            if (isFoodSection && (!listings || listings.length === 0)) {
+              try {
+                const foodResult = await getFoodMenus(12, 0);
+                const foodListings = Array.isArray(foodResult?.listings) ? foodResult.listings : [];
+                if (foodListings.length > 0) {
+                  listings = foodListings;
+                }
+              } catch (foodErr) {
+                console.warn("⚠️ Failed to fetch food listings fallback:", foodErr);
+              }
+            }
+
+
+
             console.log(`✅ Section ${section.sectionId} has ${listings.length} listings`);
-            
+
+            // Filter out expired experience listings: if an experience has an end
+            // date and that date is before today, remove it from homepage display.
+            if (activeFilter === "experience" && Array.isArray(listings) && listings.length > 0) {
+              const now = moment();
+              const dateFields = [
+                'endDate', 'end_date', 'eventEndDate', 'event_end_date',
+                'availableUntil', 'availabilityEnd', 'availability_end',
+                'bookingEndDate', 'booking_end_date', 'endsAt', 'endAt',
+                'eventDate', 'event_date'
+              ];
+
+              const beforeCount = listings.length;
+              listings = listings.filter((listing) => {
+                if (!listing || typeof listing !== 'object') return true;
+                for (const f of dateFields) {
+                  const raw = listing[f];
+                  if (!raw) continue;
+                  const m = moment(String(raw));
+                  if (!m.isValid()) continue;
+                  // exclude if end date is strictly before today
+                  if (m.isBefore(now, 'day')) return false;
+                  // if valid and not before today, keep it
+                  return true;
+                }
+                // no date field found — keep listing
+                return true;
+              });
+              const afterCount = listings.length;
+              if (beforeCount !== afterCount) {
+                console.log(`ℹ️ Filtered ${beforeCount - afterCount} expired experience listing(s) from section ${section.sectionId}`);
+              }
+            }
+
             return {
               section: sectionInfo,
               listings: listings,
@@ -146,7 +250,8 @@ const FleetHome = () => {
             };
           }
         });
-        
+
+
         const sectionsWithListings = await Promise.allSettled(sectionPromises);
         const resolvedSections = sectionsWithListings.map((result) => {
           if (result.status === "fulfilled") {
@@ -155,20 +260,23 @@ const FleetHome = () => {
           console.warn("⚠️ Section promise rejected:", result.reason);
           return { section: {}, listings: [] };
         });
-        
+
+
         console.log("✅ Loaded all sections with listings:", resolvedSections);
         console.log(`✅ Total sections: ${resolvedSections.length}, Sections with listings: ${resolvedSections.filter(s => s.listings && s.listings.length > 0).length}`);
-        
+
+
         setSectionsData(resolvedSections);
-        
+
+
       } catch (err) {
         console.error("❌ Error loading homepage data:", err);
         // Check if it's a connection/network error
-        const isConnectionError = err.message?.includes("proxy") || 
-                                  err.message?.includes("ECONNREFUSED") ||
-                                  err.message?.includes("504") ||
-                                  err.code === "ECONNREFUSED";
-        
+        const isConnectionError = err.message?.includes("proxy") ||
+          err.message?.includes("ECONNREFUSED") ||
+          err.message?.includes("504") ||
+          err.code === "ECONNREFUSED";
+
         if (isConnectionError) {
           setError("Backend server is not running. Please start the backend server on port 5000.");
         } else {
@@ -188,7 +296,8 @@ const FleetHome = () => {
       <div className={styles.heroSection}>
         <HeroSection />
       </div>
-      
+
+
       <div className={cn("container", styles.container)}>
         <div className={styles.glassContainer}>
           <div className={styles.searchBar}>
@@ -202,13 +311,13 @@ const FleetHome = () => {
             {showCalendar && (
               <>
                 <div className={styles.searchDivider}></div>
-                <div 
+                <div
                   className={styles.searchField}
                   ref={dateItemRef}
                   style={{ position: "relative" }}
                 >
                   <Icon name="calendar" size="16" />
-                  <div 
+                  <div
                     className={styles.searchFieldContent}
                     onClick={() => setShowDatePicker(!showDatePicker)}
                     style={{ cursor: "pointer" }}
@@ -229,13 +338,13 @@ const FleetHome = () => {
               </>
             )}
             <div className={styles.searchDivider}></div>
-            <div 
+            <div
               className={styles.searchField}
               ref={guestItemRef}
               style={{ position: "relative" }}
             >
               <Icon name="user" size="16" />
-              <div 
+              <div
                 className={styles.searchFieldContent}
                 onClick={() => setShowGuestPicker(!showGuestPicker)}
                 style={{ cursor: "pointer" }}
@@ -269,7 +378,7 @@ const FleetHome = () => {
                     <Icon name={filter.icon} size="18" />
                     <span>{filter.label}</span>
                   </div>
-                  {!["experience", "events"].includes(filter.id) && (
+                  {!["experience", "events", "stays", "food", "places"].includes(filter.id) && (
                     <div className={styles.comingSoonBadge}>Coming Soon</div>
                   )}
                 </button>
@@ -284,13 +393,15 @@ const FleetHome = () => {
             <p>Loading homepage sections...</p>
           </div>
         )}
-        
+
+
         {error && (
           <div style={{ padding: "1rem", textAlign: "center", backgroundColor: "#fee", color: "#c33" }}>
             <p>⚠️ {error}</p>
           </div>
         )}
-        
+
+
         {!loading && !error && sectionsData.length === 0 && (
           <div style={{ padding: "3rem", textAlign: "center" }}>
             <p>No sections available</p>
@@ -299,7 +410,8 @@ const FleetHome = () => {
             </p>
           </div>
         )}
-        
+
+
         {!loading && !error && sectionsData.length > 0 && sectionsData.every(s => !s.listings || s.listings.length === 0) && (
           <div style={{ padding: "3rem", textAlign: "center" }}>
             <p>Sections loaded but no listings found</p>
@@ -308,19 +420,22 @@ const FleetHome = () => {
             </p>
           </div>
         )}
-        
+
+
         {!loading &&
           sectionsData.map((sectionData, index) => {
             if (!sectionData || !sectionData.section) {
               console.warn(`⚠️ Skipping invalid section data at index ${index}:`, sectionData);
               return null;
             }
-            
+
+
             if (!sectionData.listings || sectionData.listings.length === 0) {
               console.log(`ℹ️ Section "${sectionData.section.sectionTitle || sectionData.section.sectionId}" has no listings, skipping`);
               return null; // Skip sections with no listings
             }
-            
+
+
             return (
               <HomepageSectionCard
                 key={sectionData.section.sectionId || index}

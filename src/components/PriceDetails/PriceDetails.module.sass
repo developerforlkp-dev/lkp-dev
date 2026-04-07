@@ -60,7 +60,12 @@
     color: $n4
 
 .subtitle
-    +body-bold-2
+    font-size: 14px
+    font-weight: 600
+    line-height: 1.4
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
 
 .body
     margin-top: 32px
@@ -108,6 +113,9 @@
 
 .form
     margin: -16px 0 16px
+
+.table
+    margin-bottom: 8px
 
 .row
     display: flex
@@ -177,6 +185,10 @@
         gap: 10px
     +dark
         background: $n2
+    img
+        flex-shrink: 0
+        object-fit: cover
+        border-radius: 8px
 
 .addOnItemName
     flex: 1
