@@ -561,26 +561,42 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
   // Extract guest requirements from listing data
   if (listingData?.guestRequirements && Array.isArray(listingData.guestRequirements)) {
-    // Find "Rules and Policies" (settingId: 17) for Host Instructions
-    const rulesAndPolicies = listingData.guestRequirements.find(
-      (gr) => gr?.setting?.settingId === 17 && gr?.setting?.isActive
-    );
+    listingData.guestRequirements.forEach((gr) => {
+      const setting = gr?.setting;
+      if (!setting?.isActive || !Array.isArray(gr.questions)) return;
 
-    if (rulesAndPolicies && Array.isArray(rulesAndPolicies.questions)) {
-      result.notes.hostInstructions = rulesAndPolicies.questions
+      const title = setting.title || "";
+      const questions = gr.questions
         .filter((q) => q?.question?.isActive)
         .map((q) => q.question.title);
-    }
 
-    // Find "What's to Bring" (settingId: 18) for Guest Requirements
-    const whatsToBring = listingData.guestRequirements.find(
-      (gr) => gr?.setting?.settingId === 18 && gr?.setting?.isActive
-    );
+      if (questions.length === 0) return;
 
-    if (whatsToBring && Array.isArray(whatsToBring.questions)) {
-      result.notes.requirements = whatsToBring.questions
-        .filter((q) => q?.question?.isActive)
-        .map((q) => q.question.title);
+      // Categorize based on title keywords or specific IDs
+      const titleLower = title.toLowerCase();
+      const isGuestContext = 
+        titleLower.includes("bring") || 
+        titleLower.includes("requirement") || 
+        titleLower.includes("eligibility") ||
+        titleLower.includes("included") ||
+        [4, 6, 7, 18].includes(setting.settingId);
+
+      // Prepend the category title for better context in individual bullet points
+      const formattedQuestions = questions.map((q) => `${title}: ${q}`);
+
+      if (isGuestContext) {
+        result.notes.requirements.push(...formattedQuestions);
+      } else {
+        result.notes.hostInstructions.push(...formattedQuestions);
+      }
+    });
+  }
+
+  // Ensure meeting instructions are also included in host notes
+  if (listingData?.meetingInstructions) {
+    const meetingNote = `Meeting Instructions: ${listingData.meetingInstructions}`;
+    if (!result.notes.hostInstructions.includes(meetingNote)) {
+      result.notes.hostInstructions.unshift(meetingNote);
     }
   }
 
