@@ -11,6 +11,7 @@ import Loader from "../../../components/Loader";
 import { browse2 } from "../../../mocks/browse";
 import { experience } from "../../../mocks/experience";
 import { getListings } from "../../../utils/api";
+import { buildExperienceUrl } from "../../../utils/experienceUrl";
 
 const breadcrumbs = [
   {
@@ -57,7 +58,7 @@ const Catalog = () => {
           title: l.title || "",
           src: l.coverPhotoUrl || "",
           srcSet: l.coverPhotoUrl || "",
-          url: `/experience-product?id=${l.listingId || l.id || 2}`,
+          url: buildExperienceUrl(l.title || "experience", l.listingId || l.id || 2),
           priceOld: "",
           priceActual: "",
           options: [],

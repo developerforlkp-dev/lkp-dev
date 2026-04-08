@@ -5,6 +5,7 @@ import Control from "../../components/Control";
 import CheckoutSlider from "./CheckoutSlider";
 import CheckoutCompleteComponent from "../../components/CheckoutComplete";
 import { getStayDetails } from "../../utils/api";
+import { buildExperienceUrl } from "../../utils/experienceUrl";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -87,7 +88,9 @@ const CheckoutComplete = () => {
     {
       title: title,
       url: booking?.listingId 
-        ? (booking?.isStay || booking?.checkInDate ? `/stay-product?id=${booking.listingId}` : `/experience-product?id=${booking.listingId}`) 
+        ? (booking?.isStay || booking?.checkInDate
+            ? `/stay-product?id=${booking.listingId}`
+            : buildExperienceUrl(booking?.listingTitle || "experience", booking.listingId))
         : (booking?.isStay || booking?.checkInDate ? "/stay-product" : "/experience-product"),
     },
     {
