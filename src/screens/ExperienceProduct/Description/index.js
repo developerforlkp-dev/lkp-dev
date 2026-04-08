@@ -2789,10 +2789,6 @@ const Description = ({ classSection, listing, hostData }) => {
                 }}
               >
                 <div className={styles.btns}>
-                  <button className={cn("button-stroke", styles.button)}>
-                    <span>Save</span>
-                    <Icon name="plus" size="16" />
-                  </button>
                   {isStay ? (
                     <button
                       type="button"
