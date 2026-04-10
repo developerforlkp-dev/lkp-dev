@@ -2,6 +2,7 @@ import axios from "axios";
 
 const normalizeBaseUrl = (url) => (url ? url.replace(/\/+$/, "") : url);
 
+
 const API_BASE_URL = normalizeBaseUrl(process.env.REACT_APP_API_URL) ||
   "https://lkp-qa-backend.azurewebsites.net/api";
 
@@ -9,10 +10,12 @@ export const DEFAULT_API_BASE_URL = (() => {
   return API_BASE_URL;
 })();
 
+
 // Get API base URL from environment variable or use default
 // Priority:
 // 1. REACT_APP_API_URL environment variable
-// 2. Shared default base URL
+
+// 2. Runtime environment-specific base URL
 const getApiBaseURL = () => {
   if (process.env.REACT_APP_API_URL) {
     return normalizeBaseUrl(process.env.REACT_APP_API_URL);
