@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import cn from "classnames";
 import styles from "./ProfileUser.module.sass";
 import Icon from "../../components/Icon";
@@ -7,6 +7,7 @@ import Reviews from "../../components/Reviews";
 import Modal from "../../components/Modal";
 import Background from "./Background";
 import Details from "./Details";
+import { getCustomerProfile } from "../../utils/api";
 
 const parametersUser = [
   {
@@ -44,6 +45,20 @@ const avatars = [
 
 const ProfileUser = () => {
   const [visible, setVisible] = useState(false);
+  const [customer, setCustomer] = useState(null);
+
+  useEffect(() => {
+    getCustomerProfile()
+      .then((data) => setCustomer(data))
+      .catch((err) => console.warn("⚠️ Could not load customer profile:", err));
+  }, []);
+
+  const displayName = customer
+    ? `${customer.firstName || ""} ${customer.lastName || ""}`.trim() || "My Profile"
+    : "My Profile";
+
+  const avatarSrc = customer?.avatarUrl || "/images/content/avatar-girl.jpg";
+
   return (
     <>
       <div className={styles.section}>
@@ -57,7 +72,7 @@ const ProfileUser = () => {
               buttonText="Message"
             >
               <div className={cn(styles.avatar, styles.big)}>
-                <img src="/images/content/avatar-girl.jpg" alt="Avatar" />
+                <img src={avatarSrc} alt="Avatar" />
               </div>
               <button
                 className={styles.update}
@@ -66,7 +81,7 @@ const ProfileUser = () => {
                 <Icon name="pencil" size="20" />
                 Update avatar
               </button>
-              <div className={cn("h4", styles.man)}>Kohaku Tora</div>
+              <div className={cn("h4", styles.man)}>{displayName}</div>
             </Profile>
             <div className={styles.wrapper}>
               <Details className={styles.details} />
@@ -89,7 +104,7 @@ const ProfileUser = () => {
           <div className={styles.note}>or click to browse</div>
         </div>
         <div className={styles.gallery}>
-          <div className={styles.info}>Use Fleet’s default photos</div>
+          <div className={styles.info}>Use Fleet's default photos</div>
           <div className={styles.list}>
             {avatars.map((x, index) => (
               <div className={styles.avatar} key={index}>
