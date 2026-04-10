@@ -368,6 +368,8 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
         null;
     } else if (apiBooking?.listingCoverPhoto) {
       coverPhotoUrl = apiBooking.listingCoverPhoto;
+    } else if (apiBooking?.listingCoverPhotoUrl) {
+      coverPhotoUrl = apiBooking.listingCoverPhotoUrl;
     } else if (apiBooking?.listing?.coverPhotoUrl) {
       coverPhotoUrl = apiBooking.listing.coverPhotoUrl;
     } else if (apiBooking?.coverPhotoUrl) {

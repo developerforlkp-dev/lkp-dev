@@ -476,6 +476,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     coverPhotoUrl = listingData?.coverPhotoUrl ||
       stayCoverPhoto ||
       apiBooking?.listingCoverPhoto ||
+      apiBooking?.listingCoverPhotoUrl ||
       apiBooking?.coverPhotoUrl ||
       "/images/content/card-pic-13.jpg";
   }

@@ -131,7 +131,7 @@ const CheckoutComplete = () => {
 
   const gallery = useMemo(() => {
     // Prefer stay image fetched from API if we have stayId, else fallback to booking stored images
-    const rawImg = stayImageUrl || booking?.roomImage || booking?.listingImage;
+    const rawImg = stayImageUrl || booking?.listingCoverPhotoUrl || booking?.roomImage || booking?.listingImage;
     const img = rawImg && typeof rawImg === 'string' && !rawImg.startsWith('http') && !rawImg.startsWith('/')
       ? formatImageUrl(rawImg)
       : (rawImg || "/images/content/slider-pic-1.jpg");
