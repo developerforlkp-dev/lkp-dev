@@ -635,7 +635,8 @@ const selectedDateAvailability = useMemo(() => {
 const availableTimeSlotsForSelectedDate = useMemo(() => {
   if (isStay) return [];
 
-  const availableTimeSlots = transformedTimeSlots.length > 0 ? transformedTimeSlots : (listing?.timeSlots || []);
+  const availableTimeSlots = (transformedTimeSlots.length > 0 ? transformedTimeSlots : (listing?.timeSlots || []))
+    .filter(slot => slot.is_active !== false && slot.isActive !== false);
   if (!selectedDate) return availableTimeSlots;
 
   const DAY_CODES_LOCAL = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -2377,8 +2378,12 @@ const lowestRoomPrice = useMemo(() => {
         const slotsResponse = await getListingSlots(validListingId, startDateStr, endDateStr);
         console.log("✅ Slots data received:", slotsResponse);
 
-        // Extract slots array from response
-        const slots = slotsResponse?.slots || [];
+        // Extract slots array from response and filter by is_active status
+        const slots = (slotsResponse?.slots || []).filter(slot => {
+          // If is_active is explicitly false, hide it. 
+          // Treat undefined or true as active.
+          return slot.is_active !== false && slot.isActive !== false;
+        });
         setSlotsData(slots);
 
         // Transform slots to match expected timeSlots format
