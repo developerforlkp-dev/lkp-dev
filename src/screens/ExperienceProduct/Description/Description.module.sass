@@ -57,14 +57,17 @@
         &:only-child
             width: 100%
             flex: 1 1 100%
+            +m
+                flex: none
+                width: 100%
         &:disabled
             opacity: 0.6
             cursor: not-allowed
             pointer-events: none
-            +m
-                width: 100%
         +m
-            height: 56px
+            flex: none !important
+            width: 100% !important
+            height: 56px !important
             border-radius: 28px
 
 .table

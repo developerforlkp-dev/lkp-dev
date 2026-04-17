@@ -199,25 +199,78 @@ const BookingSidebar = ({
   // Shown at the top as a "starting from" price before selection.
   const getMealPlanPriceForRoom = (room) => {
     if (!room) return 0;
+
+    const activeSeasonObj = room?.seasonalPeriods?.find(p =>
+      moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+      moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+    ) || stay?.seasonalPeriods?.find(p =>
+      moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+      moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+    );
+
+    const roomActiveSeasonData = activeSeasonObj ? (
+      room?.seasonalPricing?.[activeSeasonObj.tempId] ||
+      room?.[activeSeasonObj.tempId] ||
+      stay?.propertySeasonalPricing?.[activeSeasonObj.tempId] || 
+      stay?.[activeSeasonObj.tempId]
+    ) : null;
+
     const mp = room.mealPlanPricing;
     if (mp) {
       // Try each plan in priority order
       for (const code of ["MAP", "CP", "BB", "AP", "EP"]) {
         const plan = mp[code];
         if (plan) {
+          if (activeSeasonObj && parseFloat(plan.hikePrice || 0) > 0) return parseFloat(plan.hikePrice);
           const p = parseFloat(plan.b2cPrice || plan.b2bPrice || plan.price || 0);
           if (p > 0) return p;
         }
       }
     }
-    return parseFloat(room.b2cPrice || room.mapPrice || room.cpPrice || room.bbPrice || room.apPrice || room.epPrice || room.price || 0);
+    
+    if (roomActiveSeasonData) {
+      if (parseFloat(roomActiveSeasonData.hikePrice || 0) > 0) return parseFloat(roomActiveSeasonData.hikePrice);
+      if (parseFloat(roomActiveSeasonData.b2cPrice || 0) > 0) return parseFloat(roomActiveSeasonData.b2cPrice);
+    }
+    
+    return parseFloat(room.hikePrice || room.b2cPrice || room.mapPrice || room.cpPrice || room.bbPrice || room.apPrice || room.epPrice || room.price || 0);
   };
+
+  const activeSeason = useMemo(() => {
+    if (!checkInDate || !stay?.seasonalPeriods) {
+      console.log('Season check skipped:', { checkInDate, hasSeasonalPeriods: !!stay?.seasonalPeriods });
+      return null;
+    }
+    const found = stay.seasonalPeriods.find(p =>
+      moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+      moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+    );
+    console.log('Season found for checkInDate', checkInDate, ':', found);
+    return found;
+  }, [checkInDate, stay?.seasonalPeriods]);
+
+  const activeSeasonData = activeSeason ? (stay?.propertySeasonalPricing?.[activeSeason.tempId] || stay?.[activeSeason.tempId]) : null;
+  
+  if (checkInDate) {
+    console.log('activeSeasonData resolved as:', activeSeasonData, 'for tempId:', activeSeason?.tempId);
+  }
+
 
   // startingFromPricePerNight — shown at top even before room selection
   // Uses availableRooms prop to reliably detect room-based pricing
   // (stay.rooms may be empty on initial render before API re-populates rooms)
   const startingFromPricePerNight = useMemo(() => {
     if (isPropertyBased) {
+      if (activeSeasonData) {
+        const sPrice = parseFloat(
+          activeSeasonData?.fullPropertyHikePrice ||
+          stay?.fullPropertyHikePrice ||
+          activeSeasonData?.fullPropertyB2cPrice ||
+          activeSeasonData?.b2cPrice ||
+          activeSeasonData?.price || 0
+        );
+        if (sPrice > 0) return sPrice;
+      }
       return parseFloat(
         stay?.fullPropertyB2cPrice ||
         stay?.b2cPrice ||
@@ -237,12 +290,16 @@ const BookingSidebar = ({
     }
     return 0;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stay, isPropertyBased, isRoomBased, selectedRoom, availableRooms]);
+  }, [stay, isPropertyBased, isRoomBased, selectedRoom, availableRooms, activeSeasonData]);
 
 // basePrice is what we use for the active price line and total calculation
 const basePrice = isRoomBased
   ? getMealPlanPriceForRoom(selectedRoom) || startingFromPricePerNight
   : parseFloat(
+    (isPropertyBased && activeSeasonData ? activeSeasonData.fullPropertyHikePrice : null) ||
+    (isPropertyBased && activeSeasonData ? stay?.fullPropertyHikePrice : null) ||
+    (isPropertyBased && activeSeasonData ? activeSeasonData.fullPropertyB2cPrice : null) ||
+    (isPropertyBased && activeSeasonData ? activeSeasonData.b2cPrice : null) ||
     (isPropertyBased ? stay?.fullPropertyB2cPrice : null) ||
     stay?.b2cPrice ||
     stay?.fullPropertyB2cPrice ||
@@ -259,8 +316,9 @@ const discountedBasePrice = discountPercentage > 0
 const extraAdults = Math.max(0, (guests?.adults || 0) - (stay?.maxAdults || 0));
 const extraChildren = Math.max(0, (guests?.children || 0) - (stay?.maxChildren || 0));
 
-const extraAdultPrice = parseFloat(stay?.fullPropertyExtraAdultPrice || stay?.extraAdultPrice || 0);
-const extraChildPrice = parseFloat(stay?.fullPropertyExtraChildPrice || stay?.extraChildPrice || 0);
+const extraAdultPrice = parseFloat(activeSeasonData?.extraAdultPrice || activeSeasonData?.fullPropertyExtraAdultPrice || stay?.fullPropertyExtraAdultPrice || stay?.extraAdultPrice || 0);
+const extraChildPrice = parseFloat(activeSeasonData?.extraChildPrice || activeSeasonData?.fullPropertyExtraChildPrice || stay?.fullPropertyExtraChildPrice || stay?.extraChildPrice || 0);
+
 
 const totalExtraPrice = (extraAdults * extraAdultPrice) + (extraChildren * extraChildPrice);
 
@@ -700,7 +758,7 @@ const PropertyDetails = ({ stay }) => {
 };
 
 // Room Card Component
-const RoomCard = ({ room, onSelect, discountPercentage, guests, stay }) => {
+const RoomCard = ({ room, onSelect, discountPercentage, guests, stay, checkInDate }) => {
   const images = room?.roomImages || room?.images || [];
   const image = room?.imageUrl || images[0] || room?.coverImageUrl;
   const roomTags = room?.roomAmenities || room?.amenities || [];
@@ -711,7 +769,30 @@ const RoomCard = ({ room, onSelect, discountPercentage, guests, stay }) => {
     ? Number(room.maxGuests)
     : (Number(room.maxAdults) || 0) + (Number(room.maxChildren) || 0) || 2;
 
-  const basePrice = parseFloat(room.b2cPrice || room.price || 0);
+  const activeSeason = useMemo(() => {
+    if (!checkInDate) return null;
+    return room?.seasonalPeriods?.find(p =>
+      moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+      moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+    ) || stay?.seasonalPeriods?.find(p =>
+      moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+      moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+    );
+  }, [checkInDate, room?.seasonalPeriods, stay?.seasonalPeriods]);
+
+  const activeSeasonData = activeSeason ? (
+    room?.seasonalPricing?.[activeSeason.tempId] ||
+    room?.[activeSeason.tempId] || 
+    stay?.propertySeasonalPricing?.[activeSeason.tempId] || 
+    stay?.[activeSeason.tempId]
+  ) : null;
+
+  const basePrice = parseFloat(
+    (activeSeasonData && parseFloat(activeSeasonData.hikePrice) > 0 ? activeSeasonData.hikePrice : null) ||
+    activeSeasonData?.b2cPrice ||
+    room.hikePrice || room.b2cPrice || room.price || 0
+  );
+  
   const discountedBasePrice = discountPercentage > 0
     ? basePrice * (1 - discountPercentage / 100)
     : basePrice;
@@ -724,8 +805,8 @@ const RoomCard = ({ room, onSelect, discountPercentage, guests, stay }) => {
   const extraAdults = Math.max(0, (guests?.adults || 0) - maxAdults);
   const extraChildren = Math.max(0, (guests?.children || 0) - maxChildren);
 
-  const extraAdultPrice = parseFloat(room.extraAdultPrice || stay?.extraAdultPrice || 0);
-  const extraChildPrice = parseFloat(room.extraChildPrice || stay?.extraChildPrice || 0);
+  const extraAdultPrice = parseFloat(activeSeasonData?.extraAdultPrice || room.extraAdultPrice || stay?.extraAdultPrice || 0);
+  const extraChildPrice = parseFloat(activeSeasonData?.extraChildPrice || room.extraChildPrice || stay?.extraChildPrice || 0);
 
   const totalExtraPrice = (extraAdults * extraAdultPrice) + (extraChildren * extraChildPrice);
 
@@ -833,7 +914,7 @@ const RoomCard = ({ room, onSelect, discountPercentage, guests, stay }) => {
 };
 
 // Available Rooms Section
-const AvailableRooms = ({ rooms, availabilityChecked, onSelectRoom, selectedRoom, discountPercentage, guests, stay }) => {
+const AvailableRooms = ({ rooms, availabilityChecked, onSelectRoom, selectedRoom, discountPercentage, guests, stay, checkInDate }) => {
   const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
 
   if (!rooms || rooms.length === 0) {
@@ -874,6 +955,7 @@ const AvailableRooms = ({ rooms, availabilityChecked, onSelectRoom, selectedRoom
             discountPercentage={discountPercentage}
             guests={guests}
             stay={stay}
+            checkInDate={checkInDate}
           />
         ))}
       </div>
@@ -1241,17 +1323,35 @@ const StayProduct = () => {
       const mealPlanCode = selectedRoom.selectedMealPlan || getMealPlanCode(selectedRoom);
 
       // Calculate B2C price for the selected room based on meal plan, as the room's base b2cPrice could be null in the API
+      const activeSeasonObj = selectedRoom.seasonalPeriods?.find(p =>
+        moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+        moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+      ) || stay?.seasonalPeriods?.find(p =>
+        moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+        moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+      );
+      const activeSeasonData = activeSeasonObj ? (
+        selectedRoom?.seasonalPricing?.[activeSeasonObj.tempId] || 
+        selectedRoom?.[activeSeasonObj.tempId] || 
+        stay?.propertySeasonalPricing?.[activeSeasonObj.tempId] || 
+        stay?.[activeSeasonObj.tempId]
+      ) : null;
+
       let basePrice = 0;
-      let extraAdultPrice = parseFloat(selectedRoom.extraAdultPrice || stay?.extraAdultPrice || 0);
-      let extraChildPrice = parseFloat(selectedRoom.extraChildPrice || stay?.extraChildPrice || 0);
+      let extraAdultPrice = parseFloat(activeSeasonData?.extraAdultPrice || selectedRoom.extraAdultPrice || stay?.extraAdultPrice || 0);
+      let extraChildPrice = parseFloat(activeSeasonData?.extraChildPrice || selectedRoom.extraChildPrice || stay?.extraChildPrice || 0);
 
       if (selectedRoom.mealPlanPricing && selectedRoom.mealPlanPricing[mealPlanCode]) {
         const mp = selectedRoom.mealPlanPricing[mealPlanCode];
-        basePrice = parseFloat(mp.b2cPrice || mp.b2bPrice || mp.price || 0);
+        basePrice = activeSeasonObj && parseFloat(mp.hikePrice || 0) > 0 
+          ? parseFloat(mp.hikePrice) 
+          : parseFloat(mp.b2cPrice || mp.b2bPrice || mp.price || 0);
         if (mp.extraAdultPrice) extraAdultPrice = parseFloat(mp.extraAdultPrice);
         if (mp.extraChildPrice) extraChildPrice = parseFloat(mp.extraChildPrice);
       } else {
-        if (mealPlanCode === "BB" && Number(selectedRoom.bbPrice) > 0) basePrice = parseFloat(selectedRoom.bbPrice);
+        if (activeSeasonData && parseFloat(activeSeasonData.hikePrice || 0) > 0) basePrice = parseFloat(activeSeasonData.hikePrice);
+        else if (activeSeasonData && parseFloat(activeSeasonData.b2cPrice || 0) > 0) basePrice = parseFloat(activeSeasonData.b2cPrice);
+        else if (mealPlanCode === "BB" && Number(selectedRoom.bbPrice) > 0) basePrice = parseFloat(selectedRoom.bbPrice);
         else if (mealPlanCode === "CP" && Number(selectedRoom.cpPrice) > 0) basePrice = parseFloat(selectedRoom.cpPrice);
         else if (mealPlanCode === "MAP" && Number(selectedRoom.mapPrice) > 0) basePrice = parseFloat(selectedRoom.mapPrice);
         else if (mealPlanCode === "AP" && Number(selectedRoom.apPrice) > 0) basePrice = parseFloat(selectedRoom.apPrice);
@@ -1287,9 +1387,25 @@ const StayProduct = () => {
       };
     } else {
       // Property-based stay: no rooms array needed
-      const propertyBasePrice = parseFloat(stay?.fullPropertyB2cPrice || stay?.b2cPrice || stay?.startingPrice || stay?.pricePerNight || stay?.price || 0);
-      const extraAdultPrice = parseFloat(stay?.fullPropertyExtraAdultPrice || stay?.extraAdultPrice || 0);
-      const extraChildPrice = parseFloat(stay?.fullPropertyExtraChildPrice || stay?.extraChildPrice || 0);
+      const activeSeasonObj = stay?.seasonalPeriods?.find(p =>
+        moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+        moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+      );
+      const activeSeasonData = activeSeasonObj ? (stay?.propertySeasonalPricing?.[activeSeasonObj.tempId] || stay?.[activeSeasonObj.tempId]) : null;
+
+      const propertyBasePrice = parseFloat(
+        (activeSeasonData && parseFloat(activeSeasonData.fullPropertyHikePrice) > 0 ? activeSeasonData.fullPropertyHikePrice : null) ||
+        (activeSeasonData && parseFloat(stay?.fullPropertyHikePrice) > 0 ? stay?.fullPropertyHikePrice : null) ||
+        activeSeasonData?.fullPropertyB2cPrice ||
+        activeSeasonData?.b2cPrice ||
+        stay?.fullPropertyB2cPrice ||
+        stay?.b2cPrice ||
+        stay?.startingPrice ||
+        stay?.pricePerNight ||
+        stay?.price || 0
+      );
+      const extraAdultPrice = parseFloat(activeSeasonData?.extraAdultPrice || activeSeasonData?.fullPropertyExtraAdultPrice || stay?.fullPropertyExtraAdultPrice || stay?.extraAdultPrice || 0);
+      const extraChildPrice = parseFloat(activeSeasonData?.extraChildPrice || activeSeasonData?.fullPropertyExtraChildPrice || stay?.fullPropertyExtraChildPrice || stay?.extraChildPrice || 0);
 
       const extraAdults = Math.max(0, (guests?.adults || 0) - (stay?.maxAdults || 0));
       const extraChildren = Math.max(0, (guests?.children || 0) - (stay?.maxChildren || 0));
@@ -1493,6 +1609,7 @@ const StayProduct = () => {
                 discountPercentage={discountPercentage}
                 guests={guests}
                 stay={stay}
+                checkInDate={checkInDate}
               />
             )}
 
