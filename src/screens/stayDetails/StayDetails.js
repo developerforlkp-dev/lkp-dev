@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import cn from "classnames";
 
@@ -69,6 +69,14 @@ const StayDetails = () => {
   const [hostData, setHostData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Shared room + meal plan selection (set by RoomCards, consumed by Description)
+  const [externalRoomId, setExternalRoomId] = useState(null);
+  const [externalMealPlan, setExternalMealPlan] = useState(null);
+
+  const handleRoomSelect = useCallback((roomId, mealPlan) => {
+    setExternalRoomId(String(roomId));
+    setExternalMealPlan(mealPlan || null);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -194,8 +202,15 @@ const StayDetails = () => {
 
       {stay && (
         <>
-          <Description classSection="section" listing={stay} hostData={hostData} />
-          <RoomCards listing={stay} />
+          <Description 
+            classSection="section" 
+            listing={stay} 
+            hostData={hostData} 
+            externalRoomId={externalRoomId} 
+            externalMealPlan={externalMealPlan} 
+            onRoomSelect={handleRoomSelect}
+            selectedRoomId={externalRoomId}
+          />
           <TabSection classSection="section" listing={stay} />
           <CommentsProduct
             className={cn("section")}

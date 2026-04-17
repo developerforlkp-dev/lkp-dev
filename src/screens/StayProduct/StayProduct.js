@@ -1306,6 +1306,13 @@ const StayProduct = () => {
         numberOfGuests: (guests.adults || 1) + (guests.children || 0),
         amount: calculatedAmountProperty,
         paymentMethod: "razorpay",
+        rooms: [
+          {
+            roomId: 0, // 0 for full property
+            roomsBooked: 1,
+            mealPlanCode: null,
+          },
+        ],
       };
     }
 
