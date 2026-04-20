@@ -15,7 +15,7 @@ import Dropdown from "../../../components/Dropdown";
 import LoginModal from "../../../components/LoginModal";
 import { getBillingConfiguration, createOrder, getListingSlots, loginWithGoogle, getStayRoomAvailability, createStayOrder } from "../../../utils/api";
 
-const Description = ({ classSection, listing, hostData, externalRoomId, externalMealPlan, onRoomSelect, selectedRoomId }) => {
+const Description = ({ classSection, listing, hostData, externalRoomId, externalMealPlan, onRoomSelect, selectedRoomId, externalRoomsCount, onRoomsCountChange }) => {
   const history = useHistory();
   const isStay = Boolean(listing?.stayId || listing?.stay_id || listing?.propertyType === "STAY");
   const isPropertyBased = isStay && (listing?.stay?.bookingScope === "Property-Based" || listing?.stay?.bookingScope === "Property Based" || listing?.bookingScope === "Property-Based" || listing?.bookingScope === "Property Based");
@@ -826,9 +826,9 @@ const lowestRoomPrice = useMemo(() => {
       : 1;
 
     // For room-based stays: determine how many rooms are needed based on guest count
-    // Use the selected room's maxGuests (or first room's) to compute roomsNeeded
-    let roomsNeeded = 1;
-    if (isStay && !isPropertyBased && staySelectedRoomType) {
+    // Priority: 1. Manual selection (externalRoomsCount), 2. Automatic calculation
+    let roomsNeeded = externalRoomsCount || 1;
+    if (isStay && !isPropertyBased && staySelectedRoomType && !externalRoomsCount) {
       const rooms = listing.rooms || listing.roomTypes || listing.room_types || listing.stay?.rooms || [];
       const selectedRoomObj = rooms.find(r =>
         String(r.roomId ?? r.room_id ?? r.roomTypeId ?? r.id ?? r.code) === String(staySelectedRoomType)
@@ -969,14 +969,48 @@ const lowestRoomPrice = useMemo(() => {
     const discountAmount = (subtotal * discountPercentage) / 100;
     const taxableAmount = Math.max(subtotal - discountAmount, 0);
 
-    const receiptData = [
-      {
+    const receiptData = [];
+
+    if (!isStay && allowChildPricing && (guests.children > 0 || guests.infants > 0)) {
+      const adultsCount = guests.adults || 0;
+      const childrenCount = guests.children || 0;
+      const infantsCount = guests.infants || 0;
+      const nightStr = nightsCount > 1 ? ` x ${nightsCount} nights` : "";
+
+      if (adultsCount > 0) {
+        receiptData.push({
+          title: `${adultsCount} ${adultsCount === 1 ? "Adult" : "Adults"} x ${currency} ${pricePerPerson.toFixed(2)}${nightStr}`,
+          content: `${currency} ${(pricePerPerson * adultsCount * nightsCount).toFixed(2)}`,
+          kind: "base",
+          showInCheckout: true,
+        });
+      }
+
+      if (childrenCount > 0) {
+        receiptData.push({
+          title: `${childrenCount} ${childrenCount === 1 ? "Child" : "Children"} x ${currency} ${childPricePerChild.toFixed(2)}${nightStr}`,
+          content: `${currency} ${(childPricePerChild * childrenCount * nightsCount).toFixed(2)}`,
+          kind: "base",
+          showInCheckout: true,
+        });
+      }
+
+      if (infantsCount > 0) {
+        receiptData.push({
+          title: `${infantsCount} ${infantsCount === 1 ? "Infant" : "Infants"} (Free)${nightStr}`,
+          content: `${currency} 0.00`,
+          kind: "base",
+          showInCheckout: true,
+        });
+      }
+    } else {
+      receiptData.push({
         title: priceDescription,
         content: `${currency} ${basePriceAmount.toFixed(2)}`,
         kind: "base",
         showInCheckout: true,
-      },
-    ];
+      });
+    }
 
     // Add individual addon entries
     if (selectedAddOns.length > 0) {
@@ -1116,7 +1150,7 @@ const lowestRoomPrice = useMemo(() => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAddOns, addOnQuantities, guests, listing, billingConfig, selectedDateAvailability, lowestRoomPrice, selectedTimeSlotData, isStay, isPropertyBased, staySelectedRoomType, selectedMealPlanCode, selectedDate, selectedEndDate]);
+  }, [selectedAddOns, addOnQuantities, guests, listing, billingConfig, selectedDateAvailability, lowestRoomPrice, selectedTimeSlotData, isStay, isPropertyBased, staySelectedRoomType, selectedMealPlanCode, selectedDate, selectedEndDate, externalRoomsCount]);
 
   // Save booking data to localStorage
   const saveBookingData = () => {
@@ -1197,9 +1231,10 @@ const lowestRoomPrice = useMemo(() => {
     const mealPlanLabels = { EP: "EP (Room Only)", CP: "CP (Breakfast)", BB: "BB (Bed & Breakfast)", MAP: "MAP (Half Board)", AP: "AP (Full Board)" };
 
     // Calculate roomsNeeded for the selected room
-    let stayRoomsNeeded = 1;
+    // Priority: 1. Manual selection (externalRoomsCount), 2. Automatic calculation
+    let stayRoomsNeeded = externalRoomsCount || 1;
     const stayGuestCount = getGuestCount(guests);
-    if (selectedRoomObj) {
+    if (selectedRoomObj && !externalRoomsCount) {
       const cap = Number(
         selectedRoomObj.maxGuests ??
         ((selectedRoomObj.maxAdults || 0) + (selectedRoomObj.maxChildren || 0))
@@ -2813,7 +2848,9 @@ return (
             onToggleAddOn={handleToggleAddOn}
             onAddOnQuantityChange={handleAddOnQuantityChange}
             onRoomSelect={onRoomSelect}
-            selectedRoomId={selectedRoomId}
+            selectedRoomId={staySelectedRoomType}
+            roomsCount={externalRoomsCount}
+            onRoomsCountChange={onRoomsCountChange}
           />
           {(!isFood && !isPlace) && (
             <Receipt
@@ -3076,7 +3113,17 @@ return (
                     (isStay && !isPropertyBased && staySelectedRoomType)
                   ) && receipt.map((x, index) => (
                     <div className={styles.line} key={index}>
-                      <div className={styles.cell}>{x.title}</div>
+                      <div className={styles.cell}>
+                        {typeof x.title === "string" && (x.title.includes(" × ") || x.title.includes(" x ")) ? (
+                          <div className={styles.priceDetailsStack}>
+                            {x.title.split(/(?= [×x] )/).map((part, i) => (
+                              <span key={i}>{part.trim()}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          x.title
+                        )}
+                      </div>
                       <div className={styles.cell}>{x.content}</div>
                     </div>
                   ))

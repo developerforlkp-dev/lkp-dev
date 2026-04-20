@@ -72,11 +72,16 @@ const StayDetails = () => {
   // Shared room + meal plan selection (set by RoomCards, consumed by Description)
   const [externalRoomId, setExternalRoomId] = useState(null);
   const [externalMealPlan, setExternalMealPlan] = useState(null);
+  const [externalRoomsCount, setExternalRoomsCount] = useState(1);
 
   const handleRoomSelect = useCallback((roomId, mealPlan) => {
-    setExternalRoomId(String(roomId));
+    const newRoomId = String(roomId);
+    if (newRoomId !== externalRoomId) {
+      setExternalRoomsCount(1);
+    }
+    setExternalRoomId(newRoomId);
     setExternalMealPlan(mealPlan || null);
-  }, []);
+  }, [externalRoomId]);
 
   useEffect(() => {
     let mounted = true;
@@ -210,6 +215,16 @@ const StayDetails = () => {
             externalMealPlan={externalMealPlan} 
             onRoomSelect={handleRoomSelect}
             selectedRoomId={externalRoomId}
+            externalRoomsCount={externalRoomsCount}
+            onRoomsCountChange={setExternalRoomsCount}
+          />
+          <RoomCards 
+            listing={stay} 
+            onRoomSelect={handleRoomSelect} 
+            selectedRoomId={externalRoomId}
+            roomsCount={externalRoomsCount}
+            onRoomsCountChange={setExternalRoomsCount}
+            noContainer 
           />
           <TabSection classSection="section" listing={stay} />
           <CommentsProduct
