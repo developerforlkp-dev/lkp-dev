@@ -1022,59 +1022,59 @@ const lowestRoomPrice = useMemo(() => {
       });
     }
 
-    // Calculate and add taxes
+    // Calculate and add guest taxes
     let totalTaxAmount = 0;
-    const apiTaxPercentage = parseFloat(listing?.pricing?.tax?.total || 0);
+    let apiTaxPercentage = 0;
 
-    if (apiTaxPercentage > 0) {
-      const taxAmount = (taxableAmount * apiTaxPercentage) / 100;
-      totalTaxAmount = taxAmount;
-      receiptData.push({
-        title: `Tax (${apiTaxPercentage}%)`,
-        content: `${currency} ${taxAmount.toFixed(2)}`,
-        kind: "tax",
-        showInCheckout: true,
-      });
-    } else if (billingConfig?.taxes && Array.isArray(billingConfig.taxes)) {
-      const enabledTaxes = billingConfig.taxes.filter(tax => tax.isEnabled);
-      enabledTaxes.forEach(tax => {
-        const taxAmount = (taxableAmount * parseFloat(tax.currentRate || 0)) / 100;
+    // Prioritize granular taxes from billingConfig (these are typically guest-facing)
+    const enabledBillingTaxes = billingConfig?.taxes?.filter(tax => tax.isEnabled) || [];
+    
+    if (enabledBillingTaxes.length > 0) {
+      enabledBillingTaxes.forEach(tax => {
+        const taxRate = parseFloat(tax.currentRate || 0);
+        const taxAmount = (taxableAmount * taxRate) / 100;
         totalTaxAmount += taxAmount;
+        apiTaxPercentage += taxRate;
         receiptData.push({
-          title: tax.name,
+          title: `${tax.name} (${taxRate}%)`,
           content: `${currency} ${taxAmount.toFixed(2)}`,
           kind: "tax",
           showInCheckout: true,
         });
       });
-    }
-
-    // Calculate Platform Commission (Service fee)
-    let pricingPlatformCommission = 0;
-    const apiCommissionPercentage = parseFloat(listing?.pricing?.commission || 0);
-
-    if (apiCommissionPercentage > 0) {
-      pricingPlatformCommission = (subtotal * apiCommissionPercentage) / 100;
-      receiptData.push({
-        title: `Service fee (${apiCommissionPercentage}%)`,
-        content: `${currency} ${pricingPlatformCommission.toFixed(2)}`,
-        kind: "commission",
-        showInCheckout: true,
-      });
-    } else if (billingConfig?.commissions && Array.isArray(billingConfig.commissions)) {
-      const platformFee = billingConfig.commissions.find(c => c.type === "Platform Fee" && c.isEnabled);
-      if (platformFee) {
-        pricingPlatformCommission = (subtotal * parseFloat(platformFee.currentRate || 0)) / 100;
+    } else {
+      // Fallback to listing-level customer tax or total tax
+      apiTaxPercentage = parseFloat(listing?.pricing?.tax?.customer || listing?.pricing?.tax?.total || 0);
+      if (apiTaxPercentage > 0) {
+        const taxAmount = (taxableAmount * apiTaxPercentage) / 100;
+        totalTaxAmount = taxAmount;
         receiptData.push({
-          title: "Service fee",
-          content: `${currency} ${pricingPlatformCommission.toFixed(2)}`,
-          kind: "commission",
+          title: `Tax (${apiTaxPercentage}%)`,
+          content: `${currency} ${taxAmount.toFixed(2)}`,
+          kind: "tax",
           showInCheckout: true,
         });
       }
     }
 
-    const total = taxableAmount + totalTaxAmount + pricingPlatformCommission;
+    // Calculate Platform Commission (Service fee)
+    // Note: Per requirement, service fee (commission) is deducted from host earnings,
+    // and should not be added to the final guest price.
+    let pricingPlatformCommission = 0;
+    const apiCommissionPercentage = parseFloat(listing?.pricing?.commission || 0);
+
+    if (apiCommissionPercentage > 0) {
+      pricingPlatformCommission = (subtotal * apiCommissionPercentage) / 100;
+      // We calculate it for host earnings logic, but don't show it to the guest as an addition
+    } else if (billingConfig?.commissions && Array.isArray(billingConfig.commissions)) {
+      const platformFee = billingConfig.commissions.find(c => c.type === "Platform Fee" && c.isEnabled);
+      if (platformFee) {
+        pricingPlatformCommission = (subtotal * parseFloat(platformFee.currentRate || 0)) / 100;
+      }
+    }
+
+    // Guest pays subtotal - discount + guest taxes.
+    const total = taxableAmount + totalTaxAmount;
 
     receiptData.push({
       title: "Total",
@@ -1105,8 +1105,8 @@ const lowestRoomPrice = useMemo(() => {
         discount: discountAmount,
         tax: totalTaxAmount,
         taxRate: apiTaxPercentage || 0,
-        commission: pricingPlatformCommission,
-        commissionRate: apiCommissionPercentage || 0,
+        commission: 0, // Commission is deducted from host, not charged to guest
+        commissionRate: 0,
         pricePerPerson: pricePerPerson,
         adultsCount: (guests.adults || 0),
         childrenCount: (guests.children || 0),
@@ -1490,7 +1490,8 @@ const lowestRoomPrice = useMemo(() => {
       const pricingAddonsTotal = addOnsTotal || 0;
       const pricingSubtotal = pricingBaseAmount + pricingAddonsTotal;
 
-      // Calculate platform commission (from API pricing or billing config)
+      // Calculate platform commission (service fee)
+      // Note: This is deducted from host earnings, not added to guest price.
       let pricingPlatformCommission = 0;
       const apiCommissionPercentage = parseFloat(listing?.pricing?.commission || 0);
       if (apiCommissionPercentage > 0) {
@@ -1510,20 +1511,28 @@ const lowestRoomPrice = useMemo(() => {
       const pricingDiscountAmount = (pricingSubtotal * apiDiscountPercentage) / 100;
       const pricingTaxableAmount = Math.max(pricingSubtotal - pricingDiscountAmount, 0);
 
-      // Calculate tax amount
+      // Calculate tax amount (guest portion)
       let pricingTaxAmount = 0;
-      const apiTaxPercentage = parseFloat(listing?.pricing?.tax?.total || 0);
-      if (apiTaxPercentage > 0) {
-        pricingTaxAmount = (pricingTaxableAmount * apiTaxPercentage) / 100;
-      } else if (billingConfig?.taxes && Array.isArray(billingConfig.taxes)) {
-        const enabledTaxes = billingConfig.taxes.filter(tax => tax.isEnabled);
-        enabledTaxes.forEach(tax => {
-          pricingTaxAmount += (pricingTaxableAmount * parseFloat(tax.currentRate || 0)) / 100;
+      let calculatedTaxRate = 0;
+      const enabledBillingTaxes = billingConfig?.taxes?.filter(tax => tax.isEnabled) || [];
+
+      if (enabledBillingTaxes.length > 0) {
+        enabledBillingTaxes.forEach(tax => {
+          const taxRate = parseFloat(tax.currentRate || 0);
+          pricingTaxAmount += (pricingTaxableAmount * taxRate) / 100;
+          calculatedTaxRate += taxRate;
         });
+      } else {
+        const apiTaxPercentage = parseFloat(listing?.pricing?.tax?.customer || listing?.pricing?.tax?.total || 0);
+        if (apiTaxPercentage > 0) {
+          pricingTaxAmount = (pricingTaxableAmount * apiTaxPercentage) / 100;
+          calculatedTaxRate = apiTaxPercentage;
+        }
       }
 
-      // Calculate total price (subtotal + taxes - discounts + platform commission)
-      const pricingTotal = pricingTaxableAmount + pricingTaxAmount + pricingPlatformCommission;
+      // Calculate total price (subtotal + taxes - discounts)
+      // Note: Per requirement, platform commission (platformFee) is NOT added to the guest total price.
+      const pricingTotal = pricingTaxableAmount + pricingTaxAmount;
 
       // Calculate host earnings (what the host receives: subtotal - platform commission)
       const calculatedHostEarnings = pricingSubtotal - pricingPlatformCommission;
@@ -1589,7 +1598,7 @@ const lowestRoomPrice = useMemo(() => {
         basePrice: pricingBaseAmount,
         addonsTotal: pricingAddonsTotal,
         taxAmount: pricingTaxAmount,
-        taxRate: apiTaxPercentage,
+        taxRate: calculatedTaxRate,
         platformFee: pricingPlatformCommission,
         commissionRate: apiCommissionPercentage,
         discountAmount: pricingDiscountAmount,
@@ -1987,9 +1996,13 @@ const lowestRoomPrice = useMemo(() => {
 
     const pricingSubtotal = pricingBaseAmount + pricingAddonsTotal;
 
-    // Calculate platform commission
+    // Calculate platform commission (service fee)
+    // Note: Deducted from host earnings, not added to guest price.
     let pricingPlatformCommission = 0;
-    if (billingConfig?.commissions && Array.isArray(billingConfig.commissions)) {
+    const apiCommissionPercentage = parseFloat(listing?.pricing?.commission || 0);
+    if (apiCommissionPercentage > 0) {
+      pricingPlatformCommission = (pricingSubtotal * apiCommissionPercentage) / 100;
+    } else if (billingConfig?.commissions && Array.isArray(billingConfig.commissions)) {
       const platformFee = billingConfig.commissions.find(c => c.type === "Platform Fee" && c.isEnabled);
       if (platformFee) {
         pricingPlatformCommission = (pricingSubtotal * parseFloat(platformFee.currentRate || 0)) / 100;
@@ -2003,18 +2016,26 @@ const lowestRoomPrice = useMemo(() => {
     ) || 0)) / 100;
     const pricingTaxableAmount = Math.max(pricingSubtotal - pricingDiscountAmount, 0);
 
-    // Calculate tax amount
+    // Calculate tax amount (prioritize guest portion from billingConfig)
     let pricingTaxAmount = 0;
-    if (billingConfig?.taxes && Array.isArray(billingConfig.taxes)) {
-      const enabledTaxes = billingConfig.taxes.filter(tax => tax.isEnabled);
-      enabledTaxes.forEach(tax => {
-        const taxAmount = (pricingTaxableAmount * parseFloat(tax.currentRate || 0)) / 100;
-        pricingTaxAmount += taxAmount;
+    let calculatedTaxRate = 0;
+    const enabledBillingTaxes = billingConfig?.taxes?.filter(tax => tax.isEnabled) || [];
+
+    if (enabledBillingTaxes.length > 0) {
+      enabledBillingTaxes.forEach(tax => {
+        const taxRate = parseFloat(tax.currentRate || 0);
+        pricingTaxAmount += (pricingTaxableAmount * taxRate) / 100;
+        calculatedTaxRate += taxRate;
       });
+    } else {
+      const apiTaxPercentage = parseFloat(listing?.pricing?.tax?.customer || listing?.pricing?.tax?.total || 0);
+      if (apiTaxPercentage > 0) {
+        pricingTaxAmount = (pricingTaxableAmount * apiTaxPercentage) / 100;
+        calculatedTaxRate = apiTaxPercentage;
+      }
     }
 
     // Calculate total price (subtotal + taxes - discounts, excluding platform commission)
-    // eslint-disable-next-line no-unused-vars
     const pricingTotal = pricingTaxableAmount + pricingTaxAmount;
 
     // Calculate host earnings (what the host receives: subtotal - platform commission)
@@ -2032,6 +2053,15 @@ const lowestRoomPrice = useMemo(() => {
       bookingTime: bookingTime, // "HH:mm:ss"
       bookingSlotId: bookingSlotId || 0,
       guestCount: billableGuests,
+      // Pricing details
+      basePrice: pricingBaseAmount,
+      addonsTotal: pricingAddonsTotal,
+      taxAmount: pricingTaxAmount,
+      taxRate: calculatedTaxRate,
+      platformFee: pricingPlatformCommission,
+      commissionRate: apiCommissionPercentage,
+      discountAmount: pricingDiscountAmount,
+      totalPrice: pricingTotal,
       customer: {
         name: customerName || "Guest User",
         email: customerEmail || "guest@example.com",
