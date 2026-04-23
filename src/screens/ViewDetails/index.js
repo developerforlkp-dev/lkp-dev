@@ -1472,15 +1472,21 @@ const ViewDetails = () => {
             <div className={styles.guestInfo}>
               <div className={styles.guestItem}>
                 <div className={styles.guestLabel}>Name</div>
-                <div className={styles.guestValue}>{booking.guest.name}</div>
+                <div className={styles.guestValue}>
+                  {booking.guest.name && booking.guest.name.toLowerCase() !== "guest user" ? booking.guest.name : "Guest"}
+                </div>
               </div>
               <div className={styles.guestItem}>
                 <div className={styles.guestLabel}>Phone</div>
-                <div className={styles.guestValue}>{booking.guest.phone}</div>
+                <div className={styles.guestValue}>
+                  {booking.guest.phone && booking.guest.phone.trim() !== "" ? booking.guest.phone : "-"}
+                </div>
               </div>
               <div className={styles.guestItem}>
                 <div className={styles.guestLabel}>Email</div>
-                <div className={styles.guestValue}>{booking.guest.email}</div>
+                <div className={styles.guestValue}>
+                  {booking.guest.email && booking.guest.email.trim() !== "" && !booking.guest.email.toLowerCase().includes("dummy") ? booking.guest.email : "-"}
+                </div>
               </div>
             </div>
           </div>
