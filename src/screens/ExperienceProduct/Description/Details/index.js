@@ -35,40 +35,7 @@ const facts = [
   },
 ];
 
-const options = [
-  {
-    title: "Free wifi 24/7",
-    icon: "modem",
-  },
-  {
-    title: "Free clean bathroom",
-    icon: "toilet-paper",
-  },
-  {
-    title: "Free computer",
-    icon: "monitor",
-  },
-  {
-    title: "Breakfast included",
-    icon: "burger",
-  },
-  {
-    title: "Free wifi 24/7",
-    icon: "medical-case",
-  },
-  {
-    title: "ATM",
-    icon: "credit-card",
-  },
-  {
-    title: "Free wifi 24/7",
-    icon: "modem",
-  },
-  {
-    title: "Nearby city",
-    icon: "building",
-  },
-];
+
 
 const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggleAddOn, onAddOnQuantityChange, onRoomSelect, selectedRoomId, roomsCount, onRoomsCountChange }) => {
   const [selectedAddonModal, setSelectedAddonModal] = useState(null);

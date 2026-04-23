@@ -7,7 +7,7 @@ import { getBookingDetails } from "../../mocks/bookings";
 import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings } from "../../utils/api";
 import Rating from "../../components/Rating";
 import Modal from "../../components/Modal";
-import Receipt from "../../components/Receipt";
+
 import html2pdf from "html2pdf.js";
 
 // Helper function to format image URLs
@@ -102,7 +102,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
         apiBooking.contact)) ||
     null;
 
-  const customerName = pickText(
+  let customerName = pickText(
     apiBooking?.customerName,
     apiBooking?.customerFullName,
     apiBooking?.guestName,
@@ -118,7 +118,11 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     customerObj?.guestName
   );
 
-  const customerPhone = pickText(
+  if (customerName === "Guest User") {
+    customerName = "Guest";
+  }
+
+  let customerPhone = pickText(
     apiBooking?.customerPhone,
     apiBooking?.phoneNumber,
     apiBooking?.phone,
@@ -133,7 +137,11 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     customerObj?.contactNumber
   );
 
-  const customerEmail = pickText(
+  if (!customerPhone || customerPhone === "+911234567890" || customerPhone === "1234567890") {
+    customerPhone = "-";
+  }
+
+  let customerEmail = pickText(
     apiBooking?.customerEmail,
     apiBooking?.email,
     apiBooking?.emailId,
@@ -144,6 +152,10 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     customerObj?.emailAddress,
     customerObj?.mailId
   );
+
+  if (!customerEmail || customerEmail === "guest@example.com") {
+    customerEmail = "-";
+  }
   // Format date from "2025-11-19" to "Fri, 21 Nov 2025" format
   const formatDate = (dateString) => {
     if (!dateString) return "";

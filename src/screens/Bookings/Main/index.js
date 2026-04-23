@@ -1053,7 +1053,7 @@ const Main = ({
                 <p className={styles.emptyDescription}>
                   {emptyState.description}
                 </p>
-                <Link to="/" className="button">
+                <Link to="/experience-category" className="button">
                   Explore experiences
                 </Link>
               </div>
