@@ -86,7 +86,7 @@ const CustomDropdown = ({ options, value, onChange }) => {
 };
 
 /* ---------- RoomCard -------------------------------------------------- */
-const RoomCard = ({ room, onRoomSelect, isSelected }) => {
+const RoomCard = ({ room, onRoomSelect, isSelected, roomsCount, onRoomsCountChange }) => {
   const allPlans = room.mealPlanPricing ? Object.keys(room.mealPlanPricing) : [];
   if (!allPlans.length) {
     if (room.epPrice) allPlans.push("EP");
@@ -172,12 +172,32 @@ const RoomCard = ({ room, onRoomSelect, isSelected }) => {
               }
             </div>
           </div>
-          <button
-            className={cn(styles.bookBtn, { [styles.selected]: isSelected })}
-            onClick={handleSelect}
-          >
-            {isSelected ? "Selected" : "Select"}
-          </button>
+          {isSelected ? (
+            <div className={styles.counterWrap}>
+              <button
+                className={styles.counterBtn}
+                onClick={() => onRoomsCountChange(Math.max(1, roomsCount - 1))}
+                disabled={roomsCount <= 1}
+              >
+                <Icon name="minus" size="16" />
+              </button>
+              <span className={styles.countValue}>{roomsCount}</span>
+              <button
+                className={styles.counterBtn}
+                onClick={() => onRoomsCountChange(Math.min(Number(totalRooms || 99), roomsCount + 1))}
+                disabled={roomsCount >= Number(totalRooms || 99)}
+              >
+                <Icon name="plus" size="16" />
+              </button>
+            </div>
+          ) : (
+            <button
+              className={cn(styles.bookBtn, { [styles.selected]: isSelected })}
+              onClick={handleSelect}
+            >
+              {isSelected ? "Selected" : "Select"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -185,7 +205,7 @@ const RoomCard = ({ room, onRoomSelect, isSelected }) => {
 };
 
 /* ---------- RoomCards section ---------------------------------------- */
-const RoomCards = ({ listing, onRoomSelect, selectedRoomId, noContainer }) => {
+const RoomCards = ({ listing, onRoomSelect, selectedRoomId, noContainer, roomsCount, onRoomsCountChange }) => {
   const rooms =
     listing?.rooms ||
     listing?.roomTypes ||
@@ -207,6 +227,8 @@ const RoomCards = ({ listing, onRoomSelect, selectedRoomId, noContainer }) => {
               room={room}
               onRoomSelect={onRoomSelect}
               isSelected={selectedRoomId === roomId}
+              roomsCount={roomsCount}
+              onRoomsCountChange={onRoomsCountChange}
             />
           );
         })}

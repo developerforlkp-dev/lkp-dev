@@ -70,7 +70,7 @@ const options = [
   },
 ];
 
-const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggleAddOn, onAddOnQuantityChange, onRoomSelect, selectedRoomId }) => {
+const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggleAddOn, onAddOnQuantityChange, onRoomSelect, selectedRoomId, roomsCount, onRoomsCountChange }) => {
   const [selectedAddonModal, setSelectedAddonModal] = useState(null);
 
   const displayAddOns = Array.isArray(listing?.addons) && listing.addons.length
@@ -172,7 +172,7 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
   // Aggregate all active guest requirements for the 'What\'s Included' / Rules section
   const requirementItems = useMemo(() => {
     if (!Array.isArray(listing?.guestRequirements)) return [];
-    
+
     return listing.guestRequirements
       .filter((gr) => gr?.setting?.isActive && Array.isArray(gr.questions))
       .flatMap((gr) => {
@@ -225,11 +225,13 @@ const Details = ({ className, listing, selectedAddOns, addOnQuantities, onToggle
           </>
         )}
       </div>
-      <RoomCards 
-        listing={listing} 
-        onRoomSelect={onRoomSelect} 
-        selectedRoomId={selectedRoomId} 
-        noContainer 
+      <RoomCards
+        listing={listing}
+        onRoomSelect={onRoomSelect}
+        selectedRoomId={selectedRoomId}
+        roomsCount={roomsCount}
+        onRoomsCountChange={onRoomsCountChange}
+        noContainer
       />
       <div className={styles.facts}>
         {(
