@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useParams, useHistory } from "react-router-dom";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
@@ -55,7 +56,9 @@ const ExperienceProduct = () => {
   const idFromPath = extractExperienceIdFromSlugAndId(slugAndId);
   const idParam = params.get("id");
   const id = idFromPath || idParam || "1";
+  const id = idFromPath || idParam || "1";
 
+  const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
   const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
   const [listing, setListing] = useState(null);
   const [hostData, setHostData] = useState(null);
@@ -71,8 +74,26 @@ const ExperienceProduct = () => {
         : [...prev, addon]
     );
   };
+  const [selectedAddOns, setSelectedAddOns] = useState([]);
+
+  const handleToggleAddon = (addon) => {
+    const addonId = addon.addonId || addon.id;
+    setSelectedAddOns((prev) =>
+      prev.some(a => (a.addonId || a.id) === addonId)
+        ? prev.filter(a => (a.addonId || a.id) !== addonId)
+        : [...prev, addon]
+    );
+  };
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    
+    const load = async () => {
+      try {
+        const data = await getListing(id);
+        if (!mounted) return;
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -96,7 +117,23 @@ const ExperienceProduct = () => {
             }
           }
           setGalleryItems(galleryImages);
+        if (data) {
+          setListing(data);
+          const galleryImages = [];
+          if (data.coverPhotoUrl) {
+            const formattedUrl = formatImageUrl(data.coverPhotoUrl);
+            if (formattedUrl) galleryImages.push(formattedUrl);
+          }
+          if (Array.isArray(data.listingMedia)) {
+            for (const media of data.listingMedia) {
+              const imageUrl = formatImageUrl(media.url || media.fileUrl);
+              if (imageUrl) galleryImages.push(imageUrl);
+            }
+          }
+          setGalleryItems(galleryImages);
 
+          const canonicalUrl = buildExperienceUrl(data.title || "experience", data.listingId || data.id || id);
+          if (location.pathname !== canonicalUrl) history.replace(canonicalUrl);
           const canonicalUrl = buildExperienceUrl(data.title || "experience", data.listingId || data.id || id);
           if (location.pathname !== canonicalUrl) history.replace(canonicalUrl);
 
@@ -132,7 +169,46 @@ const ExperienceProduct = () => {
   const textY = useTransform(heroProgress, [0, 1], [0, -200]);
   const fade = useTransform(heroProgress, [0, 0.6], [1, 0]);
 
+          const hostId = data.hostId || data.host?.id || data.host?.hostId || data.leadUserId || data.host?.leadUserId;
+          if (hostId) {
+            getHost(hostId).then(resp => mounted && setHostData(resp.host || resp)).catch(e => console.warn(e));
+          }
+
+          const leadId = data.leadId || data.lead_id || data.host?.leadId || data.leadUserId;
+          if (leadId) {
+            getLeadDetails(leadId).then(resp => mounted && setLeadData(resp)).catch(e => console.warn(e));
+          }
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+      } 
+    };
+    load();
+    return () => { mounted = false; };
+  }, [id]);
+
+  const [sc, setSc] = useState(false);
+  useEffect(() => {
+    const h = () => setSc(window.scrollY > 40);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  const heroRef = useRef(null);
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const textY = useTransform(heroProgress, [0, 1], [0, -200]);
+  const fade = useTransform(heroProgress, [0, 0.6], [1, 0]);
+
   if (loading && !listing) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: BG }}><Loader /></div>;
+  }
+
+  // Formatting description for details section
+  const description = listing?.description || listing?.aboutListing || "A multisensory odyssey that blurs the line between perception and possibility.";
+  const summary = listing?.summary || listing?.listingSummary || "High-fidelity touchpoints that respond to your presence in real-time.";
+  const displayTags = listing?.tags?.length > 0 ? listing.tags : ["Artistic Evolution", "Deep Immersion", "Sonic Archeology"];
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: BG }}><Loader /></div>;
   }
 
