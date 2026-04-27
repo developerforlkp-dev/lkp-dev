@@ -824,14 +824,30 @@ function Rules({ event }) {
 }
 
 function EventBookingPopup({ event }) {
-  const ticketTypes = Array.isArray(event?.ticketTypes) ? event.ticketTypes :
+  const ticketTypes = (Array.isArray(event?.ticketTypes) ? event.ticketTypes :
                       Array.isArray(event?.ticketTiers) ? event.ticketTiers :
-                      Array.isArray(event?.tickets) ? event.tickets : [];
+                      Array.isArray(event?.tickets) ? event.tickets : []).map((ticket, index) => ({
+    ...ticket,
+    id: ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`,
+    name: ticket.name || ticket.ticketTypeName || ticket.typeName || ticket.title || ticket.ticketName || `Ticket ${index + 1}`,
+    price: ticket.price ?? ticket.ticketTypePrice ?? ticket.typePrice ?? ticket.ticketPrice ?? ticket.individualPrice ?? ticket.amount ?? ticket.basePrice ?? 0,
+    applicableSlots: Array.isArray(ticket.applicableSlots) ? ticket.applicableSlots :
+                     Array.isArray(ticket.applicable_slots) ? ticket.applicable_slots :
+                     Array.isArray(ticket.eventSlots) ? ticket.eventSlots :
+                     Array.isArray(ticket.event_slots) ? ticket.event_slots :
+                     Array.isArray(ticket.allowedSlots) ? ticket.allowedSlots :
+                     Array.isArray(ticket.allowed_slots) ? ticket.allowed_slots :
+                     Array.isArray(ticket.slotIds) ? ticket.slotIds :
+                     Array.isArray(ticket.slot_ids) ? ticket.slot_ids :
+                     Array.isArray(ticket.slots) ? ticket.slots : []
+  }));
   const firstTicket = ticketTypes[0] || {};
   const ticketPrice = firstTicket.price ?? firstTicket.amount ?? firstTicket.basePrice ?? firstTicket.b2cPrice ?? event?.ticketPrice ?? event?.price ?? 0;
-  const rawSlots = event?.timeSlots || event?.slots || [];
+  const rawSlots = event?.eventSlots || event?.slots || event?.timeSlots || ticketTypes.flatMap(ticket => ticket.applicableSlots || []);
   const timeSlots = rawSlots.length > 0 ? rawSlots.map((slot, i) => ({
     ...slot,
+    id: slot.id ?? slot.slotId ?? slot.eventSlotId ?? slot.event_slot_id ?? `slot-${i}`,
+    eventSlotId: slot.eventSlotId ?? slot.event_slot_id ?? slot.slotId ?? slot.slot_id ?? slot.id,
     slotName: slot.slotName || slot.name || slot.startTime || `Slot ${i + 1}`,
     startTime: slot.startTime || slot.time || slot.slotName || event?.startTime || "",
     endTime: slot.endTime || event?.endTime || "",
@@ -846,6 +862,7 @@ function EventBookingPopup({ event }) {
   const listing = {
     ...event,
     listingId: event?.listingId || event?.id || event?.eventId,
+    eventId: event?.eventId || event?.id || event?.listingId,
     title: event?.title || "Event",
     name: event?.title || "Event",
     coverPhotoUrl: event?.media?.[0]?.url || event?.coverPhotoUrl || event?.imageUrl || "",
@@ -856,6 +873,9 @@ function EventBookingPopup({ event }) {
       ...(event?.pricing || {}),
       basePrice: ticketPrice
     },
+    ticketTypes,
+    eventSlots: timeSlots,
+    slots: timeSlots,
     timeSlots,
     host: event?.hostProfile?.host || event?.host || {}
   };
