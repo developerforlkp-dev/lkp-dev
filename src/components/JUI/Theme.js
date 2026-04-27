@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import useDarkMode from "use-dark-mode";
 
 /* ─── TOKENS (Light mode + Premium Teal) ─────────── */
 export const THEMES = {
@@ -37,7 +38,8 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light");
+  const darkMode = useDarkMode(false);
+  const theme = darkMode.value ? "dark" : "light";
   
   useEffect(() => {
     const root = document.documentElement;
@@ -53,7 +55,7 @@ export function ThemeProvider({ children }) {
     root.setAttribute('data-theme', theme);
   }, [theme]);
   
-  const toggleTheme = () => setTheme(prev => prev === "light" ? "dark" : "light");
+  const toggleTheme = () => darkMode.toggle();
   
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, tokens: THEMES[theme] }}>
