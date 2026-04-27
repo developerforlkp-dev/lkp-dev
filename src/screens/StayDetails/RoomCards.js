@@ -39,43 +39,51 @@ const getPriceForPlan = (room, code) => {
   return flat[code] ? room[flat[code]] : room.b2cPrice || room.price || null;
 };
 
+/* Extract feature tags from room data */
+const getRoomFeatures = (room) => {
+  const features = [];
+  if (Array.isArray(room.amenities)) {
+    room.amenities.forEach(a => {
+      const label = typeof a === "string" ? a : a?.name || a?.amenity;
+      if (label) features.push(label);
+    });
+  }
+  if (Array.isArray(room.features)) {
+    room.features.forEach(f => {
+      const label = typeof f === "string" ? f : f?.name || f?.feature;
+      if (label) features.push(label);
+    });
+  }
+  if (Array.isArray(room.tags)) {
+    room.tags.forEach(t => {
+      const label = typeof t === "string" ? t : t?.name || t?.tag;
+      if (label) features.push(label);
+    });
+  }
+  return [...new Set(features)];
+};
+
 /* ---------- Custom Dropdown ------------------------------------------ */
 const CustomDropdown = ({ options, value, onChange }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
-
   const selected = options.find((o) => o.value === value) || options[0];
-
   return (
     <div ref={ref} className={styles.dropdown}>
-      {/* Trigger */}
-      <div
-        onClick={() => setOpen((p) => !p)}
-        className={cn(styles.dropdownTrigger, { [styles.open]: open })}
-      >
-        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {selected ? selected.label : "Select…"}
-        </span>
+      <div onClick={() => setOpen((p) => !p)} className={cn(styles.dropdownTrigger, { [styles.open]: open })}>
+        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{selected ? selected.label : "Select…"}</span>
         <span className={cn(styles.dropdownArrow, { [styles.open]: open })}>▼</span>
       </div>
-
-      {/* Dropdown list */}
       {open && (
         <div className={styles.dropdownList}>
           {options.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={() => { onChange(opt.value); setOpen(false); }}
-              className={cn(styles.dropdownOption, { [styles.selected]: opt.value === value })}
-            >
+            <div key={opt.value} onClick={() => { onChange(opt.value); setOpen(false); }} className={cn(styles.dropdownOption, { [styles.selected]: opt.value === value })}>
               {opt.label}
             </div>
           ))}
@@ -85,7 +93,7 @@ const CustomDropdown = ({ options, value, onChange }) => {
   );
 };
 
-/* ---------- RoomCard -------------------------------------------------- */
+/* ---------- RoomCard (Horizontal Layout) ------------------------------ */
 const RoomCard = ({ room, onRoomSelect, isSelected, roomsCount, onRoomsCountChange }) => {
   const allPlans = room.mealPlanPricing ? Object.keys(room.mealPlanPricing) : [];
   if (!allPlans.length) {
@@ -105,13 +113,14 @@ const RoomCard = ({ room, onRoomSelect, isSelected, roomsCount, onRoomsCountChan
   const description = room.roomDescription || room.description || room.shortDescription;
   const totalRooms = room.totalRooms || room.totalUnits || null;
   const coverImage = resolveCoverImage(room);
+  const features = getRoomFeatures(room);
+  const VISIBLE_TAGS = 3;
+  const visibleFeatures = features.slice(0, VISIBLE_TAGS);
+  const extraCount = features.length - VISIBLE_TAGS;
 
   const handlePlanChange = (code) => {
     setPlan(code);
-    // Immediately update booking card if this room is already selected
-    if (isSelected && onRoomSelect) {
-      onRoomSelect(room.roomId ?? room.id, code);
-    }
+    if (isSelected && onRoomSelect) onRoomSelect(room.roomId ?? room.id, code);
   };
 
   const handleSelect = () => {
@@ -120,83 +129,79 @@ const RoomCard = ({ room, onRoomSelect, isSelected, roomsCount, onRoomsCountChan
 
   return (
     <div className={cn(styles.card, { [styles.cardSelected]: isSelected })}>
-      {/* Image */}
+      {/* Left: Image */}
       <div className={styles.imgWrap}>
         {coverImage
           ? <img src={coverImage} alt={name} className={styles.img} />
-          : <div className={styles.imgPlaceholder}><Icon name="home" size="40" /></div>
+          : <div className={styles.imgPlaceholder}><Icon name="home" size="48" /></div>
         }
-        {totalRooms != null && <span className={styles.badge}>{totalRooms} rooms</span>}
-        {isSelected && <span className={styles.selectedBadge}>Selected</span>}
+        {totalRooms != null && <span className={styles.badge}>{totalRooms} UNITS</span>}
+        {isSelected && <span className={styles.selectedBadge}>✓ Selected</span>}
       </div>
 
-      {/* Body */}
+      {/* Right: Content */}
       <div className={styles.body}>
-        <h4 className={styles.roomName}>{name}</h4>
-        {capacity != null && (
-          <div className={styles.capacity}>
-            <Icon name="user" size="14" />
-            <span>Up to {capacity} guest{capacity !== 1 ? "s" : ""}
-              {room.maxAdults > 0 && <> · {room.maxAdults} adults{room.maxChildren > 0 ? `, ${room.maxChildren} children` : ""}</>}
-            </span>
-          </div>
-        )}
-        {description && <p className={styles.desc}>{description}</p>}
-
-        {/* Meal plan */}
-        {allPlans.length > 0 && (
-          <div className={styles.planSection}>
-            <div className={styles.planLabel}>Meal Plan</div>
-            {allPlans.length > 1 ? (
-              <CustomDropdown
-                options={allPlans.map((c) => ({ value: c, label: getMealPlanLabel(c) }))}
-                value={plan}
-                onChange={handlePlanChange}
-              />
-            ) : (
-              <div className={styles.singlePlan}>
-                {getMealPlanLabel(allPlans[0])}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Price + CTA */}
-        <div className={styles.foot}>
-          <div className={styles.price}>
-            <span className={styles.priceLabel}>From</span>
+        {/* Top row: name + price */}
+        <div className={styles.topRow}>
+          <h4 className={styles.roomName}>{name}</h4>
+          <div className={styles.priceBlock}>
+            <span className={styles.priceLabel}>STARTING FROM</span>
             <div className={styles.amount}>
               {displayPrice
-                ? <>INR {displayPrice}<span className={styles.perNight}>&nbsp;/ night</span></>
-                : <span style={{ opacity: 0.5 }}>Price on request</span>
+                ? <>₹{displayPrice}<span className={styles.perNight}> / night</span></>
+                : <span className={styles.priceOnRequest}>Price on request</span>
               }
             </div>
           </div>
+        </div>
+
+        {/* Guest capacity */}
+        {capacity != null && (
+          <p className={styles.capacity}>
+            Max {capacity} Guest{capacity !== 1 ? "s" : ""}
+            {room.maxAdults > 0 && <> · {room.maxAdults} adults{room.maxChildren > 0 ? `, ${room.maxChildren} children` : ""}</>}
+          </p>
+        )}
+
+        {/* Description */}
+        {description && <p className={styles.desc}>{description}</p>}
+
+        {/* Meal plan selector */}
+        {allPlans.length > 0 && (
+          <div className={styles.planSection}>
+            <div className={styles.planLabel}>Meal Plan</div>
+            {allPlans.length > 1
+              ? <CustomDropdown options={allPlans.map(c => ({ value: c, label: getMealPlanLabel(c) }))} value={plan} onChange={handlePlanChange} />
+              : <div className={styles.singlePlan}>{getMealPlanLabel(allPlans[0])}</div>
+            }
+          </div>
+        )}
+
+        {/* Feature tags */}
+        {features.length > 0 && (
+          <div className={styles.tagsRow}>
+            {visibleFeatures.map((f, i) => <span key={i} className={styles.tag}>{f}</span>)}
+            {extraCount > 0 && <span className={styles.tagMore}>+ {extraCount} more</span>}
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className={styles.foot}>
           {isSelected ? (
-            <div className={styles.counterWrap}>
-              <button 
-                className={styles.counterBtn} 
-                onClick={() => onRoomsCountChange(Math.max(1, roomsCount - 1))}
-                disabled={roomsCount <= 1}
-              >
-                <Icon name="minus" size="16" />
-              </button>
-              <span className={styles.countValue}>{roomsCount}</span>
-              <button 
-                className={styles.counterBtn} 
-                onClick={() => onRoomsCountChange(Math.min(Number(totalRooms || 99), roomsCount + 1))}
-                disabled={roomsCount >= Number(totalRooms || 99)}
-              >
-                <Icon name="plus" size="16" />
-              </button>
+            <div className={styles.counterRow}>
+              <div className={styles.counterWrap}>
+                <button className={styles.counterBtn} onClick={() => onRoomsCountChange(Math.max(1, roomsCount - 1))} disabled={roomsCount <= 1}>
+                  <Icon name="minus" size="16" />
+                </button>
+                <span className={styles.countValue}>{roomsCount}</span>
+                <button className={styles.counterBtn} onClick={() => onRoomsCountChange(Math.min(Number(totalRooms || 99), roomsCount + 1))} disabled={roomsCount >= Number(totalRooms || 99)}>
+                  <Icon name="plus" size="16" />
+                </button>
+              </div>
+              <button className={cn(styles.bookBtn, styles.selectedBtn)} onClick={handleSelect}>✓ Room Selected</button>
             </div>
           ) : (
-            <button
-              className={cn(styles.bookBtn, { [styles.selected]: isSelected })}
-              onClick={handleSelect}
-            >
-              {isSelected ? "Selected" : "Select"}
-            </button>
+            <button className={styles.bookBtn} onClick={handleSelect}>SELECT ROOM</button>
           )}
         </div>
       </div>
@@ -206,45 +211,32 @@ const RoomCard = ({ room, onRoomSelect, isSelected, roomsCount, onRoomsCountChan
 
 /* ---------- RoomCards section ---------------------------------------- */
 const RoomCards = ({ listing, onRoomSelect, selectedRoomId, noContainer, roomsCount, onRoomsCountChange }) => {
-  const rooms =
-    listing?.rooms ||
-    listing?.roomTypes ||
-    listing?.room_types ||
-    listing?.stay?.rooms ||
-    [];
-
+  const rooms = listing?.rooms || listing?.roomTypes || listing?.room_types || listing?.stay?.rooms || [];
   if (!Array.isArray(rooms) || rooms.length === 0) return null;
 
   const content = (
-    <>
-      <h2 className={styles.title}>Available Rooms</h2>
-      <div className={styles.list}>
-        {rooms.map((room, idx) => {
-          const roomId = String(room.roomId ?? room.id ?? idx);
-          return (
-            <RoomCard
-              key={roomId}
-              room={room}
-              onRoomSelect={onRoomSelect}
-              isSelected={selectedRoomId === roomId}
-              roomsCount={roomsCount}
-              onRoomsCountChange={onRoomsCountChange}
-            />
-          );
-        })}
-      </div>
-    </>
+    <div className={styles.list}>
+      {rooms.map((room, idx) => {
+        const roomId = String(room.roomId ?? room.id ?? idx);
+        return (
+          <RoomCard
+            key={roomId}
+            room={room}
+            onRoomSelect={onRoomSelect}
+            isSelected={selectedRoomId === roomId}
+            roomsCount={roomsCount}
+            onRoomsCountChange={onRoomsCountChange}
+          />
+        );
+      })}
+    </div>
   );
 
-  if (noContainer) {
-    return <div style={{ marginTop: '32px', marginBottom: '48px' }}>{content}</div>;
-  }
+  if (noContainer) return <div>{content}</div>;
 
   return (
     <div className={cn("section", styles.section)}>
-      <div className="container">
-        {content}
-      </div>
+      <div className="container">{content}</div>
     </div>
   );
 };
