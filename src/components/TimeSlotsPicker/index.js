@@ -62,6 +62,7 @@ const TimeSlotsPicker = ({
   times = [],
   timeSlots = [], // Array of timeSlot objects with startTime and endTime
   selectedDate,   // moment object, Date, or ISO string for the chosen date
+  availabilityData = [], // Optional array of availability data
   className,
 }) => {
   // Resolve the weekday index from selectedDate (null when no date chosen)
@@ -153,8 +154,47 @@ const TimeSlotsPicker = ({
       }
     }
 
+    // Filter by availability data if present for the selected date
+    if (selectedDate && availabilityData.length > 0) {
+      try {
+        const selected = typeof selectedDate.toDate === 'function'
+          ? selectedDate.toDate()
+          : new Date(selectedDate);
+        
+        // Format as YYYY-MM-DD to match availabilityData
+        const y = selected.getFullYear();
+        const m = String(selected.getMonth() + 1).padStart(2, '0');
+        const d = String(selected.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+
+        // Get availability for this date
+        const dateAvailability = availabilityData.filter(av => av.date === dateStr);
+
+        if (dateAvailability.length > 0) {
+          rawSlots = rawSlots.map(s => {
+            const slotId = s.slot?.slot_id || s.slot?.slotId || s.id;
+            const slotName = s.slotName || s.id;
+            
+            // Find matching availability entry (by ID first, then Name)
+            const av = dateAvailability.find(a => 
+              (a.slot_id && slotId && String(a.slot_id) === String(slotId)) || 
+              (a.slot_name && slotName && a.slot_name === slotName)
+            );
+
+            // If found and explicitly marked unavailable, mark the slot as such
+            if (av && av.is_available === false) {
+              return { ...s, isUnavailable: true };
+            }
+            return s;
+          });
+        }
+      } catch (err) {
+        // ignore date errors
+      }
+    }
+
     return rawSlots;
-  }, [timeSlots, times, selectedDayIndex, selectedDate]);
+  }, [timeSlots, times, selectedDayIndex, selectedDate, availabilityData]);
 
   const [time, setTime] = useState(selectedTime || (slots[0]?.id || slots[0]?.slotName));
 
@@ -181,8 +221,10 @@ const TimeSlotsPicker = ({
             slots.map((slot) => (
               <button
                 key={slot.id}
+                disabled={slot.isUnavailable}
                 className={cn(styles.timeBtn, {
-                  [styles.active]: time === slot.id || time === slot.slotName || selectedTime === slot.slotName
+                  [styles.active]: time === slot.id || time === slot.slotName || selectedTime === slot.slotName,
+                  [styles.unavailable]: slot.isUnavailable
                 })}
                 onClick={() => handleTimeClick(slot)}
               >

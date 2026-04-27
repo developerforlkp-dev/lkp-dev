@@ -242,3 +242,58 @@
         display: block
         line-height: 1.4
         white-space: normal
+
+.privateToggleRow
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 12px
+    padding: 12px 16px
+    margin-bottom: 16px
+    background: $n7
+    border-radius: 12px
+    border: 1px solid $n6
+    +dark
+        background: $n3
+        border-color: $n4
+
+.privateToggleInfo
+    display: flex
+    flex-direction: column
+    gap: 2px
+    flex: 1
+    min-width: 0
+
+.privateToggleLabel
+    display: flex
+    align-items: center
+    gap: 6px
+    +body-bold-2
+    color: $n2
+    +dark
+        color: $n8
+    svg
+        fill: $p1
+        flex-shrink: 0
+
+.privateToggleDesc
+    +caption-2
+    color: $n4
+    +dark
+        color: $n5
+
+.privateToggleDescError
+    color: #FF6A55
+    +dark
+        color: #FF6A55
+
+.privateToggleDescSuccess
+    color: #45B26B
+    +dark
+        color: #45B26B
+
+.privateToggleRowError
+    border-color: #FF6A55
+    background: rgba(#FF6A55, 0.06)
+    +dark
+        background: rgba(#FF6A55, 0.1)

@@ -95,6 +95,17 @@
         color: $n8
         box-shadow: 0 0 0 3px rgba($p1, .15)
         font-weight: 600
+    &.unavailable
+        opacity: 0.5
+        cursor: not-allowed
+        border-color: $n6
+        background: $n7
+        text-decoration: line-through
+        pointer-events: none
+        +dark
+            background: $n2
+            border-color: $n3
+            color: $n5
 
 .timeRange
     display: flex

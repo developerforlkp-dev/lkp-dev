@@ -13,7 +13,8 @@ import TimeSlotsPicker from "../../../components/TimeSlotsPicker";
 import GuestPicker from "../../../components/GuestPicker";
 import Dropdown from "../../../components/Dropdown";
 import LoginModal from "../../../components/LoginModal";
-import { getBillingConfiguration, createOrder, getListingSlots, loginWithGoogle, getStayRoomAvailability, createStayOrder } from "../../../utils/api";
+import Switch from "../../../components/Switch";
+import { getBillingConfiguration, createOrder, getListingSlots, loginWithGoogle, getStayRoomAvailability, createStayOrder, getListingPrivateAvailability, getListingPrivateAvailabilityRange } from "../../../utils/api";
 
 const Description = ({ classSection, listing, hostData, externalRoomId, externalMealPlan, onRoomSelect, selectedRoomId, externalRoomsCount, onRoomsCountChange }) => {
   const history = useHistory();
@@ -22,6 +23,11 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
   const isFood = Boolean(listing?.menuName || listing?.cuisineType || listing?.foodId || listing?.menuId);
   const isPlace = Boolean(listing?.placeName || listing?.placeType || listing?.placeId);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [privateAvailability, setPrivateAvailability] = useState(null);
+  const [privateAvailabilityRangeData, setPrivateAvailabilityRangeData] = useState([]);
+  const [privateAvailabilityLoading, setPrivateAvailabilityLoading] = useState(false);
+  const [privateAvailabilityError, setPrivateAvailabilityError] = useState(null);
   const [addOnQuantities, setAddOnQuantities] = useState({}); // Track quantities for Group pricing addons
 
   // State declarations - must come before they're used
@@ -470,21 +476,33 @@ const selectedTimeSlotData = useMemo(() => {
 // Filter availability data by selected slot for date picker
 // If no slot is selected, show all availability (user can pick date first)
 const filteredAvailabilityData = useMemo(() => {
-  if (!availabilityData.length) return [];
+  const sourceData = isPrivate && privateAvailabilityRangeData.length > 0 
+    ? privateAvailabilityRangeData 
+    : availabilityData;
+
+  const privateBookedSlots = listing?.privateBookedSlots || [];
+  const safeSourceData = sourceData.filter(av => {
+    return !privateBookedSlots.some(pbs => 
+      pbs.date === av.date && 
+      (String(pbs.slotId) === String(av.slot_id) || String(pbs.slot_id) === String(av.slot_id))
+    );
+  });
+
+  if (!safeSourceData.length) return [];
 
   // If no slot is selected, show all availability
   if (!selectedTimeSlotData && !selectedTimeSlot) {
-    return availabilityData;
+    return safeSourceData;
   }
 
   const slotId = selectedTimeSlotData?.slotId || selectedTimeSlotData?.slot_id;
   const slotName = selectedTimeSlotData?.slotName || selectedTimeSlot;
 
   // Filter availability to only show dates for the selected slot
-  return availabilityData.filter(av =>
+  return safeSourceData.filter(av =>
     slotId ? av.slot_id === slotId : av.slot_name === slotName
   );
-}, [availabilityData, selectedTimeSlotData, selectedTimeSlot]);
+}, [availabilityData, privateAvailabilityRangeData, isPrivate, selectedTimeSlotData, selectedTimeSlot, listing?.privateBookedSlots]);
 
 // Get availability data for selected date and slot
 const selectedDateAvailability = useMemo(() => {
@@ -1647,6 +1665,7 @@ const lowestRoomPrice = useMemo(() => {
         addons: addonsArray,
         guestAnswers: guestAnswers,
         paymentMethod: "razorpay",
+        ...(isPrivate ? { isPrivateBooking: true } : {}),
       };
 
       console.log("📦 Creating order:", orderData);
@@ -2106,6 +2125,7 @@ const lowestRoomPrice = useMemo(() => {
       addons: addonsArray,
       guestAnswers: guestAnswers,
       paymentMethod: "razorpay",
+      ...(isPrivate ? { isPrivateBooking: true } : {}),
     };
 
     console.log("📦 Creating order after login:", orderData);
@@ -2532,7 +2552,100 @@ const lowestRoomPrice = useMemo(() => {
     fetchBillingConfig();
   }, [listing, isStay]);
 
+  // Fetch private availability when private mode is toggled ON and a date is selected
+  useEffect(() => {
+    // Reset whenever private is turned off
+    if (!isPrivate) {
+      setPrivateAvailability(null);
+      setPrivateAvailabilityError(null);
+      return;
+    }
+
+    const listingId = listing?.listingId || listing?.listing_id || listing?.id;
+    if (!listingId || !selectedDate) {
+      // Private is ON but no date yet — clear stale data
+      setPrivateAvailability(null);
+      return;
+    }
+
+    const dateStr = selectedDate.format("YYYY-MM-DD");
+
+    const fetchPrivateAvailability = async () => {
+      setPrivateAvailabilityLoading(true);
+      setPrivateAvailabilityError(null);
+      try {
+        const data = await getListingPrivateAvailability(listingId, dateStr);
+        setPrivateAvailability(data);
+      } catch (err) {
+        console.warn("⚠️ Private availability fetch failed:", err?.response?.data || err.message);
+        setPrivateAvailabilityError(
+          err?.response?.data?.message || "Could not load private availability. Please try again."
+        );
+        setPrivateAvailability(null);
+      } finally {
+        setPrivateAvailabilityLoading(false);
+      }
+    };
+
+    fetchPrivateAvailability();
+  }, [isPrivate, selectedDate, listing]);
+
+  // Fetch private availability for the current and next month when private mode is ON
+  useEffect(() => {
+    if (!isPrivate) {
+      setPrivateAvailabilityRangeData([]);
+      return;
+    }
+
+    const listingId = listing?.listingId || listing?.listing_id || listing?.id;
+    if (!listingId) return;
+
+    const fetchRangeData = async () => {
+      try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 2, 0);
+
+        const formatDate = (date) => {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        };
+
+        const startDateStr = formatDate(startDate);
+        const endDateStr = formatDate(endDate);
+
+        const data = await getListingPrivateAvailabilityRange(listingId, startDateStr, endDateStr);
+        if (Array.isArray(data)) {
+          // Map to match the structure expected by InlineDatePicker
+          const mapped = data.map(av => ({
+            date: av.date,
+            booked_seats: av.bookedSeats || av.booked_seats || 0,
+            available_seats: av.availableSeats || av.available_seats || 0,
+            is_available: av.privateBookingAvailable !== false && av.private_booking_available !== false,
+            max_seats: av.maxSeats || av.max_seats || 0,
+            start_time: av.startTime || av.start_time,
+            end_time: av.endTime || av.end_time,
+            price_per_person: av.pricePerPerson || av.price_per_person,
+            slot_id: av.slotId || av.slot_id,
+            slot_name: av.slotName || av.slot_name,
+            private_booking_available: av.privateBookingAvailable !== false && av.private_booking_available !== false
+          }));
+          setPrivateAvailabilityRangeData(mapped);
+        }
+      } catch (err) {
+        console.warn("⚠️ Failed to fetch private availability range:", err);
+      }
+    };
+
+    fetchRangeData();
+  }, [isPrivate, listing]);
+
   // Note: Availability is now fetched from slots API, so we don't need a separate availability fetch
+
   // The old availability endpoint is kept as a fallback but disabled when slots data is available
 
   // Ensure guest count doesn't exceed available seats when date/slot/availability changes
@@ -2762,6 +2875,7 @@ const lowestRoomPrice = useMemo(() => {
             extraBeds: 0,
           },
         ],
+        ...(isPrivate ? { isPrivateBooking: true } : {}),
       };
 
 
@@ -2796,6 +2910,7 @@ const lowestRoomPrice = useMemo(() => {
         amount: calculatedAmount,
         paymentMethod: "razorpay",
         rooms: [],
+        ...(isPrivate ? { isPrivateBooking: true } : {}),
       };
     }
 
@@ -2919,7 +3034,22 @@ return (
                   }
 
                   // Determine whether any time slots exist and are valid for the selected day
-                  const availableTimeSlots = transformedTimeSlots.length > 0 ? transformedTimeSlots : (listing?.timeSlots || []);
+                  const baseTimeSlots = transformedTimeSlots.length > 0 ? transformedTimeSlots : (listing?.timeSlots || []);
+                  
+                  // Filter out privateBookedSlots for the selected date
+                  const availableTimeSlots = (() => {
+                    if (!selectedDate || !listing?.privateBookedSlots?.length) return baseTimeSlots;
+                    const dateStr = selectedDate.format("YYYY-MM-DD");
+                    return baseTimeSlots.filter(slot => {
+                      const slotId = slot.slotId || slot.slot_id || slot.slotName;
+                      const isPrivateBooked = listing.privateBookedSlots.some(pbs => 
+                        pbs.date === dateStr && 
+                        (String(pbs.slotId) === String(slotId) || String(pbs.slot_id) === String(slotId))
+                      );
+                      return !isPrivateBooked;
+                    });
+                  })();
+
                   // If a date is selected, filter by day of week to decide if the tile should be enabled
                   const DAY_CODES_LOCAL = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
                   const DAY_FLAGS_LOCAL = ['isSunday', 'isMonday', 'isTuesday', 'isWednesday', 'isThursday', 'isFriday', 'isSaturday'];
@@ -2965,6 +3095,7 @@ return (
                         selectedTime={selectedTimeSlot}
                         timeSlots={availableTimeSlots}
                         selectedDate={selectedDate}
+                        availabilityData={filteredAvailabilityData}
                       />
                     </div>
                   );
@@ -3046,6 +3177,67 @@ return (
                 return null;
               }}
               >
+                {listing?.privateOptionAvailable === true && (() => {
+                  // Resolve the slot entry from the API array response for the selected date+slot
+                  const dateStr = selectedDate ? selectedDate.format("YYYY-MM-DD") : null;
+                  const slotArray = Array.isArray(privateAvailability) ? privateAvailability : [];
+                  const slotEntry = dateStr
+                    ? slotArray.find((s) =>
+                        s.date === dateStr &&
+                        (selectedTimeSlotData
+                          ? s.slotId === (selectedTimeSlotData.slotId || selectedTimeSlotData.slot_id)
+                          : true)
+                      ) || slotArray.find((s) => s.date === dateStr)
+                    : null;
+
+                  const privateAvail = slotEntry?.privateBookingAvailable;
+                  const isUnavailable = isPrivate && slotEntry && privateAvail === false;
+                  const isAvailable = isPrivate && slotEntry && privateAvail === true;
+
+                  return (
+                    <div className={cn(styles.privateToggleRow, isUnavailable && styles.privateToggleRowError)}>
+                      <div className={styles.privateToggleInfo}>
+                        <div className={styles.privateToggleLabel}>
+                          <Icon name="lock" size="16" />
+                          Make it Private
+                        </div>
+                        <div className={cn(
+                          styles.privateToggleDesc,
+                          isUnavailable && styles.privateToggleDescError,
+                          isAvailable && styles.privateToggleDescSuccess
+                        )}>
+                          {privateAvailabilityLoading
+                            ? "Checking availability…"
+                            : isUnavailable
+                            ? "Private booking is not available for this slot on the selected date. Please try another slot or date."
+                            : isAvailable
+                            ? (() => {
+                                const currency = listing?.currency || "INR";
+                                const parts = [];
+                                if (slotEntry?.pricePerPerson != null)
+                                  parts.push(`${currency} ${parseFloat(slotEntry.pricePerPerson).toFixed(2)} / person`);
+                                if (slotEntry?.availableSeats != null)
+                                  parts.push(`${slotEntry.availableSeats} seat(s) available`);
+                                return parts.length
+                                  ? `Available · ${parts.join(" · ")}`
+                                  : "Available for private booking";
+                              })()
+                            : isPrivate && selectedDate && slotArray.length === 0 && !privateAvailabilityLoading
+                            ? "No availability data found for this date."
+                            : !selectedDate
+                            ? "Please select a date first to enable private booking"
+                            : "Book the experience exclusively for your group"}
+                        </div>
+                      </div>
+                      <Switch
+                        value={isPrivate}
+                        onChange={() => setIsPrivate((prev) => !prev)}
+                        disabled={!selectedDate && !isPrivate}
+                      />
+                    </div>
+                  );
+                })()}
+
                 <div className={styles.btns}>
                   {isStay ? (
                     <button
