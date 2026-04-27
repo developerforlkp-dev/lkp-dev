@@ -145,15 +145,13 @@ const ScopedStyles = () => (
     .artist-row:hover .artist-image-tile img { filter: grayscale(0); transform: scale(1.04); }
     
     @media(max-width:1024px){
-      .gallery-grid{grid-template-columns:repeat(3,1fr)!important}
-      .gallery-grid>:nth-child(4),.gallery-grid>:nth-child(5){display:none}
+      .gallery-grid{flex-wrap: wrap; justify-content: center !important;}
     }
     @media(max-width:768px){
       .event-details-premium .desk-only{display:none!important}
       .event-details-premium .grid-2, .event-details-premium .grid-3{grid-template-columns:1fr!important}
       .event-details-premium .grid-3-2{grid-template-columns:1fr!important}
-      .gallery-grid{grid-template-columns:repeat(2,1fr)!important; height:600px!important}
-      .gallery-grid>:nth-child(3){display:none}
+      .gallery-grid{height:600px!important}
       .artist-row{grid-template-columns:60px 1fr!important}
       .artist-row>:nth-child(3),.artist-row>:nth-child(4){display:none!important}
     }
@@ -324,7 +322,19 @@ function Hero({ event }) {
   const date = event?.startDate ? event.startDate.split('-').reverse().join('.') : "21.06.26";
   const venueStr = event?.venueFullAddress || "Mumbai";
   const time = event?.startTime || "6:00 PM IST";
-  const tags = event?.category ? [event.category, "Live Event", "Experience"] : ["Live Music", "Contemporary Art", "Immersive"];
+  const splitTitle = (str) => {
+    if (!str) return ["", ""];
+    if (str.includes("SOLSTICE")) return ["SOL", "STICE"];
+    const words = str.split(" ");
+    if (words.length === 1) {
+      const half = Math.ceil(str.length / 2);
+      return [str.slice(0, half), str.slice(half)];
+    }
+    const middle = Math.ceil(words.length / 2);
+    return [words.slice(0, middle).join(" "), words.slice(middle).join(" ")];
+  };
+  const [titlePart1, titlePart2] = splitTitle(title);
+  const heroTags = event?.category ? [event.category, "Live Event", "Experience"] : ["Live Music", "Contemporary Art", "Immersive"];
 
   return (
     <section style={{ position: "relative", minHeight: "100vh", background: W, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
@@ -346,7 +356,7 @@ function Hero({ event }) {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ position: "relative", zIndex: 2, maxWidth: 1320, margin: "0 auto", padding: "0 36px", width: "100%", paddingTop: 168 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-          {tags.map((t, i) => (
+          {heroTags.map((t, i) => (
             <motion.span key={t} className="hero-tag-pill" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.55 + i * 0.07 }} whileHover={{ scale: 1.04, transition: { duration: 0.35, ease: E } }} style={{ position: "relative", display: "inline-flex", alignItems: "center", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", fontWeight: 600, color: A, border: `1px solid ${A}40`, padding: "5px 14px", cursor: "default", transformOrigin: "center", willChange: "transform", transition: "background-color 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s cubic-bezier(0.22, 1, 0.36, 1)" }}>
               {t}
             </motion.span>
@@ -358,14 +368,14 @@ function Hero({ event }) {
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.62 }} className="font-mono" style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: M, marginBottom: 12 }}>
           <span style={{ color: A }}>▸</span> Edition 01 — {date} — {venueStr.split(',')[0]}
         </motion.p>
-        <div style={{ overflow: "hidden" }}>
-          <motion.h1 initial={{ y: "110%" }} animate={{ y: 0 }} transition={{ duration: 1.2, ease: E, delay: 0.65 }} className="font-display" style={{ fontSize: "clamp(4.5rem, 14vw, 11rem)", fontWeight: 700, lineHeight: 0.86, color: FG, margin: 0, letterSpacing: "-0.03em" }}>
-            {title.includes("SOLSTICE") ? "SOL" : title.slice(0, Math.ceil(title.length / 2))}
+        <div style={{ overflow: "hidden", paddingBottom: "0.2em" }}>
+          <motion.h1 initial={{ y: "110%" }} animate={{ y: 0 }} transition={{ duration: 1.2, ease: E, delay: 0.65 }} className="font-display" style={{ fontSize: "clamp(3rem, 10vw, 8.5rem)", fontWeight: 700, lineHeight: 1.1, color: FG, margin: 0, letterSpacing: "-0.03em" }}>
+            {titlePart1}
           </motion.h1>
         </div>
-        <div style={{ overflow: "hidden" }}>
-          <motion.h1 initial={{ y: "110%" }} animate={{ y: 0 }} transition={{ duration: 1.2, ease: E, delay: 0.79 }} className="font-display" style={{ fontSize: "clamp(4.5rem, 14vw, 11rem)", fontWeight: 700, lineHeight: 0.86, color: W, WebkitTextFillColor: W, WebkitTextStroke: `2px ${A}`, margin: 0, letterSpacing: "-0.03em" }}>
-            {title.includes("SOLSTICE") ? "STICE" : title.slice(Math.ceil(title.length / 2))}
+        <div style={{ overflow: "hidden", paddingBottom: "0.2em", marginTop: "-0.2em" }}>
+          <motion.h1 initial={{ y: "110%" }} animate={{ y: 0 }} transition={{ duration: 1.2, ease: E, delay: 0.79 }} className="font-display" style={{ fontSize: "clamp(3rem, 10vw, 8.5rem)", fontWeight: 700, lineHeight: 1.1, color: W, WebkitTextFillColor: W, WebkitTextStroke: `2px ${A}`, margin: 0, letterSpacing: "-0.03em" }}>
+            {titlePart2}
           </motion.h1>
         </div>
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.15, ease: E }} style={{ marginTop: 44, display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 24 }}>
@@ -562,15 +572,21 @@ function Gallery({ event }) {
             <span style={{ fontSize: 10, letterSpacing: "0.35em", fontWeight: 600, textTransform: "uppercase", color: AH, whiteSpace: "nowrap" }}>01.5 — Gallery</span>
             <div style={{ flex: 1, height: 1, backgroundColor: theme === 'light' ? "#333" : "#2a2a2a" }} />
           </div>
-          <Chars text="The Experience" cls="font-display" style={{ fontSize: "clamp(3.5rem,8vw,7rem)", fontWeight: 700, lineHeight: 0.92, color: BG, marginBottom: 64, overflow: "hidden", letterSpacing: "-0.02em" }} />
-        </div>
-        <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 24px" }}>
-          <div className="gallery-grid">
-            <GalleryColumn images={GALLERY_COLS[0]} direction="up" speed={28} />
-            <GalleryColumn images={GALLERY_COLS[1]} direction="down" speed={36} />
-            <GalleryColumn images={GALLERY_COLS[2]} direction="up" speed={32} />
-            <GalleryColumn images={GALLERY_COLS[3]} direction="down" speed={40} />
-            <GalleryColumn images={GALLERY_COLS[4]} direction="up" speed={30} />
+          
+          <Chars text="The Experience" cls="font-display" style={{ fontSize: "clamp(2rem,5vw,4.5rem)", fontWeight: 700, lineHeight: 1.1, color: BG, marginBottom: 64, overflow: "hidden", letterSpacing: "-0.02em", paddingBottom: "0.15em" }} />
+          
+          <div className="gallery-grid" style={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            gap: 16, 
+            height: 850, 
+            overflow: "hidden" 
+          }}>
+            <div style={{ width: 280, flexShrink: 0 }}><GalleryColumn images={GALLERY_COLS[0]} direction="up" speed={28} /></div>
+            <div style={{ width: 280, flexShrink: 0 }}><GalleryColumn images={GALLERY_COLS[1]} direction="down" speed={36} /></div>
+            <div style={{ width: 280, flexShrink: 0 }}><GalleryColumn images={GALLERY_COLS[2]} direction="up" speed={32} /></div>
+            <div style={{ width: 280, flexShrink: 0 }}><GalleryColumn images={GALLERY_COLS[3]} direction="down" speed={40} /></div>
+            <div style={{ width: 280, flexShrink: 0 }}><GalleryColumn images={GALLERY_COLS[4]} direction="up" speed={30} /></div>
           </div>
         </div>
       </section>
@@ -599,11 +615,11 @@ function Artists({ event }) {
   ];
   return (
     <>
-      <Mq items={ARTISTS.map(a => a.name)} dir="l" size="xl" bg={W} accent />
+      <Mq items={ARTISTS.map(a => a.name)} dir="l" size="lg" bg={W} accent />
       <section id="artists" style={{ background: W, padding: "130px 36px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <SHdr idx="02" label="Lineup" />
-          <Chars text="The Artists" cls="font-display" style={{ fontSize: "clamp(3.5rem,10vw,9rem)", fontWeight: 700, lineHeight: 0.88, color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em" }} />
+          <Chars text="The Artists" cls="font-display" style={{ fontSize: "clamp(2rem,5vw,4.5rem)", fontWeight: 700, lineHeight: 1.1, color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em", paddingBottom: "0.15em" }} />
           <div style={{ borderTop: `1px solid ${B}` }}>
             {ARTISTS.map((a, i) => (
               <motion.div key={a.id} initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.07, ease: E }} onHoverStart={() => setHov(a.id)} onHoverEnd={() => setHov(null)} whileHover={{ paddingLeft: 20, backgroundColor: AL }} className="artist-row">
@@ -666,8 +682,8 @@ function Venue({ event, hostName }) {
       <section id="venue" style={{ background: BG, padding: "130px 36px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <SHdr idx="03" label="Venue & Organizer" />
-          <Chars text="Where It Happens" cls="font-display" style={{ fontSize: "clamp(3rem,8vw,8rem)", fontWeight: 700, lineHeight: 0.88, color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B, marginBottom: 1 }} className="grid-3-2">
+          <Chars text="Where It Happens" cls="font-display" style={{ fontSize: "clamp(1.8rem,4.5vw,4.2rem)", fontWeight: 700, lineHeight: 1.1, color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em", paddingBottom: "0.15em" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B }} className="grid-3-2">
             <Rev delay={0.1}>
               <div style={{ background: W, padding: 52 }}>
                 <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 24 }}>
@@ -740,8 +756,6 @@ function Venue({ event, hostName }) {
                 </div>
               </div>
             </Rev>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B }} className="grid-3-2">
             <Rev delay={0.1}>
               <div style={{ background: W, padding: 52, minHeight: 300 }}>
                 <p className="host-presented-label" style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "#0097B2", WebkitTextFillColor: "#0097B2", marginBottom: 36, fontWeight: 700 }}>Presented By</p>
