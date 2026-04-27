@@ -193,35 +193,35 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               style={{
                 position: "relative",
                 width: "100%",
-                maxWidth: 480,
+                maxWidth: 420,
                 background: BG,
-                borderRadius: 32,
+                borderRadius: 24,
                 boxShadow: "0 40px 100px rgba(0,0,0,0.4)",
                 border: `1px solid ${B}`
               }}
             >
               {/* Header */}
-              <div style={{ padding: "40px 40px 20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+              <div style={{ padding: "32px 32px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                      <span style={{ fontSize: 32, fontWeight: 700, color: FG }}>₹{data.price}</span>
-                      <span style={{ fontSize: 14, color: M }}>/{data.unit}</span>
+                      <span style={{ fontSize: 28, fontWeight: 700, color: FG }}>₹{data.price}</span>
+                      <span style={{ fontSize: 13, color: M }}>/{data.unit}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
-                      <Star size={14} fill={A} color={A} />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>4.9</span>
-                      <span style={{ fontSize: 13, color: M }}>(124 reviews)</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                      <Star size={12} fill={A} color={A} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: FG }}>4.9</span>
+                      <span style={{ fontSize: 12, color: M }}>(124 reviews)</span>
                     </div>
                   </div>
                   <button onClick={() => setShow(false)} style={{ background: S, border: "none", padding: 8, borderRadius: 100, cursor: "pointer", color: FG }}>
-                    <X size={20} />
+                    <X size={18} />
                   </button>
                 </div>
               </div>
 
               {/* Selector Grid */}
-              <div style={{ padding: "0 40px 40px" }}>
+              <div style={{ padding: "0 32px 32px" }}>
                 <div style={{ 
                   border: `1px solid ${B}`, 
                   borderRadius: 20, 
@@ -290,26 +290,26 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 </div>
 
                 {/* Total & Summary */}
-                <div style={{ marginTop: 32, padding: "24px 0", borderTop: `1px solid ${B}` }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                    <span style={{ color: M, fontSize: 14 }}>₹{data.price} x {totalGuests} {data.unit}{totalGuests > 1 ? 's' : ''}</span>
-                    <span style={{ color: FG, fontWeight: 600, fontSize: 14 }}>₹{baseTotal}</span>
+                <div style={{ marginTop: 24, padding: "20px 0", borderTop: `1px solid ${B}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ color: M, fontSize: 13 }}>₹{data.price} x {totalGuests} {data.unit}{totalGuests > 1 ? 's' : ''}</span>
+                    <span style={{ color: FG, fontWeight: 600, fontSize: 13 }}>₹{baseTotal}</span>
                   </div>
 
                   {selectedAddOns.length > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                      <span style={{ color: M, fontSize: 14 }}>Add-ons ({selectedAddOns.length})</span>
-                      <span style={{ color: FG, fontWeight: 600, fontSize: 14 }}>+₹{addOnsTotal}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                      <span style={{ color: M, fontSize: 13 }}>Add-ons ({selectedAddOns.length})</span>
+                      <span style={{ color: FG, fontWeight: 600, fontSize: 13 }}>+₹{addOnsTotal}</span>
                     </div>
                   )}
 
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                    <span style={{ color: M, fontSize: 14 }}>Service fee</span>
-                    <span style={{ color: FG, fontWeight: 600, fontSize: 14 }}>₹0</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ color: M, fontSize: 13 }}>Service fee</span>
+                    <span style={{ color: FG, fontWeight: 600, fontSize: 13 }}>₹0</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, paddingTop: 16, borderTop: `1px dashed ${B}` }}>
-                    <span style={{ color: FG, fontWeight: 700, fontSize: 18 }}>Total</span>
-                    <span style={{ color: A, fontWeight: 700, fontSize: 18 }}>₹{finalTotal}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${B}` }}>
+                    <span style={{ color: FG, fontWeight: 700, fontSize: 16 }}>Total</span>
+                    <span style={{ color: A, fontWeight: 700, fontSize: 16 }}>₹{finalTotal}</span>
                   </div>
                 </div>
 
@@ -322,13 +322,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     width: "100%",
                     background: (!startDate || !startTime) ? M : A,
                     color: "#FFF",
-                    padding: "20px",
-                    borderRadius: 16,
+                    padding: "16px",
+                    borderRadius: 14,
                     border: "none",
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: 700,
                     cursor: (!startDate || !startTime) ? "not-allowed" : "pointer",
-                    marginTop: 8,
+                    marginTop: 4,
                     boxShadow: `0 10px 30px ${AL}`
                   }}
                 >

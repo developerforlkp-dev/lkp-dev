@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Camera, Coffee, Phone, Info, Plus } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
-import { Navbar } from "../../components/JUI/Navbar";
+import Header from "../../components/Header";
 import { Footer } from "../../components/JUI/Footer";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import Loader from "../../components/Loader";
@@ -56,7 +56,7 @@ const ExperienceProduct = () => {
   const idParam = params.get("id");
   const id = idFromPath || idParam || "1";
 
-  const { tokens: { A, FG, M, B, W, BG, S, AL, AH } } = useTheme();
+  const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
   const [listing, setListing] = useState(null);
   const [hostData, setHostData] = useState(null);
   const [leadData, setLeadData] = useState(null);
@@ -120,6 +120,13 @@ const ExperienceProduct = () => {
     return () => { mounted = false; };
   }, [id]);
 
+  const [sc, setSc] = useState(false);
+  useEffect(() => {
+    const h = () => setSc(window.scrollY > 40);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
   const heroRef = useRef(null);
   const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const textY = useTransform(heroProgress, [0, 1], [0, -200]);
@@ -136,7 +143,21 @@ const ExperienceProduct = () => {
 
   return (
     <>
-      <Navbar />
+      <motion.div
+        className="slim-header-wrapper"
+        initial={{ y: -72, opacity: 0 }} 
+        animate={{ y: 0, opacity: 1 }} 
+        transition={{ duration: 0.85, ease: E }}
+        style={{ 
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, 
+          transition: "all 0.4s", 
+          background: sc ? (theme === 'light' ? "rgba(251,251,249,0.92)" : "rgba(8,8,8,0.92)") : "transparent", 
+          backdropFilter: sc ? "blur(20px)" : "none", 
+          borderBottom: sc ? `1px solid ${B}` : "1px solid transparent" 
+        }}
+      >
+        <Header />
+      </motion.div>
       <main style={{ background: BG }}>
         {/* HERO SECTION */}
         <section ref={heroRef} style={{ position: "relative", minHeight: "110vh", overflow: "hidden", display: "flex", alignItems: "center" }}>
@@ -489,6 +510,8 @@ const ExperienceProduct = () => {
           .prep-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
           .host-grid { grid-template-columns: 1fr !important; }
         }
+        .slim-header-wrapper > div { padding: 4px 0 !important; }
+        .slim-header-wrapper img { width: 140px !important; }
       `}</style>
     </>
   );
