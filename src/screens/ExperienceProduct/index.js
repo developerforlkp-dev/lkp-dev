@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useParams, useHistory } from "react-router-dom";
 import cn from "classnames";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Camera, Coffee, Phone, Info, Plus } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
@@ -42,7 +42,7 @@ function ExperienceBg({ progress, src }) {
         <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 40%, ${A}44 0%, transparent 60%)` }} />
         <motion.div animate={{ opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 7, repeat: Infinity, delay: 2 }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 70% 60%, ${A}33 0%, transparent 50%)` }} />
       </motion.div>
-      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 60%, ${BG} 100%)` }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 60%, #080808 100%)` }} />
     </div>
   );
 }
@@ -62,6 +62,8 @@ const ExperienceProduct = () => {
   const [leadData, setLeadData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sc, setSc] = useState(false);
 
   const handleToggleAddon = (addon) => {
     const addonId = addon.addonId || addon.id;
@@ -71,7 +73,6 @@ const ExperienceProduct = () => {
         : [...prev, addon]
     );
   };
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -120,7 +121,6 @@ const ExperienceProduct = () => {
     return () => { mounted = false; };
   }, [id]);
 
-  const [sc, setSc] = useState(false);
   useEffect(() => {
     const h = () => setSc(window.scrollY > 40);
     window.addEventListener("scroll", h);
@@ -136,7 +136,6 @@ const ExperienceProduct = () => {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: BG }}><Loader /></div>;
   }
 
-  // Formatting description for details section
   const description = listing?.description || listing?.aboutListing || "A multisensory odyssey that blurs the line between perception and possibility.";
   const summary = listing?.summary || listing?.listingSummary || "High-fidelity touchpoints that respond to your presence in real-time.";
   const displayTags = listing?.tags?.length > 0 ? listing.tags : ["Artistic Evolution", "Deep Immersion", "Sonic Archeology"];
@@ -144,7 +143,7 @@ const ExperienceProduct = () => {
   return (
     <>
       <motion.div
-        className="slim-header-wrapper"
+        className={cn("slim-header-wrapper", { "force-dark": !sc && theme === "light" })}
         initial={{ y: -72, opacity: 0 }} 
         animate={{ y: 0, opacity: 1 }} 
         transition={{ duration: 0.85, ease: E }}
@@ -165,29 +164,29 @@ const ExperienceProduct = () => {
           <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 60px", position: "relative", zIndex: 10, width: "100%" }}>
              <motion.div style={{ opacity: fade, y: textY }}>
                <p style={{ fontSize: 12, letterSpacing: "1em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 40, fontFamily: 'monospace' }}>The Narrative Experience</p>
-               <h1 style={{ fontSize: "clamp(3.5rem, 10vw, 8rem)", fontWeight: 900, color: FG, lineHeight: 1.1, letterSpacing: "0.05em", margin: 0, textTransform: "uppercase", fontFamily: 'inherit' }}>
-                 {listing?.title?.split(' ')[0] || "ULTRA"}
-               </h1>
-               <h1 style={{ fontSize: "clamp(3.5rem, 10vw, 8rem)", fontWeight: 900, color: "transparent", WebkitTextStroke: `1px ${FG}`, lineHeight: 1.1, letterSpacing: "0.05em", margin: 0, textTransform: "uppercase", fontFamily: 'inherit' }}>
-                 {listing?.title?.split(' ').slice(1).join(' ') || "REALITY"}
-               </h1>
-               
-               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 100, marginTop: 100, maxWidth: 1000 }} className="hero-stats">
-                  <div>
-                     <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: A, marginBottom: 20, fontWeight: 700 }}>01. Atmospherics</p>
-                     <p style={{ fontSize: 18, color: M, lineHeight: 1.6, fontWeight: 400 }}>{listing?.experienceType || "A multisensory odyssey that blurs the line between perception and possibility."}</p>
-                  </div>
-                  <div>
-                     <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: A, marginBottom: 20, fontWeight: 700 }}>02. Interaction</p>
-                     <p style={{ fontSize: 18, color: M, lineHeight: 1.6, fontWeight: 400 }}>{listing?.activityType || "High-fidelity touchpoints that respond to your presence in real-time."}</p>
-                  </div>
-               </div>
+                  <Rev>
+                    <h1 style={{ fontSize: "clamp(4.5rem, 12vw, 10rem)", fontWeight: 900, lineHeight: 0.85, color: "#FFFFFF", marginBottom: 40, letterSpacing: "-0.04em" }} className="font-display">
+                      {listing?.title}
+                    </h1>
+                  </Rev>
+                  <Rev delay={0.2}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60 }} className="hero-stats">
+                      <div style={{ borderLeft: "2px solid #0097B2", paddingLeft: 24 }}>
+                         <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#0097B2", marginBottom: 20, fontWeight: 700 }}>01. Atmospherics</p>
+                         <p style={{ fontSize: 18, color: "#D4D4D4", lineHeight: 1.6, fontWeight: 400 }}>{listing?.experienceType || "A multisensory odyssey that blurs the line between perception and possibility."}</p>
+                      </div>
+                      <div style={{ borderLeft: "2px solid #0097B2", paddingLeft: 24 }}>
+                         <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#0097B2", marginBottom: 20, fontWeight: 700 }}>02. Interaction</p>
+                         <p style={{ fontSize: 18, color: "#D4D4D4", lineHeight: 1.6, fontWeight: 400 }}>{listing?.activityType || "High-fidelity touchpoints that respond to your presence in real-time."}</p>
+                      </div>
+                   </div>
+                </Rev>
              </motion.div>
           </div>
-          <motion.div style={{ position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20, opacity: fade }}>
-            <motion.div animate={{ height: [40, 80, 40] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ width: 1, background: A }} />
-            <span style={{ fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase", color: M, fontWeight: 600 }}>Explore Souls</span>
-          </motion.div>
+           <motion.div style={{ position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20, opacity: fade }}>
+             <motion.div animate={{ height: [40, 80, 40] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ width: 1, background: "#FFFFFF" }} />
+             <span style={{ fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase", color: "#8C8C88", fontWeight: 600 }}>Scroll to explore</span>
+           </motion.div>
         </section>
 
         <Mq items={displayTags} size="sm" bg={BG} />
@@ -512,66 +511,124 @@ const ExperienceProduct = () => {
         }
         .slim-header-wrapper > div { padding: 4px 0 !important; }
         .slim-header-wrapper img { width: 140px !important; }
+        
+        /* Force dark styles when over hero in light mode */
+        .force-dark [class*="Header_link"], 
+        .force-dark [class*="Header_bookingsLink"],
+        .force-dark [class*="Header_themeToggle"] svg {
+          color: #FCFCFD !important;
+          fill: #FCFCFD !important;
+        }
+        .force-dark [class*="Header_logo"] img {
+          filter: brightness(0) invert(1) !important;
+        }
       `}</style>
     </>
   );
 };
 
-function PolicyItem({ p }) {
+function PolicyItem({ req }) {
   const { tokens: { FG, A, M, AL, B } } = useTheme();
   const [op, setOp] = useState(false);
   
+  const title = req.setting?.title;
+  const description = req.setting?.description;
+  const questions = req.questions || [];
+
   return (
     <motion.div style={{ borderBottom: `1px solid ${B}` }} whileHover={{ backgroundColor: AL }}>
-      <button onClick={() => setOp(!op)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: op ? A : FG }}>{p.title}</span>
-        <ChevronDown size={15} color={M} style={{ transform: op ? 'rotate(180deg)' : 'none', transition: '0.3s' }} />
-      </button>
-      {op && (
-        <div style={{ padding: "0 16px 22px", fontSize: 13, color: M, lineHeight: 1.8 }}>
-          {p.body?.includes('\n') ? (
-            <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 8, padding: 0, margin: 0 }}>
-              {p.body.split('\n').map(line => line.trim()).filter(line => line).map((item, j) => (
-                <li key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                   <div style={{ width: 4, height: 4, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 8 }} />
-                   <span style={{ fontSize: 13, color: M, lineHeight: 1.4 }}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p style={{ margin: 0 }}>{p.body}</p>
+      <div 
+        onClick={() => setOp(!op)} 
+        style={{ 
+          width: "100%", 
+          display: "flex", 
+          alignItems: "flex-start", 
+          justifyContent: "space-between", 
+          padding: "24px 16px", 
+          background: "none", 
+          border: "none", 
+          cursor: "pointer", 
+          textAlign: "left" 
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, display: "block", marginBottom: 8 }}>{title}</span>
+          {description && (
+            <p style={{ fontSize: 13, color: M, lineHeight: 1.5, whiteSpace: "pre-line", margin: 0 }}>
+              {description}
+            </p>
           )}
         </div>
-      )}
+        <ChevronDown size={18} color={M} style={{ transform: op ? 'rotate(180deg)' : 'none', transition: '0.3s', marginTop: 4, flexShrink: 0 }} />
+      </div>
+      
+      <AnimatePresence>
+        {op && questions.length > 0 && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ padding: "0 16px 24px", overflow: "hidden" }}
+          >
+            <div style={{ padding: "20px", background: AL, borderRadius: 16, border: `1px solid ${B}` }}>
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0 }}>
+                {questions.map((q, j) => (
+                  <li key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                     <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
+                     <span style={{ fontSize: 14, color: FG, lineHeight: 1.4, fontWeight: 500 }}>{q.question?.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
 
 function ExperiencePolicies({ listing }) {
   const { tokens: { FG, W, B, A, M } } = useTheme();
-  const policies = [
-    { id: 1, title: "Punctuality", body: "The Experience begins precisely as scheduled. Late arrivals may not be accommodated to prevent disruption." },
-    { id: 2, title: "Cancellation", body: "Fully refundable up to 72 hours before the event. Non-refundable within 72 hours." }
-  ];
   
   return (
     <section style={{ background: W, padding: "130px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <SHdr idx="05" label="Rules & Policies" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 80 }} className="pol-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.5fr", gap: 80 }} className="pol-grid">
           <Rev delay={0.1}>
-            <Chars text="Know Before You Go." cls="font-display" style={{ fontSize: "clamp(3.5rem,8vw,5.5rem)", fontWeight: 700, lineHeight: 0.9, color: FG, letterSpacing: "-0.02em" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Chars 
+                text="Know Before" 
+                cls="font-display" 
+                style={{ 
+                  fontSize: "clamp(3.5rem, 8vw, 5.5rem)", 
+                  fontWeight: 700, 
+                  lineHeight: 0.95, 
+                  color: FG, 
+                  letterSpacing: "-0.02em"
+                }} 
+              />
+              <Chars 
+                text="You Go." 
+                cls="font-display" 
+                style={{ 
+                  fontSize: "clamp(3.5rem, 8vw, 5.5rem)", 
+                  fontWeight: 700, 
+                  lineHeight: 0.95, 
+                  color: FG, 
+                  letterSpacing: "-0.02em"
+                }} 
+              />
+            </div>
           </Rev>
           <Rev delay={0.2}>
             <div style={{ borderTop: `1px solid ${B}` }}>
               {listing?.guestRequirements?.length > 0 ? (
                 listing.guestRequirements.map((req, i) => (
-                  <PolicyItem key={`req-${i}`} p={{ title: req.setting?.title, body: req.setting?.description }} />
+                  <PolicyItem key={`req-${i}`} req={req} />
                 ))
               ) : (
-                policies.map(p => (
-                  <PolicyItem key={p.id} p={p} />
-                ))
+                <p style={{ color: M, fontSize: 14, padding: "40px 0" }}>No specific requirements listed for this experience.</p>
               )}
             </div>
           </Rev>
