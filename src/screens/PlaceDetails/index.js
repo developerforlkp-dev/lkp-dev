@@ -94,6 +94,109 @@ const toDisplayString = (value) => {
   return String(value);
 };
 
+const toDisplayList = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value.map(toDisplayString).map(item => item.trim()).filter(Boolean);
+};
+
+const toTwelveHourTime = (value) => {
+  if (!value || typeof value !== "string") return "";
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return value;
+  const hours = Number(match[1]);
+  const minutes = match[2];
+  if (Number.isNaN(hours) || hours < 0 || hours > 23) return value;
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes} ${suffix}`;
+};
+
+const getTimingsText = (place) => {
+  const openingTime = toTwelveHourTime(place?.openingTime);
+  const closingTime = toTwelveHourTime(place?.closingTime);
+  if (openingTime && closingTime) return `${openingTime} - ${closingTime}`;
+  return place?.timings || place?.openingHours || "06:00 - 20:00";
+};
+
+const getLocationSummary = (place) => {
+  const parts = [place?.district, place?.state, place?.country]
+    .map(toDisplayString)
+    .map(item => item.trim())
+    .filter(Boolean);
+  return parts.length ? parts.join(", ") : place?.city || "Location unavailable";
+};
+
+const getFullAddress = (place) => {
+  return place?.fullAddress || place?.address || "";
+};
+
+const getHostName = (host) => {
+  const fullName = [host?.firstName, host?.lastName]
+    .map(toDisplayString)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .join(" ");
+  return fullName || host?.displayName || host?.name || "Lead Curator";
+};
+
+const getHostEmail = (host) => {
+  return host?.email || host?.emailAddress || "";
+};
+
+const getHostPhone = (host) => {
+  return host?.phoneNumber || host?.phone || host?.mobileNumber || "";
+};
+
+const toCommaList = (value) => {
+  if (Array.isArray(value)) return toDisplayList(value);
+  if (typeof value !== "string") return [];
+  return value.split(",").map(item => item.trim()).filter(Boolean);
+};
+
+const getVisitDuration = (place) => {
+  const hours = Number(place?.visitDurationHours || 0);
+  const minutes = Number(place?.visitDurationMinutes || 0);
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
+  return parts.join(" ");
+};
+
+const toYesNo = (value) => {
+  if (typeof value !== "boolean") return "";
+  return value ? "Yes" : "No";
+};
+
+const getDistanceText = (value) => {
+  const text = toDisplayString(value).trim();
+  if (!text) return "";
+  return /\bkm\b/i.test(text) ? text : `${text} km`;
+};
+
+const getAccessItems = (place) => {
+  const sections = [
+    { label: "Railway Station", items: place?.nearestRailwayStations },
+    { label: "Town", items: place?.nearestTowns },
+    { label: "Airport", items: place?.nearestAirports },
+  ];
+
+  return sections.flatMap(section => (
+    Array.isArray(section.items)
+      ? section.items.map(item => ({
+          label: item?.name || section.label,
+          type: section.label,
+          distance: getDistanceText(item?.distance),
+        })).filter(item => item.label || item.distance)
+      : []
+  ));
+};
+
+const getWebsiteUrl = (value) => {
+  const website = toDisplayString(value).trim();
+  if (!website) return "";
+  return /^https?:\/\//i.test(website) ? website : `https://${website}`;
+};
+
 /* ─── UI COMPONENTS ─────────── */
 function Cursor() {
   const { tokens: { A, AL } } = useTheme();
@@ -269,7 +372,7 @@ function PlaceHero({ place, galleryItems }) {
             <p className="font-mono" style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 16 }}>{toDisplayString(place?.category) || "DESTINATION"}</p>
             <Chars text={placeName.toUpperCase()} cls="font-display" style={{ fontSize: "clamp(3rem, 9vw, 6.5rem)", fontWeight: 700, color: FG, lineHeight: 1, letterSpacing: "-0.04em", margin: 0 }} />
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, pointerEvents: "auto" }}>
-              {[place?.city, place?.placeType, "Discovery"].filter(Boolean).map(tag => (
+              {[place?.placeType].filter(Boolean).map(tag => (
                 <motion.span key={toDisplayString(tag)} whileHover={{ background: A, color: W, borderColor: A }} style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: M, border: `1px solid ${B}`, padding: "8px 20px", borderRadius: 40, background: W, transition: "all 0.3s" }}>{toDisplayString(tag)}</motion.span>
               ))}
             </div>
@@ -304,7 +407,7 @@ function PlaceHero({ place, galleryItems }) {
 function QuickFacts({ place }) {
   const { tokens: { A, B, FG, M, S, W } } = useTheme();
   const facts = [
-    { label: "Timings", val: place?.timings || place?.openingHours || "06:00 - 20:00", icon: Clock },
+    { label: "Timings", val: getTimingsText(place), icon: Clock },
     { label: "Entry Fee", val: place?.entryFee || "Free Entry", icon: Ticket },
     { label: "Best Time", val: place?.bestTimeToVisit || "Year Round", icon: Star },
     { label: "Rating", val: `${place?.rating || place?.averageRating || "4.8"} User Rating`, icon: Check },
@@ -337,6 +440,10 @@ function QuickFacts({ place }) {
 
 function DestAbout({ place, hostData, hostAvatar }) {
   const { tokens: { A, FG, M, B, W } } = useTheme();
+  const host = { ...(place?.host || {}), ...(hostData || {}) };
+  const hostName = getHostName(host);
+  const hostEmail = getHostEmail(host);
+  const hostPhone = getHostPhone(host);
   return (
     <section style={{ background: W, padding: "140px 36px 120px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -363,13 +470,20 @@ function DestAbout({ place, hostData, hostAvatar }) {
                <div style={{ marginTop: 48, borderTop: `1px solid ${B}`, paddingTop: 40, display: "flex", gap: 64 }}>
                  <div>
                    <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Location</p>
-                   <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{place?.city || "Discovery Town"}</p>
+                   <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{getLocationSummary(place)}</p>
+                   {getFullAddress(place) && (
+                     <p style={{ fontSize: 12, color: M, lineHeight: 1.6, marginTop: 8, maxWidth: 380 }}>{getFullAddress(place)}</p>
+                   )}
                  </div>
                  <div>
                    <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Curator</p>
-                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                   <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                      <img src={hostAvatar || "https://picsum.photos/seed/host/40/40"} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} alt="" />
-                     <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{hostData?.displayName || "Lead Curator"}</p>
+                     <div>
+                       <p style={{ fontSize: 15, fontWeight: 700, color: FG, marginBottom: 6 }}>{hostName}</p>
+                       {hostEmail && <p style={{ fontSize: 12, color: M, lineHeight: 1.5 }}>{hostEmail}</p>}
+                       {hostPhone && <p style={{ fontSize: 12, color: M, lineHeight: 1.5 }}>{hostPhone}</p>}
+                     </div>
                    </div>
                  </div>
                </div>
@@ -383,6 +497,7 @@ function DestAbout({ place, hostData, hostAvatar }) {
 
 function Logistics({ place, hostData }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
+  const accessItems = getAccessItems(place);
   return (
     <section style={{ background: S, padding: "140px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -402,16 +517,19 @@ function Logistics({ place, hostData }) {
                 <div style={{ borderTop: `1px solid ${B}`, paddingTop: 40 }}>
                   <h4 style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Getting There</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                    {[
-                      { l: "Nearest Station", d: "3 km" },
-                      { l: "City Center", d: place?.distance || "5 km" },
-                      { l: "International Airport", d: "25 km" },
-                    ].map(loc => (
-                      <div key={loc.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: 14, color: M }}>{loc.l}</span>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: FG }}>{loc.d}</span>
-                      </div>
-                    ))}
+                    {accessItems.length > 0 ? (
+                      accessItems.map(loc => (
+                        <div key={`${loc.label}-${loc.distance}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 24 }}>
+                          <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: A, fontWeight: 700 }}>{loc.type}</span>
+                            <span style={{ fontSize: 14, color: M }}>{loc.label}</span>
+                          </span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: FG, whiteSpace: "nowrap" }}>{loc.distance}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: 14, color: M }}>Access details unavailable</span>
+                    )}
                   </div>
                 </div>
              </div>
@@ -422,21 +540,21 @@ function Logistics({ place, hostData }) {
              <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
                 <div style={{ padding: 48, border: `1px solid ${B}`, borderRadius: 32, background: W }}>
                    <p style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Official Inquiries</p>
-                   <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{hostData?.displayName || "Tourism Authority"}</h3>
+                   <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{place?.managedBy || "Tourism Authority"}</h3>
                    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                      <a href={`tel:${hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                        <Phone size={18} color={A} /> {hostData?.phone || "Contact via App"}
+                      <a href={place?.contactInfo ? `tel:${place.contactInfo}` : undefined} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
+                        <Phone size={18} color={A} /> {place?.contactInfo || "Contact unavailable"}
                       </a>
-                      <a href="#" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                        <Globe size={18} color={A} /> {place?.website || "Official Portal"}
+                      <a href={getWebsiteUrl(place?.officialWebsite) || undefined} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
+                        <Globe size={18} color={A} /> {place?.officialWebsite || "Website unavailable"}
                       </a>
                    </div>
                 </div>
 
                 <div style={{ padding: 48, border: `1px solid ${B}`, borderRadius: 32, background: A, color: W }}>
                    <h4 style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: 16 }}>Prime Visit</h4>
-                   <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Peak Season</p>
-                   <p style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>October to March is ideal for exploring the open-air heritage and coastal views.</p>
+                   <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{place?.bestTimeToVisit || "Season Details"}</p>
+                   <p style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{place?.seasonDetails || "Visit timing details unavailable."}</p>
                 </div>
              </div>
            </Rev>
@@ -446,28 +564,46 @@ function Logistics({ place, hostData }) {
   );
 }
 
-function Itinerary({ place }) {
+function Itinerary({ place, formatImageUrl }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
-  const steps = [
-    { title: "Discovery Phase", desc: "Explore the primary landmarks and architectural wonders of this unique location." },
-    { title: "Local Immersion", desc: "Engage with the local culture and hidden gems that define the heart of the area." },
-    { title: "Sunset Perspective", desc: "End your journey with breathtaking panoramic views as the day transitions to night." }
-  ];
+  const steps = Array.isArray(place?.itinerary)
+    ? [...place.itinerary]
+        .sort((a, b) => (a?.itemNumber || 0) - (b?.itemNumber || 0))
+        .map((item, index) => {
+          const image = Array.isArray(item?.images) ? item.images[0] : null;
+          const imageUrl = image ? formatImageUrl(image.url || image.blobName) : null;
+          return {
+            title: item?.title || `Item ${item?.itemNumber || index + 1}`,
+            desc: item?.description || "",
+            imageUrl,
+            itemNumber: item?.itemNumber || index + 1,
+          };
+        })
+        .filter(item => item.title || item.desc || item.imageUrl)
+    : [];
+
+  if (!steps.length) return null;
+
   return (
     <section style={{ background: S, padding: "120px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <SHdr idx="01" label="Highlights & Itinerary" />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 520px))", gap: 32 }}>
           {steps.map((s, i) => (
             <Soul key={i} delay={i * 0.15} y={80} r={i % 2 === 0 ? 3 : -3}>
-              <motion.div whileHover={{ y: -8 }} transition={{ duration: 0.4 }} style={{ background: W, border: `1px solid ${B}`, borderRadius: 32, padding: "56px 48px", height: "100%", position: "relative", overflow: "hidden" }}>
-                <span className="font-display" style={{ position: "absolute", top: -10, right: 10, fontSize: "clamp(5rem, 8vw, 10rem)", fontWeight: 800, color: A, opacity: 0.04, pointerEvents: "none" }}>{i + 1}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                   <div style={{ width: 8, height: 8, background: A }} />
-                   <p style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Step {i + 1}</p>
+              <motion.div whileHover={{ y: -8 }} transition={{ duration: 0.4 }} style={{ background: W, border: `1px solid ${B}`, borderRadius: 32, padding: "40px", height: "100%", position: "relative", overflow: "hidden", display: "flex", gap: 28, alignItems: "center" }}>
+                <span className="font-display" style={{ position: "absolute", top: -10, right: 10, fontSize: "clamp(5rem, 8vw, 10rem)", fontWeight: 800, color: A, opacity: 0.04, pointerEvents: "none" }}>{s.itemNumber}</span>
+                {s.imageUrl && (
+                  <img src={s.imageUrl} style={{ width: 150, minWidth: 150, height: 180, objectFit: "cover", borderRadius: 20, border: `1px solid ${B}`, display: "block" }} alt={s.title} />
+                )}
+                <div style={{ position: "relative", zIndex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+                     <div style={{ width: 8, height: 8, background: A }} />
+                     <p style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Step {s.itemNumber}</p>
+                  </div>
+                  <h3 className="font-display" style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 20 }}>{s.title}</h3>
+                  <p style={{ fontSize: 14, color: M, lineHeight: 1.85 }}>{s.desc}</p>
                 </div>
-                <h3 className="font-display" style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 20 }}>{s.title}</h3>
-                <p style={{ fontSize: 14, color: M, lineHeight: 1.85 }}>{s.desc}</p>
               </motion.div>
             </Soul>
           ))}
@@ -479,36 +615,62 @@ function Itinerary({ place }) {
 
 function GoodToKnow({ place }) {
   const { tokens: { A, B, FG, M, W, AL } } = useTheme();
+  const carryItems = toCommaList(place?.whatToCarry);
+  const avoidItems = toCommaList(place?.thingsToAvoid);
+  const suitableFor = toDisplayList(place?.suitableFor);
+  const detailItems = [
+    { label: "Visit Duration", value: getVisitDuration(place) },
+    { label: "Visiting Notes", value: place?.visitingNotes },
+    { label: "Weather Dependency", value: toYesNo(place?.weatherDependency) },
+    { label: "Wheelchair Access", value: toYesNo(place?.wheelchairAccess) },
+    { label: "Age Restriction", value: place?.ageRestriction },
+    { label: "Suitable For", value: suitableFor.join(", ") },
+  ].filter(item => item.value);
+
   return (
     <section style={{ background: W, padding: "120px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 100 }} className="info-grid">
         <Rev>
           <SHdr idx="02" label="Good To Know" />
           <div style={{ display: "flex", flexDirection: "column", gap: 48 }}>
-             <div>
-               <h4 style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, fontWeight: 700, color: FG, marginBottom: 20 }}>
-                 <Briefcase size={16} color={A} /> What to Carry
-               </h4>
-               <ul style={{ listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                 {["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"].map(item => (
-                   <li key={item} style={{ fontSize: 13, color: M, display: "flex", alignItems: "center", gap: 8 }}>
-                     <div style={{ width: 4, height: 4, borderRadius: "50%", background: A }} /> {item}
-                   </li>
+             {carryItems.length > 0 && (
+               <div>
+                 <h4 style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, fontWeight: 700, color: FG, marginBottom: 20 }}>
+                   <Briefcase size={16} color={A} /> What to Carry
+                 </h4>
+                 <ul style={{ listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                   {carryItems.map(item => (
+                     <li key={item} style={{ fontSize: 13, color: M, display: "flex", alignItems: "center", gap: 8 }}>
+                       <div style={{ width: 4, height: 4, borderRadius: "50%", background: A }} /> {item}
+                     </li>
+                   ))}
+                 </ul>
+               </div>
+             )}
+             {detailItems.length > 0 && (
+               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
+                 {detailItems.map(item => (
+                   <div key={item.label} style={{ padding: 20, background: "#f8f8f8", borderRadius: 14, border: `1px solid ${B}` }}>
+                     <p style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 8 }}>{item.label}</p>
+                     <p style={{ fontSize: 14, fontWeight: 700, color: FG, lineHeight: 1.5 }}>{item.value}</p>
+                   </div>
                  ))}
-               </ul>
-             </div>
-             <div style={{ background: "#fff5f5", border: "1px solid #fee2e2", padding: 32, borderRadius: 20 }}>
-               <h4 style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 16 }}>
-                 <XCircle size={16} color="#ef4444" /> Things to Avoid
-               </h4>
-               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
-                 {["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"].map(item => (
-                   <li key={item} style={{ fontSize: 12, color: "#b91c1c", display: "flex", alignItems: "center", gap: 8 }}>
-                     <XCircle size={10} /> {item}
-                   </li>
-                 ))}
-               </ul>
-             </div>
+               </div>
+             )}
+             {avoidItems.length > 0 && (
+               <div style={{ background: "#fff5f5", border: "1px solid #fee2e2", padding: 32, borderRadius: 20 }}>
+                 <h4 style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 16 }}>
+                   <XCircle size={16} color="#ef4444" /> Things to Avoid
+                 </h4>
+                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
+                   {avoidItems.map(item => (
+                     <li key={item} style={{ fontSize: 12, color: "#b91c1c", display: "flex", alignItems: "center", gap: 8 }}>
+                       <XCircle size={10} /> {item}
+                     </li>
+                   ))}
+                 </ul>
+               </div>
+             )}
           </div>
         </Rev>
 
@@ -602,6 +764,11 @@ const PlaceDetails = () => {
         return avatarUrl ? formatImageUrl(avatarUrl) : null;
     }, [hostData, place]);
 
+    const placeTags = useMemo(() => {
+        const tags = toDisplayList(place?.tags);
+        return tags.length ? tags : ["Coastal Gem", "Urban Heart", "Historical Echo"];
+    }, [place]);
+
     if (loading && !place) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -618,23 +785,23 @@ const PlaceDetails = () => {
             
             <PlaceHero place={place} galleryItems={galleryItems} />
             
-            <Mq items={["Discovery", "Heritage", "Landscape", "Perspective"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={placeTags} size="sm" bg={THEMES.light.S} accent />
             
             <QuickFacts place={place} />
             
-            <Mq items={["Coastal Gem", "Urban Heart", "Historical Echo"]} bg={THEMES.light.S} />
+            <Mq items={placeTags} bg={THEMES.light.S} />
             
             <DestAbout place={place} hostData={hostData} hostAvatar={hostAvatar} />
             
-            <Mq items={["Journey Blueprint", "Daily Rhythm", "The Itinerary"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={placeTags} size="sm" bg={THEMES.light.S} accent />
             
-            <Itinerary place={place} />
+            <Itinerary place={place} formatImageUrl={formatImageUrl} />
 
-            <Mq items={["Community Pulse", "Visitor Wisdom", "Safety Net"]} bg={THEMES.light.S} />
+            <Mq items={placeTags} bg={THEMES.light.S} />
 
             <GoodToKnow place={place} />
 
-            <Mq items={["Location Access", "Arrival Logic", "Journey Blueprint"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={placeTags} size="sm" bg={THEMES.light.S} accent />
             
             <Logistics place={place} hostData={hostData} />
             
