@@ -139,7 +139,10 @@ const ScopedStyles = () => (
     #cur-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid var(--AL); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s, border-color 0.3s; }
     
     .gallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: start; height: 850px; overflow: hidden; border-radius: 40px; }
-    .artist-row { display: grid; grid-template-columns: 80px 1fr 120px 90px; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--B); align-items: center; cursor: default; transition: padding 0.3s, background 0.3s; }
+    .artist-row { display: grid; grid-template-columns: 80px 1fr 150px 90px; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--B); align-items: center; cursor: default; transition: padding 0.3s, background 0.3s; }
+    .artist-image-tile { width: 150px; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: var(--S); border: 1px solid var(--B); }
+    .artist-image-tile img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1); transition: filter 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+    .artist-row:hover .artist-image-tile img { filter: grayscale(0); transform: scale(1.04); }
     
     @media(max-width:1024px){
       .gallery-grid{grid-template-columns:repeat(3,1fr)!important}
@@ -586,14 +589,13 @@ function Artists({ event }) {
   const ARTISTS = eventArtists.length > 0 ? eventArtists.map((a, i) => ({
     id: a.id || i,
     name: a.name || a.artistName || "Guest Artist",
-    role: a.role || a.type || "Performer",
     origin: a.origin || a.location || "INTL",
     bio: a.bio || a.description || "Performing live at Solstice.",
-    time: a.time || a.startTime || "09:00 PM"
+    image: formatImageUrl(a.photoUrl || a.imageUrl || a.profileImage || a.avatar || a.photo || a.artistImage)
   })) : [
-    { id: 1, name: "Aroha Ngata", role: "Sonic Architect", origin: "NZL", bio: "A pioneer of immersive soundscapes blurring the boundary between music and architecture.", tags: ["Electronic", "Ambient", "Installation"], time: "07:00 PM" },
-    { id: 2, name: "Ravi Khanna", role: "Classical Fusion", origin: "IND", bio: "Tabla maestro meets modular synthesizer — live sets that are meditations in controlled chaos.", tags: ["Classical", "Electronic", "Tabla"], time: "08:30 PM" },
-    { id: 3, name: "Lena Solberg", role: "Visual Artist", origin: "NOR", bio: "Creates monumental paintings in real-time, her canvas as large as the wall behind her.", tags: ["Live Art", "Abstract", "Performance"], time: "09:15 PM" },
+    { id: 1, name: "Aroha Ngata", origin: "NZL", bio: "A pioneer of immersive soundscapes blurring the boundary between music and architecture.", tags: ["Electronic", "Ambient", "Installation"], image: "" },
+    { id: 2, name: "Ravi Khanna", origin: "IND", bio: "Tabla maestro meets modular synthesizer — live sets that are meditations in controlled chaos.", tags: ["Classical", "Electronic", "Tabla"], image: "" },
+    { id: 3, name: "Lena Solberg", origin: "NOR", bio: "Creates monumental paintings in real-time, her canvas as large as the wall behind her.", tags: ["Live Art", "Abstract", "Performance"], image: "" },
   ];
   return (
     <>
@@ -606,7 +608,6 @@ function Artists({ event }) {
             {ARTISTS.map((a, i) => (
               <motion.div key={a.id} initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.07, ease: E }} onHoverStart={() => setHov(a.id)} onHoverEnd={() => setHov(null)} whileHover={{ paddingLeft: 20, backgroundColor: AL }} className="artist-row">
                 <div>
-                  <p className="font-mono" style={{ fontSize: 10, color: A, fontWeight: 500 }}>{a.time}</p>
                   <motion.p animate={{ color: hov === a.id ? A : B }} style={{ fontFamily: "monospace", fontSize: 10 }}>{String(i + 1).padStart(2, "0")}</motion.p>
                 </div>
                 <div>
@@ -616,7 +617,15 @@ function Artists({ event }) {
                   </div>
                   <p style={{ fontSize: 12, color: M, lineHeight: 1.65, maxWidth: 480 }}>{a.bio}</p>
                 </div>
-                <p style={{ fontSize: 12, fontWeight: 600, color: hov === a.id ? A : FG, textAlign: "right", transition: "color 0.3s" }}>{a.role}</p>
+                <div className="artist-image-tile">
+                  {a.image ? (
+                    <img src={a.image} alt={a.name} loading="lazy" />
+                  ) : (
+                    <div className="font-display" style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: M, fontSize: 34, fontWeight: 700 }}>
+                      {a.name?.charAt(0) || "A"}
+                    </div>
+                  )}
+                </div>
                 <motion.div animate={{ x: hov === a.id ? 4 : 0, opacity: hov === a.id ? 1 : 0.2 }} style={{ display: "flex", justifyContent: "flex-end" }}>
                   <ArrowRight size={16} color={A} />
                 </motion.div>
