@@ -3,8 +3,9 @@ import { useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   Wifi, Waves, Sparkles, Dumbbell, Umbrella, Plane, GlassWater, Utensils,
-  Phone, Clock, FileText, MapPin, ChevronDown, CheckCircle, Info, Building,
-  ArrowRight, ShieldCheck, Mail, Globe, Map, Navigation, ArrowDown
+  Phone, Clock, FileText, MapPin, ChevronDown, CheckCircle, Info, Building, 
+  ArrowRight, ShieldCheck, Mail, Globe, Map, Navigation, ArrowDown, Car, AirVent,
+  Users, DoorOpen, Bed, Bath, Maximize
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
@@ -310,16 +311,38 @@ function StayHeroCarousel({ stay, galleryItems }) {
 function StayAmenities({ stay }) {
   const { tokens: { A, FG, M, S, B, W } } = useTheme();
 
-  const amenities = [
-    { label: "High-speed WiFi", icon: Wifi },
-    { label: "Infinity Pool", icon: Waves },
-    { label: "Bespoke Spa", icon: Sparkles },
-    { label: "Elite Gym", icon: Dumbbell },
-    { label: "Private Access", icon: Umbrella },
-    { label: "Travel Hub", icon: Plane },
-    { label: "Curated Bar", icon: GlassWater },
-    { label: "Fine Dining", icon: Utensils },
-  ];
+  // Map dynamic amenities from backend to icons
+  const iconMap = {
+    "wifi": Wifi, "swimming": Waves, "spa": Sparkles, "gym": Dumbbell, "fitness": Dumbbell,
+    "beach": Umbrella, "shuttle": Plane, "bar": GlassWater, "restaurant": Utensils,
+    "parking": Car, "ac": AirVent, "pool": Waves
+  };
+
+  const dynamicAmenities = useMemo(() => {
+    if (!stay?.amenities?.length) return [
+      { label: "High-speed WiFi", icon: Wifi },
+      { label: "Infinity Pool", icon: Waves },
+      { label: "Bespoke Spa", icon: Sparkles },
+      { label: "Elite Gym", icon: Dumbbell },
+      { label: "Private Access", icon: Umbrella },
+      { label: "Travel Hub", icon: Plane },
+      { label: "Curated Bar", icon: GlassWater },
+      { label: "Fine Dining", icon: Utensils },
+    ];
+    
+    return stay.amenities.slice(0, 8).map(am => {
+      const label = toDisplayString(am);
+      const lower = label.toLowerCase();
+      let icon = Wifi;
+      Object.keys(iconMap).forEach(key => { if (lower.includes(key)) icon = iconMap[key]; });
+      return { label, icon };
+    });
+  }, [stay]);
+
+  const dynamicFacilities = useMemo(() => {
+    if (!stay?.facilities?.length) return ["Concierge Elite", "In-Room Wellness", "Private Transfers", "Reef Explorations", "Childcare Services", "Nightlife Access"];
+    return stay.facilities.map(f => toDisplayString(f));
+  }, [stay]);
 
   return (
     <section style={{ background: W, padding: "140px 36px" }}>
@@ -337,8 +360,8 @@ function StayAmenities({ stay }) {
               </p>
             </Rev>
             <Rev delay={0.2} style={{ flex: "1 1 400px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignContent: "center" }}>
-              {amenities.map((am, i) => (
-                <motion.div key={am.label}
+              {dynamicAmenities.map((am, i) => (
+                <motion.div key={i}
                   animate={{ y: [0, (i % 2 === 0 ? -6 : 6), 0] }}
                   transition={{ duration: 4 + i * 0.4, repeat: Infinity, ease: "easeInOut" }}
                   style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -359,8 +382,8 @@ function StayAmenities({ stay }) {
               <p style={{ fontSize: 13, color: M, lineHeight: 1.7 }}>Precision hospitality ensuring every moment of your stay is frictionless.</p>
             </Rev>
             <Rev delay={0.2} style={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "24px" }}>
-              {["Concierge Elite", "In-Room Wellness", "Private Transfers", "Reef Explorations", "Childcare Services", "Nightlife Access"].map(fac => (
-                <div key={fac} style={{ display: "flex", alignItems: "center", gap: 14, padding: "20px 24px", background: S, borderRadius: 16, border: `1px solid ${B}`, transition: "transform 0.3s" }}>
+              {dynamicFacilities.map((fac, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "20px 24px", background: S, borderRadius: 16, border: `1px solid ${B}`, transition: "transform 0.3s" }}>
                   <CheckCircle size={18} color={A} />
                   <span style={{ fontSize: 14, color: FG, fontWeight: 600 }}>{fac}</span>
                 </div>
@@ -401,7 +424,7 @@ function PolicyItem({ rule, A, FG, M, B }) {
       <AnimatePresence>
         {op && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: E }} style={{ overflow: "hidden" }}>
-            <p style={{ padding: "0 20px 40px 64px", fontSize: 14, color: M, lineHeight: 1.85, maxWidth: 640 }}>{rule.body}</p>
+            <p style={{ padding: "0 20px 40px 64px", fontSize: 14, color: M, lineHeight: 1.85, maxWidth: 640, whiteSpace: "pre-wrap" }}>{rule.body}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -411,11 +434,89 @@ function PolicyItem({ rule, A, FG, M, B }) {
 
 function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
   const { tokens: { A, AL, BG, FG, M, S, B, W } } = useTheme();
-  const policies = [
-    { id: 1, title: "Check-in / Check-out", body: "Check-in from 2:00 PM. Check-out by 11:00 AM. Early arrivals or late departures are subject to availability and may incur fees." },
-    { id: 2, title: "Resort Etiquette", body: "We observe quiet hours from 10:00 PM. Our property is a non-smoking sanctuary. Guests are encouraged to respect the natural coral reef systems." },
-    { id: 3, title: "Reservation Terms", body: "Cancellations made within 7 days of arrival are subject to a 100% penalty. Special event bookings may have unique terms." }
-  ];
+  const policies = useMemo(() => {
+    const p = [];
+    if (stay?.checkInTime || stay?.checkOutTime) {
+      p.push({ id: 1, title: "Check-in / Check-out", body: `Check-in from ${stay.checkInTime || "2:00 PM"}. Check-out by ${stay.checkOutTime || "11:00 AM"}. Early arrivals or late departures are subject to availability.` });
+    } else {
+      p.push({ id: 1, title: "Check-in / Check-out", body: "Check-in from 2:00 PM. Check-out by 11:00 AM. Early arrivals or late departures are subject to availability and may incur fees." });
+    }
+    
+    const extractText = (r) => {
+      if (!r) return "";
+      if (typeof r === 'string') return r;
+      // CMS component keys often mirror their labels
+      const val = r.propertyRule || r.policyRule || r.rule || r.text || r.content || r.description || r.value || r.title || r.name;
+      if (val && typeof val === 'string') return val;
+      // Fallback: grab the first string value found in the object
+      const firstStringVal = Object.values(r).find(v => typeof v === 'string');
+      return firstStringVal || "";
+    };
+
+    // Property Rules
+    let propertyRulesBody = "";
+    const rawPropRules = stay?.propertyRules || stay?.propertyRule || stay?.rules;
+    if (Array.isArray(rawPropRules) && rawPropRules.length > 0) {
+      propertyRulesBody = rawPropRules.map(r => `• ${extractText(r)}`).filter(t => t !== "• ").join("\n");
+    } else if (stay?.houseRules) {
+      propertyRulesBody = stay.houseRules;
+    }
+
+    if (propertyRulesBody) {
+      p.push({ id: 2, title: "Property Rules", body: propertyRulesBody });
+    } else {
+      p.push({ id: 2, title: "Resort Etiquette", body: "We observe quiet hours from 10:00 PM. Our property is a non-smoking sanctuary. Guests are encouraged to respect the natural coral reef systems." });
+    }
+    
+    // Cancellation Policy
+    let cancelPolicyBody = "";
+    const rawCancelRules = stay?.cancellationPolicyRules || stay?.cancellationPolicyRule || stay?.cancellationRules;
+    if (Array.isArray(rawCancelRules) && rawCancelRules.length > 0) {
+      cancelPolicyBody = rawCancelRules.map(r => `• ${extractText(r)}`).filter(t => t !== "• ").join("\n");
+      const summary = stay?.generatedPolicySummary || stay?.policySummary;
+      if (summary) cancelPolicyBody += `\n\nSummary:\n${summary}`;
+    } else if (stay?.generatedPolicySummary || stay?.policySummary) {
+      cancelPolicyBody = stay?.generatedPolicySummary || stay?.policySummary;
+    } else if (stay?.cancellationPolicy || stay?.cancellationPolicyText) {
+      cancelPolicyBody = stay.cancellationPolicy || stay.cancellationPolicyText;
+    }
+
+    if (cancelPolicyBody) {
+      p.push({ id: 3, title: "Cancellation Policy", body: cancelPolicyBody });
+    } else {
+      p.push({ id: 3, title: "Reservation Terms", body: "Cancellations made within 7 days of arrival are subject to a 100% penalty. Special event bookings may have unique terms." });
+    }
+
+    const privacy = stay?.privacyPolicy || stay?.privacyPolicyRules || stay?.privacyRules;
+    if (privacy) {
+      p.push({ id: 4, title: "Privacy Policy", body: privacy });
+    }
+
+    return p;
+  }, [stay]);
+
+  const getPhone = () => {
+    const p = hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.host?.mobileNumber || hostData?.host?.businessContact || hostData?.phone || hostData?.phoneNumber || hostData?.mobileNumber || hostData?.businessContact || stay?.host?.phone || stay?.contactNumber || stay?.phone || stay?.contactPhone || stay?.businessContact;
+    return typeof p === "string" && p.trim() ? p.trim() : "Contact via Portal";
+  };
+
+  const getEmail = () => {
+    const e = hostData?.host?.email || hostData?.host?.emailAddress || hostData?.host?.businessEmail || hostData?.email || hostData?.emailAddress || hostData?.businessEmail || stay?.host?.email || stay?.contactEmail || stay?.email || stay?.emailAddress || stay?.businessEmail;
+    return typeof e === "string" && e.trim() ? e.trim() : "reservations@property.com";
+  };
+
+  const phone = getPhone();
+  const email = getEmail();
+
+  const primaryName = stay?.contactInformation?.primaryContactName || stay?.primaryContactName || stay?.primaryContact?.name || (hostData?.firstName ? `${hostData.firstName} ${hostData.lastName || ""}`.trim() : hostData?.name || hostData?.businessName || hostData?.host?.displayName || stay?.host?.name || stay?.host?.firstName || "Adithyan");
+  const primaryPhoneNum = stay?.contactInformation?.primaryPhone || stay?.primaryPhone || stay?.primaryContactNumber || stay?.primaryContact?.phone || phone;
+  const primaryEmailAddress = stay?.contactInformation?.primaryEmail || stay?.primaryEmail || stay?.primaryContactEmail || stay?.primaryContact?.email || email;
+
+  const salesName = stay?.contactInformation?.salesContactName || stay?.salesContactName || stay?.salesContact?.name || stay?.salesName;
+  const salesPhoneNum = stay?.contactInformation?.salesPhone || stay?.salesPhone || stay?.salesContactNumber || stay?.salesContact?.phone;
+  const salesEmailAddress = stay?.contactInformation?.salesEmail || stay?.salesEmail || stay?.salesContactEmail || stay?.salesContact?.email;
+
+  const frontOffice = stay?.contactInformation?.frontOfficePhone || stay?.frontOfficePhone || stay?.frontOfficeContact;
 
   return (
     <section style={{ background: W, padding: "140px 36px" }}>
@@ -430,31 +531,54 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
         </Soul>
 
         <Rev delay={0.2}>
-          <div style={{ background: BG, padding: 56, border: `1px solid ${B}`, borderRadius: 32, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", boxShadow: "0 40px 80px -20px rgba(0,0,0,0.1)" }}>
-            <div>
-              <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, marginBottom: 32, fontWeight: 700 }}>Direct Curator</p>
+          <div style={{ background: BG, padding: 48, border: `1px solid ${B}`, borderRadius: 32, display: "flex", flexDirection: "column", height: "100%", boxShadow: "0 40px 80px -20px rgba(0,0,0,0.1)" }}>
+            <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, marginBottom: 32, fontWeight: 700 }}>Property Contacts</p>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 48 }}>
-                <div style={{ width: 72, height: 72, borderRadius: "50%", background: S, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${B}`, overflow: "hidden" }}>
-                  <img src={hostAvatar || "https://picsum.photos/seed/host/100/100"} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                </div>
-                <div>
-                  <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Managed by</p>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: FG }}>{hostData?.displayName || "Lead Ambassador"}</p>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 56 }}>
-                <a href={`tel:${hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none" }}>
-                  <Phone size={18} color={A} />
-                  <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{hostData?.phone || "Contact via Portal"}</span>
+            <div style={{ marginBottom: 32, paddingBottom: 32, borderBottom: `1px solid ${B}` }}>
+              <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Primary Contact</p>
+              <p style={{ fontSize: 18, fontWeight: 800, color: FG, marginBottom: 16 }}>{primaryName}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <a href={`tel:${primaryPhoneNum}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+                  <Phone size={16} color={A} />
+                  <span style={{ fontSize: 15, fontWeight: 600, color: FG }}>{primaryPhoneNum}</span>
                 </a>
-                <a href={`mailto:${hostData?.email}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none" }}>
-                  <Mail size={18} color={A} />
-                  <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{hostData?.email || "reservations@property.com"}</span>
+                <a href={`mailto:${primaryEmailAddress}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+                  <Mail size={16} color={A} />
+                  <span style={{ fontSize: 15, fontWeight: 600, color: FG }}>{primaryEmailAddress}</span>
                 </a>
               </div>
             </div>
+
+            {(salesName || salesPhoneNum || salesEmailAddress) && (
+              <div style={{ marginBottom: 32, paddingBottom: 32, borderBottom: `1px solid ${B}` }}>
+                <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Sales Contact</p>
+                {salesName && <p style={{ fontSize: 16, fontWeight: 700, color: FG, marginBottom: 16 }}>{salesName}</p>}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {salesPhoneNum && (
+                    <a href={`tel:${salesPhoneNum}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+                      <Phone size={16} color={A} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: FG }}>{salesPhoneNum}</span>
+                    </a>
+                  )}
+                  {salesEmailAddress && (
+                    <a href={`mailto:${salesEmailAddress}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+                      <Mail size={16} color={A} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: FG }}>{salesEmailAddress}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {frontOffice && (
+              <div style={{ marginBottom: 40 }}>
+                <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Front Office</p>
+                <a href={`tel:${frontOffice}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+                  <Building size={16} color={A} />
+                  <span style={{ fontSize: 15, fontWeight: 600, color: FG }}>{frontOffice}</span>
+                </a>
+              </div>
+            )}
 
             <motion.button className="shimmer-cta" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ width: "100%", padding: 20, border: "none", cursor: "none", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: 11 }}>
               Verify Availability
@@ -564,7 +688,52 @@ const StayDetails = () => {
 
       <div style={{ background: THEMES.light.BG, padding: "80px 36px 140px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="02" label="Accommodations" />
+          <SHdr idx="02" label="Property Overview & Accommodations" />
+          
+          <div style={{ background: THEMES.light.W, padding: 48, borderRadius: 24, border: `1px solid ${THEMES.light.B}`, marginBottom: 64 }}>
+            <h4 style={{ fontSize: 18, fontWeight: 700, color: THEMES.light.FG, marginBottom: 8 }}>Basic Information</h4>
+            <p style={{ fontSize: 13, color: THEMES.light.M, marginBottom: 40 }}>Comprehensive property details provided by the host.</p>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 40, marginBottom: 48 }}>
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 8, fontWeight: 700 }}>Property Name</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: THEMES.light.FG }}>{stay?.propertyName || stay?.title || "—"}</p>
+              </div>
+              
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 8, fontWeight: 700 }}>Property Type</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: THEMES.light.FG }}>{toDisplayString(stay?.propertyType) || "—"}</p>
+              </div>
+              
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 8, fontWeight: 700 }}>Property Category</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: THEMES.light.FG }}>{toDisplayString(stay?.propertyCategory) || "—"}</p>
+              </div>
+              
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 8, fontWeight: 700 }}>Star Rating</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: THEMES.light.FG }}>{stay?.starRating ? `${stay.starRating} Star` : "—"}</p>
+              </div>
+
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 8, fontWeight: 700 }}>Location Category</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: THEMES.light.FG }}>{toDisplayString(stay?.locationCategory) || "—"}</p>
+              </div>
+            </div>
+
+            <div style={{ borderTop: `1px solid ${THEMES.light.B}`, paddingTop: 40, display: "flex", flexDirection: "column", gap: 32 }}>
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 12, fontWeight: 700 }}>Short Description</p>
+                <p style={{ fontSize: 16, fontWeight: 500, color: THEMES.light.FG, lineHeight: 1.6 }}>{stay?.shortDescription || "—"}</p>
+              </div>
+              
+              <div>
+                <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: THEMES.light.A, marginBottom: 12, fontWeight: 700 }}>Detailed Description</p>
+                <p style={{ fontSize: 14, color: THEMES.light.M, lineHeight: 1.8 }}>{stay?.detailedDescription || stay?.description || "—"}</p>
+              </div>
+            </div>
+          </div>
+
           <RoomCards
             listing={stay}
             onRoomSelect={handleRoomSelect}
