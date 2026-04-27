@@ -18,6 +18,72 @@ const toDisplayString = (value) => {
   return String(value);
 };
 
+const toDisplayList = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value.map(toDisplayString).map(item => item.trim()).filter(Boolean);
+};
+
+const getCuisineLabel = (food) => {
+  const names = toDisplayList(food?.cuisineTypeNames);
+  if (names.length) return names.join(", ");
+
+  const types = toDisplayList(food?.cuisineTypes);
+  if (types.length) return types.join(", ");
+
+  return toDisplayString(food?.cuisineType) || "Cuisine";
+};
+
+const getHostName = (host) => {
+  const fullName = [host?.firstName, host?.lastName]
+    .map(toDisplayString)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .join(" ");
+  return fullName || host?.displayName || host?.name || "";
+};
+
+const getFoodLocation = (food) => {
+  const parts = [food?.district, food?.state, food?.country]
+    .map(toDisplayString)
+    .map(item => item.trim())
+    .filter(Boolean);
+  return parts.length ? parts.join(", ") : food?.fullAddress || "Location unavailable";
+};
+
+const getFoodRating = (food) => {
+  const rating = food?.googleRating || food?.rating;
+  if (!rating || Number(rating) <= 0) return "New Listing";
+  const reviewCount = Number(food?.reviewCount || 0);
+  return reviewCount > 0 ? `${rating} Stars (${reviewCount} reviews)` : `${rating} Stars`;
+};
+
+const getFoodHostContact = (food, hostData) => {
+  return food?.instagramHandle || food?.contactPhone || hostData?.phone || food?.host?.phoneNumber || food?.host?.phone || food?.host?.email || "";
+};
+
+const toTwelveHourTime = (value) => {
+  if (!value || typeof value !== "string") return "";
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return value;
+  const hours = Number(match[1]);
+  const minutes = match[2];
+  if (Number.isNaN(hours) || hours < 0 || hours > 23) return value;
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes} ${suffix}`;
+};
+
+const getFoodTiming = (food) => {
+  const openingTime = toTwelveHourTime(food?.openingTime);
+  const closingTime = toTwelveHourTime(food?.closingTime);
+  return openingTime && closingTime ? `${openingTime} - ${closingTime}` : "Timing unavailable";
+};
+
+const toYesNo = (value) => {
+  if (typeof value !== "boolean") return "";
+  return value ? "Yes" : "No";
+};
+
 /* ─── TOKENS & THEME ─────────── */
 const THEMES = {
   light: {
@@ -207,6 +273,8 @@ function CulinaryHero({ food, galleryItems }) {
   const title = food?.menuName || food?.title || "PURE CRAFT";
   const coverImg = food?.coverImageUrl || (galleryItems.length > 0 ? galleryItems[0] : "https://picsum.photos/seed/culinary/1200/800");
   const philosophy = food?.description?.split('.')[0] + "." || "Where the alchemy of tradition meets the precision of the future.";
+  const cuisineLabel = getCuisineLabel(food);
+  const categoryLabel = toDisplayString(food?.category) || "Category";
 
   return (
     <section ref={r} style={{ position: "relative", minHeight: "140vh", background: BG, overflow: "hidden" }}>
@@ -228,7 +296,7 @@ function CulinaryHero({ food, galleryItems }) {
 
       <div style={{ position: "relative", zIndex: 10, height: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
         <motion.div style={{ opacity, y: yText }}>
-           <p style={{ fontSize: 11, letterSpacing: "0.6em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 32 }}>Epicurean Odyssey — {toDisplayString(food?.category) || "Cuisine"}</p>
+           <p style={{ fontSize: 11, letterSpacing: "0.6em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 32 }}>{cuisineLabel} — {categoryLabel}</p>
            <h1 className="font-display" style={{ fontSize: "clamp(3.5rem, 8vw, 7.5rem)", fontWeight: 800, color: FG, lineHeight: 1.1, letterSpacing: "0.15em", margin: 0, textTransform: "uppercase" }}>
              {title.split(' ')[0]} <br/><span style={{ color: "transparent", WebkitTextStroke: `1px ${FG}` }}>{title.split(' ').slice(1).join(' ') || "CRAFT"}</span>
            </h1>
@@ -256,6 +324,15 @@ function ChefSection({ food, hostData, hostAvatar }) {
   const r = useRef(null);
   const { scrollYProgress } = useScroll({ target: r, offset: ["start end", "end start"] });
   const x = useTransform(scrollYProgress, [0, 1], ["30%", "-30%"]);
+  const host = { ...(food?.host || {}), ...(hostData || {}) };
+  const hostName = getHostName(host) || food?.managedBy || "Curator";
+  const hostContact = getFoodHostContact(food, hostData);
+  const detailItems = [
+    { label: "Host", value: hostName, sub: hostContact },
+    { label: "Source", value: toDisplayString(food?.sourceType) || food?.managedBy || "Food Partner" },
+    { label: "Location", value: getFoodLocation(food) },
+    { label: "Rating", value: getFoodRating(food) }
+  ];
 
   return (
     <section ref={r} style={{ background: BG, padding: "180px 0", overflow: "hidden", position: "relative", borderTop: `1px solid ${B}` }}>
@@ -277,19 +354,15 @@ function ChefSection({ food, hostData, hostAvatar }) {
                  Engineering <br/><span style={{ color: A }}>Sensory Architecture.</span>
                </h2>
                <p style={{ fontSize: 16, color: M, lineHeight: 1.85, marginBottom: 48, maxWidth: 500 }}>
-                 &ldquo;{food?.description || "We don't just serve food; we orchestrate biological responses. In our kitchen, heritage secrets meet high-pressure laboratory physics."}&rdquo;
+                 &ldquo;{food?.chefOwnerStory || food?.description || "Every dish carries a story from the people who make it."}&rdquo;
                </p>
                
                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
-                  {[
-                    { label: "Host", value: hostData?.displayName || "Aura Curator" },
-                    { label: "Vision", value: "Circular Gastronomy" },
-                    { label: "Location", value: toDisplayString(food?.city) || "Global" },
-                    { label: "Rating", value: `${food?.rating || "4.9"} Stars` }
-                  ].map(it => (
+                  {detailItems.map(it => (
                     <div key={it.label}>
                        <p style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: A, marginBottom: 8, fontWeight: 700 }}>{it.label}</p>
                        <p style={{ fontSize: 13, fontWeight: 600, color: FG }}>{it.value}</p>
+                       {it.sub && <p style={{ fontSize: 12, color: M, marginTop: 6, lineHeight: 1.4 }}>{it.sub}</p>}
                     </div>
                   ))}
                </div>
@@ -302,6 +375,11 @@ function ChefSection({ food, hostData, hostAvatar }) {
 
 function DishGallery({ galleryItems, food }) {
   const { tokens: { A, FG, M, BG, S, B } } = useTheme();
+  const dishes = toDisplayList(food?.signatureDishes);
+  const cards = (dishes.length ? dishes : [food?.menuName || "Signature Dish"]).map((dish, index) => ({
+    title: dish,
+    image: galleryItems[index] || galleryItems[0] || "https://picsum.photos/seed/food/800/600",
+  }));
   
   return (
     <section style={{ background: BG, padding: "150px 0", borderTop: `1px solid ${B}` }}>
@@ -310,15 +388,15 @@ function DishGallery({ galleryItems, food }) {
       </div>
       
       <div style={{ display: "flex", gap: 32, overflowX: "auto", padding: "0 5vw 64px", scrollbarWidth: "none" }} className="dish-scroll">
-         {galleryItems.map((img, i) => (
+         {cards.map((card, i) => (
            <Soul key={i} delay={i * 0.1} y={40} r={3} style={{ flexShrink: 0, width: "clamp(280px, 35vw, 450px)" }}>
              <motion.div whileHover={{ scale: 1.02 }} style={{ background: S, border: `1px solid ${B}`, borderRadius: 28, overflow: "hidden" }}>
                 <div style={{ height: 480, overflow: "hidden", position: "relative" }}>
-                   <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.9)" }} alt="" />
+                   <img src={card.image} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.9)" }} alt={card.title} />
                    <div style={{ position: "absolute", bottom: 28, left: 28, right: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                       <div>
                         <p style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 8 }}>{toDisplayString(food?.cuisineType) || "Signature"}</p>
-                        <h4 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG }}>{food?.menuName || "Culinary Craft"}</h4>
+                        <h4 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG }}>{card.title}</h4>
                       </div>
                       <span style={{ fontSize: 20, fontWeight: 700, color: A }}>{food?.price || ""}</span>
                    </div>
@@ -338,6 +416,20 @@ function DishGallery({ galleryItems, food }) {
 
 function ReservationNoir({ food, hostData }) {
   const { tokens: { A, FG, M, BG, S, B, AL } } = useTheme();
+  const openingDays = toDisplayList(food?.openingDays).join(", ") || "Days unavailable";
+  const serviceModes = toDisplayList(food?.serviceModeNames);
+  const highlights = [
+    { label: "Hours", value: getFoodTiming(food) },
+    { label: "Opening Days", value: openingDays },
+    { label: "Location", value: food?.fullAddress || getFoodLocation(food) },
+    { label: "Family Friendly", value: toYesNo(food?.familyFriendly) || "Not specified" },
+    { label: "Average Cost", value: food?.averageCostForOne ? `₹${food.averageCostForOne}` : food?.priceRange || "Cost unavailable" },
+  ];
+  const partnerItems = [
+    ...serviceModes,
+    food?.alcoholServed ? "Alcohol Served" : "No Alcohol",
+    food?.advancedBookingRequired ? "Advance Booking Required" : "No Advance Booking",
+  ].filter(Boolean);
 
   return (
     <section style={{ background: BG, padding: "150px 36px", borderTop: `1px solid ${B}` }}>
@@ -347,29 +439,24 @@ function ReservationNoir({ food, hostData }) {
                <div>
                   <h3 className="font-display" style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)", fontWeight: 700, color: FG, marginBottom: 28 }}>Transcend the <br/><span style={{ color: A }}>Standard Meal.</span></h3>
                   <p style={{ fontSize: 15, color: M, lineHeight: 1.8, maxWidth: 450, marginBottom: 48 }}>
-                     Our tables are finite. The experience is infinite. We require 48-hour prior notification for the bespoke molecular taster menu.
+                     {food?.shortDescription || food?.description || "Plan your meal with the latest availability and service details."}
                   </p>
                   
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
-                     <div>
-                        <p style={{ fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 16 }}>Dine-In Sessions</p>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                           <p style={{ fontSize: 13, color: FG, fontWeight: 600 }}>{food?.startTime || "01:00 PM"} — {food?.endTime || "04:00 PM"}</p>
-                           <p style={{ fontSize: 13, color: FG, fontWeight: 600 }}>Evening by Appointment</p>
-                        </div>
-                     </div>
-                     <div>
-                        <p style={{ fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 16 }}>Hotline</p>
-                        <p style={{ fontSize: 20, color: FG, fontWeight: 700 }}>{hostData?.phone || food?.host?.phone || hostData?.email || "Contact Host"}</p>
-                     </div>
+                     {highlights.map(item => (
+                       <div key={item.label}>
+                          <p style={{ fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 16 }}>{item.label}</p>
+                          <p style={{ fontSize: 13, color: FG, fontWeight: 600, lineHeight: 1.5 }}>{item.value}</p>
+                       </div>
+                     ))}
                   </div>
                </div>
                
                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <div style={{ background: AL, borderRadius: 28, padding: 40, border: `1px solid ${B}` }}>
-                     <p style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 20 }}>Official Partnership</p>
+                     <p style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 20 }}>Service & Dining Details</p>
                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        {["Molecular Dining", "Sonic Pairings", "Heritage Archives", "Avant Delivery"].map(t => (
+                        {partnerItems.map(t => (
                           <div key={t} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                              <div style={{ width: 5, height: 5, borderRadius: "50%", background: A }} />
                              <span style={{ fontSize: 13, color: FG, fontWeight: 500 }}>{t}</span>
@@ -459,6 +546,11 @@ const FoodDetails = () => {
         return avatarUrl ? formatImageUrl(avatarUrl) : null;
     }, [hostData, food]);
 
+    const foodTags = useMemo(() => {
+        const tags = toDisplayList(food?.tags);
+        return tags.length ? tags : ["Avant Cuisine", "Molecular Art", "Sonic Plating", "Epicurean Odyssey"];
+    }, [food]);
+
     if (loading && !food) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -475,15 +567,15 @@ const FoodDetails = () => {
             
             <CulinaryHero food={food} galleryItems={galleryItems} />
             
-            <Mq items={["Avant Cuisine", "Molecular Art", "Sonic Plating", "Epicurean Odyssey"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={foodTags} size="sm" bg={THEMES.light.S} accent />
             
             <ChefSection food={food} hostData={hostData} hostAvatar={hostAvatar} />
             
-            <Mq items={["Heritage Taste", "Liquid Alchemy", "Curated Palette", "Biological Response"]} bg={THEMES.light.S} />
+            <Mq items={foodTags} bg={THEMES.light.S} />
             
             <DishGallery galleryItems={galleryItems} food={food} />
             
-            <Mq items={["Bespoke Reservations", "Finite Tables", "Infinite Experience"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={foodTags} size="sm" bg={THEMES.light.S} accent />
             
             <ReservationNoir food={food} hostData={hostData} />
             
