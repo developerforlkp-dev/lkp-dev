@@ -2,13 +2,19 @@ import React, { useState, useEffect, createContext, useContext, useRef } from "r
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
 import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users } from "lucide-react";
-import { getEventDetails } from "../../../utils/api";
+import { getEventDetails, getHost } from "../../../utils/api";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
   if (url.startsWith('http')) return url;
   if (url.startsWith('/')) return url;
   return url;
+};
+
+const formatHostName = (hostPayload) => {
+  const host = hostPayload?.host || hostPayload;
+  const fullName = [host?.firstName, host?.lastName].filter(Boolean).join(" ").trim();
+  return host?.displayName || host?.name || fullName || host?.businessName || "";
 };
 
 /* ─── TOKENS & THEME ─────────── */
@@ -94,6 +100,10 @@ const ScopedStyles = () => (
       border-color: var(--A) !important;
       color: var(--W) !important;
       z-index: 2;
+    }
+    .event-details-premium .host-presented-label {
+      color: #0097B2 !important;
+      -webkit-text-fill-color: #0097B2 !important;
     }
     
     #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); transition: background 0.3s; }
@@ -353,7 +363,7 @@ function Hero({ event }) {
   );
 }
 
-function About({ event }) {
+function About({ event, hostName }) {
   const { tokens: { A, AL, BG, FG, M, W, B, S } } = useTheme();
   
   const desc = event?.description || "SOLSTICE is not merely an event — it is a threshold. A gathering of the most luminous minds in music, art, and culture, converging for a single evening at the intersection of the timeless and the radically new.";
@@ -363,6 +373,7 @@ function About({ event }) {
   const tags = Array.isArray(event?.tags) ? event.tags : 
                typeof event?.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : 
                ["Experience", "Premium", "Event"];
+  const mqItems = tags.map(tag => String(tag || "").trim()).filter(Boolean);
 
   // Calculate dynamic stats
   const artistsCount = event?.lineup?.length || event?.artists?.length || 0;
@@ -390,9 +401,9 @@ function About({ event }) {
     ["Event Type", event?.eventType || event?.category || "Multi-Disciplinary Arts"],
     ["Duration", event?.duration || (event?.startTime && event?.endTime ? `${event.startTime} – ${event.endTime}` : "6:00 PM – 2:00 AM")],
     ["Dress Code", event?.dressCode || "Smart Casual / Formal"],
-    ["Age Limit", event?.ageLimit || "18+ Strictly"],
+    ["Age Limit", event?.minimumAge != null ? `${event.minimumAge}+` : (event?.ageLimit || "18+ Strictly")],
     ["Capacity", event?.capacity ? `${event.capacity} Guests` : "500 Guests"],
-    ["Host name", event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName || "Namma Studio"],
+    ["Host name", hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName || "Namma Studio"],
   ];
 
   return (
@@ -449,7 +460,7 @@ function About({ event }) {
           </div>
         </div>
       </section>
-      <Mq items={["Sonic Architecture", "Live Performance", "Conscious Curation", "One Night Only", "500 Souls"]} dir="r" size="sm" bg={S} />
+      <Mq items={mqItems.length > 0 ? mqItems : ["Experience", "Premium", "Event"]} dir="r" size="sm" bg={S} />
     </>
   );
 }
@@ -475,6 +486,11 @@ function GalleryColumn({ images, direction, speed = 28 }) {
 
 function Gallery({ event }) {
   const { tokens: { BG, FG, AH, W, B }, theme } = useTheme();
+  const eventTitle = event?.title || "SOLSTICE Ed.01";
+  const tags = Array.isArray(event?.tags) ? event.tags :
+               typeof event?.tags === 'string' ? event.tags.split(',').map(t => t.trim()) :
+               [];
+  const galleryMqItems = [eventTitle, ...tags].map(item => String(item || "").trim()).filter(Boolean);
   
   // Use actual event media from backend if available
   const eventMedia = Array.isArray(event?.media) ? event.media : [];
@@ -507,7 +523,7 @@ function Gallery({ event }) {
 
   return (
     <>
-      <Mq items={["Moments", "Curated Visuals", event?.title || "SOLSTICE Ed.01", "Behind The Scenes", "Art & Sound"]} dir="l" size="sm" bg={BG} accent />
+      <Mq items={galleryMqItems.length > 0 ? galleryMqItems : ["SOLSTICE Ed.01", "Moments", "Curated Visuals"]} dir="l" size="sm" bg={BG} accent />
       <section id="gallery" style={{ backgroundColor: FG, padding: "120px 0", overflow: "hidden" }}>
         <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 36px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
@@ -584,8 +600,19 @@ function Artists({ event }) {
   );
 }
 
-function Venue({ event }) {
+function Venue({ event, hostName }) {
   const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
+  const hostProfile = event?.hostProfile;
+  const host = hostProfile?.host || hostProfile || event?.host || {};
+  const hostDescription = host?.description || host?.bio || host?.about || host?.summary || event?.organizerDescription || "Curators of memorable experiences, thoughtful gatherings, and community-led moments.";
+  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
+  const hostEmail = host?.email || host?.contactEmail || host?.businessEmail;
+  const hostPhone = host?.phone || host?.phoneNumber || host?.mobile || host?.contactPhone;
+  const hostWebsite = host?.website || host?.websiteUrl;
+  const hostInstagram = host?.instagram || host?.instagramHandle;
+  const hostLocation = host?.city || host?.location || host?.address || [host?.district, host?.state].filter(Boolean).join(", ");
+  const hostListings = Array.isArray(hostProfile?.listings) ? hostProfile.listings.slice(0, 3) : [];
   const tags = Array.isArray(event?.tags) ? event.tags : 
                typeof event?.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : 
                ["Experience", "Premium", "Event"];
@@ -625,8 +652,8 @@ function Venue({ event }) {
                   {event?.state && (
                     <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>State: </span>{event?.state}</p>
                   )}
-                  {(event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName) && (
-                    <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>Host name: </span>{event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName}</p>
+                  {displayHostName && (
+                    <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>Host name: </span>{displayHostName}</p>
                   )}
                 </div>
 
@@ -654,6 +681,40 @@ function Venue({ event }) {
                       <div style={{ width: 10, height: 10, borderRadius: "50%", background: A, position: "relative", zIndex: 1 }} />
                     </div>
                   </div>
+                </div>
+              </div>
+            </Rev>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B }} className="grid-3-2">
+            <Rev delay={0.1}>
+              <div style={{ background: W, padding: 52, minHeight: 300 }}>
+                <p className="host-presented-label" style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "#0097B2", WebkitTextFillColor: "#0097B2", marginBottom: 36, fontWeight: 700 }}>Presented By</p>
+                <h3 className="font-display" style={{ fontSize: "clamp(2.4rem,5vw,4.2rem)", fontWeight: 700, color: FG, lineHeight: 1, marginBottom: 22 }}>
+                  {displayHostName || "Event Host"}
+                </h3>
+                <p style={{ color: M, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 28 }}>{hostSubtitle}</p>
+                <p style={{ color: M, fontSize: 14, lineHeight: 1.85, maxWidth: 620 }}>{hostDescription}</p>
+              </div>
+            </Rev>
+            <Rev delay={0.18}>
+              <div style={{ background: S, padding: 52, minHeight: 300 }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: M, marginBottom: 34, fontWeight: 500 }}>Host Details</p>
+                {hostListings.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    {hostListings.map((listing, i) => (
+                      <div key={listing.id || listing.listingId || i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, padding: "12px 0", borderBottom: `1px solid ${B}` }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{listing.title || listing.name || `Past Event ${i + 1}`}</span>
+                        <ArrowRight size={13} color={A} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {hostEmail && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Contact: </span>{hostEmail}</p>}
+                  {hostPhone && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Phone: </span>{hostPhone}</p>}
+                  {hostWebsite && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Website: </span>{hostWebsite}</p>}
+                  {hostInstagram && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Instagram: </span>{hostInstagram}</p>}
+                  {hostLocation && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Based in: </span>{hostLocation}</p>}
                 </div>
               </div>
             </Rev>
@@ -950,8 +1011,8 @@ function Tickets({ event }) {
                       </div>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-                      {['S','M','T','W','T','F','S'].map(d => (
-                        <div key={d} style={{ fontSize: 10, fontWeight: 700, color: M, textAlign: "center", paddingBottom: 8 }}>{d}</div>
+                      {['S','M','T','W','T','F','S'].map((d, i) => (
+                        <div key={`${d}-${i}`} style={{ fontSize: 10, fontWeight: 700, color: M, textAlign: "center", paddingBottom: 8 }}>{d}</div>
                       ))}
                       {calendarDays.map((d, i) => (
                         <div key={i} style={{ textAlign: "center" }}>
@@ -1111,6 +1172,7 @@ export default function EventDetails() {
   const eventId = queryParams.get('id') || '3';
 
   const [event, setEvent] = useState(null);
+  const [hostName, setHostName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -1121,7 +1183,20 @@ export default function EventDetails() {
         setLoading(true);
         const data = await getEventDetails(eventId);
         console.log("DEBUG: Event Details Data:", data);
-        if (mounted) { setEvent(data); setError(null); }
+        let fetchedHostName = "";
+        let hostProfile = null;
+
+        if (data?.leadUserId) {
+          try {
+            const hostData = await getHost(data.leadUserId);
+            fetchedHostName = formatHostName(hostData);
+            hostProfile = hostData;
+          } catch (hostErr) {
+            console.error("Failed to load event host:", hostErr);
+          }
+        }
+
+        if (mounted) { setEvent({ ...data, hostProfile }); setHostName(fetchedHostName); setError(null); }
       } catch (err) {
         if (mounted) setError("Failed to load event details.");
       } finally {
@@ -1141,10 +1216,10 @@ export default function EventDetails() {
       <Cursor />
       <ProgressBar />
       <Hero event={event} />
-      <About event={event} />
+      <About event={event} hostName={hostName} />
       <Gallery event={event} />
       <Artists event={event} />
-      <Venue event={event} />
+      <Venue event={event} hostName={hostName} />
       <Rules event={event} />
       <Tickets event={event} />
     </ScopedThemeProvider>
