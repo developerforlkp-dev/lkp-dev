@@ -3,6 +3,7 @@ import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
 import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users } from "lucide-react";
 import { getEventDetails, getHost } from "../../../utils/api";
+import { buildExperienceUrl } from "../../../utils/experienceUrl";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -15,6 +16,26 @@ const formatHostName = (hostPayload) => {
   const host = hostPayload?.host || hostPayload;
   const fullName = [host?.firstName, host?.lastName].filter(Boolean).join(" ").trim();
   return host?.displayName || host?.name || fullName || host?.businessName || "";
+};
+
+const getHostListingTitle = (listing) => (
+  listing?.title || listing?.name || listing?.propertyName || listing?.menuName || listing?.placeName || "Listing"
+);
+
+const getHostListingUrl = (listing) => {
+  const interest = String(listing?.businessInterestCode || listing?.businessInterest || listing?.type || "").toUpperCase();
+  const eventId = listing?.eventId ?? listing?.event_id;
+  const stayId = listing?.stayId ?? listing?.stay_id;
+  const foodId = listing?.foodMenuId ?? listing?.foodId ?? listing?.menuId;
+  const placeId = listing?.placeId;
+  const listingId = listing?.listingId ?? listing?.listing_id ?? listing?.id ?? listing?._id;
+
+  if (eventId != null || interest === "EVENT") return `/event-details?id=${eventId ?? listingId}`;
+  if (stayId != null || interest === "STAY") return `/stay-details?id=${stayId ?? listingId}`;
+  if (foodId != null || interest === "FOOD") return `/food-details?id=${foodId ?? listingId}`;
+  if (placeId != null || interest === "PLACE") return `/place-details?id=${placeId ?? listingId}`;
+
+  return buildExperienceUrl(getHostListingTitle(listing), listingId);
 };
 
 /* ─── TOKENS & THEME ─────────── */
@@ -104,6 +125,13 @@ const ScopedStyles = () => (
     .event-details-premium .host-presented-label {
       color: #0097B2 !important;
       -webkit-text-fill-color: #0097B2 !important;
+    }
+    .event-details-premium .venue-map-frame {
+      filter: grayscale(1) contrast(1.05);
+      transition: filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .event-details-premium .venue-map-wrap:hover .venue-map-frame {
+      filter: grayscale(0) contrast(1);
     }
     
     #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); transition: background 0.3s; }
@@ -616,6 +644,11 @@ function Venue({ event, hostName }) {
   const tags = Array.isArray(event?.tags) ? event.tags : 
                typeof event?.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : 
                ["Experience", "Premium", "Event"];
+  const venueLat = Number(event?.venueLatitude);
+  const venueLng = Number(event?.venueLongitude);
+  const hasVenueCoords = Number.isFinite(venueLat) && Number.isFinite(venueLng);
+  const mapQuery = hasVenueCoords ? `${venueLat},${venueLng}` : (event?.venueFullAddress || event?.venueName || "");
+  const mapSrc = mapQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=14&output=embed` : "";
 
   return (
     <>
@@ -674,12 +707,25 @@ function Venue({ event, hostName }) {
               <div style={{ background: S, padding: 52, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 400 }}>
                 <div>
                   <p style={{ fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: M, marginBottom: 24, fontWeight: 500 }}>Location</p>
-                  <div style={{ position: "relative", width: "100%", paddingBottom: "85%", background: W, overflow: "hidden", border: `1px solid ${B}` }}>
-                    <motion.div animate={{ backgroundPosition: ["0px 0px", "28px 28px"] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "28px 28px" }} />
-                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
-                      <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-8px", borderRadius: "50%", border: `1.5px solid ${A}`, transform: "translate(-50%,-50%)", top: "50%", left: "50%" }} />
-                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: A, position: "relative", zIndex: 1 }} />
-                    </div>
+                  <div className="venue-map-wrap" style={{ position: "relative", width: "100%", paddingBottom: "85%", background: W, overflow: "hidden", border: `1px solid ${B}` }}>
+                    {mapSrc ? (
+                      <iframe
+                        className="venue-map-frame"
+                        title="Venue location map"
+                        src={mapSrc}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+                      />
+                    ) : (
+                      <>
+                        <motion.div animate={{ backgroundPosition: ["0px 0px", "28px 28px"] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "28px 28px" }} />
+                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
+                          <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-8px", borderRadius: "50%", border: `1.5px solid ${A}`, transform: "translate(-50%,-50%)", top: "50%", left: "50%" }} />
+                          <div style={{ width: 10, height: 10, borderRadius: "50%", background: A, position: "relative", zIndex: 1 }} />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -698,14 +744,14 @@ function Venue({ event, hostName }) {
             </Rev>
             <Rev delay={0.18}>
               <div style={{ background: S, padding: 52, minHeight: 300 }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: M, marginBottom: 34, fontWeight: 500 }}>Host Details</p>
+                <p style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: M, marginBottom: 34, fontWeight: 500 }}>More From This Host</p>
                 {hostListings.length > 0 && (
                   <div style={{ marginBottom: 28 }}>
                     {hostListings.map((listing, i) => (
-                      <div key={listing.id || listing.listingId || i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, padding: "12px 0", borderBottom: `1px solid ${B}` }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{listing.title || listing.name || `Past Event ${i + 1}`}</span>
+                      <Link key={listing.id || listing.listingId || i} to={getHostListingUrl(listing)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, padding: "12px 0", borderBottom: `1px solid ${B}`, textDecoration: "none" }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{getHostListingTitle(listing)}</span>
                         <ArrowRight size={13} color={A} />
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
