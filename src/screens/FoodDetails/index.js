@@ -278,8 +278,8 @@ function CulinaryHero({ food, galleryItems }) {
 
   return (
     <section ref={r} style={{ position: "relative", minHeight: "140vh", background: BG, overflow: "hidden" }}>
-      <motion.div style={{ y: yHero, position: "absolute", inset: 0, zIndex: 1, opacity: 0.6 }}>
-        <img src={coverImg} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.4) saturate(1.2)" }} alt={title} />
+      <motion.div style={{ y: yHero, position: "absolute", inset: 0, zIndex: 1, opacity: 0.72 }}>
+        <img src={coverImg} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.34) saturate(1.08)" }} alt={title} />
       </motion.div>
 
       {/* Floating Ingredients Layer */}
@@ -296,12 +296,12 @@ function CulinaryHero({ food, galleryItems }) {
 
       <div style={{ position: "relative", zIndex: 10, height: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
         <motion.div style={{ opacity, y: yText }}>
-           <p style={{ fontSize: 11, letterSpacing: "0.6em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 32 }}>{cuisineLabel} — {categoryLabel}</p>
-           <h1 className="font-display" style={{ fontSize: "clamp(3.5rem, 8vw, 7.5rem)", fontWeight: 800, color: FG, lineHeight: 1.1, letterSpacing: "0.15em", margin: 0, textTransform: "uppercase" }}>
-             {title.split(' ')[0]} <br/><span style={{ color: "transparent", WebkitTextStroke: `1px ${FG}` }}>{title.split(' ').slice(1).join(' ') || "CRAFT"}</span>
+           <p style={{ fontSize: 11, letterSpacing: "0.6em", textTransform: "uppercase", color: "#7EE8F5", fontWeight: 800, marginBottom: 28, textShadow: "0 2px 18px rgba(0,0,0,0.55)" }}>{cuisineLabel} — {categoryLabel}</p>
+           <h1 className="font-display" style={{ fontSize: "clamp(3.5rem, 8vw, 7.5rem)", fontWeight: 800, color: "#F8F7F1", lineHeight: 1.05, letterSpacing: "0.12em", margin: 0, textTransform: "uppercase", textShadow: "0 18px 55px rgba(0,0,0,0.45)" }}>
+             {title.split(' ')[0]} <br/><span style={{ color: "rgba(248,247,241,0.16)", WebkitTextStroke: "1px rgba(248,247,241,0.82)", textShadow: "0 14px 45px rgba(0,0,0,0.5)" }}>{title.split(' ').slice(1).join(' ') || "CRAFT"}</span>
            </h1>
-           <div style={{ marginTop: 64, maxWidth: 600, padding: "0 20px" }}>
-              <p style={{ fontSize: 18, color: M, lineHeight: 1.6, fontWeight: 400, fontStyle: "italic" }}>
+           <div style={{ marginTop: 48, maxWidth: 620, padding: "0 20px" }}>
+              <p style={{ fontSize: 18, color: "rgba(255,255,255,0.86)", lineHeight: 1.6, fontWeight: 500, fontStyle: "italic", textShadow: "0 3px 22px rgba(0,0,0,0.65)" }}>
                 "{philosophy}"
               </p>
            </div>
@@ -314,7 +314,7 @@ function CulinaryHero({ food, galleryItems }) {
       </div>
 
       {/* Vignette Overlay */}
-      <div style={{ position: "absolute", inset: 0, zIndex: 5, background: "radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, zIndex: 5, background: "radial-gradient(circle, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.42) 48%, rgba(0,0,0,0.82) 100%)", pointerEvents: "none" }} />
     </section>
   );
 }
