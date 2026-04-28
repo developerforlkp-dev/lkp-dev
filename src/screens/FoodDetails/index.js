@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
+import { Footer } from "../../components/JUI/Footer";
 import { getFoodDetails, getHost } from "../../utils/api";
 
 const toDisplayString = (value) => {
@@ -486,6 +487,8 @@ const FoodDetails = () => {
             <Mq items={["Bespoke Reservations", "Finite Tables", "Infinite Experience"]} size="sm" bg={THEMES.light.S} accent />
             
             <ReservationNoir food={food} hostData={hostData} />
+            
+            <Footer />
             
         </ScopedThemeProvider>
     );
