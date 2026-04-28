@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Ticket, ChefHat, Bed, X, Sparkles, Clock, Users, Star, Plus, Minus, CheckCircle2, ShieldCheck, ChevronDown } from "lucide-react";
@@ -9,7 +9,7 @@ import { Rev, Chars } from "./UI";
 import DateSingle from "../DateSingle";
 import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
-import { createEventOrder } from "../../utils/api";
+import { createEventOrder, createOrder } from "../../utils/api";
 
 const asNumber = (value) => {
   const parsed = Number(value);
@@ -113,6 +113,28 @@ const getDateKey = (value) => {
   return date.toISOString().slice(0, 10);
 };
 
+const normalizeBookingTime = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const match = raw.match(/^(\d{1,2})(?::(\d{1,2}))?/);
+  if (!match) return raw;
+  const hours = String(Math.min(Math.max(Number(match[1]) || 0, 0), 23)).padStart(2, "0");
+  const minutes = String(Math.min(Math.max(Number(match[2]) || 0, 0), 59)).padStart(2, "0");
+  return `${hours}:${minutes}:00`;
+};
+
+const getRazorpayKeyFromCache = () => {
+  try {
+    const cachedKey = localStorage.getItem("lastRazorpayKeyId");
+    if (cachedKey) return cachedKey;
+    const pendingPayment = localStorage.getItem("pendingPayment");
+    if (pendingPayment) return JSON.parse(pendingPayment)?.razorpayKeyId;
+  } catch (e) {
+    console.warn("Could not read cached Razorpay key:", e);
+  }
+  return null;
+};
+
 const addDateRangeKeys = (keys, startValue, endValue) => {
   const startKey = getDateKey(startValue);
   const endKey = getDateKey(endValue || startValue);
@@ -156,6 +178,7 @@ const normalizeEventSlots = (slots = [], fallbackPrice = 0) => (
 export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience" }) {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W } } = useTheme();
+  const isMountedRef = useRef(true);
   const [show, setShow] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   
@@ -166,6 +189,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const totalGuests = guests.adults + guests.children;
   const [showTimePicker, setShowTimePicker] = useState(false);
   const isEventBooking = type === "event";
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   const eventTickets = useMemo(() => {
     if (!isEventBooking) return [];
     if (Array.isArray(listing?.ticketTypes)) return listing.ticketTypes;
@@ -310,6 +340,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   const handleReserve = async () => {
     if (!startDate) return;
+    localStorage.removeItem("pendingPayment");
+    localStorage.removeItem("pendingOrderId");
+    localStorage.removeItem("actualPaidAmount");
+    localStorage.removeItem("razorpayPaymentSuccess");
+    localStorage.removeItem("paymentFailed");
 
     if (isEventBooking) {
       if (!selectedTicket || selectedEventSlots.length === 0 || totalGuests < 1 || bookingLoading) return;
@@ -355,7 +390,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       };
 
       try {
-        setBookingLoading(true);
+        if (isMountedRef.current) setBookingLoading(true);
         const res = await createEventOrder(payload);
         const order = res?.order || res;
         const payment = res?.payment || res?.data?.payment || res?.order?.payment || order?.payment || null;
@@ -363,17 +398,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         const razorpayOrderId = payment?.razorpayOrderId || order?.razorpayOrderId || res?.razorpayOrderId || order?.razorpay_order_id || res?.razorpay_order_id;
         const currency = listing?.currency || payment?.currency || "INR";
         const amountInPaise = payment?.amount || Math.round(finalTotal * 100);
-        const getCachedRazorpayKey = () => {
-          try {
-            const cachedPayment = localStorage.getItem("lastRazorpayKeyId");
-            if (cachedPayment) return cachedPayment;
-            const pendingPayment = localStorage.getItem("pendingPayment");
-            if (pendingPayment) return JSON.parse(pendingPayment)?.razorpayKeyId;
-          } catch (e) {
-            console.warn("Could not get cached Razorpay key:", e);
-          }
-          return null;
-        };
         const razorpayKeyId =
           payment?.razorpayKeyId ||
           payment?.razorpay_key_id ||
@@ -387,7 +411,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           order?.keyId ||
           res?.keyId ||
           process.env.REACT_APP_RAZORPAY_KEY_ID ||
-          getCachedRazorpayKey() ||
+          getRazorpayKeyFromCache() ||
           "rzp_test_RaBjdu0Ed3p1gN";
 
         if (razorpayKeyId) {
@@ -457,14 +481,24 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         console.error("Event booking failed:", e?.response?.data || e?.message || e);
         alert(e?.response?.data?.message || e?.response?.data?.error || e?.message || "Booking failed. Please try again.");
       } finally {
-        setBookingLoading(false);
+        if (isMountedRef.current) setBookingLoading(false);
       }
       return;
     }
     
     const dateStr = startDate.format("YYYY-MM-DD");
-    let url = `/experience-checkout?listingId=${listingId}&startDate=${dateStr}&guests=${totalGuests}`;
-    if (startTime) url += `&startTime=${startTime}`;
+    const slotId = getSlotId(selectedSlotData);
+    const bookingTime = normalizeBookingTime(
+      selectedSlotData?.startTime ||
+      selectedSlotData?.slotStartTime ||
+      selectedSlotData?.time ||
+      startTime
+    );
+
+    if (!listingId || !slotId || !bookingTime) {
+      alert("Unable to book: experience slot information is missing.");
+      return;
+    }
 
     const guestsObj = { ...guests, guests: totalGuests };
     const addOnQuantities = {};
@@ -527,22 +561,120 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         billableGuestCount: totalGuests
       }
     };
-    
-    // Pass selected addons and full bookingData to the checkout page
-    history.push({
-      pathname: "/experience-checkout",
-      search: url.split("?")[1] ? "?" + url.split("?")[1] : "",
-      state: { 
-        addOns: selectedAddOns.map(item => item.addon || item),
-        bookingData: bookingData
+
+    const addons = selectedAddOns.map((item) => {
+      const addon = item.addon || item;
+      const addonId = addon.addonId || addon.id;
+      if (!addonId) return null;
+      return {
+        addonId,
+        addonName: addon.title || addon.name || addon.addonName || "Add-on",
+        addonPrice: parseFloat(addon.price || addon.addonPrice || 0),
+        quantity: addon.quantity || 1,
+      };
+    }).filter(Boolean);
+
+    const userInfo = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("userInfo") || "{}");
+      } catch {
+        return {};
       }
-    });
+    })();
+
+    const orderData = {
+      listingId: Number(listingId),
+      bookingDate: dateStr,
+      bookingTime,
+      bookingSlotId: Number(slotId),
+      guestCount: totalGuests,
+      childCount: guests.children || 0,
+      childPricePerChild: Number(listing?.childPricePerChild || listing?.childPrice || 0),
+      customer: {
+        name: userInfo.name || (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") || "Guest User",
+        email: userInfo.email || userInfo.customerEmail || "guest@example.com",
+        phone: userInfo.customerPhone || userInfo.phoneNumber || userInfo.phone || "+911234567890",
+      },
+      specialRequests: "",
+      paymentMethod: "razorpay",
+      addons,
+      guestAnswers: [],
+    };
+
+    try {
+      if (isMountedRef.current) setBookingLoading(true);
+      console.log("Creating experience order from BookingSystem:", orderData);
+      const res = await createOrder(orderData);
+      console.log("Experience order created from BookingSystem:", res);
+
+      const order = res?.order || res?.data?.order || res;
+      const payment = res?.payment || res?.data?.payment || order?.payment || null;
+      const orderId = order?.orderId || order?.id || res?.orderId || res?.id || res?.data?.orderId || res?.data?.id;
+      const razorpayOrderId =
+        payment?.razorpayOrderId ||
+        payment?.razorpay_order_id ||
+        order?.razorpayOrderId ||
+        order?.razorpay_order_id ||
+        res?.razorpayOrderId ||
+        res?.razorpay_order_id;
+      const razorpayKeyId =
+        payment?.razorpayKeyId ||
+        payment?.razorpay_key_id ||
+        payment?.keyId ||
+        order?.razorpayKeyId ||
+        order?.razorpay_key_id ||
+        res?.razorpayKeyId ||
+        res?.razorpay_key_id ||
+        process.env.REACT_APP_RAZORPAY_KEY_ID ||
+        getRazorpayKeyFromCache() ||
+        "rzp_test_RaBjdu0Ed3p1gN";
+      const currency = payment?.currency || order?.currency || res?.currency || "INR";
+      const amountInPaise = payment?.amount || order?.amount || res?.amount || Math.round(finalTotal * 100);
+
+      if (!razorpayOrderId) {
+        alert("Payment order was not created. Please try booking again.");
+        return;
+      }
+
+      const paymentData = {
+        orderId,
+        razorpayOrderId,
+        razorpayKeyId,
+        amount: amountInPaise,
+        currency,
+        paymentMethod: "razorpay",
+        discount: payment?.discount || res?.discount || 0,
+        finalAmount: payment?.finalAmount || amountInPaise,
+        paidAmount: payment?.paidAmount || payment?.finalAmount || amountInPaise,
+      };
+
+      localStorage.setItem("pendingBooking", JSON.stringify(bookingData));
+      localStorage.setItem("checkoutBooking", JSON.stringify(bookingData));
+      localStorage.setItem("pendingPayment", JSON.stringify(paymentData));
+      if (orderId) localStorage.setItem("pendingOrderId", String(orderId));
+      if (razorpayKeyId) localStorage.setItem("lastRazorpayKeyId", razorpayKeyId);
+
+      history.push({
+        pathname: "/experience-checkout",
+        search: `?listingId=${listingId}&startDate=${dateStr}&guests=${totalGuests}${startTime ? `&startTime=${encodeURIComponent(startTime)}` : ""}`,
+        state: {
+          addOns: selectedAddOns.map(item => item.addon || item),
+          bookingData,
+          paymentData,
+        }
+      });
+    } catch (e) {
+      console.error("Experience booking failed:", e?.response?.data || e?.message || e);
+      alert(e?.response?.data?.message || e?.response?.data?.error || e?.message || "Booking failed. Please try again.");
+    } finally {
+      if (isMountedRef.current) setBookingLoading(false);
+    }
   };
 
   const IconComp = data.icon;
   const canReserve = isEventBooking
     ? Boolean(startDate && selectedTicket && selectedEventSlots.length > 0 && getSlotId(selectedEventSlots[0]) && totalGuests >= 1 && !bookingLoading)
-    : Boolean(startDate && startTime);
+    : Boolean(startDate && startTime && !bookingLoading);
 
   return (
     <>

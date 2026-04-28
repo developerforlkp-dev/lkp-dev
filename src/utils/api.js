@@ -528,7 +528,7 @@ export const getAvailability = async (listingId, startDate, endDate, slotId) => 
 export const createOrder = async (orderData) => {
   try {
     console.log("📤 Creating order with data:", JSON.stringify(orderData, null, 2));
-    const response = await OrdersAPI.post("/orders", orderData);
+    const response = await ListingsAPI.post("/orders", orderData);
     console.log("✅ Order created successfully:", response.data);
     return response.data;
   } catch (error) {
