@@ -234,6 +234,40 @@ function Count({ to, suffix = "" }) {
   return <span ref={r}>0{suffix}</span>;
 }
 
+function parseDurationMinutes(value) {
+  if (value == null || value === "") return 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+
+  const text = String(value).trim().toLowerCase();
+  const numeric = Number(text.replace(/[^0-9.]/g, ""));
+  if (/^\d+(\.\d+)?\s*(m|min|mins|minute|minutes)?$/.test(text)) {
+    return Number.isFinite(numeric) ? numeric : 0;
+  }
+
+  let total = 0;
+  const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours)/);
+  const minuteMatch = text.match(/(\d+(?:\.\d+)?)\s*(m|min|mins|minute|minutes)/);
+  if (hourMatch) total += Number(hourMatch[1]) * 60;
+  if (minuteMatch) total += Number(minuteMatch[1]);
+
+  const timeMatch = text.match(/^(\d{1,2}):(\d{2})$/);
+  if (!total && timeMatch) total = Number(timeMatch[1]) * 60 + Number(timeMatch[2]);
+
+  return Number.isFinite(total) ? total : 0;
+}
+
+function formatDurationMinutes(totalMinutes) {
+  const roundedMinutes = Math.round(Number(totalMinutes) || 0);
+  if (roundedMinutes <= 0) return "To be announced";
+
+  const hours = Math.floor(roundedMinutes / 60);
+  const minutes = roundedMinutes % 60;
+  const parts = [];
+  if (hours) parts.push(`${hours}hr`);
+  if (minutes) parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
+  return parts.join(" ");
+}
+
 function SpinBadge({ event }) {
   const { tokens: { A } } = useTheme();
   const title = event?.title || "SOLSTICE";
@@ -330,11 +364,10 @@ function SHdr({ idx, label }) {
 
 /* ─── SECTIONS ───────────────────────────────────── */
 function Hero({ event }) {
-  const { tokens: { A, W, M, FG, B, S }, theme, toggleTheme } = useTheme();
+  const { tokens: { A, W, M, FG } } = useTheme();
   const title = event?.title || "SOLSTICE";
   const date = event?.startDate ? event.startDate.split('-').reverse().join('.') : "21.06.26";
   const venueStr = event?.venueFullAddress || "Mumbai";
-  const time = event?.startTime || "6:00 PM IST";
   const splitTitle = (str) => {
     if (!str) return ["", ""];
     if (str.includes("SOLSTICE")) return ["SOL", "STICE"];
@@ -350,7 +383,7 @@ function Hero({ event }) {
   const heroTags = event?.category ? [event.category, "Live Event", "Experience"] : ["Live Music", "Contemporary Art", "Immersive"];
 
   return (
-    <section style={{ position: "relative", minHeight: "100vh", background: W, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+    <section style={{ position: "relative", minHeight: "100vh", background: W, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
       <motion.div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
         <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 800, height: 800, borderRadius: "50%", background: `radial-gradient(circle, ${A}12 0%, transparent 60%)` }} />
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}08 1px, transparent 1px), linear-gradient(90deg, ${A}08 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
@@ -361,13 +394,7 @@ function Hero({ event }) {
         <div className="float-anim"><ImageRing event={event} /></div>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.8 }} style={{ position: "absolute", top: 96, left: 36, zIndex: 2, border: `1px solid ${B}`, padding: "12px 20px", background: `${W}ee`, backdropFilter: "blur(10px)" }} className="desk-only">
-        <p style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: M, marginBottom: 4, fontWeight: 500 }}>Event Date</p>
-        <p className="font-display" style={{ fontSize: 22, fontWeight: 700, color: FG, lineHeight: 1 }}>{date}</p>
-        <p style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: A, marginTop: 4, fontWeight: 600 }}>{time}</p>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ position: "relative", zIndex: 2, maxWidth: 1320, margin: "0 auto", padding: "0 36px", width: "100%", paddingTop: 168 }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ position: "relative", zIndex: 2, maxWidth: 1320, margin: "0 auto", padding: "64px 36px 0", width: "100%" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
           {heroTags.map((t, i) => (
             <motion.span key={t} className="hero-tag-pill" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.55 + i * 0.07 }} whileHover={{ scale: 1.04, transition: { duration: 0.35, ease: E } }} style={{ position: "relative", display: "inline-flex", alignItems: "center", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", fontWeight: 600, color: A, border: `1px solid ${A}40`, padding: "5px 14px", cursor: "default", transformOrigin: "center", willChange: "transform", transition: "background-color 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s cubic-bezier(0.22, 1, 0.36, 1)" }}>
@@ -401,25 +428,12 @@ function Hero({ event }) {
         </motion.div>
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.45 }} style={{ position: "relative", zIndex: 2, borderTop: `1px solid ${B}`, marginTop: 48, background: `${W}dd`, backdropFilter: "blur(8px)" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto", padding: "14px 36px", display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 36, flexWrap: "wrap" }}>
-            {[["Date", date, FG], ["Doors Open", time, FG], ["Venue", venueStr.split(',')[0] || "The Grand Atrium", A], ["Category", event?.category || "Art & Music", A]].map(([l, v, c]) => (
-              <div key={l}>
-                <p style={{ fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: M, marginBottom: 4, fontWeight: 500 }}>{l}</p>
-                <p style={{ fontSize: 11, fontWeight: 600, color: c }}>{v}</p>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </motion.div>
     </section>
   );
 }
 
-function About({ event, hostName }) {
-  const { tokens: { A, AL, BG, FG, M, W, B, S } } = useTheme();
+function About({ event }) {
+  const { tokens: { A, BG, FG, M, W, B, S } } = useTheme();
   
   const desc = event?.description || "SOLSTICE is not merely an event — it is a threshold. A gathering of the most luminous minds in music, art, and culture, converging for a single evening at the intersection of the timeless and the radically new.";
   
@@ -430,40 +444,33 @@ function About({ event, hostName }) {
                ["Experience", "Premium", "Event"];
   const mqItems = tags.map(tag => String(tag || "").trim()).filter(Boolean);
 
-  // Calculate dynamic stats
-  const artistsCount = event?.lineup?.length || event?.artists?.length || 0;
-  const stages = event?.stagesCount || event?.stages?.length || 1;
-  const capacity = event?.maxGuests || event?.capacity || "500";
-  
-  const nights = React.useMemo(() => {
-    if (!event?.startDate || !event?.endDate) return 1;
-    const start = new Date(event.startDate);
-    const end = new Date(event.endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 1;
-  }, [event?.startDate, event?.endDate]);
+  const ticketTypes = Array.isArray(event?.ticketTypes) ? event.ticketTypes : [];
+  const guestCount = ticketTypes.reduce((sum, ticket) => {
+    const totalTickets = Number(ticket?.totalTickets ?? ticket?.totalTicket ?? 0);
+    return sum + (Number.isFinite(totalTickets) ? totalTickets : 0);
+  }, 0);
+  const slots = event?.slots || event?.eventSlots || event?.timeSlots || ticketTypes.flatMap(ticket => (
+    ticket?.applicableSlots || ticket?.slots || ticket?.eventSlots || []
+  ));
+  const totalSlotDuration = Array.isArray(slots)
+    ? slots.reduce((sum, slot) => {
+      const durationValue = slot?.duration ?? slot?.durationMinutes ?? slot?.durationInMinutes ?? slot?.duration_minutes ?? slot?.schedule?.duration;
+      return sum + parseDurationMinutes(durationValue);
+    }, 0)
+    : 0;
+  const eventType = event?.eventType || event?.category || "Event";
+  const duration = formatDurationMinutes(totalSlotDuration);
+  const ageLimit = event?.minimumAge != null ? `${event.minimumAge}+` : (event?.ageLimit || "All ages");
 
   const statsList = [
-    { n: artistsCount, s: artistsCount > 0 ? "+" : "", l: "Artists", sub: artistsCount > 0 ? "Curated performers" : "To be announced" },
-    { n: stages, s: "", l: stages === 1 ? "Stage" : "Stages", sub: "Sonic environments" },
-    { n: nights, s: "", l: nights === 1 ? "Night" : "Nights", sub: nights === 1 ? "One time only" : "Multi-day experience" },
-    { n: typeof capacity === 'number' ? capacity : 500, s: "", l: "Guests", sub: "Exclusive capacity" },
-  ];
-
-  // Detailed info table (Spec table)
-  const specTable = [
-    ["Event Type", event?.eventType || event?.category || "Multi-Disciplinary Arts"],
-    ["Duration", event?.duration || (event?.startTime && event?.endTime ? `${event.startTime} – ${event.endTime}` : "6:00 PM – 2:00 AM")],
-    ["Dress Code", event?.dressCode || "Smart Casual / Formal"],
-    ["Age Limit", event?.minimumAge != null ? `${event.minimumAge}+` : (event?.ageLimit || "18+ Strictly")],
-    ["Capacity", event?.capacity ? `${event.capacity} Guests` : "500 Guests"],
-    ["Host name", hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName || "Namma Studio"],
+    { value: eventType, l: "Event Type", sub: "Program format" },
+    { value: duration, l: "Duration", sub: "Scheduled window" },
+    { value: ageLimit, l: "Age Limit", sub: "Entry guidance" },
+    { value: guestCount, l: "Guest Count", sub: "Total ticket capacity", isCount: true },
   ];
 
   return (
     <>
-      <Mq items={[event?.title || "Art & Music Festival", event?.startDate || "June 21 2026", event?.venueFullAddress?.split(',')[0] || "The Grand Atrium"]} dir="l" size="sm" bg={S} />
       <section id="about" style={{ background: BG, padding: "130px 36px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <SHdr idx="01" label="About The Event" />
@@ -490,24 +497,12 @@ function About({ event, hostName }) {
               {/* Stats Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 {statsList.map((s, i) => (
-                  <motion.div key={s.l} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.1 }} whileHover={{ y: -4, borderColor: `${A}60`, backgroundColor: W }} style={{ border: `1px solid ${B}`, padding: "28px 28px", backgroundColor: BG, transition: "all 0.3s", cursor: "default" }}>
-                    <p className="font-display" style={{ fontSize: "clamp(2.5rem,5vw,3.8rem)", fontWeight: 700, color: A, lineHeight: 1, marginBottom: 6 }}>
-                      <Count to={s.n} suffix={s.s} />
+                  <motion.div key={s.l} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.1 }} whileHover={{ y: -4, borderColor: `${A}60`, backgroundColor: W }} style={{ border: `1px solid ${B}`, padding: "28px 28px", backgroundColor: BG, transition: "all 0.3s", cursor: "default", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: FG, marginBottom: 14 }}>{s.l}</p>
+                    <p className="font-display" style={{ fontSize: "clamp(2rem,3.2vw,3rem)", fontWeight: 700, color: A, lineHeight: 1.05, marginBottom: 10, whiteSpace: "nowrap", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {s.isCount ? <Count to={s.value} /> : s.value}
                     </p>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: FG, marginBottom: 3 }}>{s.l}</p>
                     <p style={{ fontSize: 11, color: M, lineHeight: 1.5 }}>{s.sub}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Specification Table */}
-              <div style={{ marginTop: 20, border: `1px solid ${B}`, backgroundColor: W }}>
-                {specTable.map(([k, v], i) => (
-                  <motion.div key={k} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}
-                    whileHover={{ backgroundColor: AL }}
-                    style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "11px 16px", backgroundColor: "transparent", borderBottom: i < specTable.length - 1 ? `1px solid ${B}` : "none" }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: M, fontWeight: 500 }}>{k}</span>
-                    <span style={{ fontSize: 12, color: FG, fontWeight: 500 }}>{v}</span>
                   </motion.div>
                 ))}
               </div>
@@ -628,7 +623,6 @@ function Artists({ event }) {
   ];
   return (
     <>
-      <Mq items={ARTISTS.map(a => a.name)} dir="l" size="lg" bg={W} accent />
       <section id="artists" style={{ background: W, padding: "130px 36px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <SHdr idx="02" label="Lineup" />
@@ -670,16 +664,6 @@ function Artists({ event }) {
 function Venue({ event, hostName }) {
   const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
   const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
-  const hostProfile = event?.hostProfile;
-  const host = hostProfile?.host || hostProfile || event?.host || {};
-  const hostDescription = host?.description || host?.bio || host?.about || host?.summary || event?.organizerDescription || "Curators of memorable experiences, thoughtful gatherings, and community-led moments.";
-  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
-  const hostEmail = host?.email || host?.contactEmail || host?.businessEmail;
-  const hostPhone = host?.phone || host?.phoneNumber || host?.mobile || host?.contactPhone;
-  const hostWebsite = host?.website || host?.websiteUrl;
-  const hostInstagram = host?.instagram || host?.instagramHandle;
-  const hostLocation = host?.city || host?.location || host?.address || [host?.district, host?.state].filter(Boolean).join(", ");
-  const hostListings = Array.isArray(hostProfile?.listings) ? hostProfile.listings.slice(0, 3) : [];
   const tags = Array.isArray(event?.tags) ? event.tags : 
                typeof event?.tags === 'string' ? event.tags.split(',').map(t => t.trim()) : 
                ["Experience", "Premium", "Event"];
@@ -694,7 +678,7 @@ function Venue({ event, hostName }) {
       <Mq items={tags} dir="r" size="sm" bg={S} accent />
       <section id="venue" style={{ background: BG, padding: "130px 36px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="03" label="Venue & Organizer" />
+          <SHdr idx="03" label="Venue" />
           <Chars text="Where It Happens" cls="font-display" style={{ fontSize: "clamp(1.8rem,4.5vw,4.2rem)", fontWeight: 700, lineHeight: 1.1, color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em", paddingBottom: "0.15em" }} />
           <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B }} className="grid-3-2">
             <Rev delay={0.1}>
@@ -769,38 +753,6 @@ function Venue({ event, hostName }) {
                 </div>
               </div>
             </Rev>
-            <Rev delay={0.1}>
-              <div style={{ background: W, padding: 52, minHeight: 300 }}>
-                <p className="host-presented-label" style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "#0097B2", WebkitTextFillColor: "#0097B2", marginBottom: 36, fontWeight: 700 }}>Presented By</p>
-                <h3 className="font-display" style={{ fontSize: "clamp(2.4rem,5vw,4.2rem)", fontWeight: 700, color: FG, lineHeight: 1, marginBottom: 22 }}>
-                  {displayHostName || "Event Host"}
-                </h3>
-                <p style={{ color: M, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 28 }}>{hostSubtitle}</p>
-                <p style={{ color: M, fontSize: 14, lineHeight: 1.85, maxWidth: 620 }}>{hostDescription}</p>
-              </div>
-            </Rev>
-            <Rev delay={0.18}>
-              <div style={{ background: S, padding: 52, minHeight: 300 }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: M, marginBottom: 34, fontWeight: 500 }}>More From This Host</p>
-                {hostListings.length > 0 && (
-                  <div style={{ marginBottom: 28 }}>
-                    {hostListings.map((listing, i) => (
-                      <Link key={listing.id || listing.listingId || i} to={getHostListingUrl(listing)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, padding: "12px 0", borderBottom: `1px solid ${B}`, textDecoration: "none" }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{getHostListingTitle(listing)}</span>
-                        <ArrowRight size={13} color={A} />
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {hostEmail && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Contact: </span>{hostEmail}</p>}
-                  {hostPhone && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Phone: </span>{hostPhone}</p>}
-                  {hostWebsite && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Website: </span>{hostWebsite}</p>}
-                  {hostInstagram && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Instagram: </span>{hostInstagram}</p>}
-                  {hostLocation && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Based in: </span>{hostLocation}</p>}
-                </div>
-              </div>
-            </Rev>
           </div>
         </div>
       </section>
@@ -811,26 +763,14 @@ function Venue({ event, hostName }) {
 function Rules({ event }) {
   const { tokens: { A, AL, BG, FG, M, S, B, W } } = useTheme();
   
-  // Map guest requirements from backend or use defaults
-  const guestReqs = Array.isArray(event?.guestRequirements) ? event.guestRequirements : [];
+  const checkInInstructions = event?.checkInInstructions || event?.checkinInstructions || event?.checkInInstruction || "Check-in instructions will be shared before the event.";
+  const cancellationPolicy = event?.cancellationPolicySummary || event?.cancellationPolicy || event?.cancellationPolicyText || "Cancellation policy will be shared before booking.";
   
-  const displayRules = guestReqs.length > 0 ? guestReqs.map((req, i) => ({
-    id: i + 1,
-    title: req.categoryName || req.title || "Requirement",
-    body: req.description || req.content || req.value || "Details to be provided"
-  })) : [
-    { id: 1, title: "Ticket Purchase & Validity", body: "All tickets are strictly non-refundable." },
-    { id: 2, title: "Age Restriction — 18+", body: "This is an 18+ event. Valid proof of age is mandatory." },
+  const displayRules = [
+    { id: 1, title: "Check-in Instructions", body: checkInInstructions },
+    { id: 2, title: "Cancellation Policy", body: cancellationPolicy },
   ];
 
-  // Append Cancellation Policy if available
-  if (event?.cancellationPolicy) {
-    displayRules.push({
-      id: displayRules.length + 1,
-      title: "Cancellation Policy",
-      body: event.cancellationPolicy
-    });
-  }
   return (
     <section id="rules" style={{ background: W, padding: "130px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -851,6 +791,63 @@ function Rules({ event }) {
                   <p style={{ padding: "10px 0 0 48px", fontSize: 13, color: M, lineHeight: 1.85 }}>{rule.body}</p>
                 </div>
               ))}
+            </div>
+          </Rev>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HostDetails({ event, hostName }) {
+  const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
+  const hostProfile = event?.hostProfile;
+  const host = hostProfile?.host || hostProfile || event?.host || {};
+  const hostDescription = host?.description || host?.bio || host?.about || host?.summary || event?.organizerDescription || "Curators of memorable experiences, thoughtful gatherings, and community-led moments.";
+  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
+  const hostEmail = host?.email || host?.contactEmail || host?.businessEmail;
+  const hostPhone = host?.phone || host?.phoneNumber || host?.mobile || host?.contactPhone;
+  const hostWebsite = host?.website || host?.websiteUrl;
+  const hostInstagram = host?.instagram || host?.instagramHandle;
+  const hostLocation = host?.city || host?.location || host?.address || [host?.district, host?.state].filter(Boolean).join(", ");
+  const hostListings = Array.isArray(hostProfile?.listings) ? hostProfile.listings.slice(0, 3) : [];
+
+  return (
+    <section id="host" style={{ background: BG, padding: "0 36px 130px" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+        <SHdr idx="05" label="Host" />
+        <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B }} className="grid-3-2">
+          <Rev delay={0.1}>
+            <div style={{ background: W, padding: 52, minHeight: 300 }}>
+              <p className="host-presented-label" style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "#0097B2", WebkitTextFillColor: "#0097B2", marginBottom: 36, fontWeight: 700 }}>Presented By</p>
+              <h3 className="font-display" style={{ fontSize: "clamp(2.4rem,5vw,4.2rem)", fontWeight: 700, color: FG, lineHeight: 1, marginBottom: 22 }}>
+                {displayHostName || "Event Host"}
+              </h3>
+              <p style={{ color: M, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 28 }}>{hostSubtitle}</p>
+              <p style={{ color: M, fontSize: 14, lineHeight: 1.85, maxWidth: 620 }}>{hostDescription}</p>
+            </div>
+          </Rev>
+          <Rev delay={0.18}>
+            <div style={{ background: S, padding: 52, minHeight: 300 }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: M, marginBottom: 34, fontWeight: 500 }}>More From This Host</p>
+              {hostListings.length > 0 && (
+                <div style={{ marginBottom: 28 }}>
+                  {hostListings.map((listing, i) => (
+                    <Link key={listing.id || listing.listingId || i} to={getHostListingUrl(listing)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, padding: "12px 0", borderBottom: `1px solid ${B}`, textDecoration: "none" }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{getHostListingTitle(listing)}</span>
+                      <ArrowRight size={13} color={A} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {hostEmail && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Contact: </span>{hostEmail}</p>}
+                {hostPhone && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Phone: </span>{hostPhone}</p>}
+                {hostWebsite && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Website: </span>{hostWebsite}</p>}
+                {hostInstagram && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Instagram: </span>{hostInstagram}</p>}
+                {hostLocation && <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 700 }}>Based in: </span>{hostLocation}</p>}
+              </div>
             </div>
           </Rev>
         </div>
@@ -1359,11 +1356,12 @@ export default function EventDetails() {
       <Cursor />
       <ProgressBar />
       <Hero event={event} />
-      <About event={event} hostName={hostName} />
+      <About event={event} />
       <Gallery event={event} />
       <Artists event={event} />
       <Venue event={event} hostName={hostName} />
       <Rules event={event} />
+      <HostDetails event={event} hostName={hostName} />
       <EventBookingPopup event={event} />
     </ScopedThemeProvider>
   );
