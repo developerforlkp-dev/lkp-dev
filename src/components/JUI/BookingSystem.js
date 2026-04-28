@@ -16,6 +16,20 @@ const asNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const asSeatLimit = (value) => {
+  const parsed = asNumber(value);
+  return parsed != null && parsed >= 0 ? parsed : undefined;
+};
+
+const getSlotSeatLimit = (slot) => (
+  asSeatLimit(slot?.maxSeats) ??
+  asSeatLimit(slot?.max_seats) ??
+  asSeatLimit(slot?.capacity?.maxSeats) ??
+  asSeatLimit(slot?.capacity?.max_seats) ??
+  asSeatLimit(slot?.availableSeats) ??
+  asSeatLimit(slot?.available_seats)
+);
+
 const getSlotId = (slot) => (
   asNumber(slot) ??
   asNumber(slot?.eventSlotId) ??
@@ -321,6 +335,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   
   // Extract proper price depending on whether a time slot is selected
   const selectedSlotData = timeSlots.find(s => s.slotName === startTime || s.startTime === startTime) || timeSlots[0];
+  const selectedSlotSeatLimit = getSlotSeatLimit(selectedSlotData);
+  const guestSeatLimit = isEventBooking ? undefined : selectedSlotSeatLimit;
   const extractedPrice = isEventBooking ? eventPrice : selectedSlotData?.pricePerPerson 
     || listing?.timeSlots?.[0]?.pricePerPerson
     || listing?.pricing?.basePrice
@@ -338,8 +354,73 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const baseTotal = parseFloat(data.price || 0) * totalGuests;
   const finalTotal = baseTotal + addOnsTotal;
 
+  const clampGuestsToSeatLimit = useCallback((nextGuests) => {
+    if (guestSeatLimit === undefined) return nextGuests;
+
+    const seatLimit = Math.max(0, guestSeatLimit);
+    const clamped = {
+      ...nextGuests,
+      adults: Math.max(0, asNumber(nextGuests?.adults) ?? 0),
+      children: Math.max(0, asNumber(nextGuests?.children) ?? 0),
+      infants: Math.max(0, asNumber(nextGuests?.infants) ?? 0),
+    };
+
+    if (seatLimit === 0) {
+      clamped.adults = 0;
+      clamped.children = 0;
+      clamped.infants = 0;
+      return clamped;
+    }
+
+    if (clamped.adults < 1) clamped.adults = 1;
+
+    const overLimit = clamped.adults + clamped.children - seatLimit;
+    if (overLimit > 0) {
+      const childrenReduction = Math.min(clamped.children, overLimit);
+      clamped.children -= childrenReduction;
+      clamped.adults = Math.max(1, clamped.adults - (overLimit - childrenReduction));
+    }
+
+    if (clamped.infants > clamped.adults) clamped.infants = clamped.adults;
+    return clamped;
+  }, [guestSeatLimit]);
+
+  useEffect(() => {
+    if (guestSeatLimit === undefined) return;
+
+    setGuests((current) => {
+      const clamped = clampGuestsToSeatLimit(current);
+      if (
+        clamped.adults === current.adults &&
+        clamped.children === current.children &&
+        clamped.infants === current.infants
+      ) {
+        return current;
+      }
+      return clamped;
+    });
+  }, [guestSeatLimit, clampGuestsToSeatLimit]);
+
+  const updateGuestsWithinSeatLimit = useCallback((updater) => {
+    setGuests((current) => {
+      const nextGuests = typeof updater === "function" ? updater(current) : updater;
+      return clampGuestsToSeatLimit(nextGuests);
+    });
+  }, [clampGuestsToSeatLimit]);
+
+  const adultMax = guestSeatLimit !== undefined
+    ? Math.max(guestSeatLimit === 0 ? 0 : 1, guestSeatLimit - (guests.children || 0))
+    : undefined;
+  const childMax = guestSeatLimit !== undefined
+    ? Math.max(0, guestSeatLimit - (guests.adults || 0))
+    : undefined;
+
   const handleReserve = async () => {
     if (!startDate) return;
+    if (!isEventBooking && guestSeatLimit !== undefined && totalGuests > guestSeatLimit) {
+      alert(`Only ${guestSeatLimit} seat${guestSeatLimit === 1 ? "" : "s"} available for this slot.`);
+      return;
+    }
     localStorage.removeItem("pendingPayment");
     localStorage.removeItem("pendingOrderId");
     localStorage.removeItem("actualPaidAmount");
@@ -674,7 +755,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const IconComp = data.icon;
   const canReserve = isEventBooking
     ? Boolean(startDate && selectedTicket && selectedEventSlots.length > 0 && getSlotId(selectedEventSlots[0]) && totalGuests >= 1 && !bookingLoading)
-    : Boolean(startDate && startTime && !bookingLoading);
+    : Boolean(startDate && startTime && totalGuests >= 1 && (guestSeatLimit === undefined || totalGuests <= guestSeatLimit) && !bookingLoading);
 
   return (
     <>
@@ -904,13 +985,28 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
                         <span style={{ fontSize: 14, fontWeight: 600, color: FG }}>Adults</span>
-                        <Counter value={guests.adults} setValue={(v) => setGuests(p => ({ ...p, adults: v }))} min={1} />
+                        <Counter
+                          value={guests.adults}
+                          setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, adults: v }))}
+                          min={guestSeatLimit === 0 ? 0 : 1}
+                          max={adultMax}
+                        />
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
                         <span style={{ fontSize: 14, fontWeight: 600, color: FG }}>Children</span>
-                        <Counter value={guests.children} setValue={(v) => setGuests(p => ({ ...p, children: v }))} min={0} />
+                        <Counter
+                          value={guests.children}
+                          setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, children: v }))}
+                          min={0}
+                          max={childMax}
+                        />
                       </div>
                     </div>
+                    {guestSeatLimit !== undefined && (
+                      <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 600 }}>
+                        Maximum {guestSeatLimit} seat{guestSeatLimit === 1 ? "" : "s"} for this slot.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
