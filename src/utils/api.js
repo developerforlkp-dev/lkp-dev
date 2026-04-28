@@ -583,6 +583,21 @@ export const createEventOrder = async (orderData) => {
   }
 };
 
+export const getEventSlotAvailability = async (eventId) => {
+  try {
+    if (!eventId) {
+      throw new Error("eventId is required");
+    }
+
+    const response = await ListingsAPI.get(`/events/${eventId}/slot-availability`);
+    console.log("Event slot availability fetched:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching event slot availability:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // Get slots for a listing
 export const getListingSlots = async (listingId, startDate, endDate) => {
   try {
