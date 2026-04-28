@@ -863,6 +863,14 @@ function EventBookingPopup({ event }) {
     id: ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`,
     name: ticket.name || ticket.ticketTypeName || ticket.typeName || ticket.title || ticket.ticketName || `Ticket ${index + 1}`,
     price: ticket.price ?? ticket.ticketTypePrice ?? ticket.typePrice ?? ticket.ticketPrice ?? ticket.individualPrice ?? ticket.amount ?? ticket.basePrice ?? 0,
+    totalTickets: ticket.totalTickets ?? ticket.totalTicket ?? ticket.total_tickets ?? ticket.total_ticket,
+    maxPerBooking: ticket.maxPerBooking ?? ticket.max_per_booking ?? ticket.maxTicketsPerBooking ?? ticket.max_tickets_per_booking,
+    groupPricingTiers: Array.isArray(ticket.groupPricingTiers) ? ticket.groupPricingTiers :
+                       Array.isArray(ticket.group_pricing_tiers) ? ticket.group_pricing_tiers :
+                       Array.isArray(ticket.groupBookingPricing) ? ticket.groupBookingPricing :
+                       Array.isArray(ticket.group_booking_pricing) ? ticket.group_booking_pricing : [],
+    ticketSaleStartDate: ticket.ticketSaleStartDate || ticket.ticket_sale_start_date || ticket.saleStartDate || event?.ticketSaleStartDate || event?.ticket_sale_start_date || event?.saleStartDate,
+    ticketSaleEndDate: ticket.ticketSaleEndDate || ticket.ticket_sale_end_date || ticket.saleEndDate || event?.ticketSaleEndDate || event?.ticket_sale_end_date || event?.saleEndDate || event?.bookingCutoffTime,
     applicableSlots: Array.isArray(ticket.applicableSlots) ? ticket.applicableSlots :
                      Array.isArray(ticket.applicable_slots) ? ticket.applicable_slots :
                      Array.isArray(ticket.eventSlots) ? ticket.eventSlots :
@@ -901,6 +909,8 @@ function EventBookingPopup({ event }) {
     basePrice: ticketPrice,
     price: ticketPrice,
     b2cPrice: ticketPrice,
+    ticketSaleStartDate: event?.ticketSaleStartDate || event?.ticket_sale_start_date || event?.saleStartDate,
+    ticketSaleEndDate: event?.ticketSaleEndDate || event?.ticket_sale_end_date || event?.saleEndDate || event?.bookingCutoffTime,
     pricing: {
       ...(event?.pricing || {}),
       basePrice: ticketPrice

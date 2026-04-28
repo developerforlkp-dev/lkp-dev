@@ -1172,7 +1172,7 @@ export const cancelOrder = async (orderId, cancelData) => {
   }
 };
 
-// ✅ Cancel an EVENT order (some backends expose a separate event-orders cancellation flow)
+// ✅ Cancel an EVENT order
 export const cancelEventOrder = async (orderId, cancelData) => {
   try {
     if (!orderId) {
@@ -1190,15 +1190,9 @@ export const cancelEventOrder = async (orderId, cancelData) => {
       adminOverride: cancelData.adminOverride || false,
     };
 
-    try {
-      const response = await ListingsAPI.post(`/event-orders/${orderIdStr}/cancel`, body);
-      console.log("✅ Event order cancelled successfully:", response.data);
-      return response.data;
-    } catch (err) {
-      const response = await ListingsAPI.post(`/orders/${orderIdStr}/cancel`, body);
-      console.log("✅ Event order cancelled successfully (fallback /orders):", response.data);
-      return response.data;
-    }
+    const response = await ListingsAPI.post(`/orders/${orderIdStr}/cancel`, body);
+    console.log("✅ Event order cancelled successfully:", response.data);
+    return response.data;
   } catch (error) {
     console.error("❌ Error cancelling event order:", error.response?.data || error.message);
     throw error;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useHistory, useLocation } from "react-router-dom";
+import moment from "moment";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Ticket, ChefHat, Bed, X, Sparkles, Clock, Users, Star, Plus, Minus, CheckCircle2, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTheme } from "./Theme";
@@ -15,6 +16,24 @@ const asNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
+
+const asDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatSaleDate = (date) => (
+  date
+    ? date.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : ""
+);
 
 const asSeatLimit = (value) => {
   const parsed = asNumber(value);
@@ -98,6 +117,88 @@ const getTicketPrice = (ticket, fallback = 0) => (
   asNumber(ticket?.basePrice) ??
   fallback
 );
+
+const getTicketTotalTickets = (ticket) => (
+  asNumber(ticket?.totalTickets) ??
+  asNumber(ticket?.totalTicket) ??
+  asNumber(ticket?.total_tickets) ??
+  asNumber(ticket?.total_ticket)
+);
+
+const getTicketMaxPerBooking = (ticket) => (
+  asNumber(ticket?.maxPerBooking) ??
+  asNumber(ticket?.max_per_booking) ??
+  asNumber(ticket?.maxTicketsPerBooking) ??
+  asNumber(ticket?.max_tickets_per_booking)
+);
+
+const getTicketGroupPricingTiers = (ticket) => {
+  const tiers =
+    ticket?.groupPricingTiers ??
+    ticket?.group_pricing_tiers ??
+    ticket?.groupBookingPricing ??
+    ticket?.group_booking_pricing ??
+    [];
+  return Array.isArray(tiers) ? tiers : [];
+};
+
+const getEffectiveTicketPrice = (ticket, quantity, fallbackPrice = 0) => {
+  const basePrice = getTicketPrice(ticket, fallbackPrice);
+  const tier = getTicketGroupPricingTiers(ticket).find((item) => {
+    const min = asNumber(item?.minQuantity ?? item?.min_quantity ?? item?.groupCountFrom ?? item?.group_count_from) ?? 0;
+    const max = asNumber(item?.maxQuantity ?? item?.max_quantity ?? item?.groupCountUpto ?? item?.group_count_upto) ?? Infinity;
+    return quantity >= min && quantity <= max;
+  });
+  const tierPrice = asNumber(tier?.pricePerTicket ?? tier?.price_per_ticket ?? tier?.price ?? tier?.ticketPrice);
+  return {
+    price: tierPrice ?? basePrice,
+    tier: tier || null,
+    basePrice,
+  };
+};
+
+const getTicketSaleWindow = (listing, ticket) => {
+  const startsAt = asDate(
+    ticket?.ticketSaleStartDate ??
+    ticket?.ticket_sale_start_date ??
+    ticket?.saleStartDate ??
+    listing?.ticketSaleStartDate ??
+    listing?.ticket_sale_start_date ??
+    listing?.saleStartDate
+  );
+  const endsAt = asDate(
+    ticket?.ticketSaleEndDate ??
+    ticket?.ticket_sale_end_date ??
+    ticket?.saleEndDate ??
+    listing?.ticketSaleEndDate ??
+    listing?.ticket_sale_end_date ??
+    listing?.saleEndDate ??
+    listing?.bookingCutoffTime
+  );
+  const now = new Date();
+
+  if (startsAt && now < startsAt) {
+    return {
+      isOpen: false,
+      status: "upcoming",
+      message: `Booking is not open yet. Ticket sales start on ${formatSaleDate(startsAt)}.`,
+    };
+  }
+
+  if (endsAt && now > endsAt) {
+    return {
+      isOpen: false,
+      status: "closed",
+      message: `Booking date is closed. Ticket sales ended on ${formatSaleDate(endsAt)}.`,
+    };
+  }
+
+  return {
+    isOpen: true,
+    status: "open",
+    message: endsAt ? `Ticket sales close on ${formatSaleDate(endsAt)}.` : "",
+  };
+};
 
 const getTicketSlotRestrictions = (ticket) => {
   const sources = [
@@ -189,6 +290,88 @@ const normalizeEventSlots = (slots = [], fallbackPrice = 0) => (
     .filter(Boolean) : []
 );
 
+function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, tokens }) {
+  const { A, AL, BG, FG, M, B, S, W } = tokens;
+  const initialDate = selectedDate && typeof selectedDate.toDate === "function"
+    ? selectedDate.toDate()
+    : new Date();
+  const [viewDate, setViewDate] = useState(initialDate);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const selectedKey = getDateKey(selectedDate);
+  const cells = [
+    ...Array.from({ length: firstDay }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => {
+      const day = index + 1;
+      const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      return { day, key, isAvailable: availableDateKeys.has(key) };
+    }),
+  ];
+
+  return (
+    <div style={{ background: S, borderRadius: 16, padding: 18, border: `1px solid ${B}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <button
+          type="button"
+          onClick={() => setViewDate(new Date(year, month - 1, 1))}
+          style={{ width: 32, height: 32, borderRadius: 999, border: `1px solid ${B}`, background: BG, color: FG, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <ChevronDown size={15} style={{ transform: "rotate(90deg)" }} />
+        </button>
+        <div style={{ fontSize: 14, fontWeight: 800, color: FG }}>
+          {viewDate.toLocaleString("en-IN", { month: "long", year: "numeric" })}
+        </div>
+        <button
+          type="button"
+          onClick={() => setViewDate(new Date(year, month + 1, 1))}
+          style={{ width: 32, height: 32, borderRadius: 999, border: `1px solid ${B}`, background: BG, color: FG, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <ChevronDown size={15} style={{ transform: "rotate(-90deg)" }} />
+        </button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}>
+        {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+          <div key={`${day}-${index}`} style={{ textAlign: "center", fontSize: 10, fontWeight: 800, color: M, padding: "4px 0" }}>
+            {day}
+          </div>
+        ))}
+        {cells.map((cell, index) => {
+          if (!cell) return <div key={`blank-${index}`} />;
+          const isSelected = selectedKey === cell.key;
+          return (
+            <button
+              key={cell.key}
+              type="button"
+              disabled={!cell.isAvailable}
+              onClick={() => onDateSelect(moment(cell.key))}
+              style={{
+                aspectRatio: "1 / 1",
+                minWidth: 0,
+                borderRadius: 12,
+                border: `1px solid ${isSelected ? A : cell.isAvailable ? `${A}55` : "transparent"}`,
+                background: isSelected ? A : cell.isAvailable ? AL : "transparent",
+                color: isSelected ? W : cell.isAvailable ? FG : `${M}55`,
+                cursor: cell.isAvailable ? "pointer" : "not-allowed",
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              {cell.day}
+            </button>
+          );
+        })}
+      </div>
+      {availableDateKeys.size === 0 && (
+        <div style={{ marginTop: 12, color: M, fontSize: 12, fontWeight: 600, textAlign: "center" }}>
+          No available dates for this event.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience" }) {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W } } = useTheme();
@@ -223,6 +406,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const selectedTicket = useMemo(() => (
     eventTickets.find(ticket => String(ticket.id ?? ticket.ticketTypeId ?? ticket.typeId) === String(selectedTicketTypeId)) || eventTickets[0] || null
   ), [eventTickets, selectedTicketTypeId]);
+  const ticketSaleWindow = useMemo(() => (
+    isEventBooking ? getTicketSaleWindow(listing, selectedTicket) : { isOpen: true, status: "open", message: "" }
+  ), [isEventBooking, listing, selectedTicket]);
   const eventFallbackSlots = useMemo(() => (
     listing?.eventSlots || listing?.slots || listing?.timeSlots || []
   ), [listing?.eventSlots, listing?.slots, listing?.timeSlots]);
@@ -242,6 +428,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     eventFallbackSlots.length > 0 ? eventFallbackSlots : ticketApplicableSlots
   ), [eventFallbackSlots, ticketApplicableSlots]);
   const eventPrice = getTicketPrice(selectedTicket, asNumber(listing?.ticketPrice) ?? asNumber(listing?.price) ?? asNumber(listing?.basePrice) ?? 0);
+  const effectiveEventPrice = useMemo(() => (
+    getEffectiveTicketPrice(selectedTicket, totalGuests, eventPrice)
+  ), [selectedTicket, totalGuests, eventPrice]);
+  const selectedTicketTotalTickets = getTicketTotalTickets(selectedTicket);
+  const selectedTicketMaxPerBooking = getTicketMaxPerBooking(selectedTicket);
   const eventSlots = useMemo(() => (
     normalizeEventSlots(allEventSlotSource, eventPrice)
   ), [allEventSlotSource, eventPrice]);
@@ -337,7 +528,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const selectedSlotData = timeSlots.find(s => s.slotName === startTime || s.startTime === startTime) || timeSlots[0];
   const selectedSlotSeatLimit = getSlotSeatLimit(selectedSlotData);
   const guestSeatLimit = isEventBooking ? undefined : selectedSlotSeatLimit;
-  const extractedPrice = isEventBooking ? eventPrice : selectedSlotData?.pricePerPerson 
+  const bookingGuestLimit = isEventBooking ? selectedTicketMaxPerBooking : guestSeatLimit;
+  const extractedPrice = isEventBooking ? effectiveEventPrice.price : selectedSlotData?.pricePerPerson 
     || listing?.timeSlots?.[0]?.pricePerPerson
     || listing?.pricing?.basePrice
     || listing?.basePrice
@@ -355,9 +547,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const finalTotal = baseTotal + addOnsTotal;
 
   const clampGuestsToSeatLimit = useCallback((nextGuests) => {
-    if (guestSeatLimit === undefined) return nextGuests;
+    if (bookingGuestLimit === undefined) return nextGuests;
 
-    const seatLimit = Math.max(0, guestSeatLimit);
+    const seatLimit = Math.max(0, bookingGuestLimit);
     const clamped = {
       ...nextGuests,
       adults: Math.max(0, asNumber(nextGuests?.adults) ?? 0),
@@ -383,10 +575,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
     if (clamped.infants > clamped.adults) clamped.infants = clamped.adults;
     return clamped;
-  }, [guestSeatLimit]);
+  }, [bookingGuestLimit]);
 
   useEffect(() => {
-    if (guestSeatLimit === undefined) return;
+    if (bookingGuestLimit === undefined) return;
 
     setGuests((current) => {
       const clamped = clampGuestsToSeatLimit(current);
@@ -399,7 +591,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       }
       return clamped;
     });
-  }, [guestSeatLimit, clampGuestsToSeatLimit]);
+  }, [bookingGuestLimit, clampGuestsToSeatLimit]);
 
   const updateGuestsWithinSeatLimit = useCallback((updater) => {
     setGuests((current) => {
@@ -408,11 +600,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     });
   }, [clampGuestsToSeatLimit]);
 
-  const adultMax = guestSeatLimit !== undefined
-    ? Math.max(guestSeatLimit === 0 ? 0 : 1, guestSeatLimit - (guests.children || 0))
+  const adultMax = bookingGuestLimit !== undefined
+    ? Math.max(bookingGuestLimit === 0 ? 0 : 1, bookingGuestLimit - (guests.children || 0))
     : undefined;
-  const childMax = guestSeatLimit !== undefined
-    ? Math.max(0, guestSeatLimit - (guests.adults || 0))
+  const childMax = bookingGuestLimit !== undefined
+    ? Math.max(0, bookingGuestLimit - (guests.adults || 0))
     : undefined;
 
   const handleReserve = async () => {
@@ -429,6 +621,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
     if (isEventBooking) {
       if (!selectedTicket || selectedEventSlots.length === 0 || totalGuests < 1 || bookingLoading) return;
+      if (!ticketSaleWindow.isOpen) {
+        alert(ticketSaleWindow.message);
+        return;
+      }
+      if (selectedTicketMaxPerBooking !== undefined && totalGuests > selectedTicketMaxPerBooking) {
+        alert(`You can book a maximum of ${selectedTicketMaxPerBooking} ticket${selectedTicketMaxPerBooking === 1 ? "" : "s"} at a time.`);
+        return;
+      }
 
       const dateStr = startDate.format("YYYY-MM-DD");
       const eventIdNum = asNumber(listing?.eventId ?? listing?.event_id ?? listing?.id ?? listing?.listingId) ?? 0;
@@ -436,7 +636,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const eventSlotIds = selectedEventSlots.map((slot) => getSlotId(slot)).filter(Boolean);
       const ticketTypeId = getTicketId(selectedTicket);
       const ticketTypeName = getTicketName(selectedTicket);
-      const pricePerTicket = asNumber(data.price) ?? 0;
+      const pricePerTicket = asNumber(effectiveEventPrice.price) ?? 0;
       const customerDetails = (() => {
         const userInfoRaw = localStorage.getItem("userInfo");
         const userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : {};
@@ -754,8 +954,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   const IconComp = data.icon;
   const canReserve = isEventBooking
-    ? Boolean(startDate && selectedTicket && selectedEventSlots.length > 0 && getSlotId(selectedEventSlots[0]) && totalGuests >= 1 && !bookingLoading)
+    ? Boolean(ticketSaleWindow.isOpen && startDate && selectedTicket && selectedEventSlots.length > 0 && getSlotId(selectedEventSlots[0]) && totalGuests >= 1 && (selectedTicketMaxPerBooking === undefined || totalGuests <= selectedTicketMaxPerBooking) && !bookingLoading)
     : Boolean(startDate && startTime && totalGuests >= 1 && (guestSeatLimit === undefined || totalGuests <= guestSeatLimit) && !bookingLoading);
+  const triggerDisabled = isEventBooking && !ticketSaleWindow.isOpen;
 
   return (
     <>
@@ -770,11 +971,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       `}</style>
       {/* Floating Trigger */}
       <motion.button
-        onClick={() => setShow(true)}
+        onClick={() => {
+          if (triggerDisabled) return;
+          setShow(true);
+        }}
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={triggerDisabled ? undefined : { scale: 1.05 }}
+        whileTap={triggerDisabled ? undefined : { scale: 0.95 }}
+        disabled={triggerDisabled}
+        title={triggerDisabled ? ticketSaleWindow.message : undefined}
         style={{
           position: "fixed",
           bottom: 30,
@@ -788,15 +994,38 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           gap: 10,
           boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
           border: "none",
-          cursor: "pointer",
+          cursor: triggerDisabled ? "not-allowed" : "pointer",
           zIndex: 1000,
           fontWeight: 600,
-          fontSize: 14
+          fontSize: 14,
+          opacity: triggerDisabled ? 0.76 : 1
         }}
       >
         <IconComp size={18} />
-        {triggerLabel}
+        {triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : triggerLabel}
       </motion.button>
+      {triggerDisabled && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 88,
+            right: 30,
+            maxWidth: 320,
+            background: BG,
+            color: FG,
+            border: `1px solid ${B}`,
+            borderRadius: 16,
+            padding: "12px 16px",
+            boxShadow: "0 15px 35px rgba(0,0,0,0.14)",
+            zIndex: 1000,
+            fontSize: 12,
+            fontWeight: 600,
+            lineHeight: 1.45,
+          }}
+        >
+          {ticketSaleWindow.message}
+        </div>
+      )}
 
       <AnimatePresence>
         {show && (
@@ -827,7 +1056,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               {/* Header */}
               <div style={{ padding: "32px 40px", borderBottom: `1px solid ${B}88`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h2 style={{ fontSize: 14, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 8 }}>Reserve Your Experience</h2>
+                  <h2 style={{ fontSize: 14, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 8 }}>
+                    {isEventBooking ? "Reserve Your Event" : "Reserve Your Experience"}
+                  </h2>
+                  {isEventBooking && ticketSaleWindow.message && (
+                    <p style={{ fontSize: 12, color: ticketSaleWindow.isOpen ? M : "#d14343", fontWeight: 700, marginBottom: 8 }}>
+                      {ticketSaleWindow.message}
+                    </p>
+                  )}
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                     <span style={{ fontSize: 32, fontWeight: 800, color: FG }}>₹{data.price}</span>
                     <span style={{ fontSize: 14, color: M, fontWeight: 500 }}>per {data.unit}</span>
@@ -853,17 +1089,26 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 <div style={{ padding: "40px", background: BG, display: "flex", flexDirection: "column", gap: 32 }}>
                   <div>
                     <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 16, letterSpacing: "0.1em" }}>01. Select Date</div>
-                    <div style={{ background: S, borderRadius: 16, padding: "8px", border: `1px solid ${B}` }}>
-                      <DateSingle 
-                        withPortal={true}
-                        date={startDate}
-                        onDateChange={(date) => setStartDate(date)}
-                        placeholder="Pick a date"
-                        id="jui-booking-date"
-                        plain
-                        isDayHighlighted={isEventBooking ? isEventDateHighlighted : undefined}
+                    {isEventBooking ? (
+                      <EventInlineCalendar
+                        selectedDate={startDate}
+                        onDateSelect={setStartDate}
+                        availableDateKeys={eventAvailableDateKeys}
+                        tokens={{ A, AL, BG, FG, M, B, S, W }}
                       />
-                    </div>
+                    ) : (
+                      <div style={{ background: S, borderRadius: 16, padding: "8px", border: `1px solid ${B}` }}>
+                        <DateSingle 
+                          withPortal={true}
+                          date={startDate}
+                          onDateChange={(date) => setStartDate(date)}
+                          placeholder="Pick a date"
+                          id="jui-booking-date"
+                          plain
+                          isDayHighlighted={isEventBooking ? isEventDateHighlighted : undefined}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {isEventBooking && (
@@ -902,6 +1147,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             })}
                           </select>
                           <ChevronDown size={18} color={M} style={{ position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                          {selectedTicketTotalTickets !== undefined && (
+                            <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
+                              Total tickets: {selectedTicketTotalTickets}
+                            </div>
+                          )}
+                          {selectedTicketMaxPerBooking !== undefined && (
+                            <div style={{ marginTop: 4, fontSize: 12, color: M, fontWeight: 600 }}>
+                              Maximum {selectedTicketMaxPerBooking} per booking.
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div style={{ padding: "16px", background: S, borderRadius: 16, fontSize: 13, color: M }}>No ticket types available.</div>
@@ -988,7 +1243,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                         <Counter
                           value={guests.adults}
                           setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, adults: v }))}
-                          min={guestSeatLimit === 0 ? 0 : 1}
+                          min={bookingGuestLimit === 0 ? 0 : 1}
                           max={adultMax}
                         />
                       </div>
@@ -1005,6 +1260,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     {guestSeatLimit !== undefined && (
                       <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 600 }}>
                         Maximum {guestSeatLimit} seat{guestSeatLimit === 1 ? "" : "s"} for this slot.
+                      </div>
+                    )}
+                    {isEventBooking && selectedTicketMaxPerBooking !== undefined && (
+                      <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 600 }}>
+                        Maximum {selectedTicketMaxPerBooking} ticket{selectedTicketMaxPerBooking === 1 ? "" : "s"} per booking.
+                      </div>
+                    )}
+                    {isEventBooking && effectiveEventPrice.tier && (
+                      <div style={{ marginTop: 8, fontSize: 12, color: A, fontWeight: 800 }}>
+                        Group price applied: ₹{effectiveEventPrice.price} per ticket.
                       </div>
                     )}
                   </div>
