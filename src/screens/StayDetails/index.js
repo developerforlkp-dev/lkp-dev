@@ -1,17 +1,21 @@
 import React, { useEffect, useState, useMemo, createContext, useContext, useRef, useCallback } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useHistory, Link } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   Wifi, Waves, Sparkles, Dumbbell, Umbrella, Plane, GlassWater, Utensils,
   Phone, Clock, FileText, MapPin, ChevronDown, CheckCircle, Info, Building, 
   ArrowRight, ShieldCheck, Mail, Globe, Map, Navigation, ArrowDown, Car, AirVent,
-  Users, DoorOpen, Bed, Bath, Maximize
+  Users, DoorOpen, Bed, Bath, Maximize, Calendar, Star, Share2, Heart, ArrowLeft
 } from "lucide-react";
+import moment from "moment";
 import cn from "classnames";
 import Loader from "../../components/Loader";
 import Icon from "../../components/Icon";
 import RoomCards from "./RoomCards";
-import { getStayDetails, getHost } from "../../utils/api";
+import { getStayDetails, getHost, createStayOrder } from "../../utils/api";
+import StayBookingSystem from "./StayBookingSystem";
+import { useTheme, THEMES } from "../../components/JUI/Theme";
+import { Footer } from "../../components/JUI/Footer";
 
 const fixImageUrl = (url) => {
   if (!url) return "";
@@ -19,49 +23,6 @@ const fixImageUrl = (url) => {
   if (!u || typeof u !== 'string') return "";
   return u.replace(/%25/g, '%');
 };
-
-/* ─── TOKENS & THEME ─────────── */
-const THEMES = {
-  light: {
-    A: "#0097B2", AH: "#008CA5", AL: "rgba(0, 151, 178, 0.08)",
-    BG: "#FBFBF9", FG: "#0F0F0F", M: "#7A7A77",
-    S: "#F3F3F1", B: "#E6E6E3", W: "#FFFFFF"
-  },
-  dark: {
-    A: "#0097B2", AH: "#0AADCA", AL: "rgba(0, 151, 178, 0.15)",
-    BG: "#080808", FG: "#EBEBE6", M: "#8C8C88",
-    S: "#111111", B: "#1F1F1F", W: "#000000"
-  }
-};
-
-const ThemeContext = createContext({ theme: "light", toggleTheme: () => { }, tokens: THEMES.light });
-const useTheme = () => useContext(ThemeContext);
-
-function ScopedThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light");
-  const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    if (wrapperRef.current) {
-      const tokens = THEMES[theme];
-      Object.entries(tokens).forEach(([key, value]) => {
-        wrapperRef.current.style.setProperty(`--${key}`, value);
-      });
-      wrapperRef.current.style.background = tokens.BG;
-      wrapperRef.current.style.color = tokens.FG;
-    }
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(prev => prev === "light" ? "dark" : "light");
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, tokens: THEMES[theme] }}>
-      <div ref={wrapperRef} className="stay-details-premium" style={{ minHeight: "100vh" }}>
-        {children}
-      </div>
-    </ThemeContext.Provider>
-  );
-}
 
 const E = [0.22, 1, 0.36, 1];
 
@@ -291,98 +252,88 @@ function SHdr({ idx, label }) {
 }
 
 /* ─── STAY SECTIONS ─────────── */
-function StayHeroCarousel({ stay, galleryItems }) {
-  const { tokens: { BG, FG, W, B, A } } = useTheme();
-
-  const containerRef = useRef(null);
-  const baseX = useMotionValue(0);
-  const [drag, setDrag] = useState(false);
-
-  // 1. Continuous Motion: Update baseX by delta * 0.05
-  // Added safety check for delta to prevent NaN values
-  useAnimationFrame((t, delta) => {
-    if (!drag) {
-      const moveBy = (delta || 16) * 0.05;
-      baseX.set(baseX.get() - moveBy);
-    }
-  });
-
-  // 4. Visual Variety: Mosaic configuration for the gallery
-  const itemConfigs = useMemo(() => [
-    { w: 420, h: 520, y: 0 },
-    { w: 320, h: 320, y: 140 },
-    { w: 520, h: 380, y: -40 },
-    { w: 380, h: 480, y: 80 },
-    { w: 480, h: 320, y: 60 },
-    { w: 320, h: 420, y: -100 },
-  ], []);
-
-  // 2. The Infinite Loop (Wrapping): Calculate W_BLOCK (totalUniqueWidth)
-  const W_BLOCK = useMemo(() => itemConfigs.reduce((sum, it) => sum + it.w + 32, 0), [itemConfigs]);
-
-  const x = useTransform(baseX, (v) => {
-    if (W_BLOCK <= 0) return "0px";
-    // Simplified seamless wrap: ensures v stays within [0, -W_BLOCK]
-    // As v decreases, this value goes 0 -> -W_BLOCK then snaps back to 0
-    const wrapped = v % W_BLOCK;
-    return `${wrapped}px`;
-  });
-
-  // Duplicated images to fill the track
-  const items = useMemo(() => Array(12).fill(itemConfigs).flat(), [itemConfigs]);
+function StayHeroCarousel({ stay, galleryItems = [] }) {
+  const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
   const title = stay?.propertyName || stay?.title || "STAY EXPERIENCE";
+  const items = galleryItems.slice(0, 5);
+  
+  // Infinite Loop Logic for images only
+  const x = useMotionValue(0);
+  const speed = 0.03;
 
-  const titleWords = title.toUpperCase().split(" ");
-  const titleMid = Math.ceil(titleWords.length / 2);
-  const titleLine1 = titleWords.slice(0, titleMid).join(" ");
-  const titleLine2 = titleWords.slice(titleMid).join(" ");
+  useAnimationFrame((t, delta) => {
+    const moveBy = (delta || 16) * speed;
+    x.set(x.get() - moveBy);
+  });
+
+  const BentoGridImages = () => (
+    <div style={{ 
+      display: "grid", 
+      gridTemplateColumns: "minmax(500px, 1.2fr) minmax(300px, 0.8fr) minmax(400px, 1fr)", 
+      gridTemplateRows: "1fr 1fr", 
+      gap: 24, 
+      height: "100%",
+      width: "100vw",
+      padding: "0 12px",
+      flexShrink: 0
+    }}>
+      <div style={{ gridArea: "1 / 1 / 3 / 2", borderRadius: 24, overflow: "hidden", border: `1px solid ${B}` }}>
+        <img src={fixImageUrl(items[0] || stay?.coverPhotoUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
+      </div>
+      <div style={{ borderRadius: 24, overflow: "hidden", border: `1px solid ${B}` }}>
+        <img src={fixImageUrl(items[1])} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+      </div>
+      <div style={{ borderRadius: 24, overflow: "hidden", border: `1px solid ${B}` }}>
+        <img src={fixImageUrl(items[2])} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+      </div>
+      <div style={{ gridArea: "1 / 3 / 3 / 4", borderRadius: 24, overflow: "hidden", border: `1px solid ${B}` }}>
+        <img src={fixImageUrl(items[3] || items[0])} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+      </div>
+    </div>
+  );
+
+  const wrappedX = useTransform(x, (v) => {
+    const W = window.innerWidth;
+    return `${v % W}px`;
+  });
 
   return (
-    <section style={{ position: "relative", height: "100vh", background: BG, overflow: "hidden", display: "flex", alignItems: "center", paddingTop: 80 }}>
-      {/* Background Decor */}
-      <motion.div
-        animate={{ opacity: [0.1, 0.2, 0.1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: "60%", background: `linear-gradient(to bottom, ${A}44, transparent)`, zIndex: 2, pointerEvents: "none" }}
-      />
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to bottom, rgba(0,0,0,0.4), transparent)", zIndex: 2, pointerEvents: "none" }} />
-
-      <div style={{ position: "absolute", top: "10%", left: "50%", transform: "translateX(-50%)", zIndex: 20, pointerEvents: "none", textAlign: "center", width: "90%" }}>
-        <Chars text={titleLine1} cls="font-display" style={{ fontSize: "clamp(3rem, 11vw, 8.5rem)", fontWeight: 700, color: W, letterSpacing: "-0.02em", lineHeight: 1.1, paddingBottom: "0.15em", display: "block" }} />
-        {titleLine2 && <Chars text={titleLine2} cls="font-display" style={{ fontSize: "clamp(3rem, 11vw, 8.5rem)", fontWeight: 700, color: W, letterSpacing: "-0.02em", lineHeight: 1.1, paddingBottom: "0.15em", display: "block" }} />}
-        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
-          style={{ fontSize: 12, letterSpacing: "0.45em", textTransform: "uppercase", color: "rgba(255,255,255,0.8)", marginTop: 12 }}>{toDisplayString(stay?.propertyType) || "Bespoke Stay Experience"}</motion.p>
-      </div>
-
-      <motion.div
-        onPan={(e, info) => baseX.set(baseX.get() + info.delta.x)}
-        onPanStart={() => setDrag(true)}
-        onPanEnd={() => setDrag(false)}
-        style={{ position: "absolute", inset: 0, zIndex: 10, cursor: drag ? "grabbing" : "grab" }}
-      />
-
-      <motion.div ref={containerRef} style={{ x, display: "flex", gap: 32, paddingLeft: 32, alignItems: "center", pointerEvents: "none", marginTop: -120 }}>
-        {items.map((it, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: (i % 6) * 0.05, ease: E }}
-            style={{
-              flexShrink: 0, width: it.w, height: it.h, y: it.y,
-              position: "relative", borderRadius: 24, overflow: "hidden",
-              border: `1px solid rgba(255,255,255,0.15)`,
-              boxShadow: "0 30px 60px -15px rgba(0,0,0,0.4)"
-            }}
-          >
-            <img src={fixImageUrl(galleryItems.length > 0 ? galleryItems[i % galleryItems.length] : "https://picsum.photos/seed/stay/800/600")} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-          </motion.div>
-        ))}
+    <section style={{ position: "relative", height: "85vh", background: BG, overflow: "hidden", padding: "30px 0" }}>
+      {/* Looping Image Track */}
+      <motion.div style={{ x: wrappedX, display: "flex", height: "100%", width: "fit-content" }}>
+        <BentoGridImages />
+        <BentoGridImages />
+        <BentoGridImages />
       </motion.div>
 
-      <div style={{ position: "absolute", bottom: 60, right: "5%", zIndex: 10, display: "flex", alignItems: "center", gap: 16 }}>
-        <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }}>Explore Gallery</span>
-        <motion.div animate={{ width: [30, 80, 30] }} transition={{ duration: 3, repeat: Infinity }} style={{ height: 1, background: "rgba(255,255,255,0.4)" }} />
+      {/* Static Fixed Text Overlay */}
+      <div style={{ position: "absolute", bottom: 80, left: 80, zIndex: 40, pointerEvents: "none" }}>
+        <Rev delay={0.2}>
+          <div style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(20px)", padding: "40px 60px", borderRadius: 32, border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+               <div style={{ width: 40, height: 1, background: A }} />
+               <span style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: A, fontWeight: 800 }}>{toDisplayString(stay?.propertyType) || "EXCEPTIONAL"}</span>
+             </div>
+             <h1 className="font-display" style={{ fontSize: "clamp(2rem, 5vw, 5rem)", fontWeight: 800, color: "#FFF", lineHeight: 0.9, letterSpacing: "-0.03em" }}>{title.toUpperCase()}</h1>
+             <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12, color: "#FFF" }}>
+               <MapPin size={18} />
+               <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "0.1em" }}>{stay?.city}, {stay?.state}</span>
+             </div>
+          </div>
+        </Rev>
+      </div>
+
+      {/* Static Overlays: Luxury Badge */}
+      <div style={{ position: "absolute", top: 60, left: 60, zIndex: 30, pointerEvents: "none" }}>
+         <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} style={{ width: 90, height: 90 }}>
+           <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+             <path id="badgePath" d="M 50, 50 m -40, 0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" fill="transparent" />
+             <text style={{ fontSize: 7.5, fontWeight: 800, fill: A, textTransform: "uppercase", letterSpacing: "2.5px" }}>
+               <textPath xlinkHref="#badgePath">Luxury Retreat — Premium Stay —</textPath>
+             </text>
+           </svg>
+         </motion.div>
       </div>
     </section>
   );
@@ -436,14 +387,11 @@ function StayAmenities({ stay }) {
   return (
     <section style={{ background: W, padding: "140px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+        <SHdr idx="02" label="Facilities & Services" />
         <Soul y={100} s={0.08}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80 }}>
             {/* Left Column: Descriptions */}
             <Rev>
-              <p style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 28 }}>
-                <MapPin size={16} />
-                {[stay?.city, stay?.state, stay?.country].filter(Boolean).join(", ") || stay?.location || stay?.address || "Location"}
-              </p>
               {(() => {
                 const short = stay?.shortDescription || "";
                 if (!short) return (
@@ -470,28 +418,6 @@ function StayAmenities({ stay }) {
 
             {/* Right Column: Amenities & Facilities */}
             <div>
-              {dynamicAmenities.length > 0 && (
-                <Rev delay={0.1} style={{ marginBottom: 48 }}>
-                  <div style={{ paddingBottom: 16, borderBottom: `1px solid ${B}`, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
-                    <Sparkles size={18} color={A} />
-                    <p style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: FG, fontWeight: 700 }}>Property Amenities</p>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 32px" }}>
-                    {dynamicAmenities.map((label, i) => {
-                      const IconComp = getIcon(label);
-                      return (
-                        <motion.div key={i} whileHover={{ x: 6 }} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                          <div style={{ width: 40, height: 40, borderRadius: "50%", background: S, border: `1px solid ${B}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <IconComp size={16} color={A} />
-                          </div>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: FG }}>{label}</span>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </Rev>
-              )}
-
               {dynamicFacilities.length > 0 && (
                 <Rev delay={0.2}>
                   <div style={{ paddingBottom: 16, borderBottom: `1px solid ${B}`, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
@@ -560,13 +486,8 @@ function PolicyItem({ rule, A, FG, M, B }) {
 function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
   const { tokens: { A, AL, BG, FG, M, S, B, W } } = useTheme();
   const policies = useMemo(() => {
-    const p = [];
-    if (stay?.checkInTime || stay?.checkOutTime) {
-      p.push({ id: 1, title: "Check-in / Check-out", body: `Check-in from ${stay.checkInTime || "2:00 PM"}. Check-out by ${stay.checkOutTime || "11:00 AM"}. Early arrivals or late departures are subject to availability.` });
-    } else {
-      p.push({ id: 1, title: "Check-in / Check-out", body: "Check-in from 2:00 PM. Check-out by 11:00 AM. Early arrivals or late departures are subject to availability and may incur fees." });
-    }
-    
+    const categories = [];
+
     const extractText = (r) => {
       if (!r) return "";
       if (typeof r === 'string') return r;
@@ -576,27 +497,18 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
       return firstStringVal || "";
     };
 
-    // Helper to deeply search the stay object for a specific array structure
     const findArrayWithKey = (obj, targetKey, targetName) => {
       if (!obj || typeof obj !== 'object') return null;
-      
-      // If we find an array, check if it matches what we're looking for
       if (Array.isArray(obj) && obj.length > 0) {
         if (typeof obj[0] === 'string' && targetName && targetName.test(obj[0])) return obj;
         if (typeof obj[0] === 'object' && obj[0] !== null) {
-          if (targetKey in obj[0] || 'rule' in obj[0] || 'policyRule' in obj[0] || 'propertyRule' in obj[0]) {
-            return obj;
-          }
+          if (targetKey in obj[0] || 'rule' in obj[0] || 'policyRule' in obj[0] || 'propertyRule' in obj[0]) return obj;
         }
       }
-
-      // Explicitly check named properties on the current level first to prioritize them
       const commonNames = ['propertyRules', 'propertyRule', 'rules', 'propertyRulesDefaultTemplate', 'cancellationPolicyRules', 'cancellationRules', 'cancellationPolicy'];
       for (const key of commonNames) {
         if (obj[key] && Array.isArray(obj[key]) && obj[key].length > 0) return obj[key];
       }
-
-      // Recursively search children
       for (const key in obj) {
         const result = findArrayWithKey(obj[key], targetKey, targetName);
         if (result) return result;
@@ -604,48 +516,78 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
       return null;
     };
 
-    // Property Rules
-    let propertyRulesBody = "";
-    const rawPropRules = stay?.propertyRulesDefaultTemplate || stay?.propertyRules || stay?.propertyRule || findArrayWithKey(stay, 'propertyRule');
-    
-    if (Array.isArray(rawPropRules) && rawPropRules.length > 0) {
-      propertyRulesBody = rawPropRules.map(r => `• ${extractText(r)}`).filter(t => t !== "• " && t !== "•").join("\n");
-    } else if (stay?.houseRules) {
-      propertyRulesBody = stay.houseRules;
+    // 1. Property Rules
+    const propItems = [];
+    if (stay?.privacyAndPolicy?.propertyRulesTemplate && stay.privacyAndPolicy.propertyRulesTemplate !== "No property rules defined.") {
+      const lines = stay.privacyAndPolicy.propertyRulesTemplate.split('\n').map(l => l.trim()).filter(Boolean);
+      lines.forEach((line, i) => {
+        const colonIdx = line.indexOf(':');
+        if (colonIdx > 0 && colonIdx < 60) {
+          propItems.push({ id: `prop-${i}`, title: line.substring(0, colonIdx).trim(), body: line.substring(colonIdx + 1).trim() });
+        } else {
+          if (line.toLowerCase() !== "check-in and check-out" && line.toLowerCase() !== "property rules") {
+             propItems.push({ id: `prop-${i}`, title: line, body: line });
+          }
+        }
+      });
+    } else {
+      const rawPropRules = stay?.propertyRulesDefaultTemplate || stay?.propertyRules || stay?.propertyRule || findArrayWithKey(stay, 'propertyRule');
+      if (Array.isArray(rawPropRules) && rawPropRules.length > 0) {
+        rawPropRules.forEach((r, i) => propItems.push({ id: `prop-${i}`, title: `Rule ${i+1}`, body: extractText(r) }));
+      } else if (stay?.houseRules) {
+        propItems.push({ id: `prop-0`, title: "General Rules", body: stay.houseRules });
+      } else if (stay?.checkInTime || stay?.checkOutTime) {
+        propItems.push({ id: `prop-0`, title: "Check-in / Check-out", body: `Check-in from ${stay.checkInTime || "2:00 PM"}. Check-out by ${stay.checkOutTime || "11:00 AM"}.` });
+      } else {
+        propItems.push({ id: `prop-0`, title: "General Rules", body: "Check-in from 2:00 PM. Check-out by 11:00 AM." });
+      }
+    }
+    if (propItems.length > 0) {
+      categories.push({ id: 'cat-prop', title: "Property Rules", items: propItems });
     }
 
-    if (propertyRulesBody) {
-      p.push({ id: 2, title: "Property Rules", body: propertyRulesBody });
-    } else {
-      p.push({ id: 2, title: "Resort Etiquette", body: "We observe quiet hours from 10:00 PM. Our property is a non-smoking sanctuary. Guests are encouraged to respect the natural coral reef systems." });
+    // 2. Guest Requirements
+    const guestItems = [];
+    if (Array.isArray(stay?.guestRequirements) && stay.guestRequirements.length > 0) {
+      stay.guestRequirements.forEach((req, i) => {
+        const title = req.setting?.title || req.description || `Requirement ${i+1}`;
+        let body = "";
+        if (Array.isArray(req.questions)) {
+          body = req.questions.map(q => `• ${q.title || q.question?.title}`).join("\n");
+        }
+        guestItems.push({ id: `guest-${i}`, title, body: body || title });
+      });
     }
-    
-    // Cancellation Policy
-    let cancelPolicyBody = "";
-    const rawCancelRules = stay?.cancellationPolicyRules || stay?.cancellationPolicyRule || stay?.cancellationRules || findArrayWithKey(stay, 'policyRule');
-    
-    if (Array.isArray(rawCancelRules) && rawCancelRules.length > 0) {
-      cancelPolicyBody = rawCancelRules.map(r => `• ${extractText(r)}`).filter(t => t !== "• " && t !== "•").join("\n");
-      const summary = stay?.generatedPolicySummary || stay?.policySummary || (stay?.cancellationPolicy && typeof stay.cancellationPolicy === 'string' ? stay.cancellationPolicy : null);
-      if (summary) cancelPolicyBody += `\n\nSummary:\n${summary}`;
-    } else if (stay?.generatedPolicySummary || stay?.policySummary) {
-      cancelPolicyBody = stay?.generatedPolicySummary || stay?.policySummary;
-    } else if (stay?.cancellationPolicy || stay?.cancellationPolicyText) {
-      cancelPolicyBody = stay.cancellationPolicy || stay.cancellationPolicyText;
+    if (guestItems.length > 0) {
+      categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     }
 
-    if (cancelPolicyBody) {
-      p.push({ id: 3, title: "Cancellation Policy", body: cancelPolicyBody });
+    // 3. Cancellation Policy
+    const cancelItems = [];
+    if (stay?.privacyAndPolicy?.cancellationPolicyTemplate && stay.privacyAndPolicy.cancellationPolicyTemplate !== "No cancellation policy rules defined.") {
+      cancelItems.push({ id: 'cancel-1', title: "Cancellation Terms", body: stay.privacyAndPolicy.cancellationPolicyTemplate });
     } else {
-      p.push({ id: 3, title: "Reservation Terms", body: "Cancellations made within 7 days of arrival are subject to a 100% penalty. Special event bookings may have unique terms." });
+      const rawCancelRules = stay?.cancellationPolicyRules || stay?.cancellationPolicyRule || stay?.cancellationRules || findArrayWithKey(stay, 'policyRule');
+      if (Array.isArray(rawCancelRules) && rawCancelRules.length > 0) {
+        rawCancelRules.forEach((r, i) => cancelItems.push({ id: `cancel-${i}`, title: `Rule ${i+1}`, body: extractText(r) }));
+      } else if (stay?.generatedPolicySummary || stay?.policySummary) {
+        cancelItems.push({ id: 'cancel-1', title: "Summary", body: stay?.generatedPolicySummary || stay?.policySummary });
+      } else if (stay?.cancellationPolicy || stay?.cancellationPolicyText) {
+        cancelItems.push({ id: 'cancel-1', title: "Terms", body: stay.cancellationPolicy || stay.cancellationPolicyText });
+      } else {
+        cancelItems.push({ id: 'cancel-1', title: "Terms", body: "Cancellations made within 7 days of arrival are subject to a 100% penalty." });
+      }
+    }
+    if (cancelItems.length > 0) {
+      categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
     }
 
     const privacy = stay?.privacyPolicy || stay?.privacyPolicyRules || stay?.privacyRules;
     if (privacy) {
-      p.push({ id: 4, title: "Privacy Policy", body: privacy });
+      categories.push({ id: 'cat-priv', title: "Privacy Policy", items: [{ id: 'priv-1', title: "Details", body: privacy }] });
     }
 
-    return p;
+    return categories;
   }, [stay]);
 
   const getPhone = () => {
@@ -675,90 +617,80 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
     <section style={{ background: BG, padding: "140px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         
-        {/* Contact Section */}
-        <div style={{ marginBottom: 120 }}>
-          <SHdr idx="04" label="Property Contacts" />
-          <Chars text="Host Contact" cls="font-display" style={{ fontSize: "clamp(2rem,4vw,3.5rem)", fontWeight: 700, lineHeight: 1.1, paddingBottom: "0.15em", color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em" }} />
+        <SHdr idx="05" label="Guidelines & Contact" />
+        
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 100, alignItems: "start", marginTop: 40 }}>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 32 }}>
-            <Rev delay={0.1}>
-              <div style={{ background: W, padding: 52, border: `1px solid ${B}` }}>
-                <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Primary Contact</p>
-                <h3 className="font-display" style={{ fontSize: "clamp(1.8rem,3vw,2.5rem)", fontWeight: 700, color: FG, marginBottom: 24 }}>
-                  {primaryName}
-                </h3>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <a href={`tel:${primaryPhoneNum}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-                    <Phone size={18} color={A} />
-                    <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{primaryPhoneNum}</span>
-                  </a>
-                  <a href={`mailto:${primaryEmailAddress}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-                    <Mail size={18} color={A} />
-                    <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{primaryEmailAddress}</span>
-                  </a>
-                </div>
-              </div>
-            </Rev>
-
-            {(salesName || salesPhoneNum || salesEmailAddress) && (
-              <Rev delay={0.2}>
-                <div style={{ background: W, padding: 52, border: `1px solid ${B}` }}>
-                  <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Sales Contact</p>
-                  {salesName ? (
-                    <h3 className="font-display" style={{ fontSize: "clamp(1.8rem,3vw,2.5rem)", fontWeight: 700, color: FG, marginBottom: 24 }}>{salesName}</h3>
-                  ) : (
-                    <div style={{ height: 24, marginBottom: 24 }} />
-                  )}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {salesPhoneNum && (
-                      <a href={`tel:${salesPhoneNum}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-                        <Phone size={18} color={A} />
-                        <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{salesPhoneNum}</span>
-                      </a>
-                    )}
-                    {salesEmailAddress && (
-                      <a href={`mailto:${salesEmailAddress}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-                        <Mail size={18} color={A} />
-                        <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{salesEmailAddress}</span>
-                      </a>
+          {/* Left Column: Host Details */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+            <div>
+              <p style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 24 }}>Property Host</p>
+              <Rev>
+                <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 32 }}>
+                  <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", border: `1px solid ${B}`, background: S }}>
+                    {hostAvatar ? (
+                      <img src={hostAvatar} alt={primaryName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 700, color: M }}>
+                        {primaryName.charAt(0)}
+                      </div>
                     )}
                   </div>
+                  <div>
+                    <h3 className="font-display" style={{ fontSize: 32, fontWeight: 700, color: FG, marginBottom: 4 }}>{primaryName}</h3>
+                    <p style={{ fontSize: 14, color: M }}>Property Representative</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "32px", background: W, border: `1px solid ${B}`, borderRadius: 2 }}>
+                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                     <span style={{ fontSize: 10, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Phone</span>
+                     <a href={`tel:${primaryPhoneNum}`} style={{ fontSize: 16, fontWeight: 600, color: FG, textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+                       <Phone size={16} color={A} />
+                       {primaryPhoneNum}
+                     </a>
+                   </div>
+                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                     <span style={{ fontSize: 10, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Email</span>
+                     <a href={`mailto:${primaryEmailAddress}`} style={{ fontSize: 16, fontWeight: 600, color: FG, textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+                       <Mail size={16} color={A} />
+                       {primaryEmailAddress}
+                     </a>
+                   </div>
                 </div>
               </Rev>
-            )}
+            </div>
 
             {frontOffice && (
-              <Rev delay={0.3}>
-                <div style={{ background: W, padding: 52, border: `1px solid ${B}` }}>
-                  <p style={{ fontSize: 11, color: M, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>Front Office</p>
-                  <div style={{ height: 36, marginBottom: 24 }} />
-                  <a href={`tel:${frontOffice}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-                    <Building size={18} color={A} />
-                    <span style={{ fontSize: 16, fontWeight: 600, color: FG }}>{frontOffice}</span>
+              <Rev delay={0.1}>
+                <div style={{ padding: "32px", background: S, border: `1px solid ${B}`, borderRadius: 2 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Front Office</p>
+                  <a href={`tel:${frontOffice}`} style={{ fontSize: 16, fontWeight: 600, color: FG, textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+                    <Building size={16} color={A} />
+                    {frontOffice}
                   </a>
                 </div>
               </Rev>
             )}
           </div>
-        </div>
 
-        {/* Guidelines Section */}
-        <SHdr idx="05" label="Stay Guidelines" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 80, alignItems: "start" }} className="grid-2">
-          <Rev delay={0.1}>
-            <Chars text="Property" cls="font-display" style={{ fontSize: "clamp(2rem,4vw,3.5rem)", fontWeight: 700, lineHeight: 1.1, paddingBottom: "0.15em", color: FG, overflow: "hidden", letterSpacing: "-0.02em" }} />
-            <Chars text="Rules." delay={0.08} cls="font-display" style={{ fontSize: "clamp(2rem,4vw,3.5rem)", fontWeight: 700, lineHeight: 1.1, paddingBottom: "0.15em", color: "transparent", WebkitTextStroke: `2px ${A}`, overflow: "hidden", letterSpacing: "-0.02em" }} />
-          </Rev>
-          <Rev delay={0.2}>
-            <div style={{ borderTop: `1px solid ${B}` }}>
-              {policies.map((rule) => (
-                <PolicyItem key={rule.id} rule={rule} A={A} FG={FG} M={M} B={B} />
+          {/* Right Column: Rules Categories & Accordions */}
+          <div>
+            <Rev delay={0.2}>
+              {policies.map((category) => (
+                <div key={category.id} style={{ marginBottom: 48 }}>
+                  <h3 style={{ fontSize: 20, fontWeight: 700, color: FG, marginBottom: 24, letterSpacing: "-0.01em" }}>{category.title}</h3>
+                  <div style={{ borderTop: `1px solid ${B}` }}>
+                    {category.items.map((rule) => (
+                      <PolicyItem key={rule.id} rule={rule} A={A} FG={FG} M={M} B={B} />
+                    ))}
+                  </div>
+                </div>
               ))}
-            </div>
-          </Rev>
-        </div>
+            </Rev>
+          </div>
 
+        </div>
       </div>
     </section>
   );
@@ -766,6 +698,8 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
 
 /* ─── MAIN COMPONENT ─────────── */
 const StayDetails = () => {
+  const { tokens: { BG, FG, W, B, S, M } } = useTheme();
+  const history = useHistory();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const id = params.get("id");
@@ -774,9 +708,15 @@ const StayDetails = () => {
   const [hostData, setHostData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Booking State
+  const [checkInDate, setCheckInDate] = useState(null);
+  const [checkOutDate, setCheckOutDate] = useState(null);
+  const [guests, setGuests] = useState({ adults: 1, children: 0 });
   const [externalRoomId, setExternalRoomId] = useState(null);
   const [externalMealPlan, setExternalMealPlan] = useState(null);
   const [externalRoomsCount, setExternalRoomsCount] = useState(1);
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   const formatImageUrl = (url) => {
     if (!url) return null;
@@ -848,77 +788,20 @@ const StayDetails = () => {
     );
   }
 
+
+
   return (
-    <ScopedThemeProvider>
+    <div className="stay-details-premium" style={{ minHeight: "100vh", background: BG, color: FG }}>
       <ScopedStyles />
-      <ProgressBar />
-      <Cursor />
 
       <StayHeroCarousel stay={stay} galleryItems={galleryItems} />
 
-      {(() => {
-        const tags = Array.isArray(stay?.tags)
-          ? stay.tags.map(t => typeof t === 'string' ? t : (t?.name || t?.tag || t?.label || t?.value)).filter(Boolean)
-          : [];
-        const items = tags.length > 0 ? tags : ["Island Sanctuary", "The Living Reef", "Azure Deep", "Bespoke Luxury"];
-        return <Mq items={items} size="sm" bg={THEMES.light.S} accent />;
-      })()}
-
       <StayAmenities stay={stay} />
 
-      {(() => {
-        const tags = Array.isArray(stay?.tags)
-          ? stay.tags.map(t => typeof t === 'string' ? t : (t?.name || t?.tag || t?.label || t?.value)).filter(Boolean)
-          : [];
-        const items = tags.length > 0 ? tags : ["Island Sanctuary", "Ocean Perspective", "Curated Luxury", "Azure Horizon"];
-        return <Mq items={items} dir="r" size="lg" bg={THEMES.light.S} />;
-      })()}
-
-      <div style={{ background: THEMES.light.BG, padding: "80px 36px 100px" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="02" label="Property Overview" />
-          
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "stretch" }}>
-            {/* Left: Main Image */}
-            <Rev delay={0.1} style={{ position: "relative", width: "100%", height: "100%", minHeight: 400, overflow: "hidden", border: `1px solid ${THEMES.light.B}` }}>
-              {(() => {
-                const coverImg = stay?.coverPhotoUrl || stay?.coverPhoto || stay?.coverImageUrl || stay?.mainImage || stay?.image || stay?.imageUrl || galleryItems[0];
-                return coverImg ? (
-                  <img src={fixImageUrl(coverImg)} alt="Property Cover" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: THEMES.light.S }} />
-                );
-              })()}
-            </Rev>
-            
-            {/* Right: Spec Grid */}
-            <Rev delay={0.2}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 1, backgroundColor: THEMES.light.B, border: `1px solid ${THEMES.light.B}` }}>
-                {[
-                  ["Property Name", stay?.propertyName || stay?.title || "—"],
-                  ["Property Type", toDisplayString(stay?.propertyType) || "—"],
-                  ["Property Category", toDisplayString(stay?.propertyCategory) || "—"],
-                  ["Star Rating", stay?.starRating ? (String(stay.starRating).toLowerCase().includes('star') ? stay.starRating : `${stay.starRating} Star`) : "—"],
-                  ["Location Category", toDisplayString(stay?.locationCategory) || "—"]
-                ].map(([k, v], i) => (
-                  <motion.div key={k} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}
-                    whileHover={{ backgroundColor: THEMES.light.AL, paddingLeft: 40 }}
-                    style={{ padding: "28px 32px", backgroundColor: THEMES.light.W, display: "flex", flexDirection: "column", justifyContent: "center", transition: "padding 0.3s ease" }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: THEMES.light.M, fontWeight: 700, marginBottom: 8 }}>{k}</span>
-                    <span className="font-display" style={{ fontSize: "1.4rem", color: THEMES.light.FG, fontWeight: 700 }}>{v}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </Rev>
-          </div>
-
-        </div>
-      </div>
-
-      <div style={{ background: THEMES.light.W, padding: "80px 36px 140px", borderTop: `1px solid ${THEMES.light.B}` }}>
+      <div style={{ background: W, padding: "80px 36px 140px", borderTop: `1px solid ${B}` }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <SHdr idx="03" label="Accommodations" />
-          <p style={{ fontSize: 16, color: THEMES.light.M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
             Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
           </p>
           <RoomCards
@@ -937,14 +820,28 @@ const StayDetails = () => {
           ? stay.tags.map(t => typeof t === 'string' ? t : (t?.name || t?.tag || t?.label || t?.value)).filter(Boolean)
           : [];
         const items = tags.length > 0 ? tags : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection"];
-        return <Mq items={items} size="sm" bg={THEMES.light.S} accent />;
+        return <Mq items={items} size="sm" bg={S} accent />;
       })()}
 
       <StayLocation stay={stay} />
 
       <StayPoliciesAndContact stay={stay} hostData={hostData} hostAvatar={hostAvatar} />
 
-    </ScopedThemeProvider>
+      <StayBookingSystem 
+        stay={stay}
+        checkInDate={checkInDate}
+        setCheckInDate={setCheckInDate}
+        checkOutDate={checkOutDate}
+        setCheckOutDate={setCheckOutDate}
+        guests={guests}
+        setGuests={setGuests}
+        selectedRoomId={externalRoomId}
+        selectedMealPlan={externalMealPlan}
+        roomsCount={externalRoomsCount}
+      />
+
+
+    </div>
   );
 };
 
