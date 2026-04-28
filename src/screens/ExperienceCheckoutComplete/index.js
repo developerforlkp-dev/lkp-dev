@@ -144,11 +144,15 @@ const ExperienceCheckoutComplete = () => {
   // Helper function to format time from "HH:mm" to "HH:mm AM/PM"
   const formatTime = (timeString) => {
     if (!timeString) return "";
-    const [hours, minutes] = timeString.split(":");
+    const raw = String(timeString).trim();
+    const match = raw.match(/^(\d{1,2})(?::(\d{1,2}))?/);
+    if (!match) return raw;
+    const hours = match[1];
+    const minutes = match[2] || "00";
     const hour = parseInt(hours, 10);
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+    return `${hour12}:${String(minutes).padStart(2, "0")} ${ampm}`;
   };
 
   // Format amount - Razorpay amounts are in paise (smallest currency unit), so divide by 100 for INR
