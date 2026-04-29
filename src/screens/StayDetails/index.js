@@ -838,6 +838,7 @@ const StayDetails = () => {
         selectedRoomId={externalRoomId}
         selectedMealPlan={externalMealPlan}
         roomsCount={externalRoomsCount}
+        onRoomsCountChange={setExternalRoomsCount}
       />
 
 

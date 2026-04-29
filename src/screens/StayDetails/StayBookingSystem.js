@@ -26,7 +26,8 @@ const StayBookingSystem = ({
   setGuests,
   selectedRoomId,
   selectedMealPlan,
-  roomsCount
+  roomsCount,
+  onRoomsCountChange
 }) => {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W } } = useTheme();
@@ -155,6 +156,11 @@ const StayBookingSystem = ({
   const handleReserve = async () => {
     if (!checkInDate || !checkOutDate) {
       alert("Please select your stay dates.");
+      return;
+    }
+
+    if (!checkOutDate.isAfter(checkInDate, 'day')) {
+      alert("Check-out date must be after Check-in date.");
       return;
     }
 
@@ -334,7 +340,8 @@ const StayBookingSystem = ({
                       date={checkInDate}
                       onDateChange={(date) => {
                         setCheckInDate(date);
-                        if (checkOutDate && date && checkOutDate.isSameOrBefore(date, 'day')) {
+                        // If new check-in is same or after current check-out, clear check-out
+                        if (checkOutDate && date && !checkOutDate.isAfter(date, 'day')) {
                           setCheckOutDate(null);
                         }
                       }}
@@ -357,7 +364,8 @@ const StayBookingSystem = ({
                       isOutsideRange={(day) => {
                         const today = moment().startOf('day');
                         if (checkInDate) {
-                          return day.isSameOrBefore(checkInDate, 'day');
+                          // Disable check-in day and everything before it
+                          return !day.isAfter(checkInDate, 'day');
                         }
                         return day.isBefore(today, 'day');
                       }}
@@ -385,13 +393,19 @@ const StayBookingSystem = ({
                 {/* Selected Room Info */}
                 {selectedRoom && (
                   <div style={{ marginTop: 32, padding: 24, background: AL, borderRadius: 20, border: `1px solid ${A}33` }}>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                      <div style={{ width: 48, height: 48, borderRadius: 12, background: A, display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF" }}>
-                        <Bed size={24} />
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 12, background: A, display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF" }}>
+                          <Bed size={24} />
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{selectedRoom.roomName || selectedRoom.name}</p>
+                          <p style={{ fontSize: 13, color: M }}>{selectedMealPlan || "EP"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{selectedRoom.roomName || selectedRoom.name}</p>
-                        <p style={{ fontSize: 13, color: M }}>{roomsCount} Room{roomsCount > 1 ? 's' : ''} · {selectedMealPlan || "EP"}</p>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                        <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Rooms</p>
+                        <Counter value={roomsCount} setValue={onRoomsCountChange} min={1} max={selectedRoom.availableRooms || 10} />
                       </div>
                     </div>
                   </div>
