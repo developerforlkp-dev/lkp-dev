@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useParams, useHistory } from "react-router-dom";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Camera, Coffee, Phone, Info, Plus, Baby, Languages, ShieldCheck } from "lucide-react";
+import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Camera, Coffee, Phone, Info, Plus, Minus, Baby, Languages, ShieldCheck } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
@@ -79,10 +79,25 @@ const ExperienceProduct = () => {
 
   const handleToggleAddon = (addon) => {
     const addonId = addon.addonId || addon.id;
+    setSelectedAddOns((prev) => {
+      const exists = prev.find(a => (a.addonId || a.id) === addonId);
+      if (exists) {
+        return prev.filter(a => (a.addonId || a.id) !== addonId);
+      } else {
+        return [...prev, { ...addon, quantity: 1 }];
+      }
+    });
+  };
+
+  const handleUpdateAddonQuantity = (addonId, delta) => {
     setSelectedAddOns((prev) =>
-      prev.some(a => (a.addonId || a.id) === addonId)
-        ? prev.filter(a => (a.addonId || a.id) !== addonId)
-        : [...prev, addon]
+      prev.map((a) => {
+        if ((a.addonId || a.id) === addonId) {
+          const nextQty = Math.max(0, (a.quantity || 1) + delta);
+          return nextQty === 0 ? null : { ...a, quantity: nextQty };
+        }
+        return a;
+      }).filter(Boolean)
     );
   };
 
@@ -306,7 +321,9 @@ const ExperienceProduct = () => {
                       const addon = item.addon || item;
                       const addonId = addon.addonId || addon.id;
                       const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
-                      const isSelected = selectedAddOns.some(a => (a.addonId || a.id) === addonId);
+                      const selectedAddon = selectedAddOns.find(a => (a.addonId || a.id) === addonId);
+                      const isSelected = !!selectedAddon;
+                      const quantity = selectedAddon?.quantity || 0;
 
                       return (
                         <motion.div
@@ -342,27 +359,70 @@ const ExperienceProduct = () => {
                           <div style={{ flex: 1 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                               <p style={{ fontSize: 18, fontWeight: 700, color: FG, marginBottom: 8 }}>{addon.title}</p>
-                              <button
-                                onClick={() => handleToggleAddon(addon)}
-                                style={{
-                                  background: isSelected ? A : S,
-                                  color: isSelected ? "#FFF" : FG,
-                                  border: `1px solid ${isSelected ? A : B}`,
-                                  borderRadius: 100,
-                                  padding: "6px 16px",
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  textTransform: "uppercase",
-                                  letterSpacing: "0.05em"
-                                }}
-                              >
-                                {isSelected ? "Selected" : "Add"}
-                              </button>
+                              {isSelected ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: 12, background: S, borderRadius: 100, padding: "4px 8px", border: `1px solid ${B}` }}>
+                                  <button
+                                    onClick={() => handleUpdateAddonQuantity(addonId, -1)}
+                                    style={{
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: "50%",
+                                      background: W,
+                                      border: `1px solid ${B}`,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: "pointer",
+                                      color: FG
+                                    }}
+                                  >
+                                    <Minus size={14} />
+                                  </button>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color: FG, minWidth: 20, textAlign: "center" }}>{quantity}</span>
+                                  <button
+                                    onClick={() => handleUpdateAddonQuantity(addonId, 1)}
+                                    style={{
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: "50%",
+                                      background: A,
+                                      border: "none",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: "pointer",
+                                      color: "#FFF"
+                                    }}
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleAddon(addon)}
+                                  style={{
+                                    background: S,
+                                    color: FG,
+                                    border: `1px solid ${B}`,
+                                    borderRadius: 100,
+                                    padding: "6px 16px",
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.05em"
+                                  }}
+                                >
+                                  Add
+                                </button>
+                              )}
                             </div>
                             <p style={{ fontSize: 14, color: M, lineHeight: 1.6 }}>{addon.briefDescription || addon.description}</p>
                             {addon.price > 0 && (
-                              <p style={{ fontSize: 13, fontWeight: 700, color: A, marginTop: 8 }}>+ ₹{addon.price}</p>
+                              <p style={{ fontSize: 13, fontWeight: 700, color: A, marginTop: 8 }}>
+                                {isSelected && quantity > 1 ? `₹${(addon.price * quantity).toFixed(2)}` : `+ ₹${addon.price}`}
+                                {isSelected && quantity > 1 && <span style={{ color: M, fontWeight: 400, fontSize: 11, marginLeft: 8 }}>(₹{addon.price} x {quantity})</span>}
+                              </p>
                             )}
                           </div>
                         </motion.div>
