@@ -15,6 +15,8 @@ import {
 import { buildExperienceUrl, extractExperienceIdFromSlugAndId } from "../../utils/experienceUrl";
 import Page from "../../components/Page";
 import ProductNavbar from "../../components/ProductNavbar";
+import PhotoView from "../../components/PhotoView";
+import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -58,6 +60,197 @@ function ExperienceBg({ progress, src }) {
   );
 }
 
+/* ─── GRID GALLERY MODAL ────────────────────────── */
+const GridGallery = ({ items, onClose, onSelect, title, A }) => {
+  const galleryRef = useRef(null);
+
+  useEffect(() => {
+    const target = galleryRef.current;
+    if (target) disableBodyScroll(target);
+    return () => {
+      if (target) enableBodyScroll(target);
+      else enableBodyScroll(document.body);
+    };
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      ref={galleryRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9990,
+        background: '#FFFFFF',
+        overflowY: 'auto',
+        padding: 'clamp(40px, 8vw, 100px) clamp(20px, 5vw, 60px)'
+      }}
+    >
+      <div style={{ maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 60 }}
+        >
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '0.8em', textTransform: 'uppercase', color: A, fontWeight: 800, marginBottom: 20 }}>Visual Anthology</p>
+            <h2 style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, color: '#141414', lineHeight: 0.9, letterSpacing: '-0.04em' }} className="font-display">
+              {title}
+            </h2>
+          </div>
+          <motion.button
+            whileHover={{ rotate: 90, scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClose}
+            style={{
+              background: 'rgba(0,0,0,0.03)',
+              border: `1px solid rgba(0,0,0,0.08)`,
+              color: '#000',
+              width: 'clamp(56px, 10vw, 80px)',
+              height: 'clamp(56px, 10vw, 80px)',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.3s',
+              flexShrink: 0,
+              marginLeft: 20
+            }}
+          >
+            <Plus size={32} style={{ transform: 'rotate(45deg)' }} color="#000" />
+          </motion.button>
+        </motion.div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))',
+          gap: 'clamp(16px, 3vw, 32px)',
+          gridAutoRows: 'clamp(250px, 40vh, 400px)'
+        }}>
+          {items.map((img, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: (i % 3) * 0.1 }}
+              whileHover={{ y: -10, scale: 1.02 }}
+              onClick={() => onSelect(i)}
+              style={{
+                borderRadius: 24,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                background: '#F4F4F4',
+                border: '1px solid rgba(0,0,0,0.05)',
+                position: 'relative',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
+              }}
+            >
+              <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileHover={{ opacity: 1 }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  padding: '24px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: A, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Plus size={16} color="#FFF" />
+                  </div>
+                  <span style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700 }}>Expand View</span>
+                </div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── MODAL IMAGE POPUP ────────────────────────── */
+const FullScreenImage = ({ src, onClose }) => {
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    const target = modalRef.current;
+    if (target) disableBodyScroll(target);
+    return () => {
+      if (target) enableBodyScroll(target);
+      else enableBodyScroll(document.body);
+    };
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      ref={modalRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        background: 'rgba(0,0,0,0.85)',
+        backdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '5vh 5vw'
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 30 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 30 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          height: '100%',
+          maxWidth: '1200px',
+          maxHeight: '80vh',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'zoom-out',
+          borderRadius: 32,
+          overflow: 'hidden',
+          boxShadow: '0 50px 100px rgba(0,0,0,0.6)',
+          background: '#000'
+        }}
+      >
+        <img
+          src={src}
+          onClick={onClose}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'block',
+            objectFit: 'cover' // This fills the container, making it feel much "larger"
+          }}
+          alt="Popup"
+        />
+        {/* Subtle indicator that it's a popup */}
+        <div style={{ position: 'absolute', bottom: 30, right: 30, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: 100, pointerEvents: 'none' }}>
+           <p style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Click to close</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 
 
 const ExperienceProduct = () => {
@@ -77,6 +270,9 @@ const ExperienceProduct = () => {
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [photoVisible, setPhotoVisible] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [gridVisible, setGridVisible] = useState(false);
 
   const handleUpdateAddonQuantity = (addon, delta) => {
     const addonId = addon.addonId || addon.id;
@@ -240,10 +436,10 @@ const ExperienceProduct = () => {
         {/* GALLERY SECTION */}
         <section style={{ background: W, padding: "80px 0 60px", overflow: "hidden", display: "flex" }}>
           {(() => {
-            const baseItems = galleryItems.length > 0 ? galleryItems : ["/images/content/placeholder.jpg"];
-            let filledItems = [...baseItems];
+            const baseItemsLocal = galleryItems.length > 0 ? galleryItems : ["/images/content/placeholder.jpg"];
+            let filledItems = [...baseItemsLocal];
             while (filledItems.length < 8) {
-              filledItems = [...filledItems, ...baseItems];
+              filledItems = [...filledItems, ...baseItemsLocal];
             }
             const doubledItems = [...filledItems, ...filledItems];
 
@@ -257,7 +453,10 @@ const ExperienceProduct = () => {
                   <motion.div
                     key={i}
                     whileHover={{ scale: 0.98 }}
-                    style={{ width: "clamp(300px, 25vw, 450px)", height: 400, borderRadius: 24, overflow: "hidden", flexShrink: 0, border: `1px solid ${B}` }}
+                    onClick={() => {
+                      setGridVisible(true);
+                    }}
+                    style={{ width: "clamp(300px, 25vw, 450px)", height: 400, borderRadius: 24, overflow: "hidden", flexShrink: 0, border: `1px solid ${B}`, cursor: "pointer" }}
                   >
                     <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Gallery" />
                   </motion.div>
@@ -265,6 +464,30 @@ const ExperienceProduct = () => {
               </motion.div>
             );
           })()}
+
+          <AnimatePresence>
+            {gridVisible && !photoVisible && (
+              <GridGallery
+                items={galleryItems.length > 0 ? galleryItems : ["/images/content/placeholder.jpg"]}
+                onClose={() => setGridVisible(false)}
+                onSelect={(index) => {
+                  setPhotoIndex(index);
+                  setPhotoVisible(true);
+                }}
+                title={listing?.title}
+                A={A}
+              />
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {photoVisible && (
+              <FullScreenImage
+                src={galleryItems[photoIndex] || (galleryItems.length > 0 ? galleryItems[0] : "/images/content/placeholder.jpg")}
+                onClose={() => setPhotoVisible(false)}
+              />
+            )}
+          </AnimatePresence>
         </section>
 
 
@@ -733,7 +956,11 @@ function PolicyItem({ req }) {
   const questions = req.questions || [];
 
   return (
-    <motion.div style={{ borderBottom: `1px solid ${B}` }} whileHover={{ backgroundColor: AL }}>
+    <motion.div 
+      layout
+      style={{ borderBottom: `1px solid ${B}`, overflow: "hidden" }} 
+      whileHover={{ backgroundColor: AL }}
+    >
       <div
         onClick={() => setOp(!op)}
         style={{
@@ -745,34 +972,47 @@ function PolicyItem({ req }) {
           background: "none",
           border: "none",
           cursor: "pointer",
-          textAlign: "left"
+          textAlign: "left",
+          userSelect: "none"
         }}
       >
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, display: "block", marginBottom: 8 }}>{title}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, display: "block", marginBottom: 8, transition: "color 0.3s" }}>{title}</span>
           {description && (
             <p style={{ fontSize: 13, color: M, lineHeight: 1.5, whiteSpace: "pre-line", margin: 0 }}>
               {description}
             </p>
           )}
         </div>
-        <ChevronDown size={18} color={M} style={{ transform: op ? 'rotate(180deg)' : 'none', transition: '0.3s', marginTop: 4, flexShrink: 0 }} />
+        <motion.div
+          animate={{ rotate: op ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          style={{ marginTop: 4, flexShrink: 0, display: "flex", alignItems: "center" }}
+        >
+          <ChevronDown size={18} color={M} />
+        </motion.div>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {op && questions.length > 0 && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            style={{ padding: "0 16px 24px", overflow: "hidden" }}
+            transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+            style={{ overflow: "hidden" }}
           >
-            <div style={{ padding: "20px", background: AL, borderRadius: 16, border: `1px solid ${B}` }}>
-              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0 }}>
-                {questions.map((q, j) => (
-                  <RequirementField key={j} question={q} A={A} FG={FG} M={M} B={B} AL={AL} S={S} />
-                ))}
-              </ul>
+            <div style={{ padding: "0 16px 24px" }}>
+              <div style={{ padding: "20px", background: AL, borderRadius: 16, border: `1px solid ${B}` }}>
+                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0 }}>
+                  {questions.map((q, j) => (
+                    <li key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
+                      <span style={{ fontSize: 14, color: FG, lineHeight: 1.4, fontWeight: 500 }}>{q.question?.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </motion.div>
         )}
@@ -786,7 +1026,11 @@ function ReviewsItem({ reviews }) {
   const [op, setOp] = useState(false);
 
   return (
-    <motion.div style={{ borderBottom: `1px solid ${B}` }} whileHover={{ backgroundColor: AL }}>
+    <motion.div 
+      layout
+      style={{ borderBottom: `1px solid ${B}`, overflow: "hidden" }} 
+      whileHover={{ backgroundColor: AL }}
+    >
       <div
         onClick={() => setOp(!op)}
         style={{
@@ -795,40 +1039,50 @@ function ReviewsItem({ reviews }) {
           justifyContent: "space-between",
           padding: "24px 16px",
           cursor: "pointer",
-          textAlign: "left"
+          textAlign: "left",
+          userSelect: "none"
         }}
       >
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, display: "block", marginBottom: 4 }}>Reviews</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, display: "block", marginBottom: 4, transition: "color 0.3s" }}>Reviews</span>
           <p style={{ fontSize: 13, color: M, margin: 0 }}>{reviews.length} guests shared their experience</p>
         </div>
-        <ChevronDown size={18} color={M} style={{ transform: op ? 'rotate(180deg)' : 'none', transition: '0.3s' }} />
+        <motion.div
+          animate={{ rotate: op ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          style={{ flexShrink: 0, display: "flex", alignItems: "center" }}
+        >
+          <ChevronDown size={18} color={M} />
+        </motion.div>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {op && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            style={{ padding: "0 16px 24px", overflow: "hidden" }}
+            transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+            style={{ overflow: "hidden" }}
           >
-            <div style={{ padding: "24px", background: AL, borderRadius: 16, border: `1px solid ${B}`, display: "flex", flexDirection: "column", gap: 24 }}>
-              {reviews.length > 0 ? (
-                reviews.slice(0, 3).map((rev, i) => (
-                  <div key={i} style={{ borderBottom: i === Math.min(reviews.length, 3) - 1 ? "none" : `1px solid ${B}`, paddingBottom: i === Math.min(reviews.length, 3) - 1 ? 0 : 24 }}>
-                    <p style={{ fontSize: 14, fontStyle: "italic", color: FG, lineHeight: 1.6, marginBottom: 16 }}>&ldquo;{rev.comment || rev.text}&rdquo;</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 32, height: 32, background: A, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: W, fontWeight: 700 }}>
-                        {(rev.customerName || rev.author || "G")[0]}
+            <div style={{ padding: "0 16px 24px" }}>
+              <div style={{ padding: "24px", background: AL, borderRadius: 16, border: `1px solid ${B}`, display: "flex", flexDirection: "column", gap: 24 }}>
+                {reviews.length > 0 ? (
+                  reviews.slice(0, 3).map((rev, i) => (
+                    <div key={i} style={{ borderBottom: i === Math.min(reviews.length, 3) - 1 ? "none" : `1px solid ${B}`, paddingBottom: i === Math.min(reviews.length, 3) - 1 ? 0 : 24 }}>
+                      <p style={{ fontSize: 14, fontStyle: "italic", color: FG, lineHeight: 1.6, marginBottom: 16 }}>&ldquo;{rev.comment || rev.text}&rdquo;</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 32, height: 32, background: A, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: W, fontWeight: 700 }}>
+                          {(rev.customerName || rev.author || "G")[0]}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>{rev.customerName || rev.author}</span>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>{rev.customerName || rev.author}</span>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <p style={{ fontSize: 14, color: M, textAlign: "center", margin: 0 }}>No reviews shared for this experience yet.</p>
-              )}
+                  ))
+                ) : (
+                  <p style={{ fontSize: 14, color: M, textAlign: "center", margin: 0 }}>No reviews shared for this experience yet.</p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
@@ -1134,7 +1388,7 @@ function ExperiencePolicies({ listing, reviews }) {
     <section style={{ background: W, padding: "80px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <SHdr idx="03" label="Rules & Policies" />
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.5fr", gap: 80 }} className="pol-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.5fr", gap: 80, alignItems: "start" }} className="pol-grid">
           <Rev delay={0.1}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <Chars

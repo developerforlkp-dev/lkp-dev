@@ -180,9 +180,9 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
   let status = statusMap[apiBooking.orderStatus] || "Upcoming";
 
-  // If the backend says Upcoming (PENDING/CONFIRMED) but the booking date has
-  // already passed, show the booking in Completed instead.
-  if (status === "Upcoming") {
+  // Override status based on date to ensure correct tab categorization (Upcoming vs Completed).
+  // This ensures stays and experiences only move to Completed after their end date has passed.
+  if (status === "Upcoming" || status === "Completed") {
     const bookingDateStr =
       apiBooking.checkOutDate ||
       apiBooking.checkInDate ||
@@ -207,6 +207,8 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
       if (deadline < new Date()) {
         status = "Completed";
+      } else {
+        status = "Upcoming";
       }
     }
   }
@@ -434,7 +436,6 @@ const tabs = [
 const actionsByStatus = {
   Upcoming: [
     { label: "View Details", variant: "primary" },
-    { label: "Leave review", variant: "secondary" },
     { label: "Cancel Booking", variant: "secondary" },
   ],
   Completed: [

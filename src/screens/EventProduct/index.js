@@ -19,6 +19,7 @@ import { useTheme } from "../../components/JUI/Theme";
 import { createEventOrder, getEventDetails } from "../../utils/api";
 import Modal from "../../components/Modal";
 import Login from "../../components/Login";
+import PhotoView from "../../components/PhotoView";
 
 const asNonEmptyString = (value) => {
   if (typeof value !== "string") return null;
@@ -401,6 +402,8 @@ const EventProduct = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [photoVisible, setPhotoVisible] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const [guests, setGuests] = useState({
     adults: asNumber(preselectedGuestsFromState?.adults) ?? 1,
     children: asNumber(preselectedGuestsFromState?.children) ?? 0,
@@ -1081,7 +1084,10 @@ const EventProduct = () => {
               {/* Main Large Image on Left */}
               <div
                 className={styles.heroMainImage}
-                onClick={() => setGalleryIndex(0)}
+                onClick={() => {
+                  setPhotoIndex(0);
+                  setPhotoVisible(true);
+                }}
               >
                 <img
                   src={selectedHeroImage || "/images/content/main-pic-1.jpg"}
@@ -1098,7 +1104,10 @@ const EventProduct = () => {
                     <div
                       key={imgIdx}
                       className={styles.heroGridImage}
-                      onClick={() => setGalleryIndex(imgIdx)}
+                      onClick={() => {
+                        setPhotoIndex(imgIdx);
+                        setPhotoVisible(true);
+                      }}
                     >
                       <img
                         src={img}
@@ -1110,7 +1119,8 @@ const EventProduct = () => {
                           className={styles.showAllPhotos}
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Navigate to full photo view or open gallery
+                            setPhotoIndex(3);
+                            setPhotoVisible(true);
                           }}
                         >
                           <Icon name="image" size="20" />
@@ -1124,6 +1134,15 @@ const EventProduct = () => {
             </div>
           )}
         </div>
+        {photoVisible && (
+          <PhotoView
+            visible={photoVisible}
+            items={allImages}
+            initialSlide={photoIndex}
+            onClose={() => setPhotoVisible(false)}
+            title={event?.title}
+          />
+        )}
       </div>
 
       {/* Main Content */}

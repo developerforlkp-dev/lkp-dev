@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info } from "lucide-react";
 import moment from "moment";
 import { useTheme } from "../../components/JUI/Theme";
-import { createStayOrder } from "../../utils/api";
+import { createStayOrder, getStayRoomAvailability } from "../../utils/api";
 import Counter from "../../components/Counter";
 // We'll use a simple date range picker or just two DateSingles for premium look
 import DateSingle from "../../components/DateSingle";
@@ -31,15 +31,73 @@ const StayBookingSystem = ({
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W } } = useTheme();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [availabilityData, setAvailabilityData] = useState(null);
+  const [fetchingAvailability, setFetchingAvailability] = useState(false);
+
+  // Fetch real-time availability and pricing when modal opens or dates change
+  useEffect(() => {
+    if (show && (stay?.stayId || stay?.id) && checkInDate && checkOutDate) {
+      const load = async () => {
+        setFetchingAvailability(true);
+        try {
+          const data = await getStayRoomAvailability(
+            stay.stayId || stay.id,
+            checkInDate.format("YYYY-MM-DD"),
+            checkOutDate.format("YYYY-MM-DD")
+          );
+          if (data) setAvailabilityData(data);
+        } catch (e) {
+          console.error("❌ Failed to fetch real-time room pricing:", e);
+        } finally {
+          setFetchingAvailability(false);
+        }
+      };
+      load();
+    }
+  }, [show, stay?.stayId, stay?.id, checkInDate, checkOutDate]);
 
   const resolvedSelectedRooms = useMemo(() => {
     if (!stay || !Array.isArray(selectedRooms)) return [];
-    const rooms = stay.rooms || stay.roomTypes || stay.room_types || [];
+    
+    // Prioritize rooms from availabilityData as they have real-time pricing for the selected dates
+    const roomsSource = (availabilityData?.roomAvailability || availabilityData?.rooms || stay.rooms || stay.roomTypes || stay.room_types || []);
+    
     return selectedRooms.map(sel => {
-      const room = rooms.find(r => String(r.roomId || r.id) === String(sel.roomId));
-      return room ? { ...room, ...sel } : null;
+      const room = roomsSource.find(r => String(r.roomId || r.id) === String(sel.roomId));
+      if (!room) return null;
+
+      const mealPlan = sel.mealPlan || "EP";
+      
+      let roomBasePrice = 0;
+      
+      // Priority 1: Check mealPlanPricing object (as seen in RoomCards.js)
+      if (room.mealPlanPricing && room.mealPlanPricing[mealPlan]) {
+        const mp = room.mealPlanPricing[mealPlan];
+        roomBasePrice = parseFloat(mp.b2cPrice || mp.price || 0);
+      } 
+      
+      // Priority 2: Check b2cMealPlanPricing array
+      if (roomBasePrice === 0) {
+        const mealPricing = (Array.isArray(room.b2cMealPlanPricing) 
+          ? room.b2cMealPlanPricing.find(p => String(p.mealPlan).toUpperCase() === String(mealPlan).toUpperCase()) 
+          : null) || (Array.isArray(room.b2c_meal_plan_pricing)
+          ? room.b2c_meal_plan_pricing.find(p => (p.meal_plan || p.mealPlan) === mealPlan)
+          : null);
+        
+        if (mealPricing) {
+          roomBasePrice = parseFloat(mealPricing.b2cPrice || mealPricing.price || mealPricing.b2c_price || 0);
+        }
+      }
+
+      // Priority 3: Fallback to existing flat meal-key-based logic or generic b2cPrice
+      if (roomBasePrice === 0) {
+        const mealKey = { EP: "epPrice", BB: "bbPrice", CP: "cpPrice", MAP: "mapPrice", AP: "apPrice" }[mealPlan];
+        roomBasePrice = parseFloat(room[mealKey] || room.b2cPrice || room.price || 0);
+      }
+
+      return { ...room, ...sel, calculatedPrice: roomBasePrice };
     }).filter(Boolean);
-  }, [stay, selectedRooms]);
+  }, [stay, selectedRooms, availabilityData]);
 
   const nightsCount = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
@@ -89,10 +147,8 @@ const StayBookingSystem = ({
     } else {
       // Room-Based: Sum up for all selected rooms
       resolvedSelectedRooms.forEach(room => {
-        let roomBasePrice = parseFloat(room.epPrice || room.b2cPrice || room.price || 0);
+        let roomBasePrice = room.calculatedPrice || 0;
         const mealPlan = room.mealPlan || "EP";
-        const mealKey = { EP: "epPrice", BB: "bbPrice", CP: "cpPrice", MAP: "mapPrice", AP: "apPrice" }[mealPlan];
-        roomBasePrice = parseFloat(room[mealKey] || roomBasePrice);
 
         let roomExtraAP = parseFloat(room.extraAdultPrice || stay.extraAdultPrice || 0);
         let roomExtraCP = parseFloat(room.extraChildPrice || stay.extraChildPrice || 0);
@@ -226,15 +282,46 @@ const StayBookingSystem = ({
       };
 
       const response = await createStayOrder(payload);
-      const paymentResponse = response?.payment || response;
+      const paymentResponse = response?.payment || response?.data?.payment || response;
+      const orderResponse = response?.order || response?.data?.order || response;
       
+      const razorpayOrderId = 
+        paymentResponse.razorpayOrderId || 
+        paymentResponse.razorpay_order_id || 
+        orderResponse?.razorpayOrderId ||
+        orderResponse?.razorpay_order_id ||
+        response?.razorpayOrderId ||
+        response?.razorpay_order_id;
+        
+      const razorpayKeyId = 
+        paymentResponse.razorpayKeyId || 
+        paymentResponse.razorpay_key_id || 
+        paymentResponse.keyId || 
+        orderResponse?.razorpayKeyId ||
+        orderResponse?.razorpay_key_id ||
+        response?.razorpayKeyId ||
+        response?.razorpay_key_id ||
+        localStorage.getItem("lastRazorpayKeyId") ||
+        process.env.REACT_APP_RAZORPAY_KEY_ID ||
+        "rzp_test_RaBjdu0Ed3p1gN";
+
+      if (!razorpayOrderId) {
+        console.error("❌ Razorpay Order ID missing from response:", response);
+        alert("Payment initialization failed. Please contact support.");
+        return;
+      }
+
       localStorage.setItem("pendingPayment", JSON.stringify({
         paymentMethod: "razorpay",
-        razorpayOrderId: paymentResponse.razorpayOrderId,
-        razorpayKeyId: paymentResponse.razorpayKeyId,
+        razorpayOrderId,
+        razorpayKeyId,
         amount: Math.round(pricing.finalTotal * 100),
-        currency: paymentResponse.currency || "INR"
+        currency: paymentResponse.currency || response?.currency || "INR"
       }));
+      
+      if (razorpayKeyId) {
+        localStorage.setItem("lastRazorpayKeyId", razorpayKeyId);
+      }
 
       const receipt = [
         { title: `Base Stay (${pricing.nightsCount} nights)`, content: `₹${formatPrice(pricing.originalPerNight * pricing.nightsCount)}` }
@@ -359,8 +446,10 @@ const StayBookingSystem = ({
                   <div>
                     <h3 className="font-display" style={{ fontSize: 28, fontWeight: 700, color: FG, marginBottom: 8 }}>Reserve Stay</h3>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: 24, fontWeight: 700, color: A }}>₹{formatPrice(pricing.perNight)}</span>
-                      {pricing.discount > 0 && (
+                      <span style={{ fontSize: 24, fontWeight: 700, color: A }}>
+                        {fetchingAvailability ? "Calculating..." : `₹${formatPrice(pricing.perNight)}`}
+                      </span>
+                      {!fetchingAvailability && pricing.discount > 0 && (
                         <span style={{ fontSize: 16, color: M, textDecoration: "line-through", opacity: 0.6 }}>₹{formatPrice(pricing.originalPerNight)}</span>
                       )}
                       <span style={{ fontSize: 14, color: M }}>/ night</span>
@@ -455,7 +544,7 @@ const StayBookingSystem = ({
                             </div>
                             <div>
                               <p style={{ fontSize: 14, fontWeight: 700, color: FG }}>{room.roomName || room.name}</p>
-                              <p style={{ fontSize: 12, color: M }}>{room.mealPlan || "EP"} Plan</p>
+                              <p style={{ fontSize: 12, color: M }}>{room.mealPlan || "EP"} Plan · ₹{formatPrice(room.calculatedPrice)} / night</p>
                             </div>
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
