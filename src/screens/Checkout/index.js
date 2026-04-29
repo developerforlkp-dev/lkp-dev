@@ -382,6 +382,7 @@ const Checkout = () => {
             guests={!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate)}
             amountToPay={paymentData?.amount}
             currency={paymentData?.currency || "INR"}
+            paymentData={paymentData}
             dateValue={items[0]?.title}
             guestValue={items[2]?.title}
             onEditDate={() => setShowDatePicker(true)}
