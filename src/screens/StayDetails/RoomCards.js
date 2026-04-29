@@ -191,6 +191,8 @@ const RoomModal = ({ room, listing, onClose }) => {
     });
   };
 
+  const seasonalPeriods = listing?.seasonalPeriods || [];
+
   useEffect(() => {
     // Background scroll lock
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -199,6 +201,15 @@ const RoomModal = ({ room, listing, onClose }) => {
       document.body.style.overflow = originalStyle;
     };
   }, []);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(dateStr));
+    } catch (e) {
+      return dateStr;
+    }
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -294,7 +305,7 @@ const RoomModal = ({ room, listing, onClose }) => {
                 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
                   {capacity != null && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: "#F3F3F1", borderRadius: 8, color: "#666", textTransform: "uppercase", letterSpacing: "0.1em" }}>Capacity: {capacity} Guests</span>}
-                  {totalRooms != null && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: "#F3F3F1", borderRadius: 8, color: "#666", textTransform: "uppercase", letterSpacing: "0.1em" }}>{totalRooms} Units Available</span>}
+                  {totalRooms != null && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: "#F3F3F1", borderRadius: 8, color: "#666", textTransform: "uppercase", letterSpacing: "0.1em" }}>{totalRooms} Rooms Available</span>}
                   {room.extraBedAllowed && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: "#E8F5E9", borderRadius: 8, color: "#2E7D32", textTransform: "uppercase", letterSpacing: "0.1em" }}>Extra Bed Policy Applied</span>}
                 </div>
 
@@ -357,6 +368,21 @@ const RoomModal = ({ room, listing, onClose }) => {
                 </div>
               )}
 
+              {/* Seasonal Periods */}
+              {seasonalPeriods.length > 0 && (
+                <div style={{ padding: 28, background: "#E0F7FA", borderRadius: 24, border: "1px solid #B2EBF2" }}>
+                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: "#00838F", marginBottom: 20 }}>Seasonal Availability</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {seasonalPeriods.map((p, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, fontSize: 14, color: "#006064", fontWeight: 600 }}>
+                        <span style={{ flex: 1 }}>{p.seasonName || p.name || p.label || `Season ${i + 1}`}</span>
+                        <span style={{ fontSize: 12, opacity: 0.8, whiteSpace: "nowrap" }}>{formatDate(p.startDate)} – {formatDate(p.endDate)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Cancellation Policy */}
               {cancellationPolicy && (
                 <div>
@@ -375,7 +401,6 @@ const RoomModal = ({ room, listing, onClose }) => {
     </div>
   );
 };
-
 
 
 
@@ -425,7 +450,7 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
           ? <img src={coverImage} alt={name} className={styles.img} />
           : <div className={styles.imgPlaceholder}><Icon name="home" size="48" /></div>
         }
-        {totalRooms != null && <span className={styles.badge}>{totalRooms} UNITS</span>}
+        {totalRooms != null && <span className={styles.badge}>{totalRooms} ROOMS</span>}
         {isSelected && <span className={styles.selectedBadge}>✓ Selected</span>}
       </div>
 
