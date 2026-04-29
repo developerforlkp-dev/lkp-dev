@@ -49,33 +49,79 @@ const StayBookingSystem = ({
   const pricing = useMemo(() => {
     if (!stay) return { perNight: 0, subtotal: 0, discount: 0, warning: null, isOver: false };
     
+    // Occupancy Limits Definition
+    let baseAdultsLimit = 0;
+    let baseChildrenLimit = 0;
+    let extraAdultsLimit = 0;
+    let extraChildrenLimit = 0;
     let basePrice = 0;
     let extraAdultPrice = parseFloat(stay.extraAdultPrice || 0);
     let extraChildPrice = parseFloat(stay.extraChildPrice || 0);
-    
-    // Occupancy Limits
-    let baseCapacity = stay.maxGuests || (stay.maxAdults || 0) + (stay.maxChildren || 0) || 1;
-    let extraCapacity = stay.maxExtraBeds || 0;
+
+    // 0. Seasonal Pricing Logic
+    const activeSeason = checkInDate ? (stay.seasonalPeriods || []).find(p => 
+      moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
+      moment(checkInDate).isSameOrBefore(p.endDate, 'day')
+    ) : null;
+    const seasonId = activeSeason?.tempId || activeSeason?.id || activeSeason?.seasonalPeriodId;
 
     if (selectedRoom) {
-      const mealPlan = selectedMealPlan || "EP";
-      const mealKey = { EP: "epPrice", BB: "bbPrice", CP: "cpPrice", MAP: "mapPrice", AP: "apPrice" }[mealPlan];
-      basePrice = parseFloat(selectedRoom[mealKey] || selectedRoom.b2cPrice || selectedRoom.price || 0);
+      baseAdultsLimit = selectedRoom.maxAdults || 1;
+      baseChildrenLimit = selectedRoom.maxChildren || 0;
+      extraAdultsLimit = selectedRoom.maxExtraAdultsAllowed || selectedRoom.maxExtraBeds || 0;
+      extraChildrenLimit = selectedRoom.maxExtraChildrenAllowed || 0;
+      basePrice = parseFloat(selectedRoom.epPrice || selectedRoom.b2cPrice || selectedRoom.price || 0);
       
-      // Use room-specific extra prices if available
+      const mealPlan = selectedMealPlan || "EP";
+      if (selectedMealPlan) {
+        const mealKey = { EP: "epPrice", BB: "bbPrice", CP: "cpPrice", MAP: "mapPrice", AP: "apPrice" }[selectedMealPlan];
+        basePrice = parseFloat(selectedRoom[mealKey] || basePrice);
+      }
+      
       if (selectedRoom.extraAdultPrice) extraAdultPrice = parseFloat(selectedRoom.extraAdultPrice);
       if (selectedRoom.extraChildPrice) extraChildPrice = parseFloat(selectedRoom.extraChildPrice);
-      
-      baseCapacity = selectedRoom.maxGuests || (selectedRoom.maxAdults || 0) + (selectedRoom.maxChildren || 0) || 1;
-      extraCapacity = selectedRoom.maxExtraBeds || 0;
+
+      // Apply Room Seasonal Pricing
+      if (seasonId) {
+        const roomSeasonData = (selectedRoom.seasonalPricing || {})[seasonId] || selectedRoom[seasonId];
+        const mealSeasonData = (selectedRoom.mealPlanSeasonalPricing || {})[seasonId]?.[mealPlan];
+        
+        if (mealSeasonData) {
+          basePrice = parseFloat(mealSeasonData.hikePrice || mealSeasonData.price || basePrice);
+        } else if (roomSeasonData) {
+          basePrice = parseFloat(roomSeasonData.hikePrice || roomSeasonData.price || basePrice);
+        }
+
+        if (roomSeasonData) {
+          if (roomSeasonData.extraAdultPrice) extraAdultPrice = parseFloat(roomSeasonData.extraAdultPrice);
+          if (roomSeasonData.extraChildPrice) extraChildPrice = parseFloat(roomSeasonData.extraChildPrice);
+        }
+      }
     } else {
+      baseAdultsLimit = stay.maxAdults || stay.maxGuests || 1;
+      baseChildrenLimit = stay.maxChildren || 0;
+      extraAdultsLimit = stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
+      extraChildrenLimit = stay.maxExtraChildrenAllowed || 0;
       basePrice = parseFloat(stay.fullPropertyB2cPrice || stay.b2cPrice || stay.price || 0);
+      
+      // Use property-specific extra prices
+      extraAdultPrice = parseFloat(stay.fullPropertyExtraAdultPrice || stay.extraAdultPrice || 0);
+      extraChildPrice = parseFloat(stay.fullPropertyExtraChildPrice || stay.extraChildPrice || 0);
+
+      // Apply Property Seasonal Pricing
+      if (seasonId) {
+        const propSeasonData = (stay.propertySeasonalPricing || {})[seasonId] || stay[seasonId];
+        if (propSeasonData) {
+          basePrice = parseFloat(propSeasonData.fullPropertyHikePrice || propSeasonData.hikePrice || propSeasonData.fullPropertyB2cPrice || basePrice);
+          extraAdultPrice = parseFloat(propSeasonData.fullPropertyExtraAdultPrice || propSeasonData.extraAdultPrice || extraAdultPrice);
+          extraChildPrice = parseFloat(propSeasonData.fullPropertyExtraChildPrice || propSeasonData.extraChildPrice || extraChildPrice);
+        }
+      }
     }
 
-    const adults = guests?.adults || 1;
-    const children = guests?.children || 0;
-    const totalGuests = adults + children;
-    const totalCapacity = baseCapacity + extraCapacity;
+    const currentAdults = guests?.adults || 1;
+    const currentChildren = guests?.children || 0;
+    const totalGuests = currentAdults + currentChildren;
     
     // Occupancy & Stay Warnings
     let warning = null;
@@ -90,54 +136,52 @@ const StayBookingSystem = ({
     
     // 2. Check Capacity
     if (!isOver) {
-      if (totalGuests > totalCapacity) {
+      const isProperty = !selectedRoom;
+      const typeLabel = isProperty ? "Property" : "Room";
+
+      if (currentAdults > (baseAdultsLimit + extraAdultsLimit)) {
         isOver = true;
-        warning = `Room capacity reached (${totalCapacity} max). Please add another room for more guests.`;
-      } else if (totalGuests > baseCapacity) {
-        const extraCount = totalGuests - baseCapacity;
-        warning = `Max base occupants (${baseCapacity}) reached. +${extraCount} extra guests will cost extra per night.`;
+        warning = `${typeLabel} adult capacity reached (${baseAdultsLimit + extraAdultsLimit} max).`;
+      } else if (currentChildren > (baseChildrenLimit + extraChildrenLimit)) {
+        isOver = true;
+        warning = `${typeLabel} children capacity reached (${baseChildrenLimit + extraChildrenLimit} max).`;
+      } else if (currentAdults > baseAdultsLimit || currentChildren > baseChildrenLimit) {
+        const exA = Math.max(0, currentAdults - baseAdultsLimit);
+        const exC = Math.max(0, currentChildren - baseChildrenLimit);
+        warning = `Base occupants reached. +${exA + exC} extra guest(s) will incur additional charges.`;
       }
     }
 
-    // Extra guest calculation (Adults filled first)
-    let extraAdults = 0;
-    let extraChildren = 0;
-    if (totalGuests > baseCapacity) {
-      if (adults > baseCapacity) {
-        extraAdults = adults - baseCapacity;
-        extraChildren = children;
-      } else {
-        extraAdults = 0;
-        extraChildren = totalGuests - baseCapacity;
-      }
-    }
+    // Extra guest calculation
+    const extraAdultsCount = Math.max(0, currentAdults - baseAdultsLimit);
+    const extraChildrenCount = Math.max(0, currentChildren - baseChildrenLimit);
 
-    const extraTotal = (extraAdults * extraAdultPrice) + (extraChildren * extraChildPrice);
-    const perNight = basePrice + extraTotal;
+    const extraTotal = (extraAdultsCount * extraAdultPrice) + (extraChildrenCount * extraChildPrice);
+    const originalPerNight = basePrice + extraTotal;
     
-    let subtotal = perNight * Math.max(1, nightsCount) * (selectedRoom ? roomsCount : 1);
-    
-    // Discount Tiers
-    let discountAmount = 0;
+    // Discount Tiers Calculation
     let appliedDiscountPercent = 0;
     if (nightsCount > 0 && Array.isArray(stay.discountTiers)) {
       const tier = stay.discountTiers.find(t => nightsCount >= (t.minimumDays || 0) && nightsCount <= (t.maximumDays || 999));
       if (tier) {
         appliedDiscountPercent = parseFloat(tier.discountPercentage || 0);
-        discountAmount = (subtotal * appliedDiscountPercent) / 100;
-        subtotal -= discountAmount;
       }
     }
 
-    // Taxes and Fees
-    const gst = subtotal * 0.18; // 18% GST
-    const serviceFee = subtotal * 0.02; // 2% Service Fee
-    const finalTotal = subtotal + gst + serviceFee;
+    const discountedPerNight = originalPerNight * (1 - (appliedDiscountPercent / 100));
+    const preTaxSubtotal = discountedPerNight * Math.max(1, nightsCount) * (selectedRoom ? roomsCount : 1);
+    const discountAmount = (originalPerNight * Math.max(1, nightsCount) * (selectedRoom ? roomsCount : 1)) - preTaxSubtotal;
+
+    // Taxes and Fees (Calculated but not shown in modal total per user request)
+    const gst = preTaxSubtotal * 0.18; // 18% GST
+    const serviceFee = preTaxSubtotal * 0.02; // 2% Service Fee
+    const finalTotalWithTax = preTaxSubtotal + gst + serviceFee;
 
     return {
-      perNight,
-      subtotal: finalTotal,
-      baseTotal: subtotal,
+      perNight: discountedPerNight,
+      originalPerNight,
+      subtotal: preTaxSubtotal, // Modal shows pre-tax total
+      finalTotal: finalTotalWithTax, // Passed to confirm and pay
       basePrice,
       extraTotal,
       nightsCount,
@@ -171,7 +215,7 @@ const StayBookingSystem = ({
         checkInDate: checkInDate.format("YYYY-MM-DD"),
         checkOutDate: checkOutDate.format("YYYY-MM-DD"),
         numberOfGuests: (guests.adults || 1) + (guests.children || 0),
-        amount: pricing.subtotal,
+        amount: pricing.finalTotal, // Use final total with tax
         paymentMethod: "razorpay",
         rooms: selectedRoom ? [{
           roomId: selectedRoom.roomId || selectedRoom.id,
@@ -190,12 +234,12 @@ const StayBookingSystem = ({
         paymentMethod: "razorpay",
         razorpayOrderId: paymentResponse.razorpayOrderId,
         razorpayKeyId: paymentResponse.razorpayKeyId,
-        amount: Math.round(pricing.subtotal * 100),
+        amount: Math.round(pricing.finalTotal * 100), // Use final total with tax
         currency: paymentResponse.currency || "INR"
       }));
 
       const receipt = [
-        { title: `Base Stay (${pricing.nightsCount} nights)`, content: `₹${formatPrice(pricing.basePrice * pricing.nightsCount * pricing.roomsCount)}` }
+        { title: `Base Stay (${pricing.nightsCount} nights)`, content: `₹${formatPrice(pricing.originalPerNight * pricing.nightsCount * pricing.roomsCount)}` }
       ];
 
       if (pricing.extraTotal > 0) {
@@ -206,9 +250,10 @@ const StayBookingSystem = ({
         receipt.push({ title: `Discount (${pricing.discountPercent}%)`, content: `- ₹${formatPrice(pricing.discount)}` });
       }
 
+      // Add Taxes only to the final receipt for Confirm and Pay page
       receipt.push({ title: "GST (18%)", content: `₹${formatPrice(pricing.gst)}` });
       receipt.push({ title: "Service Fee (2%)", content: `₹${formatPrice(pricing.serviceFee)}` });
-      receipt.push({ title: "Total", content: `₹${formatPrice(pricing.subtotal)}` });
+      receipt.push({ title: "Total", content: `₹${formatPrice(pricing.finalTotal)}` });
 
       const bookingData = {
         stayId: payload.stayId,
@@ -319,8 +364,11 @@ const StayBookingSystem = ({
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <h3 className="font-display" style={{ fontSize: 28, fontWeight: 700, color: FG, marginBottom: 8 }}>Reserve Stay</h3>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                       <span style={{ fontSize: 24, fontWeight: 700, color: A }}>₹{formatPrice(pricing.perNight)}</span>
+                      {pricing.discount > 0 && (
+                        <span style={{ fontSize: 16, color: M, textDecoration: "line-through", opacity: 0.6 }}>₹{formatPrice(pricing.originalPerNight)}</span>
+                      )}
                       <span style={{ fontSize: 14, color: M }}>/ night</span>
                     </div>
                   </div>
@@ -431,13 +479,13 @@ const StayBookingSystem = ({
                   <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
                       <span>Base Price × {nightsCount} nights</span>
-                      <span>₹{formatPrice(pricing.basePrice * nightsCount)}</span>
+                      <span>₹{formatPrice(pricing.originalPerNight * nightsCount * roomsCount)}</span>
                     </div>
                     
                     {pricing.extraTotal > 0 && (
                       <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
                         <span>Extra Guests Fee</span>
-                        <span>₹{formatPrice(pricing.extraTotal * nightsCount)}</span>
+                        <span>₹{formatPrice(pricing.extraTotal * nightsCount * roomsCount)}</span>
                       </div>
                     )}
 
@@ -448,14 +496,6 @@ const StayBookingSystem = ({
                       </div>
                     )}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
-                      <span>GST (18%)</span>
-                      <span>₹{formatPrice(pricing.gst)}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
-                      <span>Service Fee (2%)</span>
-                      <span>₹{formatPrice(pricing.serviceFee)}</span>
-                    </div>
                     {roomsCount > 1 && (
                       <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
                         <span>Room Quantity</span>
@@ -470,27 +510,35 @@ const StayBookingSystem = ({
                   </div>
                 )}
 
-                <motion.button
-                  whileHover={{ scale: pricing.isOver ? 1 : 1.02 }}
-                  whileTap={{ scale: pricing.isOver ? 1 : 0.98 }}
-                  onClick={handleReserve}
-                  disabled={loading || !checkInDate || !checkOutDate || !selectedRoomId || pricing.isOver}
-                  style={{
-                    width: "100%",
-                    background: (loading || !checkInDate || !checkOutDate || !selectedRoomId || pricing.isOver) ? M : A,
-                    color: "#FFF",
-                    padding: "20px",
-                    borderRadius: 16,
-                    border: "none",
-                    fontSize: 16,
-                    fontWeight: 700,
-                    cursor: (loading || !checkInDate || !checkOutDate || !selectedRoomId || pricing.isOver) ? "not-allowed" : "pointer",
-                    marginTop: 32,
-                    boxShadow: (loading || !checkInDate || !checkOutDate || !selectedRoomId || pricing.isOver) ? "none" : `0 12px 24px ${A}33`
-                  }}
-                >
-                  {loading ? "Processing..." : (pricing.isOver ? "Capacity Exceeded" : (selectedRoomId ? "Reserve" : "Select a Room First"))}
-                </motion.button>
+                {(() => {
+                  const isPropertyBased = stay?.bookingScope === "Property-Based";
+                  const isDisabled = loading || !checkInDate || !checkOutDate || (!isPropertyBased && !selectedRoomId) || pricing.isOver;
+                  const buttonText = loading ? "Processing..." : (pricing.isOver ? "Capacity Exceeded" : ((isPropertyBased || selectedRoomId) ? "Reserve" : "Select a Room First"));
+
+                  return (
+                    <motion.button
+                      whileHover={{ scale: isDisabled ? 1 : 1.02 }}
+                      whileTap={{ scale: isDisabled ? 1 : 0.98 }}
+                      onClick={handleReserve}
+                      disabled={isDisabled}
+                      style={{
+                        width: "100%",
+                        background: isDisabled ? M : A,
+                        color: "#FFF",
+                        padding: "20px",
+                        borderRadius: 16,
+                        border: "none",
+                        fontSize: 16,
+                        fontWeight: 700,
+                        cursor: isDisabled ? "not-allowed" : "pointer",
+                        marginTop: 32,
+                        boxShadow: isDisabled ? "none" : `0 12px 24px ${A}33`
+                      }}
+                    >
+                      {buttonText}
+                    </motion.button>
+                  );
+                })()}
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24, color: M, fontSize: 13 }}>
                   <ShieldCheck size={16} />
