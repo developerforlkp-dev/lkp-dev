@@ -395,7 +395,7 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
 };
 
 /* ---------- RoomCards section ---------------------------------------- */
-const RoomCards = ({ listing, onRoomSelect, selectedRoomId, noContainer, roomsCount, onRoomsCountChange }) => {
+const RoomCards = ({ listing, onRoomSelect, selectedRooms = [], noContainer, onRoomsCountChange }) => {
   const rooms = listing?.rooms || listing?.roomTypes || listing?.room_types || listing?.stay?.rooms || [];
   if (!Array.isArray(rooms) || rooms.length === 0) return null;
 
@@ -403,15 +403,16 @@ const RoomCards = ({ listing, onRoomSelect, selectedRoomId, noContainer, roomsCo
     <div className={styles.list}>
       {rooms.map((room, idx) => {
         const roomId = String(room.roomId ?? room.id ?? idx);
+        const selection = selectedRooms.find(r => r.roomId === roomId);
         return (
           <RoomCard
             key={roomId}
             room={room}
             listing={listing}
             onRoomSelect={onRoomSelect}
-            isSelected={selectedRoomId === roomId}
-            roomsCount={roomsCount}
-            onRoomsCountChange={onRoomsCountChange}
+            isSelected={!!selection}
+            roomsCount={selection?.count || 1}
+            onRoomsCountChange={(count) => onRoomsCountChange(roomId, count)}
           />
         );
       })}

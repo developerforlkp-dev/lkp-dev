@@ -24,9 +24,7 @@ const StayBookingSystem = ({
   setCheckOutDate,
   guests,
   setGuests,
-  selectedRoomId,
-  selectedMealPlan,
-  roomsCount,
+  selectedRooms, // Array of {roomId, mealPlan, count}
   onRoomsCountChange
 }) => {
   const history = useHistory();
@@ -34,168 +32,169 @@ const StayBookingSystem = ({
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const selectedRoom = useMemo(() => {
-    if (!stay || !selectedRoomId) return null;
+  const resolvedSelectedRooms = useMemo(() => {
+    if (!stay || !Array.isArray(selectedRooms)) return [];
     const rooms = stay.rooms || stay.roomTypes || stay.room_types || [];
-    return rooms.find(r => String(r.roomId || r.id) === String(selectedRoomId));
-  }, [stay, selectedRoomId]);
+    return selectedRooms.map(sel => {
+      const room = rooms.find(r => String(r.roomId || r.id) === String(sel.roomId));
+      return room ? { ...room, ...sel } : null;
+    }).filter(Boolean);
+  }, [stay, selectedRooms]);
 
   const nightsCount = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
     return Math.max(1, moment(checkOutDate).diff(moment(checkInDate), "days"));
   }, [checkInDate, checkOutDate]);
 
-  // Price Calculation Logic with Discount Tiers and Occupancy Rules
+  // Price Calculation Logic
   const pricing = useMemo(() => {
     if (!stay) return { perNight: 0, subtotal: 0, discount: 0, warning: null, isOver: false };
     
-    // Occupancy Limits Definition
-    let baseAdultsLimit = 0;
-    let baseChildrenLimit = 0;
-    let extraAdultsLimit = 0;
-    let extraChildrenLimit = 0;
-    let basePrice = 0;
-    let extraAdultPrice = parseFloat(stay.extraAdultPrice || 0);
-    let extraChildPrice = parseFloat(stay.extraChildPrice || 0);
+    let totalOriginalPerNight = 0;
+    let totalBaseAdultsLimit = 0;
+    let totalBaseChildrenLimit = 0;
+    let totalExtraAdultsLimit = 0;
+    let totalExtraChildrenLimit = 0;
 
-    // 0. Seasonal Pricing Logic
     const activeSeason = checkInDate ? (stay.seasonalPeriods || []).find(p => 
       moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
       moment(checkInDate).isSameOrBefore(p.endDate, 'day')
     ) : null;
     const seasonId = activeSeason?.tempId || activeSeason?.id || activeSeason?.seasonalPeriodId;
 
-    if (selectedRoom) {
-      baseAdultsLimit = selectedRoom.maxAdults || 1;
-      baseChildrenLimit = selectedRoom.maxChildren || 0;
-      extraAdultsLimit = selectedRoom.maxExtraAdultsAllowed || selectedRoom.maxExtraBeds || 0;
-      extraChildrenLimit = selectedRoom.maxExtraChildrenAllowed || 0;
-      basePrice = parseFloat(selectedRoom.epPrice || selectedRoom.b2cPrice || selectedRoom.price || 0);
-      
-      const mealPlan = selectedMealPlan || "EP";
-      if (selectedMealPlan) {
-        const mealKey = { EP: "epPrice", BB: "bbPrice", CP: "cpPrice", MAP: "mapPrice", AP: "apPrice" }[selectedMealPlan];
-        basePrice = parseFloat(selectedRoom[mealKey] || basePrice);
-      }
-      
-      if (selectedRoom.extraAdultPrice) extraAdultPrice = parseFloat(selectedRoom.extraAdultPrice);
-      if (selectedRoom.extraChildPrice) extraChildPrice = parseFloat(selectedRoom.extraChildPrice);
+    const isPropertyBased = stay?.bookingScope === "Property-Based";
 
-      // Apply Room Seasonal Pricing
-      if (seasonId) {
-        const roomSeasonData = (selectedRoom.seasonalPricing || {})[seasonId] || selectedRoom[seasonId];
-        const mealSeasonData = (selectedRoom.mealPlanSeasonalPricing || {})[seasonId]?.[mealPlan];
-        
-        if (mealSeasonData) {
-          basePrice = parseFloat(mealSeasonData.hikePrice || mealSeasonData.price || basePrice);
-        } else if (roomSeasonData) {
-          basePrice = parseFloat(roomSeasonData.hikePrice || roomSeasonData.price || basePrice);
-        }
-
-        if (roomSeasonData) {
-          if (roomSeasonData.extraAdultPrice) extraAdultPrice = parseFloat(roomSeasonData.extraAdultPrice);
-          if (roomSeasonData.extraChildPrice) extraChildPrice = parseFloat(roomSeasonData.extraChildPrice);
-        }
-      }
-    } else {
-      baseAdultsLimit = stay.maxAdults || stay.maxGuests || 1;
-      baseChildrenLimit = stay.maxChildren || 0;
-      extraAdultsLimit = stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
-      extraChildrenLimit = stay.maxExtraChildrenAllowed || 0;
-      basePrice = parseFloat(stay.fullPropertyB2cPrice || stay.b2cPrice || stay.price || 0);
+    if (isPropertyBased) {
+      totalBaseAdultsLimit = stay.maxAdults || stay.maxGuests || 1;
+      totalBaseChildrenLimit = stay.maxChildren || 0;
+      totalExtraAdultsLimit = stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
+      totalExtraChildrenLimit = stay.maxExtraChildrenAllowed || 0;
       
-      // Use property-specific extra prices
-      extraAdultPrice = parseFloat(stay.fullPropertyExtraAdultPrice || stay.extraAdultPrice || 0);
-      extraChildPrice = parseFloat(stay.fullPropertyExtraChildPrice || stay.extraChildPrice || 0);
+      let basePrice = parseFloat(stay.fullPropertyB2cPrice || stay.b2cPrice || stay.price || 0);
+      let extraAP = parseFloat(stay.fullPropertyExtraAdultPrice || stay.extraAdultPrice || 0);
+      let extraCP = parseFloat(stay.fullPropertyExtraChildPrice || stay.extraChildPrice || 0);
 
-      // Apply Property Seasonal Pricing
       if (seasonId) {
         const propSeasonData = (stay.propertySeasonalPricing || {})[seasonId] || stay[seasonId];
         if (propSeasonData) {
           basePrice = parseFloat(propSeasonData.fullPropertyHikePrice || propSeasonData.hikePrice || propSeasonData.fullPropertyB2cPrice || basePrice);
-          extraAdultPrice = parseFloat(propSeasonData.fullPropertyExtraAdultPrice || propSeasonData.extraAdultPrice || extraAdultPrice);
-          extraChildPrice = parseFloat(propSeasonData.fullPropertyExtraChildPrice || propSeasonData.extraChildPrice || extraChildPrice);
+          extraAP = parseFloat(propSeasonData.fullPropertyExtraAdultPrice || propSeasonData.extraAdultPrice || extraAP);
+          extraCP = parseFloat(propSeasonData.fullPropertyExtraChildPrice || propSeasonData.extraChildPrice || extraCP);
         }
       }
+
+      const exA = Math.max(0, (guests?.adults || 1) - totalBaseAdultsLimit);
+      const exC = Math.max(0, (guests?.children || 0) - totalBaseChildrenLimit);
+      totalOriginalPerNight = basePrice + (exA * extraAP) + (exC * extraCP);
+    } else {
+      // Room-Based: Sum up for all selected rooms
+      resolvedSelectedRooms.forEach(room => {
+        let roomBasePrice = parseFloat(room.epPrice || room.b2cPrice || room.price || 0);
+        const mealPlan = room.mealPlan || "EP";
+        const mealKey = { EP: "epPrice", BB: "bbPrice", CP: "cpPrice", MAP: "mapPrice", AP: "apPrice" }[mealPlan];
+        roomBasePrice = parseFloat(room[mealKey] || roomBasePrice);
+
+        let roomExtraAP = parseFloat(room.extraAdultPrice || stay.extraAdultPrice || 0);
+        let roomExtraCP = parseFloat(room.extraChildPrice || stay.extraChildPrice || 0);
+
+        if (seasonId) {
+          const roomSeasonData = (room.seasonalPricing || {})[seasonId] || room[seasonId];
+          const mealSeasonData = (room.mealPlanSeasonalPricing || {})[seasonId]?.[mealPlan];
+          if (mealSeasonData) roomBasePrice = parseFloat(mealSeasonData.hikePrice || mealSeasonData.price || roomBasePrice);
+          else if (roomSeasonData) roomBasePrice = parseFloat(roomSeasonData.hikePrice || roomSeasonData.price || roomBasePrice);
+          
+          if (roomSeasonData) {
+            if (roomSeasonData.extraAdultPrice) roomExtraAP = parseFloat(roomSeasonData.extraAdultPrice);
+            if (roomSeasonData.extraChildPrice) roomExtraCP = parseFloat(roomSeasonData.extraChildPrice);
+          }
+        }
+
+        totalOriginalPerNight += roomBasePrice * room.count;
+        totalBaseAdultsLimit += (room.maxAdults || 1) * room.count;
+        totalBaseChildrenLimit += (room.maxChildren || 0) * room.count;
+        totalExtraAdultsLimit += (room.maxExtraAdultsAllowed || room.maxExtraBeds || 0) * room.count;
+        totalExtraChildrenLimit += (room.maxExtraChildrenAllowed || 0) * room.count;
+
+        // Note: For multi-room, extra guest calculation is complex. 
+        // We'll apply extra fees based on the TOTAL overflow across all selected rooms.
+        // This is a common simplification for unified guest pickers.
+      } );
+
+      const exA = Math.max(0, (guests?.adults || 1) - totalBaseAdultsLimit);
+      const exC = Math.max(0, (guests?.children || 0) - totalBaseChildrenLimit);
+      
+      // Calculate average extra prices from selected rooms or stay fallbacks
+      const avgExtraAP = resolvedSelectedRooms.length > 0 
+        ? resolvedSelectedRooms.reduce((acc, r) => acc + parseFloat(r.extraAdultPrice || stay.extraAdultPrice || 0), 0) / resolvedSelectedRooms.length
+        : parseFloat(stay.extraAdultPrice || 0);
+      const avgExtraCP = resolvedSelectedRooms.length > 0
+        ? resolvedSelectedRooms.reduce((acc, r) => acc + parseFloat(r.extraChildPrice || stay.extraChildPrice || 0), 0) / resolvedSelectedRooms.length
+        : parseFloat(stay.extraChildPrice || 0);
+
+      totalOriginalPerNight += (exA * avgExtraAP) + (exC * avgExtraCP);
     }
 
-    const currentAdults = guests?.adults || 1;
-    const currentChildren = guests?.children || 0;
-    const totalGuests = currentAdults + currentChildren;
-    
     // Occupancy & Stay Warnings
     let warning = null;
     let isOver = false;
     
+    const currentAdults = guests?.adults || 1;
+    const currentChildren = guests?.children || 0;
+
     // 1. Check Maximum Stay Limit
     const maxNights = stay.maximumStayNights || 0;
     if (maxNights > 0 && nightsCount > maxNights) {
       isOver = true;
-      warning = `Maximum stay allowed is ${maxNights} nights. Please adjust your dates.`;
+      warning = `Maximum stay allowed is ${maxNights} nights.`;
     }
     
     // 2. Check Capacity
     if (!isOver) {
-      const isProperty = !selectedRoom;
-      const typeLabel = isProperty ? "Property" : "Room";
-
-      if (currentAdults > (baseAdultsLimit + extraAdultsLimit)) {
+      const typeLabel = isPropertyBased ? "Property" : "Selected Rooms";
+      if (currentAdults > (totalBaseAdultsLimit + totalExtraAdultsLimit)) {
         isOver = true;
-        warning = `${typeLabel} adult capacity reached (${baseAdultsLimit + extraAdultsLimit} max).`;
-      } else if (currentChildren > (baseChildrenLimit + extraChildrenLimit)) {
+        warning = `${typeLabel} adult capacity reached (${totalBaseAdultsLimit + totalExtraAdultsLimit} max).`;
+      } else if (currentChildren > (totalBaseChildrenLimit + totalExtraChildrenLimit)) {
         isOver = true;
-        warning = `${typeLabel} children capacity reached (${baseChildrenLimit + extraChildrenLimit} max).`;
-      } else if (currentAdults > baseAdultsLimit || currentChildren > baseChildrenLimit) {
-        const exA = Math.max(0, currentAdults - baseAdultsLimit);
-        const exC = Math.max(0, currentChildren - baseChildrenLimit);
-        warning = `Base occupants reached. +${exA + exC} extra guest(s) will incur additional charges.`;
+        warning = `${typeLabel} children capacity reached (${totalBaseChildrenLimit + totalExtraChildrenLimit} max).`;
+      } else if (currentAdults > totalBaseAdultsLimit || currentChildren > totalBaseChildrenLimit) {
+        warning = `Base occupants reached. Additional guests will incur extra charges.`;
       }
     }
 
-    // Extra guest calculation
-    const extraAdultsCount = Math.max(0, currentAdults - baseAdultsLimit);
-    const extraChildrenCount = Math.max(0, currentChildren - baseChildrenLimit);
-
-    const extraTotal = (extraAdultsCount * extraAdultPrice) + (extraChildrenCount * extraChildPrice);
-    const originalPerNight = basePrice + extraTotal;
-    
-    // Discount Tiers Calculation
+    // Discount Tiers
     let appliedDiscountPercent = 0;
     if (nightsCount > 0 && Array.isArray(stay.discountTiers)) {
       const tier = stay.discountTiers.find(t => nightsCount >= (t.minimumDays || 0) && nightsCount <= (t.maximumDays || 999));
-      if (tier) {
-        appliedDiscountPercent = parseFloat(tier.discountPercentage || 0);
-      }
+      if (tier) appliedDiscountPercent = parseFloat(tier.discountPercentage || 0);
     }
 
-    const discountedPerNight = originalPerNight * (1 - (appliedDiscountPercent / 100));
-    const preTaxSubtotal = discountedPerNight * Math.max(1, nightsCount) * (selectedRoom ? roomsCount : 1);
-    const discountAmount = (originalPerNight * Math.max(1, nightsCount) * (selectedRoom ? roomsCount : 1)) - preTaxSubtotal;
+    const discountedPerNight = totalOriginalPerNight * (1 - (appliedDiscountPercent / 100));
+    const preTaxSubtotal = discountedPerNight * Math.max(1, nightsCount);
+    const discountAmount = (totalOriginalPerNight * Math.max(1, nightsCount)) - preTaxSubtotal;
 
-    // Taxes and Fees (Calculated but not shown in modal total per user request)
-    const gst = preTaxSubtotal * 0.18; // 18% GST
-    const serviceFee = preTaxSubtotal * 0.02; // 2% Service Fee
+    const gst = preTaxSubtotal * 0.18;
+    const serviceFee = preTaxSubtotal * 0.02;
     const finalTotalWithTax = preTaxSubtotal + gst + serviceFee;
 
     return {
       perNight: discountedPerNight,
-      originalPerNight,
-      subtotal: preTaxSubtotal, // Modal shows pre-tax total
-      finalTotal: finalTotalWithTax, // Passed to confirm and pay
-      basePrice,
-      extraTotal,
+      originalPerNight: totalOriginalPerNight,
+      subtotal: preTaxSubtotal,
+      finalTotal: finalTotalWithTax,
       nightsCount,
-      roomsCount,
       discount: discountAmount,
       discountPercent: appliedDiscountPercent,
       warning,
       isOver,
-      extraAdultPrice,
-      extraChildPrice,
       gst,
-      serviceFee
+      serviceFee,
+      baseAdultsLimit: totalBaseAdultsLimit,
+      extraAdultsLimit: totalExtraAdultsLimit,
+      baseChildrenLimit: totalBaseChildrenLimit,
+      extraChildrenLimit: totalExtraChildrenLimit
     };
-  }, [stay, selectedRoom, selectedMealPlan, guests, nightsCount, roomsCount]);
+  }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount]);
 
   const handleReserve = async () => {
     if (!checkInDate || !checkOutDate) {
@@ -215,45 +214,41 @@ const StayBookingSystem = ({
         checkInDate: checkInDate.format("YYYY-MM-DD"),
         checkOutDate: checkOutDate.format("YYYY-MM-DD"),
         numberOfGuests: (guests.adults || 1) + (guests.children || 0),
-        amount: pricing.finalTotal, // Use final total with tax
+        amount: pricing.finalTotal,
         paymentMethod: "razorpay",
-        rooms: selectedRoom ? [{
-          roomId: selectedRoom.roomId || selectedRoom.id,
-          roomsBooked: roomsCount,
+        rooms: resolvedSelectedRooms.map(r => ({
+          roomId: r.roomId || r.id,
+          roomsBooked: r.count,
           adults: guests.adults || 1,
           children: guests.children || 0,
-          mealPlanCode: selectedMealPlan || "EP"
-        }] : []
+          mealPlanCode: r.mealPlan || "EP"
+        }))
       };
 
       const response = await createStayOrder(payload);
-      
-      // Save local storage for checkout
       const paymentResponse = response?.payment || response;
+      
       localStorage.setItem("pendingPayment", JSON.stringify({
         paymentMethod: "razorpay",
         razorpayOrderId: paymentResponse.razorpayOrderId,
         razorpayKeyId: paymentResponse.razorpayKeyId,
-        amount: Math.round(pricing.finalTotal * 100), // Use final total with tax
+        amount: Math.round(pricing.finalTotal * 100),
         currency: paymentResponse.currency || "INR"
       }));
 
       const receipt = [
-        { title: `Base Stay (${pricing.nightsCount} nights)`, content: `₹${formatPrice(pricing.originalPerNight * pricing.nightsCount * pricing.roomsCount)}` }
+        { title: `Base Stay (${pricing.nightsCount} nights)`, content: `₹${formatPrice(pricing.originalPerNight * pricing.nightsCount)}` }
       ];
-
-      if (pricing.extraTotal > 0) {
-        receipt.push({ title: "Extra Guests Fee", content: `₹${formatPrice(pricing.extraTotal * pricing.nightsCount * pricing.roomsCount)}` });
-      }
 
       if (pricing.discount > 0) {
         receipt.push({ title: `Discount (${pricing.discountPercent}%)`, content: `- ₹${formatPrice(pricing.discount)}` });
       }
 
-      // Add Taxes only to the final receipt for Confirm and Pay page
       receipt.push({ title: "GST (18%)", content: `₹${formatPrice(pricing.gst)}` });
       receipt.push({ title: "Service Fee (2%)", content: `₹${formatPrice(pricing.serviceFee)}` });
       receipt.push({ title: "Total", content: `₹${formatPrice(pricing.finalTotal)}` });
+
+      const roomSummary = resolvedSelectedRooms.map(r => `${r.count}x ${r.roomName || r.name}`).join(", ");
 
       const bookingData = {
         stayId: payload.stayId,
@@ -262,8 +257,7 @@ const StayBookingSystem = ({
         isStay: true,
         checkInDate: checkInDate.format("MMM DD, YYYY"),
         checkOutDate: checkOutDate.format("MMM DD, YYYY"),
-        roomType: selectedRoom ? (selectedRoom.roomName || selectedRoom.name) : "Full Property",
-        roomsBooked: roomsCount,
+        roomType: roomSummary || "Full Property",
         guests: guests,
         receipt: receipt
       };
@@ -426,36 +420,56 @@ const StayBookingSystem = ({
                         <p style={{ fontSize: 14, fontWeight: 700, color: FG }}>Adults</p>
                         <p style={{ fontSize: 12, color: M }}>Age 13+</p>
                       </div>
-                      <Counter value={guests.adults} setValue={(v) => setGuests(prev => ({...prev, adults: v}))} min={1} />
+                      <Counter 
+                        value={guests.adults} 
+                        setValue={(v) => setGuests(prev => ({...prev, adults: v}))} 
+                        min={1} 
+                        max={pricing.baseAdultsLimit + pricing.extraAdultsLimit}
+                      />
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <p style={{ fontSize: 14, fontWeight: 700, color: FG }}>Children</p>
                         <p style={{ fontSize: 12, color: M }}>Ages 2–12</p>
                       </div>
-                      <Counter value={guests.children} setValue={(v) => setGuests(prev => ({...prev, children: v}))} min={0} />
+                      <Counter 
+                        value={guests.children} 
+                        setValue={(v) => setGuests(prev => ({...prev, children: v}))} 
+                        min={0} 
+                        max={pricing.baseChildrenLimit + pricing.extraChildrenLimit}
+                      />
                     </div>
                   </div>
                 </div>
 
-                {/* Selected Room Info */}
-                {selectedRoom && (
-                  <div style={{ marginTop: 32, padding: 24, background: AL, borderRadius: 20, border: `1px solid ${A}33` }}>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                        <div style={{ width: 48, height: 48, borderRadius: 12, background: A, display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF" }}>
-                          <Bed size={24} />
-                        </div>
-                        <div>
-                          <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{selectedRoom.roomName || selectedRoom.name}</p>
-                          <p style={{ fontSize: 13, color: M }}>{selectedMealPlan || "EP"}</p>
+                {/* Selected Rooms List */}
+                {resolvedSelectedRooms.length > 0 && (
+                  <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <p style={{ fontSize: 11, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Selected Accommodations</p>
+                    {resolvedSelectedRooms.map((room) => (
+                      <div key={room.roomId || room.id} style={{ padding: "20px 24px", background: AL, borderRadius: 20, border: `1px solid ${A}33` }}>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
+                          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 12, background: A, display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF" }}>
+                              <Bed size={20} />
+                            </div>
+                            <div>
+                              <p style={{ fontSize: 14, fontWeight: 700, color: FG }}>{room.roomName || room.name}</p>
+                              <p style={{ fontSize: 12, color: M }}>{room.mealPlan || "EP"} Plan</p>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                            <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Rooms</p>
+                            <Counter 
+                              value={room.count} 
+                              setValue={(v) => onRoomsCountChange(room.roomId || room.id, v)} 
+                              min={1} 
+                              max={Number(room.units || room.totalRooms || room.availableRooms || 99)} 
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                        <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Rooms</p>
-                        <Counter value={roomsCount} setValue={onRoomsCountChange} min={1} max={selectedRoom.availableRooms || 10} />
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 )}
 
@@ -479,27 +493,13 @@ const StayBookingSystem = ({
                   <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
                       <span>Base Price × {nightsCount} nights</span>
-                      <span>₹{formatPrice(pricing.originalPerNight * nightsCount * roomsCount)}</span>
+                      <span>₹{formatPrice(pricing.originalPerNight * nightsCount)}</span>
                     </div>
-                    
-                    {pricing.extraTotal > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
-                        <span>Extra Guests Fee</span>
-                        <span>₹{formatPrice(pricing.extraTotal * nightsCount * roomsCount)}</span>
-                      </div>
-                    )}
 
                     {pricing.discount > 0 && (
                       <div style={{ display: "flex", justifyContent: "space-between", color: "#10B981", fontSize: 15, fontWeight: 600 }}>
                         <span>Discount ({pricing.discountPercent}%)</span>
                         <span>- ₹{formatPrice(pricing.discount)}</span>
-                      </div>
-                    )}
-
-                    {roomsCount > 1 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 15 }}>
-                        <span>Room Quantity</span>
-                        <span>× {roomsCount}</span>
                       </div>
                     )}
 
@@ -512,8 +512,9 @@ const StayBookingSystem = ({
 
                 {(() => {
                   const isPropertyBased = stay?.bookingScope === "Property-Based";
-                  const isDisabled = loading || !checkInDate || !checkOutDate || (!isPropertyBased && !selectedRoomId) || pricing.isOver;
-                  const buttonText = loading ? "Processing..." : (pricing.isOver ? "Capacity Exceeded" : ((isPropertyBased || selectedRoomId) ? "Reserve" : "Select a Room First"));
+                  const hasSelection = isPropertyBased || resolvedSelectedRooms.length > 0;
+                  const isDisabled = loading || !checkInDate || !checkOutDate || !hasSelection || pricing.isOver;
+                  const buttonText = loading ? "Processing..." : (pricing.isOver ? "Capacity Exceeded" : (hasSelection ? "Reserve" : "Select Accommodation First"));
 
                   return (
                     <motion.button
