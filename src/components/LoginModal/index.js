@@ -250,7 +250,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
           {step === "phone" && (
             <div className={styles.item}>
               <div className={cn("h3", styles.title)}>Sign up on Little Known Planet</div>
-              <div className={styles.info}>Use Your OpenID to Sign up</div>
+              <div className={styles.info}>Welcome back, sign in to continue</div>
               <div className={styles.btns}>
                 <button 
                   className={cn("button-stroke", styles.googleBtn)} 
