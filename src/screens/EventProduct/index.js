@@ -924,7 +924,7 @@ const EventProduct = () => {
         </div>
       )}
       {/* Hero Section with Title, Actions, and Gallery */}
-      <div className={cn("section-mb64", styles.hero)}>
+      <div className={cn("section-mb64", styles.hero)} style={{ zIndex: 50 }}>
         <div className={cn("container", styles.heroContainer)}>
           {/* Header with Title and Actions */}
           <div className={styles.heroHeader}>

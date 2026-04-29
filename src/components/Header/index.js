@@ -64,15 +64,7 @@ const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile }) => {
             />
           </Link>
           <div className={cn(styles.wrapper, { [styles.active]: visibleNav })}>
-            <NavLink
-              className={styles.link}
-              to="/support"
-              activeClassName={styles.active}
-              onClick={() => setVisibleNav(false)}
-            >
-              <Icon name="help" size="24" className={styles.mobileIcon} />
-              <span>Support</span>
-            </NavLink>
+
             <NavLink
               className={cn(styles.link, styles.mobileOnlyLink)}
               to="/bookings"
