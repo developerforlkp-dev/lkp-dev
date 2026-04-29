@@ -245,17 +245,38 @@ const getRateFromPricing = (...values) => {
   return 0;
 };
 
-const calculateEventGuestPricing = (unitPrice, pricing = {}) => {
+const calculateEventGuestPricing = (unitPrice, pricing = {}, earlyBirdDiscounts = [], bookingDate = null) => {
   const baseUnitPrice = asNumber(unitPrice) ?? 0;
   const discount = pricing?.discount || {};
   const tax = pricing?.tax || {};
-  const discountRate = getRateFromPricing(
+  
+  let discountRate = getRateFromPricing(
     discount.customer,
     discount.guest,
     discount.total,
     pricing?.discountRate,
     pricing?.discount
   );
+
+  // Apply Early Bird Discount if applicable
+  if (bookingDate && Array.isArray(earlyBirdDiscounts) && earlyBirdDiscounts.length > 0) {
+    const today = moment().startOf('day');
+    const bDate = moment(bookingDate).startOf('day');
+    const daysInAdvance = bDate.diff(today, 'days');
+
+    const applicableDiscounts = earlyBirdDiscounts.filter(d => 
+      d.isActive !== false && daysInAdvance >= (asNumber(d.daysInAdvance) ?? 0)
+    );
+    
+    if (applicableDiscounts.length > 0) {
+      // Use the discount with the highest percentage if multiple apply
+      const bestDiscount = applicableDiscounts.reduce((prev, current) => 
+        ((asNumber(current.percentage) ?? 0) > (asNumber(prev.percentage) ?? 0)) ? current : prev
+      );
+      discountRate += (asNumber(bestDiscount.percentage) ?? 0);
+    }
+  }
+
   const customerTaxRate = getRateFromPricing(
     tax.customer,
     tax.guest,
@@ -906,8 +927,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     getEffectiveTicketPrice(selectedTicket, totalGuests, eventPrice)
   ), [selectedTicket, totalGuests, eventPrice]);
   const eventGuestPricing = useMemo(() => (
-    calculateEventGuestPricing(effectiveEventPrice.price, listing?.pricing)
-  ), [effectiveEventPrice.price, listing?.pricing]);
+    calculateEventGuestPricing(effectiveEventPrice.price, listing?.pricing, listing?.earlyBirdDiscounts, startDate)
+  ), [effectiveEventPrice.price, listing?.pricing, listing?.earlyBirdDiscounts, startDate]);
   const selectedTicketTotalTickets = getTicketTotalTickets(selectedTicket);
   const selectedTicketMaxPerBooking = getTicketMaxPerBooking(selectedTicket);
   const eventIdForAvailability = asNumber(listing?.eventId ?? listing?.event_id ?? listing?.id ?? listing?.listingId);
@@ -1181,7 +1202,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     : rawExperiencePrice;
 
   const experienceGuestPricing = !isEventBooking
-    ? calculateEventGuestPricing(effectiveRawPrice, listing?.pricing)
+    ? calculateEventGuestPricing(effectiveRawPrice, listing?.pricing, listing?.earlyBirdDiscounts, startDate)
     : null;
   const extractedPrice = isEventBooking
     ? eventGuestPricing.finalUnitPrice
@@ -1196,7 +1217,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     ? (listing?.childPricePerChild || listing?.childPrice || listing?.pricing?.childPricePerChild || 0)
     : 0;
   const childGuestPricing = !isEventBooking && childrenAllowed && rawChildPrice > 0
-    ? calculateEventGuestPricing(rawChildPrice, listing?.pricing)
+    ? calculateEventGuestPricing(rawChildPrice, listing?.pricing, listing?.earlyBirdDiscounts, startDate)
     : null;
   // Effective per-child price (after discount + tax), fallback to adult price if no child price set
   const effectiveChildPrice = childGuestPricing
