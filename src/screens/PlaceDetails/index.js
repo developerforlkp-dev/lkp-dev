@@ -3,13 +3,16 @@ import { useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import { 
   MapPin, Clock, Ticket, Star, Calendar, ArrowDown, ExternalLink, Map, Navigation, 
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight 
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight,
+  Sparkles, Car, Users
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
 import Browse from "../../components/Browse";
 import { browse2 } from "../../mocks/browse";
 import { getPlaceDetails, getHost } from "../../utils/api";
+
+import useDarkMode from "use-dark-mode";
 
 /* ─── TOKENS & THEME ─────────── */
 const THEMES = {
@@ -29,7 +32,8 @@ const ThemeContext = createContext({ theme: "light", toggleTheme: () => { }, tok
 const useTheme = () => useContext(ThemeContext);
 
 function ScopedThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light");
+  const darkMode = useDarkMode(false);
+  const theme = darkMode.value ? "dark" : "light";
   const wrapperRef = useRef(null);
 
   useEffect(() => {
@@ -43,10 +47,8 @@ function ScopedThemeProvider({ children }) {
     }
   }, [theme]);
 
-  const toggleTheme = () => setTheme(prev => prev === "light" ? "dark" : "light");
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, tokens: THEMES[theme] }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme: darkMode.toggle, tokens: THEMES[theme] }}>
       <div ref={wrapperRef} className="place-details-premium" style={{ minHeight: "100vh" }}>
         {children}
       </div>
@@ -73,6 +75,21 @@ const ScopedStyles = () => (
     .place-details-premium .font-display { font-family: var(--font-fraunces, Georgia, serif); }
     .place-details-premium .mq-l { display: flex; white-space: nowrap; animation: marquee-l 30s linear infinite; }
     .place-details-premium .mq-r { display: flex; white-space: nowrap; animation: marquee-r 34s linear infinite; }
+    
+    /* Blend header with hero */
+    .place-details-premium {
+      margin-top: -88px;
+    }
+    header, [class*="Header_header"] {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      position: absolute !important;
+      width: 100% !important;
+      top: 0 !important;
+      left: 0 !important;
+      z-index: 1000 !important;
+    }
     
     #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); }
     #cur-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid var(--AL); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%, -50%); }
@@ -200,51 +217,69 @@ function PlaceHero({ place, galleryItems }) {
   const { scrollYProgress } = useScroll({ target: r, offset: ["start start", "end start"] });
   
   const baseX = useMotionValue(0);
-  const [drag, setDrag] = useState(false);
-
-  useAnimationFrame((t, delta) => {
-    if (!drag) {
-      // Increased speed from 0.04 to 0.12 for better visibility
-      baseX.set(baseX.get() - delta * 0.12);
-    }
-  });
-
-  // Split gallery items into two rows
-  const row1 = galleryItems.slice(0, Math.ceil(galleryItems.length / 2));
-  const row2 = galleryItems.slice(Math.ceil(galleryItems.length / 2));
+  const [isDragging, setIsDragging] = useState(false);
   
-  const itemWidth1 = 440, itemWidth2 = 520, gap = 40;
-  // Ensure we have at least one item width for range
-  const range1 = Math.max((row1.length || 1) * (itemWidth1 + gap), 1);
-  const range2 = Math.max((row2.length || 1) * (itemWidth2 + gap), 1);
+  // 1. The Continuous Ticker - Using more robust animate function
+  useEffect(() => {
+    if (!isDragging) {
+      const controls = animate(baseX, baseX.get() - 50000, {
+        duration: 1000, // Large duration for slow movement
+        ease: "linear",
+        repeat: Infinity
+      });
+      return () => controls.stop();
+    }
+  }, [isDragging, baseX]);
 
+  // Calculate items and ranges dynamically
+  const { items1, items2, range1, range2 } = useMemo(() => {
+    const r1 = galleryItems.slice(0, Math.ceil(galleryItems.length / 2));
+    const r2 = galleryItems.slice(Math.ceil(galleryItems.length / 2));
+    
+    const i1 = r1.length ? r1 : ["https://picsum.photos/seed/p1/800/1000", "https://picsum.photos/seed/p2/800/1000"];
+    const i2 = r2.length ? r2 : ["https://picsum.photos/seed/p3/800/1000", "https://picsum.photos/seed/p4/800/1000"];
+    
+    const w1 = 440, w2 = 520, g = 40;
+    
+    return {
+      items1: [...i1, ...i1, ...i1],
+      items2: [...i2, ...i2, ...i2],
+      range1: i1.length * (w1 + g),
+      range2: i2.length * (w2 + g)
+    };
+  }, [galleryItems]);
+
+  // 2. The Looping Logic
   const x1 = useTransform(baseX, (v) => {
-    // Standard modulo for seamless loop
-    const modX = ((v % range1) - range1) % range1;
-    return `${modX}px`;
+    const range = range1 || 1800;
+    return `${((v % range) - range) % range}px`;
   });
   
   const x2 = useTransform(baseX, (v) => {
-    // Reverse or different speed for row 2
-    const modX = ((-v * 0.8 % range2) - range2) % range2;
-    return `${modX}px`;
+    const range = range2 || 1800;
+    // Row 2 moves with a different ratio or offset
+    return `${((-v * 0.7 % range) - range) % range}px`;
   });
 
-  // Duplicate items enough times to fill large screens (min 12 items)
-  const fillCount = 12;
-  const items1 = row1.length ? Array(fillCount).fill(row1).flat() : Array(fillCount).fill("https://picsum.photos/seed/p1/400/500");
-  const items2 = row2.length ? Array(fillCount).fill(row2).flat() : Array(fillCount).fill("https://picsum.photos/seed/p3/400/500");
+  // 3. Parallax for scrolling
+  const y1 = useTransform(scrollYProgress, [0, 0.3], [0, -40]);
+  const y2 = useTransform(scrollYProgress, [0, 0.3], [0, 40]);
 
+  const itemWidth1 = 440, itemWidth2 = 520, gap = 40;
   const placeName = place?.placeName || place?.title || "COASTAL GEM";
+
+  const bgScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.5]);
+  const bgRotate = useTransform(scrollYProgress, [0, 0.5], [0, 5]);
 
   return (
     <section ref={r} style={{ position: "relative", minHeight: "100vh", background: W, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      {/* Background Decor */}
       <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", opacity: 0.03, overflow: "hidden" }}>
          <motion.h1 
            className="font-display"
            style={{ 
-             scale: useTransform(scrollYProgress, [0, 0.5], [1, 1.5]), 
-             rotate: useTransform(scrollYProgress, [0, 0.5], [0, 5]),
+             scale: bgScale, 
+             rotate: bgRotate,
              fontSize: "45vw", 
              fontWeight: 900, 
              color: FG,
@@ -256,40 +291,44 @@ function PlaceHero({ place, galleryItems }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap, position: "relative", zIndex: 10 }}>
-        <motion.div style={{ x: x1, y: useTransform(scrollYProgress, [0, 0.3], [0, -40]), display: "flex", gap, paddingLeft: gap }}>
+        {/* Row 1 */}
+        <motion.div style={{ x: x1, y: y1, display: "flex", gap, paddingLeft: gap }}>
           {items1.map((img, i) => (
-            <motion.div key={i} whileHover={{ scale: 1.05, rotate: 1, zIndex: 100 }} style={{ flexShrink: 0, width: itemWidth1, height: itemWidth1 * 1.25, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)", transition: "transform 0.4s" }}>
+            <div key={`r1-${i}`} style={{ flexShrink: 0, width: itemWidth1, height: itemWidth1 * 1.25, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)" }}>
               <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-            </motion.div>
+            </div>
           ))}
         </motion.div>
 
+        {/* Center Overlay */}
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 50, pointerEvents: "none" }}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: E }} style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(40px)", padding: "50px 80px", borderRadius: 40, border: `1px solid ${B}`, textAlign: "center", boxShadow: "0 60px 120px -20px rgba(0,0,0,0.15)" }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2 }} style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(40px)", padding: "50px 80px", borderRadius: 40, border: `1px solid ${B}`, textAlign: "center", boxShadow: "0 60px 120px -20px rgba(0,0,0,0.15)" }}>
             <p className="font-mono" style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 16 }}>{toDisplayString(place?.category) || "DESTINATION"}</p>
             <Chars text={placeName.toUpperCase()} cls="font-display" style={{ fontSize: "clamp(3rem, 9vw, 6.5rem)", fontWeight: 700, color: FG, lineHeight: 1, letterSpacing: "-0.04em", margin: 0 }} />
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, pointerEvents: "auto" }}>
-              {[place?.city, place?.placeType, "Discovery"].filter(Boolean).map(tag => (
-                <motion.span key={toDisplayString(tag)} whileHover={{ background: A, color: W, borderColor: A }} style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: M, border: `1px solid ${B}`, padding: "8px 20px", borderRadius: 40, background: W, transition: "all 0.3s" }}>{toDisplayString(tag)}</motion.span>
+              {[place?.primaryCategoryName, place?.subcategoryName, place?.managedBy].filter(Boolean).map(tag => (
+                <motion.span key={toDisplayString(tag)} whileHover={{ background: A, color: W, borderColor: A }} style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: M, border: `1px solid ${B}`, padding: "8px 20px", borderRadius: 40, background: W }}>{toDisplayString(tag)}</motion.span>
               ))}
             </div>
           </motion.div>
         </div>
 
-        <motion.div style={{ x: x2, y: useTransform(scrollYProgress, [0, 0.3], [0, 40]), display: "flex", gap, paddingLeft: 100 }}>
+        {/* Row 2 */}
+        <motion.div style={{ x: x2, y: y2, display: "flex", gap, paddingLeft: 100 }}>
           {items2.map((img, i) => (
-            <motion.div key={i} whileHover={{ scale: 1.05, rotate: -1, zIndex: 100 }} style={{ flexShrink: 0, width: itemWidth2, height: itemWidth2 * 0.75, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)", transition: "transform 0.4s" }}>
+            <div key={`r2-${i}`} style={{ flexShrink: 0, width: itemWidth2, height: itemWidth2 * 0.75, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)" }}>
               <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-            </motion.div>
+            </div>
           ))}
         </motion.div>
       </div>
 
+      {/* 4. Invisible Pan Overlay */}
       <motion.div
         onPan={(e, info) => baseX.set(baseX.get() + info.delta.x)}
-        onPanStart={() => setDrag(true)}
-        onPanEnd={() => setDrag(false)}
-        style={{ position: "absolute", inset: 0, zIndex: 100, cursor: drag ? "grabbing" : "grab" }}
+        onPanStart={() => setIsDragging(true)}
+        onPanEnd={() => setIsDragging(false)}
+        style={{ position: "absolute", inset: 0, zIndex: 100, cursor: isDragging ? "grabbing" : "grab" }}
       />
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
@@ -303,11 +342,21 @@ function PlaceHero({ place, galleryItems }) {
 
 function QuickFacts({ place }) {
   const { tokens: { A, B, FG, M, S, W } } = useTheme();
+  
+  const visitDuration = [
+    place?.visitDurationHours && `${place.visitDurationHours}h`,
+    place?.visitDurationMinutes && `${place.visitDurationMinutes}m`
+  ].filter(Boolean).join(" ") || "2-4 Hours";
+
+  const timings = (place?.openingTime && place?.closingTime) 
+    ? `${place.openingTime} - ${place.closingTime}` 
+    : "Sunrise - Sunset";
+
   const facts = [
-    { label: "Timings", val: place?.timings || place?.openingHours || "06:00 - 20:00", icon: Clock },
-    { label: "Entry Fee", val: place?.entryFee || "Free Entry", icon: Ticket },
-    { label: "Best Time", val: place?.bestTimeToVisit || "Year Round", icon: Star },
-    { label: "Rating", val: `${place?.rating || place?.averageRating || "4.8"} User Rating`, icon: Check },
+    { label: "Timings", val: timings, icon: Clock },
+    { label: "Entry", val: place?.entryType || "Free", icon: Ticket },
+    { label: "Duration", val: visitDuration, icon: Calendar },
+    { label: "Rating", val: `${place?.rating || "0.00"} (${place?.reviewCount || 0} Reviews)`, icon: Star },
   ];
 
   return (
@@ -348,9 +397,14 @@ function DestAbout({ place, hostData, hostAvatar }) {
                  {place?.placeName || "Experience the local heritage."}
                </h2>
                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                 {[toDisplayString(place?.category), place?.city, "Historical", "Vibrant"].filter(Boolean).map(tag => (
-                   <div key={tag} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "#f8f8f8", borderRadius: 12, border: `1px solid ${B}` }}>
-                     <User size={12} color={A} />
+                 {[
+                   place?.primaryCategoryName,
+                   place?.subCategoryName,
+                   place?.managedBy && `Managed by ${place.managedBy}`,
+                   place?.entryType
+                 ].filter(Boolean).map(tag => (
+                   <div key={tag} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "transparent", borderRadius: 12, border: `1px solid ${B}` }}>
+                     <Sparkles size={12} color={A} />
                      <span style={{ fontSize: 11, fontWeight: 600, color: FG }}>{tag}</span>
                    </div>
                  ))}
@@ -358,18 +412,18 @@ function DestAbout({ place, hostData, hostAvatar }) {
             </Rev>
             <Rev delay={0.2}>
                <p style={{ fontSize: 17, lineHeight: 1.85, color: M, marginBottom: 32 }}>
-                 {place?.description || "Discover the hidden gems and vibrant culture of this unique location. From historical landmarks to modern attractions, there is something for everyone."}
+                 {place?.placeDescription || place?.description || "Discover the hidden gems and vibrant culture of this unique location. From historical landmarks to modern attractions, there is something for everyone."}
                </p>
                <div style={{ marginTop: 48, borderTop: `1px solid ${B}`, paddingTop: 40, display: "flex", gap: 64 }}>
                  <div>
-                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Location</p>
-                   <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{place?.city || "Discovery Town"}</p>
+                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>District / State</p>
+                   <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{place?.district || place?.city || "Discovery Town"}, {place?.state || "India"}</p>
                  </div>
                  <div>
-                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Curator</p>
+                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Lead Curator</p>
                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                      <img src={hostAvatar || "https://picsum.photos/seed/host/40/40"} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} alt="" />
-                     <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{hostData?.displayName || "Lead Curator"}</p>
+                     <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{place?.host?.firstName || hostData?.displayName || "Lead Curator"}</p>
                    </div>
                  </div>
                </div>
@@ -383,6 +437,20 @@ function DestAbout({ place, hostData, hostAvatar }) {
 
 function Logistics({ place, hostData }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
+  
+  const stations = [
+    ...(place?.nearestRailwayStations || []),
+    ...(place?.nearestAirports || []),
+    ...(place?.nearestTowns || [])
+  ].slice(0, 4);
+
+  const accessibility = [
+    { label: "Car Access", val: place?.accessByCar, icon: Car },
+    { label: "Bike Access", val: place?.accessByBike, icon: Briefcase },
+    { label: "Off Road", val: place?.accessByOffRoad, icon: Globe },
+    { label: "Wheelchair", val: place?.wheelchairAccess, icon: Users },
+  ];
+
   return (
     <section style={{ background: S, padding: "140px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -393,50 +461,67 @@ function Logistics({ place, hostData }) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 40 }}>
                   <div>
                     <h4 style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 12 }}>Address</h4>
-                    <p style={{ fontSize: 16, color: FG, fontWeight: 600, maxWidth: 350, lineHeight: 1.6 }}>{place?.address || "Explore the local maps for the exact navigation details."}</p>
+                    <p style={{ fontSize: 16, color: FG, fontWeight: 600, maxWidth: 350, lineHeight: 1.6 }}>{place?.fullAddress || place?.address || "Explore the local maps for navigation details."}</p>
                   </div>
-                  <motion.a whileHover={{ scale: 1.1 }} href={`https://www.google.com/maps/search/?api=1&query=${place?.placeName}`} target="_blank" style={{ background: A, width: 52, height: 52, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+                  <motion.a 
+                    whileHover={{ scale: 1.1 }} 
+                    href={place?.googleMapsLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place?.fullAddress || place?.placeName)}`} 
+                    target="_blank" 
+                    style={{ background: A, width: 52, height: 52, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}
+                  >
                     <Navigation size={22} color={W} />
                   </motion.a>
                 </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 40 }}>
+                   {accessibility.map(acc => (
+                     <div key={acc.label} style={{ display: "flex", alignItems: "center", gap: 12, opacity: acc.val ? 1 : 0.35 }}>
+                        <acc.icon size={14} color={acc.val ? A : M} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: acc.val ? FG : M }}>{acc.label}</span>
+                     </div>
+                   ))}
+                </div>
+
                 <div style={{ borderTop: `1px solid ${B}`, paddingTop: 40 }}>
-                  <h4 style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Getting There</h4>
+                  <h4 style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Nearby Infrastructure</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                    {[
-                      { l: "Nearest Station", d: "3 km" },
-                      { l: "City Center", d: place?.distance || "5 km" },
-                      { l: "International Airport", d: "25 km" },
-                    ].map(loc => (
-                      <div key={loc.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: 14, color: M }}>{loc.l}</span>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: FG }}>{loc.d}</span>
+                    {stations.length > 0 ? stations.map((loc, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 14, color: M }}>{loc.name || loc.displayName || loc.code}</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: FG }}>{loc.distance || loc.distanceInKm || "—"}</span>
                       </div>
-                    ))}
+                    )) : (
+                      <p style={{ fontSize: 14, color: M, fontStyle: "italic" }}>No nearby transport data available.</p>
+                    )}
                   </div>
                 </div>
              </div>
            </Rev>
 
            <Rev delay={0.2}>
-             <SHdr idx="04" label="Contact & Guide" />
+             <SHdr idx="04" label="Contact & Information" />
              <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
                 <div style={{ padding: 48, border: `1px solid ${B}`, borderRadius: 32, background: W }}>
                    <p style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Official Inquiries</p>
-                   <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{hostData?.displayName || "Tourism Authority"}</h3>
+                   <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{place?.host?.companyName || "Lead Curator"}</h3>
                    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                      <a href={`tel:${hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                        <Phone size={18} color={A} /> {hostData?.phone || "Contact via App"}
+                      <a href={`tel:${place?.contactInfo || place?.host?.phoneNumber}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
+                        <Phone size={18} color={A} /> {place?.contactInfo || place?.host?.phoneNumber || "Contact via Portal"}
                       </a>
-                      <a href="#" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                        <Globe size={18} color={A} /> {place?.website || "Official Portal"}
-                      </a>
+                      {place?.officialWebsite && (
+                        <a href={place.officialWebsite.startsWith('http') ? place.officialWebsite : `https://${place.officialWebsite}`} target="_blank" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
+                          <Globe size={18} color={A} /> {place.officialWebsite}
+                        </a>
+                      )}
                    </div>
                 </div>
 
                 <div style={{ padding: 48, border: `1px solid ${B}`, borderRadius: 32, background: A, color: W }}>
-                   <h4 style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: 16 }}>Prime Visit</h4>
-                   <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Peak Season</p>
-                   <p style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>October to March is ideal for exploring the open-air heritage and coastal views.</p>
+                   <h4 style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: 16 }}>Peak Season</h4>
+                   <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{place?.bestTimeToVisit || "Optimal Visiting"}</p>
+                   <p style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>
+                     {place?.seasonDetails || "Plan your visit during the optimal months for the best experience at this destination."}
+                   </p>
                 </div>
              </div>
            </Rev>
@@ -448,11 +533,16 @@ function Logistics({ place, hostData }) {
 
 function Itinerary({ place }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
-  const steps = [
+  const rawSteps = place?.itinerary || [];
+  const steps = rawSteps.length > 0 ? rawSteps.map(s => ({
+    title: s.title || s.stepName || "Discovery Phase",
+    desc: s.description || s.details || "Experience the curated highlights of this unique location."
+  })) : [
     { title: "Discovery Phase", desc: "Explore the primary landmarks and architectural wonders of this unique location." },
     { title: "Local Immersion", desc: "Engage with the local culture and hidden gems that define the heart of the area." },
     { title: "Sunset Perspective", desc: "End your journey with breathtaking panoramic views as the day transitions to night." }
   ];
+  
   return (
     <section style={{ background: S, padding: "120px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -478,7 +568,18 @@ function Itinerary({ place }) {
 }
 
 function GoodToKnow({ place }) {
-  const { tokens: { A, B, FG, M, W, AL } } = useTheme();
+  const { tokens: { A, B, FG, M, W } } = useTheme();
+  
+  const parseList = (str) => {
+    if (!str) return [];
+    return str.split(",").map(s => s.trim()).filter(Boolean);
+  };
+
+  const carryList = parseList(place?.whatToCarry) || ["Water Bottle", "Umbrella", "Comfortable Shoes"];
+  const avoidList = parseList(place?.thingsToAvoid) || ["Littering", "Loud Music"];
+  const notes = place?.visitingNotes || "Keep Quiet & Respect Nature";
+  const rules = place?.specialRules || "No Plastics allowed";
+
   return (
     <section style={{ background: W, padding: "120px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 100 }} className="info-grid">
@@ -490,19 +591,31 @@ function GoodToKnow({ place }) {
                  <Briefcase size={16} color={A} /> What to Carry
                </h4>
                <ul style={{ listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                 {["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"].map(item => (
+                 {carryList.map(item => (
                    <li key={item} style={{ fontSize: 13, color: M, display: "flex", alignItems: "center", gap: 8 }}>
                      <div style={{ width: 4, height: 4, borderRadius: "50%", background: A }} /> {item}
                    </li>
                  ))}
                </ul>
              </div>
+
+             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+                <div>
+                   <h4 style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: A, marginBottom: 12, fontWeight: 700 }}>Visiting Notes</h4>
+                   <p style={{ fontSize: 14, color: M, lineHeight: 1.6 }}>{notes}</p>
+                </div>
+                <div>
+                   <h4 style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: A, marginBottom: 12, fontWeight: 700 }}>Special Rules</h4>
+                   <p style={{ fontSize: 14, color: M, lineHeight: 1.6 }}>{rules}</p>
+                </div>
+             </div>
+
              <div style={{ background: "#fff5f5", border: "1px solid #fee2e2", padding: 32, borderRadius: 20 }}>
                <h4 style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 16 }}>
                  <XCircle size={16} color="#ef4444" /> Things to Avoid
                </h4>
                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
-                 {["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"].map(item => (
+                 {avoidList.map(item => (
                    <li key={item} style={{ fontSize: 12, color: "#b91c1c", display: "flex", alignItems: "center", gap: 8 }}>
                      <XCircle size={10} /> {item}
                    </li>
@@ -513,17 +626,22 @@ function GoodToKnow({ place }) {
         </Rev>
 
         <Rev delay={0.2}>
-          <div style={{ background: "#f8f8f8", border: `1px solid ${B}`, borderRadius: 32, padding: 48 }}>
-             <h3 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: FG, marginBottom: 12 }}>Community Feedback</h3>
-             <p style={{ fontSize: 12, color: M, marginBottom: 24 }}>Share your recent experience or suggest updates for this location.</p>
-             <textarea 
-               placeholder="Share your thoughts..."
-               style={{ width: "100%", height: 120, background: W, border: `1px solid ${B}`, borderRadius: 12, padding: 16, fontSize: 13, marginBottom: 20, outline: "none" }}
-             />
-             <motion.button whileHover={{ scale: 1.02 }}
-               style={{ width: "100%", padding: 16, background: A, color: W, border: "none", borderRadius: 10, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-               Submit Updates
-             </motion.button>
+          <div style={{ background: THEMES.light.S, border: `1px solid ${B}`, borderRadius: 32, padding: 48 }}>
+             <h3 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: FG, marginBottom: 12 }}>Guest Requirements</h3>
+             <p style={{ fontSize: 14, color: M, marginBottom: 24, lineHeight: 1.6 }}>
+               {place?.ageRestriction || "All age groups are welcome to explore this destination."}
+             </p>
+             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 32 }}>
+                {(place?.suitableFor || ["Family", "Couples"]).map(tag => (
+                   <span key={tag} style={{ fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", background: W, padding: "8px 16px", borderRadius: 8, border: `1px solid ${B}`, color: FG, fontWeight: 600 }}>{tag}</span>
+                ))}
+             </div>
+             <div style={{ background: W, border: `1px solid ${B}`, borderRadius: 12, padding: 24 }}>
+                <p style={{ fontSize: 11, letterSpacing: "0.1em", color: M, marginBottom: 8, textTransform: "uppercase" }}>Weekly Schedule</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: FG }}>
+                   Closed on: {Array.isArray(place?.closedDays) ? place.closedDays.join(", ") : "N/A"}
+                </p>
+             </div>
           </div>
         </Rev>
       </div>
@@ -612,34 +730,131 @@ const PlaceDetails = () => {
 
     return (
         <ScopedThemeProvider>
+            <PlaceDetailsContent place={place} galleryItems={galleryItems} hostData={hostData} hostAvatar={hostAvatar} />
+        </ScopedThemeProvider>
+    );
+};
+
+function PlaceDetailsContent({ place, galleryItems, hostData, hostAvatar }) {
+    const { tokens } = useTheme();
+
+    return (
+        <>
             <ScopedStyles />
             <ProgressBar />
             <Cursor />
             
             <PlaceHero place={place} galleryItems={galleryItems} />
             
-            <Mq items={["Discovery", "Heritage", "Landscape", "Perspective"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={["Discovery", "Heritage", "Landscape", "Perspective"]} size="sm" bg={tokens.S} accent />
             
             <QuickFacts place={place} />
             
-            <Mq items={["Coastal Gem", "Urban Heart", "Historical Echo"]} bg={THEMES.light.S} />
+            <Mq items={["Coastal Gem", "Urban Heart", "Historical Echo"]} bg={tokens.S} />
             
             <DestAbout place={place} hostData={hostData} hostAvatar={hostAvatar} />
             
-            <Mq items={["Journey Blueprint", "Daily Rhythm", "The Itinerary"]} size="sm" bg={THEMES.light.S} accent />
+            <Mq items={["Journey Blueprint", "Daily Rhythm", "The Itinerary"]} size="sm" bg={tokens.S} accent />
             
             <Itinerary place={place} />
-
-            <Mq items={["Community Pulse", "Visitor Wisdom", "Safety Net"]} bg={THEMES.light.S} />
-
+            
+            <Mq items={["Community Pulse", "Visitor Wisdom", "Safety Net"]} bg={tokens.S} />
+            
             <GoodToKnow place={place} />
-
-            <Mq items={["Location Access", "Arrival Logic", "Journey Blueprint"]} size="sm" bg={THEMES.light.S} accent />
+            
+            <Mq items={["Location Access", "Arrival Logic", "Journey Blueprint"]} size="sm" bg={tokens.S} accent />
             
             <Logistics place={place} hostData={hostData} />
-            
-        </ScopedThemeProvider>
+
+            <Footer />
+        </>
     );
-};
+}
+
+function Footer() {
+  const { tokens: { A, AH, BG, FG, M, B } } = useTheme();
+  const footerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: footerRef,
+    offset: ["start end", "end end"]
+  });
+
+  const scaleX = useTransform(scrollYProgress, [0, 0.9, 1], [0.4, 0.95, 1]);
+  const letterSpacing = useTransform(scrollYProgress, [0, 1], ["2em", "-0.02em"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.6, 1], [0, 0.5, 1]);
+
+  return (
+    <footer 
+      ref={footerRef}
+      style={{ background: FG, color: BG, borderTop: `1px solid ${B}`, overflow: "hidden", cursor: "none" }}
+    >
+      <div style={{ borderBottom: `1px solid ${B}`, padding: "120px 36px 80px" }}>
+        <div style={{ maxWidth: 1320, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 100, alignItems: "center" }} className="footer-top">
+          <div>
+            <p style={{ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: AH, marginBottom: 24, fontWeight: 700 }}>Stay Synchronized</p>
+            <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", fontWeight: 700, color: BG, lineHeight: 1.1, marginBottom: 32 }}>Join the Collective.</h2>
+            <div style={{ display: "flex", gap: 0, width: "100%", maxWidth: 500, position: "relative" }}>
+              <input 
+                type="email" placeholder="YOUR@EMAIL.LIVE"
+                style={{ 
+                  flex: 1, background: "transparent", border: `1px solid ${B}`, color: BG, 
+                  fontSize: 11, letterSpacing: "0.1em", padding: "20px 24px", outline: "none", fontWeight: 500 
+                }}
+              />
+              <motion.button 
+                whileHover={{ background: BG, color: FG }}
+                style={{ 
+                  background: "transparent", color: BG, border: `1px solid ${B}`, borderLeft: "none",
+                  fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", padding: "0 32px", cursor: "none", fontWeight: 700 
+                }}
+              >
+                Connect
+              </motion.button>
+            </div>
+          </div>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60 }}>
+             <div>
+                <p style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Exploration</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                   {["Experience", "Sanctuary", "Culinary", "Chronology"].map(l => (
+                     <motion.a key={l} whileHover={{ x: 5, color: AH }} style={{ fontSize: 13, color: BG, textDecoration: "none", fontWeight: 500 }}>{l}</motion.a>
+                   ))}
+                </div>
+             </div>
+             <div>
+                <p style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Socials</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                   {["Instagram", "X / Twitter", "Behance", "Email"].map(l => (
+                     <motion.a key={l} whileHover={{ x: 5, color: AH }} style={{ fontSize: 13, color: BG, textDecoration: "none", fontWeight: 500 }}>{l}</motion.a>
+                   ))}
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "80px 0", textAlign: "center", borderBottom: `1px solid ${B}` }}>
+        <motion.h1 
+          className="font-display" 
+          style={{ 
+            fontSize: "clamp(4rem, 15vw, 18rem)", fontWeight: 900, color: BG, margin: 0, lineHeight: 0.8,
+            scaleX, letterSpacing, opacity, transformOrigin: "center center"
+          }}
+        >
+          LITTLE KNOWN PLANET
+        </motion.h1>
+      </div>
+
+      <div style={{ maxWidth: 1320, margin: "0 auto", padding: "40px 36px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+           <div style={{ width: 12, height: 12, borderRadius: "50%", background: A }} />
+           <span style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, color: BG }}>A Little Known Planet Production</span>
+        </div>
+        <p style={{ fontSize: 9, letterSpacing: "0.1em", color: M, textTransform: "uppercase" }}>© 2024 — All Rights Allocated.</p>
+      </div>
+    </footer>
+  );
+}
 
 export default PlaceDetails;
