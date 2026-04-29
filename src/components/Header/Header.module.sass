@@ -94,9 +94,9 @@
     +button-2
     &:last-child
         margin-right: 0
-    color: $n2
+    color: #000000
     +dark
-        color: $n8
+        color: #FFFFFF
     transition: color .2s
     +t
         display: none
@@ -110,8 +110,10 @@
         font-size: 24px
         font-weight: 600
         svg
-            fill: $n4
+            fill: #000000
             margin-right: 16px
+            +dark
+                fill: #FFFFFF
     &:hover,
     &.active
         color: $n2
@@ -171,10 +173,12 @@
     margin-left: 12px
     -webkit-tap-highlight-color: rgba(0,0,0,0)
     svg
-        fill: $n4
+        fill: #000000
         width: 24px
         height: 24px
         transition: fill .2s
+        +dark
+            fill: #FFFFFF
     &:hover
         svg
             fill: $n2

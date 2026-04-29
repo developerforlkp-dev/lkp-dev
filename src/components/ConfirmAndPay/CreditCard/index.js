@@ -203,7 +203,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
           />
         </>
       )}
-      <div className={styles.message}>
+      <div className={styles.message} style={{ display: "none" }}>
         <div className={styles.category}>Message the host</div>
         <TextArea
           className={styles.field}
