@@ -9,7 +9,7 @@ import { Footer } from "../JUI/Footer";
 import { useTheme } from "../JUI/Theme";
 
 const Page = ({
-  separatorHeader,
+  separatorHeader = true,
   children,
   fooferHide,
   wide,
@@ -17,7 +17,7 @@ const Page = ({
   hideHeaderOnMobile,
 }) => {
   const { pathname } = useLocation();
-  const { tokens: { B }, theme } = useTheme();
+  const { tokens: { B, BG }, theme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -40,11 +40,11 @@ const Page = ({
         style={{ 
           position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
           height: (scrolled || separatorHeader) ? "72px" : "0px",
-          zIndex: 5, 
+          zIndex: (scrolled || separatorHeader) ? 99 : 5, 
           transition: "all 0.4s", 
-          background: (scrolled || separatorHeader) ? (theme === 'light' ? "rgba(251,251,249,0.92)" : "rgba(8,8,8,0.92)") : "transparent", 
-          backdropFilter: (scrolled || separatorHeader) ? "blur(20px)" : "none", 
-          borderBottom: (scrolled || separatorHeader) ? `1px solid ${B}` : "1px solid transparent" 
+          background: (scrolled || separatorHeader) ? BG : "transparent", 
+          backdropFilter: "none", 
+          borderBottom: "none" 
         }}
       />
 

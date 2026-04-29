@@ -245,7 +245,7 @@ const ExperienceProduct = () => {
                 <div style={{ background: S, border: `1px solid ${B}`, padding: 32, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                   <Clock size={24} color={A} style={{ marginBottom: 12 }} />
                   <p style={{ fontSize: 20, fontWeight: 700, color: FG, marginBottom: 4 }}>
-                    {listing?.duration ? `${listing.duration} ${listing.durationUnit || "Hrs"}` : "2.5 Hrs"}
+                    {listing?.duration ? `${listing.duration} ${listing.durationUnit || ""}` : "2.5 Hrs"}
                   </p>
                   <p style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: M }}>Duration</p>
                 </div>
@@ -274,8 +274,10 @@ const ExperienceProduct = () => {
               <Soul y={40} r={5} style={{ gridColumn: "span 1" }}>
                 <div style={{ background: S, border: `1px solid ${B}`, padding: 32, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                   <Languages size={24} color={A} style={{ marginBottom: 12 }} />
-                  <p style={{ fontSize: 16, fontWeight: 700, color: FG, marginBottom: 4 }}>
-                    {Array.isArray(listing?.languagesOffered) ? listing.languagesOffered[0] : (listing?.languages || "English")}
+                  <p style={{ fontSize: 14, fontWeight: 700, color: FG, marginBottom: 4 }}>
+                    {Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 
+                      ? listing.languagesOffered.join(", ") 
+                      : (listing?.languages || "English")}
                   </p>
                   <p style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: M }}>Languages</p>
                 </div>
