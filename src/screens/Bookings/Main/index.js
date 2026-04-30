@@ -596,20 +596,37 @@ const Main = ({
   }, [transformedBookings, transformedCompletedBookings, completedCount]);
 
   const bookingsForTab = useMemo(() => {
+    let result = [];
     // For completed tab: merge server-side completed orders + date-overridden ones from regular bookings
     if (displayedTab === "completed") {
       const dateOverridden = transformedBookings.filter(
         (b) => b.statusTone === "completed"
       );
-      return [...dateOverridden, ...transformedCompletedBookings];
+      result = [...dateOverridden, ...transformedCompletedBookings];
+    } else {
+      // For upcoming and cancelled tabs, exclude date-overridden completed bookings
+      result = transformedBookings.filter((booking) => {
+        const tabId = booking.statusTone === "upcoming" ? "upcoming"
+          : booking.statusTone === "completed" ? null  // exclude — goes to completed tab
+          : "cancelled";
+        return tabId === displayedTab;
+      });
     }
 
-    // For upcoming and cancelled tabs, exclude date-overridden completed bookings
-    return transformedBookings.filter((booking) => {
-      const tabId = booking.statusTone === "upcoming" ? "upcoming"
-        : booking.statusTone === "completed" ? null  // exclude — goes to completed tab
-        : "cancelled";
-      return tabId === displayedTab;
+    // Sort by date descending to show latest bookings first
+    return [...result].sort((a, b) => {
+      const dateA = a.bookingData?.checkInDate || a.bookingData?.bookingDate || a.bookingData?.eventDate || "";
+      const dateB = b.bookingData?.checkInDate || b.bookingData?.bookingDate || b.bookingData?.eventDate || "";
+      
+      // If dates are different, sort by date descending
+      if (dateA !== dateB) {
+        return dateB.localeCompare(dateA);
+      }
+      
+      // Fallback to orderId descending for same-day bookings
+      const idA = parseInt(a.orderId) || 0;
+      const idB = parseInt(b.orderId) || 0;
+      return idB - idA;
     });
   }, [transformedBookings, transformedCompletedBookings, displayedTab]);
 
