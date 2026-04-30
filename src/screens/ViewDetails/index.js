@@ -583,38 +583,8 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     statusTone: status.toLowerCase(),
   };
 
-  // Extract guest requirements from listing data
-  if (listingData?.guestRequirements && Array.isArray(listingData.guestRequirements)) {
-    listingData.guestRequirements.forEach((gr) => {
-      const setting = gr?.setting;
-      if (!setting?.isActive || !Array.isArray(gr.questions)) return;
-
-      const title = setting.title || "";
-      const questions = gr.questions
-        .filter((q) => q?.question?.isActive)
-        .map((q) => q.question.title);
-
-      if (questions.length === 0) return;
-
-      // Categorize based on title keywords or specific IDs
-      const titleLower = title.toLowerCase();
-      const isGuestContext = 
-        titleLower.includes("bring") || 
-        titleLower.includes("requirement") || 
-        titleLower.includes("eligibility") ||
-        titleLower.includes("included") ||
-        [4, 6, 7, 18].includes(setting.settingId);
-
-      // Prepend the category title for better context in individual bullet points
-      const formattedQuestions = questions.map((q) => `${title}: ${q}`);
-
-      if (isGuestContext) {
-        result.notes.requirements.push(...formattedQuestions);
-      } else {
-        result.notes.hostInstructions.push(...formattedQuestions);
-      }
-    });
-  }
+  // Removed guest requirements and other host instructions from listingData.guestRequirements
+  // as per user request to only show Meeting Instructions.
 
   // Ensure meeting instructions are also included in host notes
   if (listingData?.meetingInstructions) {
