@@ -41,7 +41,13 @@ const asNonEmptyString = (value) => {
 };
 
 // Determine payment status mapping - handle case-insensitive matching
-const getPaymentStatus = (paymentStatus) => {
+const getPaymentStatus = (paymentStatus, orderStatus = "") => {
+  // If the order is confirmed or completed, payment must have been successful
+  const normalizedOrder = String(orderStatus).toUpperCase().trim();
+  if (normalizedOrder === "CONFIRMED" || normalizedOrder === "COMPLETED" || normalizedOrder === "SUCCESS") {
+    return "Success";
+  }
+
   if (!paymentStatus) return "Pending";
 
   // Normalize to uppercase for comparison
@@ -1601,7 +1607,7 @@ const ViewDetails = () => {
                 </div>
               )}
               <div className={cn(styles.paymentRow, styles.paymentTotal)}>
-                <span>Total Paid</span>
+                <span>{getPaymentStatus(booking.paymentStatus, booking.status) === "Success" ? "Total Paid" : "Total Amount"}</span>
                 <span>{booking.pricing.total}</span>
               </div>
               <div className={styles.paymentMethod}>
@@ -1609,10 +1615,10 @@ const ViewDetails = () => {
                 <span>Payment Status: </span>
                 <span className={cn(styles.paymentStatusBadge, {
                   [styles.paymentStatusFailed]: isPaymentFailed(booking.paymentStatus),
-                  [styles.paymentStatusPending]: getPaymentStatus(booking.paymentStatus) === "Pending",
-                  [styles.paymentStatusSuccess]: getPaymentStatus(booking.paymentStatus) === "Success",
+                  [styles.paymentStatusPending]: getPaymentStatus(booking.paymentStatus, booking.status) === "Pending",
+                  [styles.paymentStatusSuccess]: getPaymentStatus(booking.paymentStatus, booking.status) === "Success",
                 })}>
-                  {getPaymentStatus(booking.paymentStatus)}
+                  {getPaymentStatus(booking.paymentStatus, booking.status)}
                 </span>
               </div>
               {isPaymentFailed(booking.paymentStatus) && (
