@@ -252,7 +252,52 @@ const FullScreenImage = ({ src, onClose }) => {
   );
 };
 
+const EarlyBirdTicker = ({ discounts, A }) => {
+  const [index, setIndex] = useState(0);
 
+  useEffect(() => {
+    if (!discounts || discounts.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % discounts.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [discounts]);
+
+  if (!discounts || discounts.length === 0) return null;
+
+  return (
+    <div style={{ display: "grid", height: 15, alignItems: "center", overflow: "hidden" }}>
+      <AnimatePresence>
+        <motion.span
+          key={index}
+          initial={{ y: 15, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -15, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          style={{ 
+            gridArea: "1 / 1",
+            fontSize: 10, 
+            letterSpacing: "0.3em", 
+            textTransform: "uppercase", 
+            color: "#FFFFFF", 
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            display: "block"
+          }}
+        >
+          <span style={{ opacity: 0.7 }}>Book</span>{" "}
+          <span style={{ color: A, fontSize: 11, fontWeight: 900 }}>
+            {discounts[index].daysInAdvance} Days
+          </span>{" "}
+          <span style={{ opacity: 0.7 }}>Advance:</span>{" "}
+          <span style={{ color: "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+            {discounts[index].percentage}% OFF
+          </span>
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const ExperienceProduct = () => {
   const location = useLocation();
@@ -459,14 +504,7 @@ const ExperienceProduct = () => {
                 }}
               >
                 <Sparkles color={A} size={14} />
-                <span style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#FFFFFF", fontWeight: 800 }}>
-                  {(() => {
-                    const activeDiscounts = listing.earlyBirdDiscounts.filter(d => d.isActive);
-                    const minDays = Math.min(...activeDiscounts.map(d => d.daysInAdvance));
-                    const maxPercentage = Math.max(...activeDiscounts.map(d => d.percentage));
-                    return `Book ${minDays} Days Advance: ${maxPercentage}% Off`;
-                  })()}
-                </span>
+                <EarlyBirdTicker discounts={listing.earlyBirdDiscounts.filter(d => d.isActive).sort((a,b) => b.percentage - a.percentage)} A={A} />
               </motion.div>
             </motion.div>
           )}
