@@ -366,7 +366,9 @@ const FleetHome = () => {
                     onClick={() => setShowDatePicker(!showDatePicker)}
                     style={{ cursor: "pointer" }}
                   >
-                    <div className={styles.searchLabel}>Check-in</div>
+                    <div className={styles.searchLabel}>
+                      {activeFilter === "stays" ? "Check-in" : "Date"}
+                    </div>
                     <div className={styles.searchInput}>
                       {formattedDate}
                     </div>
