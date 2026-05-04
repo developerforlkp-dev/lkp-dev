@@ -1870,7 +1870,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
       <AnimatePresence>
         {show && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflow: "auto" }}>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1887,11 +1887,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 position: "relative",
                 width: "95%",
                 maxWidth: 850,
+                maxHeight: "calc(100vh - 40px)",
                 background: BG,
                 borderRadius: 32,
                 boxShadow: "0 40px 120px rgba(0,0,0,0.5)",
                 border: `1px solid ${B}`,
-                overflow: "hidden"
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column"
               }}
             >
               {/* Header */}
@@ -1931,6 +1934,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                   </button>
                 </div>
               </div>
+
+              <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
 
               {/* Closed state — all dates have passed */}
               {isExperienceClosed ? (
@@ -2249,8 +2254,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 <ShieldCheck size={14} />
                 <span>Secure payment processed by Little Known Planet</span>
               </div>
-              </>
+               </>
               )}
+              </div>
             </motion.div>
           </div>
         )}
