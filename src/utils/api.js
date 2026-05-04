@@ -899,6 +899,14 @@ export const submitOrderReview = async (orderId, reviewData) => {
       }
     }
 
+    // Pass stay check-in / check-out dates if provided (required by server for stay orders)
+    if (reviewData.checkInDate) {
+      requestBody.checkInDate = reviewData.checkInDate;
+    }
+    if (reviewData.checkOutDate) {
+      requestBody.checkOutDate = reviewData.checkOutDate;
+    }
+
     console.log("📤 Submitting review with request body:", requestBody);
 
     const response = await ListingsAPI.post(`/reviews`, requestBody);

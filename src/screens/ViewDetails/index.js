@@ -635,7 +635,10 @@ const ViewDetails = () => {
 
   // Receipt state
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
-  const isCompletedOrder = String(booking?.originalData?.orderStatus || "").toUpperCase() === "COMPLETED";
+  // Also treat as completed if the transformed status is "Completed" (checkout date has passed)
+  const isCompletedOrder =
+    String(booking?.originalData?.orderStatus || "").toUpperCase() === "COMPLETED" ||
+    booking?.status === "Completed";
   const canLeaveReview = booking?.orderId != null && orderIdsEligibleForReview.has(Number(booking.orderId));
 
   const handleCancelBookingClick = () => {
@@ -1174,6 +1177,9 @@ const ViewDetails = () => {
         comment: reviewText,
         listingId: listingId,
         customerId: customerId,
+        // Pass raw stay dates so the server can validate the review is post-checkout
+        checkInDate: booking.originalData?.checkInDate || null,
+        checkOutDate: booking.originalData?.checkOutDate || null,
       });
 
       setOrderIdsEligibleForReview((prev) => {
@@ -1722,6 +1728,29 @@ const ViewDetails = () => {
               </div>
             ) : (
               <form className={styles.reviewForm} onSubmit={handleReviewSubmit}>
+                {/* Show stay check-in / check-out dates as context */}
+                {(() => {
+                  const isStayReview =
+                    booking.originalData?.stayId != null ||
+                    booking.originalData?.checkInDate != null ||
+                    booking.originalData?.checkOutDate != null ||
+                    (Array.isArray(booking.originalData?.stayOrderRooms) && booking.originalData.stayOrderRooms.length > 0);
+                  if (!isStayReview) return null;
+                  return (
+                    <div className={styles.reviewStayDates}>
+                      {booking.startDate && (
+                        <span>
+                          <strong>Check-in:</strong> {booking.startDate}
+                        </span>
+                      )}
+                      {booking.endDate && booking.endDate !== booking.startDate && (
+                        <span>
+                          <strong>Check-out:</strong> {booking.endDate}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className={styles.reviewFormHead}>
                   <div className={styles.reviewFormText}>
                     Share your experience with <span>{booking.title}</span>
