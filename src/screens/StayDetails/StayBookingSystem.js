@@ -289,6 +289,51 @@ const StayBookingSystem = ({
     };
   }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount]);
 
+  const blockedDateKeys = useMemo(() => {
+    const ranges = stay?.bookedDateRanges || stay?.stay?.bookedDateRanges || [];
+    if (!Array.isArray(ranges) || ranges.length === 0) return new Set();
+
+    const normalizeId = (value) => {
+      if (value === null || value === undefined) return "";
+      const raw = String(value).trim();
+      if (!raw) return "";
+      const numeric = Number(raw);
+      return Number.isFinite(numeric) ? String(numeric) : raw.toLowerCase();
+    };
+
+    const isPropertyBased = stay?.bookingScope === "Property-Based" || stay?.bookingScope === "Property Based";
+    const selectedRoomIds = new Set(
+      (selectedRooms || [])
+        .map((r) => normalizeId(r?.roomId ?? r?.room_id ?? r?.roomTypeId ?? r?.room_type_id ?? r?.id))
+        .filter(Boolean)
+    );
+
+    const keys = new Set();
+    ranges.forEach((range) => {
+      const rangeRoomId = normalizeId(range?.roomId ?? range?.room_id ?? range?.roomTypeId ?? range?.room_type_id ?? range?.id);
+      if (!isPropertyBased) {
+        if (selectedRoomIds.size === 0) return;
+        if (!rangeRoomId || !selectedRoomIds.has(rangeRoomId)) return;
+      }
+
+      const start = moment(range?.checkInDate || range?.check_in_date || range?.startDate || range?.start_date);
+      const end = moment(range?.checkOutDate || range?.check_out_date || range?.endDate || range?.end_date);
+      if (!start.isValid() || !end.isValid()) return;
+
+      // Block occupied nights: [check-in, checkout)
+      const cursor = start.clone().startOf("day");
+      const endDay = end.clone().startOf("day");
+      while (cursor.isBefore(endDay, "day")) {
+        keys.add(cursor.format("YYYY-MM-DD"));
+        cursor.add(1, "day");
+      }
+    });
+
+    return keys;
+  }, [stay, selectedRooms]);
+
+  const isBlockedDay = (day) => blockedDateKeys.has(moment(day).format("YYYY-MM-DD"));
+
   const handleReserve = async () => {
     if (!checkInDate || !checkOutDate) {
       alert("Please select your stay dates.");
@@ -641,6 +686,10 @@ const StayBookingSystem = ({
                       plain
                       withPortal
                       displayFormat="DD/MM/YYYY"
+                      isOutsideRange={(day) => {
+                        const today = moment().startOf('day');
+                        return day.isBefore(today, 'day') || isBlockedDay(day);
+                      }}
                     />
                   </div>
                   {/* Check Out */}
@@ -655,11 +704,13 @@ const StayBookingSystem = ({
                       displayFormat="DD/MM/YYYY"
                       isOutsideRange={(day) => {
                         const today = moment().startOf('day');
+                        if (day.isBefore(today, 'day')) return true;
+                        if (isBlockedDay(day)) return true;
                         if (checkInDate) {
                           // Disable check-in day and everything before it
                           return !day.isAfter(checkInDate, 'day');
                         }
-                        return day.isBefore(today, 'day');
+                        return false;
                       }}
                     />
                   </div>
