@@ -18,7 +18,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../components/JUI/Theme";
 import { createEventOrder, getEventDetails, getEventReviews, getEligibleBookings, getListingReviews } from "../../utils/api";
 import Modal from "../../components/Modal";
-import Login from "../../components/Login";
+import LoginPromptModal from "../../components/LoginPromptModal";
+
 import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 
 const asNonEmptyString = (value) => {
@@ -541,7 +542,7 @@ const EventProduct = () => {
   const [showTicketTypePicker, setShowTicketTypePicker] = useState(false);
   const ticketTypeItemRef = useRef(null);
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const autoCheckoutTriggeredRef = useRef(false);
   const handleBookNowRef = useRef(null);
   const [bookButtonArmed, setBookButtonArmed] = useState(Boolean(checkoutAfterGuestSelection));
@@ -925,7 +926,7 @@ const EventProduct = () => {
     if (bookingLoading) return;
 
     if (!hasValidJwtToken()) {
-      setShowLoginModal(true);
+      setShowLoginPrompt(true);
       return;
     }
 
@@ -1157,7 +1158,7 @@ const EventProduct = () => {
       console.error("❌ Event booking failed:", e?.response?.data || e?.message || e);
       const status = e?.response?.status;
       if (status === 401 || status === 403) {
-        setShowLoginModal(true);
+        setShowLoginPrompt(true);
         return;
       }
       const errorMessage = e?.response?.data?.message || e?.response?.data?.error || e?.message || "Booking failed. Please try again.";
@@ -1199,7 +1200,7 @@ const EventProduct = () => {
     ) : null;
   }
 
-  if (checkoutAfterGuestSelection && bookingLoading && !showLoginModal) {
+  if (checkoutAfterGuestSelection && bookingLoading && !showLoginPrompt) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
         <Loader />
@@ -1209,9 +1210,7 @@ const EventProduct = () => {
 
   return (
     <div className={styles.eventProduct}>
-      <Modal visible={showLoginModal} onClose={() => setShowLoginModal(false)}>
-        <Login onClose={() => setShowLoginModal(false)} />
-      </Modal>
+      <LoginPromptModal visible={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
       {error && (
         <div style={{ padding: "1rem", textAlign: "center", backgroundColor: "#fee", color: "#c33" }}>
           <p>⚠️ {error}</p>
