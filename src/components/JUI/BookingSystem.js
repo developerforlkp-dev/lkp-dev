@@ -1295,10 +1295,17 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const rawBaseTotal = !isEventBooking
     ? (baseAdultPricePerPerson * guests.adults) + (baseChildPricePerChild * guests.children)
     : baseTotal;
-  const finalTotal = baseTotal + addOnsTotal;
+  const activeGuestPricing = isEventBooking ? eventGuestPricing : experienceGuestPricing;
+  const appliedDiscountRate = activeGuestPricing?.discountRate ?? 0;
+  const appliedTaxRate = activeGuestPricing?.customerTaxRate ?? 0;
+  const subtotalBeforeAdjustments = rawBaseTotal + addOnsTotal;
+  const totalDiscountAmount = subtotalBeforeAdjustments * (appliedDiscountRate / 100);
+  const taxableSubtotal = Math.max(0, subtotalBeforeAdjustments - totalDiscountAmount);
+  const totalTaxAmount = taxableSubtotal * (appliedTaxRate / 100);
+  const finalTotal = taxableSubtotal + totalTaxAmount;
   const eventBaseTotal = eventGuestPricing.baseUnitPrice * totalGuests;
-  const eventDiscountTotal = eventGuestPricing.discountAmount * totalGuests;
-  const eventTaxTotal = eventGuestPricing.taxAmount * totalGuests;
+  const eventDiscountTotal = totalDiscountAmount;
+  const eventTaxTotal = totalTaxAmount;
 
   const clampGuestsToSeatLimit = useCallback((nextGuests) => {
     if (bookingGuestLimit === undefined) return nextGuests;
@@ -1508,9 +1515,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             pricePerPerson: eventGuestPricing.finalUnitPrice,
             basePrice: eventBaseTotal,
             discount: eventDiscountTotal,
-            discountRate: eventGuestPricing.discountRate,
+            discountRate: appliedDiscountRate,
             tax: eventTaxTotal,
-            taxRate: eventGuestPricing.customerTaxRate,
+            taxRate: appliedTaxRate,
+            addonsTotal: addOnsTotal,
+            subtotal: subtotalBeforeAdjustments,
             total: finalTotal,
             guestCount: totalGuests,
           },
@@ -1650,14 +1659,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         adultBasePricePerPerson: baseAdultPricePerPerson,
         childPricePerChild: hasChildPricing ? effectiveChildPrice : 0,
         baseChildPricePerChild,
-        discount: (experienceGuestPricing?.discountAmount ?? 0) * guests.adults
-          + (childGuestPricing ? (childGuestPricing.discountAmount * guests.children) : 0),
-        discountRate: experienceGuestPricing?.discountRate ?? 0,
-        tax: (experienceGuestPricing?.taxAmount ?? 0) * guests.adults
-          + (childGuestPricing ? (childGuestPricing.taxAmount * guests.children) : 0),
-        taxRate: experienceGuestPricing?.customerTaxRate ?? 0,
+        discount: totalDiscountAmount,
+        discountRate: appliedDiscountRate,
+        tax: totalTaxAmount,
+        taxRate: appliedTaxRate,
         addonsTotal: addOnsTotal,
-        subtotal: rawBaseTotal + addOnsTotal,
+        subtotal: subtotalBeforeAdjustments,
         total: finalTotal,
         guestCount: totalGuests,
       },
