@@ -330,6 +330,8 @@ const EventProduct = () => {
   const checkoutAfterGuestSelection = Boolean(location?.state?.checkoutAfterGuestSelection);
 
   const [event, setEvent] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewSummary, setReviewSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -550,6 +552,14 @@ const EventProduct = () => {
 
         if (!mounted) return;
         setEvent(normalizedEvent);
+
+        // Fetch reviews for the event listing
+        getListingReviews(eventId).then(resp => {
+          if (mounted && resp) {
+            if (resp.reviews) setReviews(resp.reviews);
+            if (resp.summary) setReviewSummary(resp.summary);
+          }
+        }).catch(e => console.warn("Error fetching event reviews:", e));
       } catch (e) {
         if (!mounted) return;
         const status = e?.response?.status;

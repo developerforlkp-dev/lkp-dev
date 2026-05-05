@@ -257,7 +257,52 @@ const FullScreenImage = ({ src, onClose }) => {
   );
 };
 
+const EarlyBirdTicker = ({ discounts, A }) => {
+  const [index, setIndex] = useState(0);
 
+  useEffect(() => {
+    if (!discounts || discounts.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % discounts.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [discounts]);
+
+  if (!discounts || discounts.length === 0) return null;
+
+  return (
+    <div style={{ display: "grid", height: 15, alignItems: "center", overflow: "hidden" }}>
+      <AnimatePresence>
+        <motion.span
+          key={index}
+          initial={{ y: 15, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -15, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          style={{ 
+            gridArea: "1 / 1",
+            fontSize: 10, 
+            letterSpacing: "0.3em", 
+            textTransform: "uppercase", 
+            color: "#FFFFFF", 
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            display: "block"
+          }}
+        >
+          <span style={{ opacity: 0.7 }}>Book</span>{" "}
+          <span style={{ color: A, fontSize: 11, fontWeight: 900 }}>
+            {discounts[index].daysInAdvance} Days
+          </span>{" "}
+          <span style={{ opacity: 0.7 }}>Advance:</span>{" "}
+          <span style={{ color: "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+            {discounts[index].percentage}% OFF
+          </span>
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const ExperienceProduct = () => {
   const location = useLocation();
@@ -429,6 +474,15 @@ const ExperienceProduct = () => {
           if (leadId) {
             getLeadDetails(leadId).then(resp => mounted && setLeadData(resp)).catch(e => console.warn(e));
           }
+
+          // Fetch reviews for the listing
+          getListingReviews(id).then(resp => {
+            if (mounted && resp) {
+              if (resp.reviews) setReviews(resp.reviews);
+              if (resp.summary) setReviewSummary(resp.summary);
+            }
+          }).catch(e => console.warn("Error fetching reviews:", e));
+
           setLoading(false);
         }
       } catch (e) {
@@ -505,14 +559,7 @@ const ExperienceProduct = () => {
                 }}
               >
                 <Sparkles color={A} size={14} />
-                <span style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#FFFFFF", fontWeight: 800 }}>
-                  {(() => {
-                    const activeDiscounts = listing.earlyBirdDiscounts.filter(d => d.isActive);
-                    const minDays = Math.min(...activeDiscounts.map(d => d.daysInAdvance));
-                    const maxPercentage = Math.max(...activeDiscounts.map(d => d.percentage));
-                    return `Book ${minDays} Days Advance: ${maxPercentage}% Off`;
-                  })()}
-                </span>
+                <EarlyBirdTicker discounts={listing.earlyBirdDiscounts.filter(d => d.isActive).sort((a,b) => b.percentage - a.percentage)} A={A} />
               </motion.div>
             </motion.div>
           )}
@@ -1059,8 +1106,8 @@ function PolicyItem({ req }) {
   );
 }
 
-function ReviewsItem({ reviews }) {
-  const { tokens: { FG, A, M, AL, B, W } } = useTheme();
+function ReviewsItem({ reviews, summary }) {
+  const { tokens: { FG, A, M, AL, B, W, AH } } = useTheme();
   const [op, setOp] = useState(false);
 
   const normalizedReviews = useMemo(() => {
@@ -1070,6 +1117,9 @@ function ReviewsItem({ reviews }) {
     if (Array.isArray(reviews?.data)) return reviews.data;
     return [];
   }, [reviews]);
+  const avgRating = summary?.averageRating || 0;
+  const totalReviews = summary?.totalReviews || reviews.length;
+  const ratingDisplay = avgRating > 0 ? avgRating.toFixed(1) : (reviews.length > 0 ? "5.0" : "0.0");
 
   return (
     <motion.div
@@ -1090,8 +1140,16 @@ function ReviewsItem({ reviews }) {
         }}
       >
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, display: "block", marginBottom: 4, transition: "color 0.3s" }}>Reviews</span>
-          <p style={{ fontSize: 13, color: M, margin: 0 }}>{normalizedReviews.length} guests shared their experience</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: op ? A : FG, transition: "color 0.3s" }}>Reviews</span>
+            {avgRating > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: AL, padding: "2px 8px", borderRadius: 100 }}>
+                <Star size={10} color={A} fill={A} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: A }}>{ratingDisplay}</span>
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: 13, color: M, margin: 0 }}>{totalReviews} {totalReviews === 1 ? 'guest' : 'guests'} shared their experience</p>
         </div>
         <motion.div
           animate={{ rotate: op ? 180 : 0 }}
@@ -1427,7 +1485,7 @@ function QualityIndexSection({ qualityIndex }) {
 }
 
 
-function ExperiencePolicies({ listing, reviews }) {
+function ExperiencePolicies({ listing, reviews, reviewSummary }) {
   const { tokens: { FG, W, B, A, M } } = useTheme();
 
   return (
@@ -1470,16 +1528,17 @@ function ExperiencePolicies({ listing, reviews }) {
               ) : (
                 <p style={{ color: M, fontSize: 14, padding: "40px 0" }}>No specific requirements listed for this experience.</p>
               )}
-              {(listing?.cancellationPolicyText || listing?.cancellationPolicy) && (
+              {(listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) && (
                 <PolicyItem
                   req={{
                     setting: {
                       title: "Cancellation Policy",
-                      description: listing.cancellationPolicyText || listing.cancellationPolicy
+                      description: listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy
                     }
                   }}
                 />
               )}
+              <ReviewsItem reviews={reviews} summary={reviewSummary} />
             </div>
           </Rev>
         </div>
