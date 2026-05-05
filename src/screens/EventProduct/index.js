@@ -16,7 +16,7 @@ import { useLocation, useHistory } from "react-router-dom";
 import { ChevronLeft, ChevronDown, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../components/JUI/Theme";
-import { createEventOrder, getEventDetails } from "../../utils/api";
+import { createEventOrder, getEventDetails, getEventReviews, getEligibleBookings } from "../../utils/api";
 import Modal from "../../components/Modal";
 import Login from "../../components/Login";
 import PhotoView from "../../components/PhotoView";
@@ -351,6 +351,8 @@ const EventProduct = () => {
   const autoCheckoutTriggeredRef = useRef(false);
   const handleBookNowRef = useRef(null);
   const [bookButtonArmed, setBookButtonArmed] = useState(Boolean(checkoutAfterGuestSelection));
+  const [reviews, setReviews] = useState([]);
+  const [eligibleBookings, setEligibleBookings] = useState([]);
 
   const hasValidJwtToken = () => {
     if (typeof window === "undefined") return false;
@@ -372,6 +374,19 @@ const EventProduct = () => {
           setEvent(dummyEventData);
           return;
         }
+
+        // Pass the full raw response – CommentsProduct handles both shapes:
+        getEventReviews(eventId).then(data => {
+          if (mounted) setReviews(data ?? []);
+        }).catch(e => console.warn("❌ Error in EventProduct reviews:", e));
+        getEligibleBookings().then(data => {
+          if (mounted) {
+            const list = Array.isArray(data) ? data : [];
+            const filtered = list.filter(b => String(b.eventId) === String(eventId));
+            setEligibleBookings(filtered);
+            console.log(`✅ Event review eligibility: ${filtered.length} eligible bookings found`);
+          }
+        }).catch(e => console.warn("❌ Error fetching event eligibility:", e));
 
         const payload = await getEventDetails(eventId);
 
@@ -579,12 +594,12 @@ const EventProduct = () => {
     if (!timeStr || typeof timeStr !== "string") return timeStr;
     const match = timeStr.trim().match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
     if (!match) return moment(timeStr, "HH:mm").format("h:mm A");
-    
+
     const hours = parseInt(match[1], 10);
     const minutes = match[2];
     const ampm = hours >= 12 ? "PM" : "AM";
     const hour12 = hours % 12 || 12;
-    
+
     return `${hour12}:${minutes} ${ampm}`;
   };
 
@@ -1441,6 +1456,18 @@ const EventProduct = () => {
               info={event.description}
               socials={socials}
               buttonText="Contact Organizer"
+              reviews={reviews}
+              listingId={eventId}
+              type="event"
+              eligibleBookings={eligibleBookings}
+              onReviewSubmitted={async () => {
+                const data = await getEventReviews(eventId);
+                setReviews(data ?? []);
+                // Refresh eligibility too
+                const eligible = await getEligibleBookings();
+                const list = Array.isArray(eligible) ? eligible : [];
+                setEligibleBookings(list.filter(b => String(b.eventId) === String(eventId)));
+              }}
             />
           </div>
         </div>
