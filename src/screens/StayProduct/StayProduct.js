@@ -198,6 +198,55 @@ const BookingSidebar = ({
     stay?.roomTypes?.length > 0 ||
     availableRooms?.length > 0
   );
+  const stayDisabledDateKeys = useMemo(() => {
+    if (!stay) return [];
+    const ranges = stay?.bookedDateRanges || [];
+    if (!Array.isArray(ranges) || ranges.length === 0) return [];
+
+    const normalizeId = (value) => {
+      if (value === null || value === undefined) return "";
+      const raw = String(value).trim();
+      if (!raw) return "";
+      const numeric = Number(raw);
+      return Number.isFinite(numeric) ? String(numeric) : raw.toLowerCase();
+    };
+    const selectedRoomId = normalizeId(
+      selectedRoom?.roomId ??
+      selectedRoom?.room_id ??
+      selectedRoom?.roomTypeId ??
+      selectedRoom?.room_type_id ??
+      selectedRoom?.id ??
+      selectedRoom?.code
+    );
+    const keys = new Set();
+
+    ranges.forEach((range) => {
+      const rangeRoomId = normalizeId(
+        range?.roomId ??
+        range?.room_id ??
+        range?.roomTypeId ??
+        range?.room_type_id ??
+        range?.id
+      );
+      if (!isPropertyBased) {
+        if (!selectedRoomId) return;
+        if (!rangeRoomId || rangeRoomId !== selectedRoomId) return;
+      }
+
+      const start = moment(range?.checkInDate || range?.check_in_date || range?.startDate || range?.start_date);
+      const end = moment(range?.checkOutDate || range?.check_out_date || range?.endDate || range?.end_date);
+      if (!start.isValid() || !end.isValid()) return;
+
+      const cursor = start.clone().startOf("day");
+      const endDay = end.clone().startOf("day");
+      while (cursor.isBefore(endDay, "day")) {
+        keys.add(cursor.format("YYYY-MM-DD"));
+        cursor.add(1, "day");
+      }
+    });
+
+    return Array.from(keys);
+  }, [stay, isPropertyBased, selectedRoom]);
 
   // ─── Price resolution ────────────────────────────────────────────────────
   // For property-based: use fullPropertyB2cPrice.
@@ -501,6 +550,7 @@ const BookingSidebar = ({
               selectedDate={activeDateField === "checkout" ? checkOutDate : checkInDate}
               timeSlots={[]}
               availabilityData={[]}
+              disabledDateKeys={stayDisabledDateKeys}
               className={styles.stayDatePicker}
             />
           </div>
@@ -1961,3 +2011,4 @@ const StayProduct = () => {
 };
 
 export default StayProduct;
+

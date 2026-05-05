@@ -486,6 +486,56 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
     );
   }, [availabilityData, selectedTimeSlotData, selectedTimeSlot]);
 
+  const stayDisabledDateKeys = useMemo(() => {
+    if (!isStay) return [];
+    const ranges = listing?.bookedDateRanges || listing?.stay?.bookedDateRanges || [];
+    if (!Array.isArray(ranges) || ranges.length === 0) return [];
+
+    const normalizeId = (value) => {
+      if (value === null || value === undefined) return "";
+      const raw = String(value).trim();
+      if (!raw) return "";
+      const numeric = Number(raw);
+      return Number.isFinite(numeric) ? String(numeric) : raw.toLowerCase();
+    };
+    const selectedRoomId = normalizeId(staySelectedRoomType);
+    const normalizeDateKey = (value) => {
+      if (!value) return null;
+      const d = moment(value);
+      return d.isValid() ? d.format("YYYY-MM-DD") : null;
+    };
+
+    const keys = new Set();
+    ranges.forEach((range) => {
+      const rangeRoomId = normalizeId(
+        range?.roomId ??
+        range?.room_id ??
+        range?.roomTypeId ??
+        range?.room_type_id ??
+        range?.id
+      );
+      // Room-based: only block dates for selected room.
+      if (!isPropertyBased) {
+        if (!selectedRoomId) return;
+        if (!rangeRoomId || rangeRoomId !== selectedRoomId) return;
+      }
+
+      const startKey = normalizeDateKey(range?.checkInDate || range?.check_in_date || range?.startDate || range?.start_date);
+      const endKey = normalizeDateKey(range?.checkOutDate || range?.check_out_date || range?.endDate || range?.end_date);
+      if (!startKey || !endKey) return;
+
+      // Block occupied nights: [check-in, checkout)
+      let cursor = moment(startKey, "YYYY-MM-DD");
+      const end = moment(endKey, "YYYY-MM-DD");
+      while (cursor.isBefore(end, "day")) {
+        keys.add(cursor.format("YYYY-MM-DD"));
+        cursor = cursor.add(1, "day");
+      }
+    });
+
+    return Array.from(keys);
+  }, [isStay, isPropertyBased, listing, staySelectedRoomType]);
+
   // Get availability data for selected date and slot
   const selectedDateAvailability = useMemo(() => {
     if (!selectedDate) return null;
@@ -2896,6 +2946,7 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
                           selectedDate={selectedDate ? selectedDate.toDate().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : null}
                           timeSlots={transformedTimeSlots.length > 0 ? transformedTimeSlots : (listing?.timeSlots || [])}
                           availabilityData={filteredAvailabilityData}
+                          disabledDateKeys={stayDisabledDateKeys}
                         />
                       </div>
                     );
@@ -2924,6 +2975,7 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
                             selectedDate={selectedEndDate ? selectedEndDate.toDate().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : null}
                             timeSlots={transformedTimeSlots.length > 0 ? transformedTimeSlots : (listing?.timeSlots || [])}
                             availabilityData={filteredAvailabilityData}
+                            disabledDateKeys={stayDisabledDateKeys}
                           />
                         </div>
                       );
