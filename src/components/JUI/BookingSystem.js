@@ -9,6 +9,8 @@ import { Rev, Chars } from "./UI";
 import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots } from "../../utils/api";
+import LoginPromptModal from "../LoginPromptModal";
+
 
 const asNumber = (value) => {
   const parsed = Number(value);
@@ -927,6 +929,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState("");
   const [privateBooking, setPrivateBooking] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   
 
   const isEventBooking = type === "event";
@@ -1367,6 +1371,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     : undefined;
 
   const handleReserve = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("jwtToken");
+    const isLoggedIn = !!token && token !== "undefined" && token !== "null";
+    if (!isLoggedIn) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     if (!startDate) return;
     if (!isEventBooking && guestSeatLimit !== undefined && totalGuests > guestSeatLimit) {
       alert(`Only ${guestSeatLimit} seat${guestSeatLimit === 1 ? "" : "s"} available for this slot.`);
@@ -2280,6 +2292,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           </div>
         )}
       </AnimatePresence>
+      <LoginPromptModal
+        visible={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </>
   );
 }
