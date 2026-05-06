@@ -258,7 +258,7 @@ const Login = ({ onClose }) => {
               onError={() => {
                 setError("Google login failed. Please try again.");
               }}
-              useOneTap
+
               theme="outline"
               size="large"
               width="310" // Approximate width to match button
