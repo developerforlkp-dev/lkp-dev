@@ -1092,48 +1092,67 @@ const Main = ({
                           <span className={styles.category}>
                             {booking.category}
                           </span>
-                          {(booking.bookingData?.totalAmount === 0 || booking.bookingData?.totalPrice === 0 || !booking.bookingData?.paymentMethod) && (
-                            <>
-                              <span className={styles.dot} aria-hidden="true">
-                                •
-                              </span>
-                              <span className={styles.category} style={{ color: "#4584FF" }}>
-                                Free Reservation
-                              </span>
-                            </>
-                          )}
-                          {booking.bookingData?.orderStatus && (
-                            <>
-                              <span className={styles.dot} aria-hidden="true">
-                                •
-                              </span>
-                              <span style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                padding: "4px 8px",
-                                borderRadius: "12px",
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                lineHeight: "1",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                                backgroundColor: (booking.status === "Completed" || displayedTab === "completed") ? "#E3F2FD" :
-                                                 (booking.bookingData.orderStatus === "CONFIRMED" || ((booking.bookingData?.totalAmount === 0 || booking.bookingData?.totalPrice === 0 || !booking.bookingData?.paymentMethod) && booking.bookingData.orderStatus === "PENDING")) ? "#E8F5E9" :
-                                                 booking.bookingData.orderStatus === "PENDING"   ? "#FFF3E0" :
-                                                 booking.bookingData.orderStatus === "CANCELLED" ? "#FFEBEE" : "#F3F4F6",
-                                color: (booking.status === "Completed" || displayedTab === "completed") ? "#1565C0" :
-                                       (booking.bookingData.orderStatus === "CONFIRMED" || ((booking.bookingData?.totalAmount === 0 || booking.bookingData?.totalPrice === 0 || !booking.bookingData?.paymentMethod) && booking.bookingData.orderStatus === "PENDING")) ? "#2E7D32" :
-                                       booking.bookingData.orderStatus === "PENDING"   ? "#E65100" :
-                                       booking.bookingData.orderStatus === "CANCELLED" ? "#C62828" : "#6B7280",
-                              }}>
-                                {(booking.status === "Completed" || displayedTab === "completed") ? "COMPLETED" : (
-                                  ((booking.bookingData?.totalAmount === 0 || booking.bookingData?.totalPrice === 0 || !booking.bookingData?.paymentMethod) && booking.bookingData.orderStatus === "PENDING")
-                                  ? "CONFIRMED"
-                                  : booking.bookingData.orderStatus
-                                )}
-                              </span>
-                            </>
-                          )}
+                          {(() => {
+                            const bData = booking.bookingData;
+                            const isFree = bData?.totalAmount === 0 || bData?.totalPrice === 0 || !bData?.paymentMethod;
+                            const orderStatus = bData?.orderStatus;
+                            const isCompleted = booking.status === "Completed" || displayedTab === "completed";
+                            
+                            let tagLabel = "";
+                            let tagColor = "";
+                            let tagBg = "";
+                            
+                            if (isCompleted) {
+                              tagLabel = "COMPLETED";
+                              tagColor = "#1565C0";
+                              tagBg = "#E3F2FD";
+                            } else if (orderStatus === "CANCELLED") {
+                              tagLabel = "CANCELLED";
+                              tagColor = "#C62828";
+                              tagBg = "#FFEBEE";
+                            } else if (orderStatus === "PENDING") {
+                              tagLabel = "PENDING";
+                              tagColor = "#E65100";
+                              tagBg = "#FFF3E0";
+                            } else if (isFree) {
+                              tagLabel = "Free Reservation";
+                              tagColor = "#4584FF";
+                              tagBg = "#E3F2FD";
+                            } else if (orderStatus === "CONFIRMED" || orderStatus === "SUCCESS") {
+                              tagLabel = "CONFIRMED";
+                              tagColor = "#2E7D32";
+                              tagBg = "#E8F5E9";
+                            } else if (orderStatus) {
+                              tagLabel = orderStatus;
+                              tagColor = "#6B7280";
+                              tagBg = "#F3F4F6";
+                            }
+
+                            if (!tagLabel) return null;
+
+                            return (
+                              <>
+                                <span className={styles.dot} aria-hidden="true">
+                                  •
+                                </span>
+                                <span style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  padding: "4px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  lineHeight: "1",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.5px",
+                                  backgroundColor: tagBg,
+                                  color: tagColor,
+                                }}>
+                                  {tagLabel}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
                         <h2 className={styles.cardTitle}>{booking.title}</h2>
                         {booking.rating > 0 && (
