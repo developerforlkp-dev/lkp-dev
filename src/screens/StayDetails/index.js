@@ -659,8 +659,6 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
         cancelItems.push({ id: 'cancel-1', title: "Summary", body: stay?.generatedPolicySummary || stay?.policySummary });
       } else if (stay?.cancellationPolicy || stay?.cancellationPolicyText) {
         cancelItems.push({ id: 'cancel-1', title: "Terms", body: stay.cancellationPolicy || stay.cancellationPolicyText });
-      } else {
-        cancelItems.push({ id: 'cancel-1', title: "Terms", body: "Cancellations made within 7 days of arrival are subject to a 100% penalty." });
       }
     }
     if (cancelItems.length > 0) {
