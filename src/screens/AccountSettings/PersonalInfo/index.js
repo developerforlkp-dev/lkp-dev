@@ -134,11 +134,6 @@ const PersonalInfo = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("jwtToken");
-    history.push("/");
-    window.location.reload();
-  };
 
   if (loading) {
     return (
@@ -152,14 +147,6 @@ const PersonalInfo = () => {
     <form className={styles.section} onSubmit={handleSubmit}>
       <div className={styles.head}>
         <div className={cn("h2", styles.title)}>Personal info</div>
-        <button
-          type="button"
-          className={cn("button-stroke button-small", styles.button)}
-          onClick={handleLogout}
-        >
-          <Icon name="close-circle" size="16" />
-          <span>Logout</span>
-        </button>
       </div>
 
       <div className={styles.avatarSection}>
