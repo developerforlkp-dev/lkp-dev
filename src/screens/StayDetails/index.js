@@ -96,10 +96,19 @@ const ScopedStyles = () => (
       animation: shimmer 3s infinite linear;
     }
     @keyframes shimmer { from { transform: translate(-50%,-50%) rotate(45deg); } to { transform: translate(50%,50%) rotate(45deg); } }
+    @keyframes propertyCoverShimmer {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(120%); }
+    }
+    @keyframes propertyCoverFloat {
+      0%, 100% { transform: scale(1) translateY(0px); }
+      50% { transform: scale(1.015) translateY(-2px); }
+    }
 
     @media(max-width:768px){
       .stay-details-premium .desk-only { display: none !important; }
       .pol-contact-grid, .amenities-grid, .location-grid, .reviews-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+      .property-stay-card { grid-template-columns: 1fr !important; }
       .stay-details-premium #cur-dot, .stay-details-premium #cur-ring { display: none !important; }
       .stay-details-premium { cursor: auto !important; }
       .stay-details-premium a, .stay-details-premium button { cursor: pointer !important; }
@@ -869,12 +878,12 @@ const StayDetails = () => {
           console.log("🏨 STAY FULL PAYLOAD:", JSON.stringify(data, null, 2));
           const galleryImages = [];
           const cover = data.coverPhotoUrl || data.coverImageUrl || data.coverPhoto || data.coverImage || data.cover;
-          if (cover) galleryImages.push(formatImageUrl(cover));
+          if (cover) galleryImages.push(fixImageUrl(cover));
 
           const collect = (arr) => {
             if (Array.isArray(arr)) arr.forEach(m => {
               const u = typeof m === "string" ? m : m?.url ?? m?.src ?? m?.imageUrl;
-              if (u) galleryImages.push(formatImageUrl(u));
+              if (u) galleryImages.push(fixImageUrl(u));
             });
           };
           collect(data.media); collect(data.images); collect(data.stayMedia);
@@ -915,8 +924,23 @@ const StayDetails = () => {
 
   const hostAvatar = useMemo(() => {
     const avatarUrl = hostData?.host?.profilePhotoUrl || hostData?.host?.profilePhoto || stay?.host?.profilePhotoUrl || stay?.host?.profilePhoto;
-    return avatarUrl ? formatImageUrl(avatarUrl) : null;
+    return avatarUrl ? fixImageUrl(avatarUrl) : null;
   }, [hostData, stay]);
+
+  const hasRoomInventory = useMemo(() => {
+    const rooms = stay?.rooms || stay?.roomTypes || stay?.room_types || stay?.stay?.rooms || [];
+    return Array.isArray(rooms) && rooms.length > 0;
+  }, [stay]);
+
+  const isPropertyBasedStay = useMemo(() => {
+    const scope = String(
+      stay?.bookingScope ||
+      stay?.booking_scope ||
+      stay?.scope ||
+      ""
+    ).toUpperCase();
+    return scope.includes("PROPERTY") || !hasRoomInventory;
+  }, [stay, hasRoomInventory]);
 
   if (loading && !stay) {
     return (
@@ -944,6 +968,9 @@ const StayDetails = () => {
           <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
             Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
           </p>
+          {isPropertyBasedStay && (
+            <PropertyStayCard stay={stay} />
+          )}
           <RoomCards
             listing={stay}
             onRoomSelect={handleRoomSelect}
@@ -999,6 +1026,229 @@ const StayDetails = () => {
     </div>
   );
 };
+
+function PropertyStayCard({ stay }) {
+  const { tokens: { FG, M, B, W, S, A } } = useTheme();
+  const [coverLoaded, setCoverLoaded] = useState(false);
+  const [isHoveringCover, setIsHoveringCover] = useState(false);
+  const toDateOnly = (value) => {
+    if (!value) return null;
+    const m = moment(value, ["YYYY-MM-DD", moment.ISO_8601], true);
+    return m.isValid() ? m.startOf("day") : null;
+  };
+  const formatTime12h = (value, fallback = "") => {
+    if (!value) return fallback;
+    const raw = String(value).trim();
+    const parsed = moment(raw, ["HH:mm:ss", "HH:mm", "h:mm A", "h:mmA"], true);
+    if (!parsed.isValid()) return raw;
+    return parsed.format("h:mm A");
+  };
+
+  const coverPhoto =
+    stay?.coverPhotoUrl ||
+    stay?.coverImageUrl ||
+    stay?.coverPhoto ||
+    stay?.coverImage ||
+    stay?.imageUrl ||
+    (Array.isArray(stay?.listingMedia) && stay.listingMedia[0]
+      ? (stay.listingMedia[0].url || stay.listingMedia[0].blobName || stay.listingMedia[0].fileUrl)
+      : null) ||
+    "/images/content/card-pic-13.jpg";
+
+  const checkInRaw = stay?.checkInTime || stay?.checkinTime || stay?.check_in_time || "14:00";
+  const checkOutRaw = stay?.checkOutTime || stay?.checkoutTime || stay?.check_out_time || "11:00";
+  const checkInText = formatTime12h(checkInRaw, "2:00 PM");
+  const checkOutText = formatTime12h(checkOutRaw, "11:00 AM");
+
+  const toAmount = (value) => {
+    if (value === null || value === undefined || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const basePrice =
+    toAmount(stay?.fullPropertyB2cPrice) ??
+    toAmount(stay?.fullPropertyb2cPrice) ??
+    toAmount(stay?.full_property_b2c_price) ??
+    toAmount(stay?.b2cPrice) ??
+    toAmount(stay?.pricePerNight) ??
+    toAmount(stay?.startingPrice) ??
+    toAmount(stay?.price);
+  const seasonalPeriods = Array.isArray(stay?.seasonalPricing)
+    ? stay.seasonalPricing
+    : (Array.isArray(stay?.seasonalPricings) ? stay.seasonalPricings : []);
+  const today = moment().startOf("day");
+  const activeSeason = seasonalPeriods.find((period) => {
+    const start = toDateOnly(period?.startDate || period?.start_date);
+    const end = toDateOnly(period?.endDate || period?.end_date);
+    if (!start || !end) return false;
+    return today.isSameOrAfter(start) && today.isSameOrBefore(end);
+  });
+  const seasonalB2CPrice =
+    activeSeason?.b2cPrice ??
+    activeSeason?.b2cprice ??
+    activeSeason?.pricePerNight ??
+    activeSeason?.price ??
+    null;
+  const priceValue = seasonalB2CPrice ?? basePrice;
+  const showSeasonal = seasonalB2CPrice != null;
+  const propertyName = stay?.propertyName || stay?.title || stay?.name || "Property Stay";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "320px 1fr",
+        gap: 24,
+        background: W,
+        border: `1px solid ${B}`,
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 24,
+      }}
+      className="property-stay-card"
+    >
+      <motion.div
+        whileHover={{ scale: 1.02, y: -2 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "linear-gradient(120deg, rgba(230,236,246,0.9), rgba(242,246,252,0.9))",
+          minHeight: 200,
+          position: "relative"
+        }}
+        onHoverStart={() => setIsHoveringCover(true)}
+        onHoverEnd={() => setIsHoveringCover(false)}
+      >
+        {!coverLoaded && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(100deg, rgba(255,255,255,0) 20%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 80%)",
+              transform: "translateX(-120%)",
+              animation: "propertyCoverShimmer 1.4s infinite",
+              zIndex: 2
+            }}
+          />
+        )}
+        <motion.div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, rgba(8,18,36,0.04) 0%, rgba(8,18,36,0.2) 100%)",
+            opacity: coverLoaded ? 1 : 0.2,
+            zIndex: 1,
+            pointerEvents: "none"
+          }}
+          animate={{ opacity: coverLoaded ? 1 : 0.2 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <motion.img
+          src={fixImageUrl(coverPhoto)}
+          alt={propertyName}
+          initial={{ opacity: 0, scale: 1.06, filter: "blur(8px)" }}
+          animate={{
+            opacity: coverLoaded ? 1 : 0,
+            scale: coverLoaded ? (isHoveringCover ? 1.04 : 1.015) : 1.08,
+            filter: coverLoaded ? "blur(0px)" : "blur(8px)"
+          }}
+          transition={{ duration: coverLoaded ? 0.75 : 0.55, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            width: "100%",
+            height: "100%",
+            minHeight: 200,
+            objectFit: "cover",
+            display: "block",
+            animation: coverLoaded ? "propertyCoverFloat 7s ease-in-out infinite" : "none"
+          }}
+          onLoad={() => setCoverLoaded(true)}
+          onError={(e) => {
+            e.currentTarget.src = "/images/content/card-pic-13.jpg";
+            setCoverLoaded(true);
+          }}
+        />
+      </motion.div>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16 }}>
+        <div>
+          <p style={{ fontSize: 11, letterSpacing: "0.14em", color: A, fontWeight: 700, textTransform: "uppercase", marginBottom: 8 }}>
+            Property Stay
+          </p>
+          <h3 style={{ fontSize: 28, lineHeight: 1.2, color: FG, marginBottom: 8 }}>{propertyName}</h3>
+          <p style={{ fontSize: 14, color: M, lineHeight: 1.6, marginBottom: 0 }}>
+            Entire-property booking with curated comfort and premium amenities.
+          </p>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          <motion.div
+            whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+            transition={{ duration: 0.2 }}
+            style={{
+              border: `1px solid ${B}99`,
+              borderRadius: 10,
+              padding: "10px 14px",
+              background: "rgba(255,255,255,0.55)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+              minWidth: 150
+            }}
+          >
+            <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Check-in</div>
+            <div style={{ fontSize: 14, color: FG, fontWeight: 700, marginTop: 4 }}>{checkInText}</div>
+          </motion.div>
+          <motion.div
+            whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+            transition={{ duration: 0.2 }}
+            style={{
+              border: `1px solid ${B}99`,
+              borderRadius: 10,
+              padding: "10px 14px",
+              background: "rgba(255,255,255,0.55)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+              minWidth: 150
+            }}
+          >
+            <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Check-out</div>
+            <div style={{ fontSize: 14, color: FG, fontWeight: 700, marginTop: 4 }}>{checkOutText}</div>
+          </motion.div>
+          <motion.div
+            whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+            transition={{ duration: 0.2 }}
+            style={{
+              border: `1px solid ${B}99`,
+              borderRadius: 10,
+              padding: "10px 14px",
+              background: "rgba(255,255,255,0.55)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+              minWidth: 170
+            }}
+          >
+            <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Price</div>
+            <div style={{ fontSize: 16, color: FG, fontWeight: 800, marginTop: 4 }}>
+              {priceValue != null ? `₹${Number(priceValue).toLocaleString("en-IN")} / night` : "Price on request"}
+            </div>
+            {showSeasonal && (
+              <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Seasonal B2C Price
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubmitted }) {
   const { isMobile } = useWindowSize();
