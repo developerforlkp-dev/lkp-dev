@@ -1620,7 +1620,7 @@ const StayProduct = () => {
     const customerPhone = userInfo.customerPhone ||
       (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") ||
       userInfo.phoneNumber ||
-      userInfo.phone || "+911234567890";
+      userInfo.phone || "";
 
     let bookingPayload;
     let frontendBreakdown = null;

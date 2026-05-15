@@ -1731,7 +1731,7 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
         customer: {
           name: customerName || "Guest User",
           email: customerEmail || "guest@example.com",
-          phone: customerPhone || "+911234567890",
+          phone: customerPhone || "",
         },
         specialRequests: specialRequests || "",
         paymentMethod: "razorpay",
@@ -2193,7 +2193,7 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
       customer: {
         name: customerName || "Guest User",
         email: customerEmail || "guest@example.com",
-        phone: customerPhone || "+911234567890",
+        phone: customerPhone || "",
       },
       specialRequests: specialRequests || "",
       paymentMethod: "razorpay",
@@ -2858,7 +2858,7 @@ const Description = ({ classSection, listing, hostData, externalRoomId, external
       const customerPhone = userInfo.customerPhone ||
         (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") ||
         userInfo.phoneNumber ||
-        userInfo.phone || "+911234567890";
+        userInfo.phone || "";
 
       let orderData;
 

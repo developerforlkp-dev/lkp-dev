@@ -1677,7 +1677,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       })();
       const customerName = `${customerDetails.firstName || ""} ${customerDetails.lastName || ""}`.trim() || "Guest User";
       const customerEmail = customerDetails.email || "guest@example.com";
-      const customerPhone = customerDetails.phone || "+911234567890";
+      const customerPhone = customerDetails.phone || "";
 
       if (!eventIdNum || !eventSlotIdNum || !ticketTypeId) {
         setValidationErrors({ slot: "Unable to book: event ticket or slot information is missing." });
@@ -1995,7 +1995,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       customer: {
         name: userInfo.name || (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") || "Guest User",
         email: userInfo.email || userInfo.customerEmail || "guest@example.com",
-        phone: userInfo.customerPhone || userInfo.phoneNumber || userInfo.phone || "+911234567890",
+        phone: userInfo.customerPhone || userInfo.phoneNumber || userInfo.phone || "",
       },
       specialRequests: "",
       paymentMethod: "razorpay",

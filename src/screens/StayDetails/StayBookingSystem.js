@@ -684,7 +684,7 @@ const StayBookingSystem = ({
       const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const customerName = userInfo.name || (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") || userInfo.customerName || "Guest User";
       const customerEmail = userInfo.email || userInfo.customerEmail || "guest@example.com";
-      const customerPhone = userInfo.customerPhone || (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") || userInfo.phoneNumber || "+911234567890";
+      const customerPhone = userInfo.customerPhone || (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") || userInfo.phoneNumber || "";
 
       const payload = {
         stayId: Number(stay.stayId || stay.id),

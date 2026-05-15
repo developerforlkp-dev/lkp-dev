@@ -478,7 +478,7 @@ const ScheduleOne = () => {
         const customerDetails = getCustomerDetailsForBooking();
         const customerName = `${customerDetails?.firstName || ''} ${customerDetails?.lastName || ''}`.trim() || 'Guest User';
         const customerEmail = customerDetails?.email || 'guest@example.com';
-        const customerPhone = customerDetails?.phone || '+911234567890';
+        const customerPhone = customerDetails?.phone || '';
 
         if (!eventSlotIdNum || eventSlotIdNum <= 0) {
             alert('Unable to continue: no valid slot is available for this ticket on the selected day.');

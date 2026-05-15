@@ -933,7 +933,7 @@ const EventProduct = () => {
     const customerDetails = getCustomerDetailsForBooking();
     const customerName = `${customerDetails?.firstName || ""} ${customerDetails?.lastName || ""}`.trim() || "Guest User";
     const customerEmail = customerDetails?.email || "guest@example.com";
-    const customerPhone = customerDetails?.phone || "+911234567890";
+    const customerPhone = customerDetails?.phone || "";
     const eventIdNum = asNumber(event?.eventId ?? event?.event_id ?? event?.id ?? eventId) ?? 0;
     const eventSlotIdNum = getEventSlotIdForBooking();
 
