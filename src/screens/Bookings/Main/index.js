@@ -537,6 +537,27 @@ const actionsByStatus = {
   ],
 };
 
+const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
+  const baseActions = actionsByStatus[booking?.status] || [];
+
+  if (tabId === "cancelled") {
+    return baseActions.filter((a) => a.label === "View Details");
+  }
+
+  if (tabId === "upcoming") {
+    return baseActions.filter((a) => a.label !== "Leave review");
+  }
+
+  if (tabId === "completed") {
+    return baseActions.filter((a) => {
+      if (a.label !== "Leave review") return true;
+      return orderIdsEligibleForReview.has(booking.orderId);
+    });
+  }
+
+  return baseActions;
+};
+
 const Main = ({
   bookingData: propBookingData = null,
   completedOrders: propCompletedOrders = null,
@@ -1179,7 +1200,7 @@ const Main = ({
                         </div>
                       </div>
                       <div className={styles.actions}>
-                        {(actionsByStatus[booking.status] || []).map((action) => {
+                        {getAllowedActionsForTab(displayedTab, booking, orderIdsEligibleForReview).map((action) => {
                           if (action.label === "View Details") {
                             // Pass businessInterestCode (category) to determine which API to use
                             const isEvent = booking.category === "EVENTS" ||
@@ -1199,7 +1220,6 @@ const Main = ({
                             );
                           }
                           if (action.label === "Cancel Booking") {
-                            if (displayedTab === "cancelled") return null;
                             return (
                               <button
                                 type="button"
@@ -1212,8 +1232,6 @@ const Main = ({
                             );
                           }
                           if (action.label === "Leave review") {
-                            if (displayedTab !== "completed") return null;
-                            if (!orderIdsEligibleForReview.has(booking.orderId)) return null;
                             return (
                               <button
                                 type="button"
