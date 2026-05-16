@@ -130,7 +130,8 @@ const Listings = () => {
 
   // Filter state
   const [filters, setFilters] = useState({
-    priceRange: { min: 0, max: 10000 },
+    priceRange: { min: "", max: "" },
+    pricePresetMax: null,
     propertyTypes: [],
     amenities: [],
     ratings: [],
@@ -372,7 +373,8 @@ const Listings = () => {
 
   const resetFilters = () => {
     setFilters({
-      priceRange: { min: 0, max: 10000 },
+      priceRange: { min: "", max: "" },
+      pricePresetMax: null,
       propertyTypes: [],
       amenities: [],
       ratings: [],

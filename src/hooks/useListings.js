@@ -65,6 +65,22 @@ export const useListings = ({
         categoryFilter.categoryValues.length > 0
       );
       const hasRatingFilter = Array.isArray(filters.ratings) && filters.ratings.length > 0;
+      const hasCustomMin = filters?.priceRange?.min !== "" && filters?.priceRange?.min !== null && filters?.priceRange?.min !== undefined;
+      const hasCustomMax = filters?.priceRange?.max !== "" && filters?.priceRange?.max !== null && filters?.priceRange?.max !== undefined;
+      const customMin = hasCustomMin ? Number(filters.priceRange.min) : undefined;
+      const customMax = hasCustomMax ? Number(filters.priceRange.max) : undefined;
+      const presetMax = filters?.pricePresetMax !== null && filters?.pricePresetMax !== undefined
+        ? Number(filters.pricePresetMax)
+        : undefined;
+      const shouldUseCustomPrice = (hasCustomMin && Number.isFinite(customMin) && customMin >= 0)
+        || (hasCustomMax && Number.isFinite(customMax) && customMax >= 0);
+      const shouldUsePresetPrice = !shouldUseCustomPrice && Number.isFinite(presetMax) && presetMax > 0;
+      const effectiveMinPrice = shouldUseCustomPrice
+        ? (Number.isFinite(customMin) && customMin >= 0 ? customMin : undefined)
+        : (shouldUsePresetPrice ? 0 : undefined);
+      const effectiveMaxPrice = shouldUseCustomPrice
+        ? (Number.isFinite(customMax) && customMax >= 0 ? customMax : undefined)
+        : (shouldUsePresetPrice ? presetMax : undefined);
 
       if (hasCategoryFilter || hasRatingFilter) {
         const mappedBusinessInterestId =
@@ -75,6 +91,8 @@ export const useListings = ({
           categoryType: categoryFilter?.categoryType,
           categoryValues: categoryFilter?.categoryValues || [],
           ratingFilter: hasRatingFilter ? Math.max(...filters.ratings) : undefined,
+          minPrice: effectiveMinPrice,
+          maxPrice: effectiveMaxPrice,
           limit,
           offset: nextOffset,
           sortBy: categoryFilter?.sortBy || "newest",
@@ -133,7 +151,12 @@ export const useListings = ({
         }
 
         // Add filters
-        // Price range is temporarily disabled
+        if (effectiveMinPrice !== undefined) {
+          params.minPrice = effectiveMinPrice;
+        }
+        if (effectiveMaxPrice !== undefined) {
+          params.maxPrice = effectiveMaxPrice;
+        }
 
         if (filters.propertyTypes && filters.propertyTypes.length > 0) {
           params.propertyTypes = filters.propertyTypes.join(",");

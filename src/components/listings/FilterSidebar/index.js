@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import cn from "classnames";
 import styles from "./FilterSidebar.module.sass";
-import { Range, getTrackBackground } from "react-range";
 import Checkbox from "../../Checkbox";
 import Icon from "../../Icon";
 import Dropdown from "../../Dropdown";
@@ -147,7 +146,14 @@ const FilterSidebar = ({
   const isEventInterest = normalizedInterest === "EVENT" || normalizedInterest === "EVENTS";
   const isExperienceInterest = normalizedInterest === "EXPERIENCE" || normalizedInterest === "EXPERIENCES";
   const isExpEventOrStay = isStayInterest || isEventInterest || isExperienceInterest;
-  const isPriceRangeEnabled = false;
+  const isPriceRangeEnabled = true;
+  const pricePresetOptions = ["Any", "Under 15000", "Under 10000", "Under 5000", "Under 1000"];
+  const presetToMaxMap = {
+    "Under 10000": 10000,
+    "Under 15000": 15000,
+    "Under 5000": 5000,
+    "Under 1000": 1000,
+  };
 
   const primaryCategoryOptions = useMemo(() => {
     const primary = Array.isArray(businessInterestFilters?.primaryCategories)
@@ -247,11 +253,6 @@ const FilterSidebar = ({
       }))
       .filter((item) => item.label);
   }, [businessInterestFilters]);
-  const [priceValues, setPriceValues] = useState([
-    filters.priceRange?.min || 0,
-    filters.priceRange?.max || 10000,
-  ]);
-
   const sortDisplayPairs = useMemo(() => (
     Array.isArray(sortingOptions)
       ? sortingOptions
@@ -286,9 +287,25 @@ const FilterSidebar = ({
     setSorting(mappedRaw);
   };
 
-  const handlePriceChange = (values) => {
-    setPriceValues(values);
-    onFilterChange("priceRange", { min: values[0], max: values[1] });
+  const selectedPricePresetLabel = useMemo(() => {
+    const max = Number(filters?.pricePresetMax);
+    if (!Number.isFinite(max) || max <= 0) return "Any";
+    const match = Object.entries(presetToMaxMap).find(([, value]) => value === max);
+    return match ? match[0] : "Any";
+  }, [filters?.pricePresetMax]);
+
+  const handlePricePresetChange = (presetLabel) => {
+    const selectedMax = presetToMaxMap[presetLabel] ?? null;
+    onFilterChange("pricePresetMax", selectedMax);
+  };
+
+  const handleCustomPriceChange = (key, value) => {
+    const normalized = value === "" ? "" : Number(value);
+    const current = filters.priceRange || { min: "", max: "" };
+    onFilterChange("priceRange", {
+      ...current,
+      [key]: Number.isFinite(normalized) ? normalized : "",
+    });
   };
 
   const handlePropertyTypeChange = (id) => {
@@ -372,10 +389,6 @@ const FilterSidebar = ({
     });
   };
 
-  const minPrice = 0;
-  const maxPrice = 10000;
-  const stepPrice = 50;
-
   return (
     <div className={styles.sidebar}>
       <div className={styles.header}>
@@ -400,88 +413,6 @@ const FilterSidebar = ({
           </div>
         )}
 
-        {/* Price Range */}
-        {isPriceRangeEnabled && isExpEventOrStay && (
-          <div className={styles.section}>
-            <div className={styles.label}>Price range</div>
-            <div className={styles.priceRange}>
-              <Range
-                values={priceValues}
-                step={stepPrice}
-                min={minPrice}
-                max={maxPrice}
-                onChange={handlePriceChange}
-                renderTrack={({ props, children }) => (
-                  <div
-                    onMouseDown={props.onMouseDown}
-                    onTouchStart={props.onTouchStart}
-                    style={{
-                      ...props.style,
-                      height: "36px",
-                      display: "flex",
-                      width: "100%",
-                    }}
-                  >
-                    <div
-                      ref={props.ref}
-                      style={{
-                        height: "8px",
-                        width: "100%",
-                        borderRadius: "4px",
-                        background: getTrackBackground({
-                          values: priceValues,
-                          colors: ["#B1B5C3", "#3772FF", "#B1B5C3"],
-                          min: minPrice,
-                          max: maxPrice,
-                        }),
-                        alignSelf: "center",
-                      }}
-                    >
-                      {children}
-                    </div>
-                  </div>
-                )}
-                renderThumb={({ index, props, isDragged }) => (
-                  <div
-                    {...props}
-                    style={{
-                      ...props.style,
-                      height: "24px",
-                      width: "24px",
-                      borderRadius: "50%",
-                      backgroundColor: "#3772FF",
-                      border: "4px solid #FCFCFD",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "-33px",
-                        color: "#fff",
-                        fontWeight: "600",
-                        fontSize: "14px",
-                        padding: "4px 8px",
-                        borderRadius: "8px",
-                        backgroundColor: "#141416",
-                      }}
-                    >
-                      ₹{priceValues[index].toLocaleString('en-IN')}
-                    </div>
-                  </div>
-                )}
-              />
-              <div className={styles.priceScale}>
-                <span>₹{minPrice.toLocaleString('en-IN')}</span>
-                <span>₹{maxPrice.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Date Range for Experience/Events */}
         {(isExperienceInterest || isEventInterest) && (
           <div className={styles.section}>
@@ -503,6 +434,43 @@ const FilterSidebar = ({
                   onChange={(e) => handleDateFieldChange("endDate", e.target.value)}
                 />
               </label>
+            </div>
+          </div>
+        )}
+
+        {/* Price Range */}
+        {isPriceRangeEnabled && isExpEventOrStay && (
+          <div className={styles.section}>
+            <div className={styles.label}>Price range</div>
+            <div className={styles.priceRange}>
+              <Dropdown
+                className={styles.sortDropdown}
+                value={selectedPricePresetLabel}
+                setValue={handlePricePresetChange}
+                options={pricePresetOptions}
+              />
+              <div className={styles.priceInputs}>
+                <label className={styles.priceField}>
+                  <span>Min price</span>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={filters.priceRange?.min ?? ""}
+                    onChange={(e) => handleCustomPriceChange("min", e.target.value)}
+                  />
+                </label>
+                <label className={styles.priceField}>
+                  <span>Max price</span>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="10000"
+                    value={filters.priceRange?.max ?? ""}
+                    onChange={(e) => handleCustomPriceChange("max", e.target.value)}
+                  />
+                </label>
+              </div>
             </div>
           </div>
         )}
@@ -601,4 +569,5 @@ const FilterSidebar = ({
 };
 
 export default FilterSidebar;
+
 
