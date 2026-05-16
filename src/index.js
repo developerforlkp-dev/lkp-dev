@@ -5,6 +5,13 @@ import App from "./App";
 // ✅ Global error handler to prevent unhandled promise rejections from showing alerts
 // This MUST be set up before React renders to catch early errors
 if (typeof window !== 'undefined') {
+  // ✅ Fix incorrect scroll restoration on page refresh
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+  // Reset scroll position to top on initial load
+  window.scrollTo(0, 0);
+
   // Set up error handler immediately
   const handleUnhandledRejection = (event) => {
     // CRITICAL: Always prevent the default browser alert

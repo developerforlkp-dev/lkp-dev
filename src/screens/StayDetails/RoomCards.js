@@ -431,12 +431,12 @@ const RoomModal = ({ room, listing, onClose }) => {
               )}
 
               {/* Cancellation Policy */}
-              {cancellationPolicy && (
+              {typeof cancellationPolicy === 'string' && cancellationPolicy.trim() !== "" && cancellationPolicy !== "No cancellation policy rules defined." && (
                 <div>
                   <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: M, marginBottom: 16 }}>Cancellation Guidelines</h3>
                   <div style={{ padding: 24, background: S, borderRadius: 24, border: `1px solid ${B}` }}>
                     <p style={{ fontSize: 14, lineHeight: 1.6, color: FG, fontWeight: 500, opacity: 0.85 }}>
-                      {typeof cancellationPolicy === 'string' ? cancellationPolicy : "Standard cancellation terms apply."}
+                      {cancellationPolicy}
                     </p>
                   </div>
                 </div>

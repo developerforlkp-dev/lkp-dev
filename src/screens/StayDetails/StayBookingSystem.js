@@ -75,20 +75,28 @@ const StayInlineCalendar = ({
         ))}
         {cells.map((cell, i) => {
           if (!cell) return <div key={`empty-${i}`} />;
-          const isSelectingCheckOut = selectionMode === "check-out" && checkInDate && !checkOutDate;
-          const disabled = cell.isPast || (
-            isSelectingCheckOut
-              ? (
-                // Checkout Selection Mode:
-                // 1. Disable dates on or before check-in
-                (checkInKey && cell.key <= checkInKey) || 
-                // 2. Disable dates strictly after the next blocked date
-                // (nextBlockedKey itself is allowed as checkout morning)
-                (nextBlockedKey && cell.key > nextBlockedKey)
-              )
-              : cell.isBlocked
-          );
-          
+          const isRangeComplete = checkInDate && checkOutDate;
+          let disabled = cell.isPast;
+          if (!disabled) {
+            if (isRangeComplete && selectionMode === "done") {
+              // Completely disable calendar interaction once range is complete
+              disabled = true;
+            } else if (selectionMode === "check-out") {
+              // In check-out mode, disable dates on or before check-in, and after next blocked date
+              disabled = (checkInKey && cell.key <= checkInKey) || (nextBlockedKey && cell.key > nextBlockedKey);
+            } else {
+              // In check-in mode, only block globally blocked dates
+              disabled = cell.isBlocked;
+            }
+          }
+
+          // Determine color: highlight selected and range, fade out visually disabled
+          const textColor = cell.isSelected 
+            ? "#FFF" 
+            : (disabled && !cell.isInRange) 
+              ? `${M}44` 
+              : FG;
+
           return (
             <button
               key={cell.key}
@@ -100,7 +108,7 @@ const StayInlineCalendar = ({
                 border: "none",
                 borderRadius: cell.isSelected ? 10 : 6,
                 background: cell.isSelected ? A : cell.isInRange ? AL : "transparent",
-                color: cell.isSelected ? "#FFF" : disabled ? `${M}44` : FG,
+                color: textColor,
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: disabled ? "not-allowed" : "pointer",
@@ -209,7 +217,7 @@ const StayBookingSystem = ({
 
   useEffect(() => {
     if (show) {
-      setSelectionMode("check-in");
+      setSelectionMode((checkInDate && checkOutDate) ? "done" : "check-in");
       setValidationError("");
       document.body.style.overflow = "hidden";
     } else {
@@ -245,9 +253,14 @@ const StayBookingSystem = ({
         // Reset checkout if it becomes invalid
         if (checkOutDate && date.isSameOrAfter(checkOutDate, 'day')) {
           setCheckOutDate(null);
+          setSelectionMode("check-out");
+        } else if (checkOutDate) {
+          // If checkout is still valid after changing check-in, finalize again
+          setSelectionMode("done");
+        } else {
+          // STEP 2: Automatic switch to Check-out mode
+          setSelectionMode("check-out");
         }
-        // STEP 2: Automatic switch to Check-out mode
-        setSelectionMode("check-out");
       }
     } else {
       // 2. Check-out Selection / Editing
@@ -269,6 +282,7 @@ const StayBookingSystem = ({
           // Boundary check
           if (nextBlockedDate && date.isAfter(nextBlockedDate, 'day')) return;
           setCheckOutDate(date);
+          setSelectionMode("done");
         } else {
           // If clicked date is before check-in, treat as new Check-in
           if (isBlocked) return;
@@ -1143,7 +1157,7 @@ const StayBookingSystem = ({
                         <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8 }}>
                           01. Select Dates
                           <span style={{ fontSize: 10, fontWeight: 700, background: AL, color: A, padding: "2px 8px", borderRadius: 100, border: `1px solid ${A}22` }}>
-                            {selectionMode === "check-in" ? "Select Check-in" : "Select Check-out"}
+                            {selectionMode === "check-in" ? "Select Check-in" : selectionMode === "check-out" ? "Select Check-out" : "Dates Selected"}
                           </span>
                         </div>
                       </div>

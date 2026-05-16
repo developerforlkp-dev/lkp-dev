@@ -1019,6 +1019,7 @@ const ExperienceProduct = () => {
         <BookingSystem
           listing={listing}
           selectedAddOns={selectedAddOns}
+          onUpdateAddonQuantity={handleUpdateAddonQuantity}
         />
       </main>
       <style>{`

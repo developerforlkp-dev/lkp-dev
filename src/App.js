@@ -45,6 +45,7 @@ import PlaceDetails from "./screens/PlaceDetails";
 import ReviewsListing from "./screens/ReviewsListing";
 import { ThemeProvider } from "./components/JUI/Theme";
 import { Cursor, ProgressBar } from "./components/JUI/UI";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   // Get Google Client ID from environment variable
@@ -64,6 +65,7 @@ function App() {
     <GoogleOAuthProvider clientId={googleClientId}>
       <ThemeProvider>
         <Router>
+          <ScrollToTop />
           <Cursor />
           <ProgressBar />
           <Switch>
