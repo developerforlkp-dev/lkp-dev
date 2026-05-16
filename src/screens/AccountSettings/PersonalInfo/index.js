@@ -28,7 +28,11 @@ const PersonalInfo = () => {
     countryCode: "+91",
     isEmailVerified: false,
     isPhoneVerified: false,
-    customerId: null
+    customerId: null,
+    instagram: "",
+    facebook: "",
+    linkedin: "",
+    twitter: ""
   });
 
   useEffect(() => {
@@ -49,7 +53,11 @@ const PersonalInfo = () => {
           countryCode, 
           isEmailVerified, 
           isPhoneVerified, 
-          customerId 
+          customerId,
+          instagram,
+          facebook,
+          linkedin,
+          twitter
         } = data.customer;
         
         console.log("✅ Profile loaded:", data.customer);
@@ -62,7 +70,11 @@ const PersonalInfo = () => {
           countryCode: countryCode || "+91",
           isEmailVerified: !!isEmailVerified,
           isPhoneVerified: !!isPhoneVerified,
-          customerId: customerId || null
+          customerId: customerId || null,
+          instagram: instagram || "",
+          facebook: facebook || "",
+          linkedin: linkedin || "",
+          twitter: twitter || ""
         });
       }
     } catch (error) {
@@ -89,7 +101,11 @@ const PersonalInfo = () => {
         email: profile.email && profile.email.trim() !== "" ? profile.email : null,
         phone: profile.phone || "",
         countryCode: profile.countryCode || "+91",
-        avatarUrl: profile.avatarUrl && profile.avatarUrl.trim() !== "" ? profile.avatarUrl : null
+        avatarUrl: profile.avatarUrl && profile.avatarUrl.trim() !== "" ? profile.avatarUrl : null,
+        instagram: profile.instagram || "",
+        facebook: profile.facebook || "",
+        linkedin: profile.linkedin || "",
+        twitter: profile.twitter || ""
       };
 
       await updateCustomerProfile(requestBody);
@@ -257,6 +273,60 @@ const PersonalInfo = () => {
                   onChange={handleChange}
                   type="email"
                   placeholder="Email"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.item}>
+          <div className={styles.category}>Social links</div>
+          <div className={styles.fieldset}>
+            <div className={styles.row}>
+              <div className={styles.col}>
+                <TextInput
+                  className={styles.field}
+                  label="Instagram"
+                  name="instagram"
+                  value={profile.instagram}
+                  onChange={handleChange}
+                  type="text"
+                  placeholder="Instagram profile link"
+                />
+              </div>
+              <div className={styles.col}>
+                <TextInput
+                  className={styles.field}
+                  label="Facebook"
+                  name="facebook"
+                  value={profile.facebook}
+                  onChange={handleChange}
+                  type="text"
+                  placeholder="Facebook profile link"
+                />
+              </div>
+            </div>
+            <div className={styles.row}>
+              <div className={styles.col}>
+                <TextInput
+                  className={styles.field}
+                  label="LinkedIn"
+                  name="linkedin"
+                  value={profile.linkedin}
+                  onChange={handleChange}
+                  type="text"
+                  placeholder="LinkedIn profile link"
+                />
+              </div>
+              <div className={styles.col}>
+                <TextInput
+                  className={styles.field}
+                  label="Twitter / X"
+                  name="twitter"
+                  value={profile.twitter}
+                  onChange={handleChange}
+                  type="text"
+                  placeholder="Twitter / X profile link"
                 />
               </div>
             </div>

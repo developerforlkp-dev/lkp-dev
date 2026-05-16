@@ -4,7 +4,7 @@ import cn from "classnames";
 import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
 import { getBookingDetails } from "../../mocks/bookings";
-import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, validateExperienceOrEventOrder, validateStayOrder } from "../../utils/api";
+import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile } from "../../utils/api";
 import Rating from "../../components/Rating";
 import Modal from "../../components/Modal";
 import Receipt from "../../components/Receipt";
@@ -72,7 +72,7 @@ const isPaymentFailed = (paymentStatus) => {
 
 // Transform API booking data to component format
 // eventData is used for EVENTS orders to get event details (images, title, location, etc.)
-const transformBookingData = (apiBooking, listingData = null, eventData = null, stayData = null, reviewData = null) => {
+const transformBookingData = (apiBooking, listingData = null, eventData = null, stayData = null, reviewData = null, profileData = null) => {
   // Determine if this is an event order
   const isEventOrder = apiBooking?.businessInterestCode === "EVENTS" ||
     apiBooking?.eventId != null;
@@ -106,48 +106,60 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
         apiBooking.contact)) ||
     null;
 
-  const customerName = pickText(
-    apiBooking?.customerName,
-    apiBooking?.customerFullName,
-    apiBooking?.guestName,
-    apiBooking?.userName,
-    apiBooking?.fullName,
-    apiBooking?.name,
-    [apiBooking?.firstName, apiBooking?.lastName].filter(Boolean).join(" "),
-    [apiBooking?.customerFirstName, apiBooking?.customerLastName].filter(Boolean).join(" "),
-    customerObj?.name,
-    customerObj?.fullName,
-    [customerObj?.firstName, customerObj?.lastName].filter(Boolean).join(" "),
-    customerObj?.customerName,
-    customerObj?.guestName
-  );
+  // Use profile data if it belongs to the same customer to ensure sync
+  const useProfileInfo = profileData && 
+    (profileData.customerId === apiBooking.customerId || 
+     profileData.customerId === apiBooking.customer?.customerId ||
+     !apiBooking.customerId); // Fallback if customerId is missing in booking but it's the user's booking
 
-  const customerPhone = pickText(
-    apiBooking?.customerPhone,
-    apiBooking?.phoneNumber,
-    apiBooking?.phone,
-    apiBooking?.mobile,
-    apiBooking?.mobileNumber,
-    apiBooking?.contactNumber,
-    apiBooking?.customerMobile,
-    customerObj?.phone,
-    customerObj?.phoneNumber,
-    customerObj?.mobile,
-    customerObj?.mobileNumber,
-    customerObj?.contactNumber
-  );
+  const customerName = useProfileInfo 
+    ? [profileData.firstName, profileData.lastName].filter(Boolean).join(" ")
+    : pickText(
+        apiBooking?.customerName,
+        apiBooking?.customerFullName,
+        apiBooking?.guestName,
+        apiBooking?.userName,
+        apiBooking?.fullName,
+        apiBooking?.name,
+        [apiBooking?.firstName, apiBooking?.lastName].filter(Boolean).join(" "),
+        [apiBooking?.customerFirstName, apiBooking?.customerLastName].filter(Boolean).join(" "),
+        customerObj?.name,
+        customerObj?.fullName,
+        [customerObj?.firstName, customerObj?.lastName].filter(Boolean).join(" "),
+        customerObj?.customerName,
+        customerObj?.guestName
+      );
 
-  const customerEmail = pickText(
-    apiBooking?.customerEmail,
-    apiBooking?.email,
-    apiBooking?.emailId,
-    apiBooking?.emailAddress,
-    apiBooking?.mailId,
-    customerObj?.email,
-    customerObj?.emailId,
-    customerObj?.emailAddress,
-    customerObj?.mailId
-  );
+  const customerPhone = useProfileInfo
+    ? (profileData.phone || profileData.mobile || "")
+    : pickText(
+        apiBooking?.customerPhone,
+        apiBooking?.phoneNumber,
+        apiBooking?.phone,
+        apiBooking?.mobile,
+        apiBooking?.mobileNumber,
+        apiBooking?.contactNumber,
+        apiBooking?.customerMobile,
+        customerObj?.phone,
+        customerObj?.phoneNumber,
+        customerObj?.mobile,
+        customerObj?.mobileNumber,
+        customerObj?.contactNumber
+      );
+
+  const customerEmail = useProfileInfo
+    ? (profileData.email || "")
+    : pickText(
+        apiBooking?.customerEmail,
+        apiBooking?.email,
+        apiBooking?.emailId,
+        apiBooking?.emailAddress,
+        apiBooking?.mailId,
+        customerObj?.email,
+        customerObj?.emailId,
+        customerObj?.emailAddress,
+        customerObj?.mailId
+      );
   // Format date from "2025-11-19" to "Fri, 21 Nov 2025" format
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -622,6 +634,7 @@ const ViewDetails = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   // Review form state
   const [reviewRating, setReviewRating] = useState(0);
@@ -1306,6 +1319,19 @@ const ViewDetails = () => {
 
         console.log("✅ Using data:", isEventOrder ? "eventData" : (listingData ? "listingData from API" : "listingData from order fields"));
 
+        // Fetch user profile to ensure synced data
+        let profile = null;
+        try {
+          const profileData = await getCustomerProfile();
+          if (profileData && profileData.customer) {
+            profile = profileData.customer;
+            setUserProfile(profile);
+            console.log("✅ Current user profile fetched for sync:", profile);
+          }
+        } catch (profileErr) {
+          console.warn("⚠️ Failed to fetch user profile for sync:", profileErr.message);
+        }
+
         // Transform the booking data
         let transformed;
         try {
@@ -1329,7 +1355,7 @@ const ViewDetails = () => {
             console.warn("⚠️ Failed to fetch review summary for Details:", reviewErr);
           }
 
-          transformed = transformBookingData(mergedApiBookingData, listingData, eventData, stayData, reviewData);
+          transformed = transformBookingData(mergedApiBookingData, listingData, eventData, stayData, reviewData, profile);
           console.log("✅ Transformed booking data:", transformed);
           console.log("✅ Original API booking data paymentMethod:", apiBookingData.paymentMethod);
           console.log("✅ Transformed paymentMethod:", transformed.paymentMethod);

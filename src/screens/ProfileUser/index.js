@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import cn from "classnames";
 import styles from "./ProfileUser.module.sass";
 import Icon from "../../components/Icon";
 import Profile from "../../components/Profile";
 import Reviews from "../../components/Reviews";
 import Modal from "../../components/Modal";
+import Loader from "../../components/Loader";
+import { getCustomerProfile } from "../../utils/api";
 import Background from "./Background";
 import Details from "./Details";
+import { useState, useEffect } from "react";
 
 const parametersUser = [
   {
@@ -44,6 +47,45 @@ const avatars = [
 
 const ProfileUser = () => {
   const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const data = await getCustomerProfile();
+        if (data && data.customer) {
+          setUser(data.customer);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className={styles.loaderWrapper} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <Loader />
+      </div>
+    );
+  }
+
+  const userSocials = user ? [
+    { title: "instagram", url: user.instagram || "" },
+    { title: "facebook", url: user.facebook || "" },
+    { title: "linkedin", url: user.linkedin || "" },
+    { title: "twitter", url: user.twitter || "" },
+  ].filter(s => s.url) : [];
+
+  const displayName = user 
+    ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "User"
+    : "Kohaku Tora";
+
   return (
     <>
       <div className={styles.section}>
@@ -53,11 +95,11 @@ const ProfileUser = () => {
             <Profile
               className={styles.profile}
               parametersUser={parametersUser}
-              socials={socials}
+              socials={userSocials.length > 0 ? userSocials : socials}
               buttonText="Message"
             >
               <div className={cn(styles.avatar, styles.big)}>
-                <img src="/images/content/avatar-girl.jpg" alt="Avatar" />
+                <img src={user?.avatarUrl || "/images/content/avatar-girl.jpg"} alt="Avatar" />
               </div>
               <button
                 className={styles.update}
@@ -66,7 +108,7 @@ const ProfileUser = () => {
                 <Icon name="pencil" size="20" />
                 Update avatar
               </button>
-              <div className={cn("h4", styles.man)}>Kohaku Tora</div>
+              <div className={cn("h4", styles.man)}>{displayName}</div>
             </Profile>
             <div className={styles.wrapper}>
               <Details className={styles.details} />
