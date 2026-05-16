@@ -597,6 +597,23 @@ const StayBookingSystem = ({
       activeExtraChildPrice: finalExtraCP
     };
   }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount]);
+  const billingConfigDiscountRate = useMemo(() => {
+    const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || [];
+    if (!Array.isArray(discounts) || discounts.length === 0) return 0;
+
+    const totalRate = discounts.reduce((sum, discount) => {
+      const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+      return sum + (Number.isFinite(rate) ? rate : 0);
+    }, 0);
+
+    return Math.max(0, Math.min(100, totalRate));
+  }, [stay?.billingConfig, stay?.billing_config]);
+
+  const nightlyBaseMinusDiscount = useMemo(() => {
+    const basePerNight = Number(pricing?.originalPerNight || 0);
+    const discountAmount = basePerNight * (billingConfigDiscountRate / 100);
+    return Math.max(0, basePerNight - discountAmount);
+  }, [pricing?.originalPerNight, billingConfigDiscountRate]);
 
   const blockedDateKeys = useMemo(() => {
     const ranges = stay?.bookedDateRanges || stay?.stay?.bookedDateRanges || [];
@@ -1135,9 +1152,9 @@ const StayBookingSystem = ({
                   </h2>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                     <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>
-                      {fetchingAvailability ? "..." : `₹${formatPrice(pricing.perNight)}`}
+                      {fetchingAvailability ? "..." : `₹${formatPrice(nightlyBaseMinusDiscount)}`}
                     </span>
-                    {!fetchingAvailability && pricing.discount > 0 && (
+                    {!fetchingAvailability && billingConfigDiscountRate > 0 && (
                       <span style={{ fontSize: 13, color: M, textDecoration: "line-through", opacity: 0.6 }}>₹{formatPrice(pricing.originalPerNight)}</span>
                     )}
                     <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>/ night</span>
@@ -1518,3 +1535,4 @@ const StayBookingSystem = ({
 };
 
 export default StayBookingSystem;
+
