@@ -11,6 +11,7 @@ import { getEventDetails, getEventReviews, getHost } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { useTheme } from "../../../components/JUI/Theme";
 import Loader from "../../../components/Loader";
+import RelatedListingsStrip from "../../../components/RelatedListingsStrip";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -1876,6 +1877,8 @@ export default function EventDetails() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const primaryCategoryId = event?.primaryCategoryId || event?.primaryCategory?.id || event?.categoryId || event?.category?.id;
+  const currentListingId = event?.eventId || event?.id || eventId;
 
   useEffect(() => {
     let mounted = true;
@@ -1944,6 +1947,12 @@ export default function EventDetails() {
       <Rules event={event} />
       <HostDetails event={event} hostName={hostName} reviews={reviews} />
       <EventBookingPopup event={event} />
+      <RelatedListingsStrip
+        businessInterestId={2}
+        primaryCategoryId={primaryCategoryId}
+        currentListingId={currentListingId}
+        title="More Events You Might Like"
+      />
       <Footer />
     </ScopedThemeProvider>
   );
