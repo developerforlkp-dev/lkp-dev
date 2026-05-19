@@ -7,7 +7,7 @@ import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 import { X, Plus as PlusIcon } from "lucide-react";
 import { BookingSystem } from "../../../components/JUI/BookingSystem";
 import { Footer } from "../../../components/JUI/Footer";
-import { getEventDetails, getEventReviews, getHost } from "../../../utils/api";
+import { getEventDetails, getEventReviews, getHost, getEventAddons, getAvailableEventAddons } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { useTheme } from "../../../components/JUI/Theme";
 import Loader from "../../../components/Loader";
@@ -1430,7 +1430,84 @@ function HostDetails({ event, hostName, reviews = [] }) {
   );
 }
 
-function EventBookingPopup({ event }) {
+function EventBookingPopup({ event, addons }) {
+  const [selectedAddOns, setSelectedAddOns] = useState(() => {
+    try {
+      const storedRaw = localStorage.getItem("frontendPendingBookingState");
+      if (storedRaw) {
+        const stored = JSON.parse(storedRaw);
+        const currentListingId = String(event?.listingId || event?.id || event?.eventId);
+        const token = localStorage.getItem("jwtToken");
+        const isLoggedIn = !!token && token !== "undefined" && token !== "null";
+
+        if (stored?.listingId === currentListingId && isLoggedIn && Array.isArray(stored.selectedAddOns)) {
+          // Map stored addon IDs back to full addon objects
+          return stored.selectedAddOns.map(id => {
+            const fullAddon = (addons || []).find(a => String(a.addonId || a.id) === String(id));
+            if (fullAddon) {
+              const pricingType = fullAddon.pricingType || (fullAddon.priceType === "per_booking" ? "Group" : "Individual");
+              const quantity = stored.addOnQuantities?.[id] || 1;
+              return { ...fullAddon, quantity, pricingType };
+            }
+            return null;
+          }).filter(Boolean);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to rehydrate event addons:", e);
+    }
+    return [];
+  });
+
+  const handleUpdateAddonQuantity = (addon, delta) => {
+    const addonId = addon.addonId || addon.id;
+    const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
+
+    setSelectedAddOns((prev) => {
+      const existing = prev.find((a) => (a.addonId || a.id) === addonId);
+
+      if (delta > 0) {
+        // Enforcement: If it's a Group item, quantity is ALWAYS 1
+        if (pricingType === "Group") {
+          // If already selected, do nothing
+          if (existing) return prev;
+
+          // Only one Group item type allowed per booking
+          const otherGroupItem = prev.find(a =>
+            (a.pricingType === "Group" || (a.priceType === "per_booking"))
+          );
+          if (otherGroupItem) {
+            return [...prev.filter(a => (a.addonId || a.id) !== (otherGroupItem.addonId || otherGroupItem.id)), { ...addon, quantity: 1, pricingType }];
+          }
+          return [...prev, { ...addon, quantity: 1, pricingType }];
+        }
+
+        // For Individual items, allow increasing quantity
+        if (existing) {
+          return prev.map((a) =>
+            (a.addonId || a.id) === addonId
+              ? { ...a, quantity: (a.quantity || 1) + delta }
+              : a
+          );
+        }
+        return [...prev, { ...addon, quantity: 1, pricingType }];
+      } else {
+        // Removal/Decrease logic
+        if (existing) {
+          if (existing.quantity > 1) {
+            return prev.map((a) =>
+              (a.addonId || a.id) === addonId
+                ? { ...a, quantity: a.quantity - 1 }
+                : a
+            );
+          }
+          return prev.filter((a) => (a.addonId || a.id) !== addonId);
+        }
+        return prev;
+      }
+    });
+  };
+
   const ticketTypes = (Array.isArray(event?.ticketTypes) ? event.ticketTypes :
     Array.isArray(event?.ticketTiers) ? event.ticketTiers :
       Array.isArray(event?.tickets) ? event.tickets : []).map((ticket, index) => ({
@@ -1494,10 +1571,20 @@ function EventBookingPopup({ event }) {
     eventSlots: timeSlots,
     slots: timeSlots,
     timeSlots,
-    host: event?.hostProfile?.host || event?.host || {}
+    host: event?.hostProfile?.host || event?.host || {},
+    addons: addons || []
   };
 
-  return <BookingSystem listing={listing} type="event" triggerLabel="Reserve Ticket" reserveLabel="Reserve Ticket" />;
+  return (
+    <BookingSystem
+      listing={listing}
+      type="event"
+      triggerLabel="Reserve Ticket"
+      reserveLabel="Reserve Ticket"
+      selectedAddOns={selectedAddOns}
+      onUpdateAddonQuantity={handleUpdateAddonQuantity}
+    />
+  );
 }
 
 function Tickets({ event }) {
@@ -1889,6 +1976,46 @@ function Tickets({ event }) {
   );
 }
 
+function EventAddonsDisplay({ eventAddons, availableAddons }) {
+  const { tokens: { BG, FG, M, W, B, A } } = useTheme();
+
+  // The addons currently assigned to the event
+  const displayedAddons = eventAddons && eventAddons.length > 0 
+    ? eventAddons.map(ea => ea.addon || ea) 
+    : [];
+
+  if (displayedAddons.length === 0) return null;
+
+  return (
+    <section style={{ background: BG, padding: "0 36px 160px" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+        <SHdr idx="07" label="Add-ons" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
+          {displayedAddons.map((addon, idx) => (
+            <div key={addon.id || idx} style={{ border: `1px solid ${B}`, borderRadius: 12, padding: 24, background: W }}>
+              {addon.imageUrls?.[0] && (
+                <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", marginBottom: 16 }}>
+                  <img src={addon.imageUrls[0]} alt={addon.title || addon.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              )}
+              <h4 style={{ fontSize: 18, fontWeight: 700, color: FG, marginBottom: 8 }}>{addon.title || addon.name}</h4>
+              <p style={{ fontSize: 14, color: M, marginBottom: 16 }}>{addon.briefDescription || addon.description}</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 16, fontWeight: 600, color: A }}>
+                  {addon.pricingType === "free" ? "Free" : `₹${addon.price || 0}`}
+                </span>
+                <span style={{ fontSize: 12, color: M, background: `${B}40`, padding: "4px 8px", borderRadius: 4 }}>
+                  {addon.pricingType === "per_person" ? "Per Person" : addon.pricingType === "per_group" ? "Per Group" : "Per Unit"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─── MAIN ───────────────────────────────────────── */
 export default function EventDetails() {
   const location = useLocation();
@@ -1901,6 +2028,8 @@ export default function EventDetails() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [eventAddons, setEventAddons] = useState([]);
+  const [availableAddons, setAvailableAddons] = useState([]);
   const primaryCategoryId = event?.primaryCategoryId || event?.primaryCategory?.id || event?.categoryId || event?.category?.id;
   const currentListingId = event?.eventId || event?.id || eventId;
 
@@ -1930,6 +2059,14 @@ export default function EventDetails() {
         }).catch(() => {
           if (mounted) setReviews([]);
         });
+
+        getEventAddons(eventId).then(res => {
+          const addons = res?.assignments || res || [];
+          if (mounted) setEventAddons(addons);
+        }).catch(() => {
+          if (mounted) setEventAddons([]);
+        });
+
 
         if (mounted) { setEvent({ ...data, hostProfile }); setHostName(fetchedHostName); setError(null); }
       } catch (err) {
@@ -1970,7 +2107,8 @@ export default function EventDetails() {
       <Venue event={event} hostName={hostName} />
       <Rules event={event} />
       <HostDetails event={event} hostName={hostName} reviews={reviews} />
-      <EventBookingPopup event={event} />
+      <EventAddonsDisplay eventAddons={eventAddons} />
+      <EventBookingPopup event={event} addons={Array.isArray(eventAddons) ? eventAddons.map(ea => ea.addon || ea) : []} />
       <RelatedListingsStrip
         businessInterestId={2}
         primaryCategoryId={primaryCategoryId}

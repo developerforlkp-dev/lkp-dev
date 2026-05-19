@@ -1596,6 +1596,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           selectedEventSlotIds,
           privateBooking,
           selectedAddOns: selectedAddOns.map(a => a?.addon?.addonId || a?.addonId || a?.id),
+          addOnQuantities: (() => {
+            const quantities = {};
+            selectedAddOns.forEach(item => {
+              const addon = item.addon || item;
+              const id = addon.addonId || addon.id;
+              quantities[id] = Number(item.quantity || addon.quantity || 1) || 1;
+            });
+            return quantities;
+          })(),
         };
         try {
           localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
@@ -1690,6 +1699,25 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         return;
       }
 
+      const eventAddonsPayload = selectedAddOns.map((item) => {
+        const addon = item.addon || item;
+        const addonId = addon.addonId || addon.id;
+        if (!addonId) return null;
+        return {
+          addonId,
+          addonName: addon.title || addon.name || addon.addonName || "Add-on",
+          addonPrice: parseFloat(addon.price || addon.addonPrice || 0),
+          quantity: Number(item.quantity || addon.quantity || 1) || 1,
+        };
+      }).filter(Boolean);
+
+      const addOnQuantities = {};
+      selectedAddOns.forEach(item => {
+        const addon = item.addon || item;
+        const id = addon.addonId || addon.id;
+        addOnQuantities[id] = Number(item.quantity || addon.quantity || 1) || 1;
+      });
+
       const payload = {
         eventId: eventIdNum,
         eventSlotId: eventSlotIdNum,
@@ -1706,6 +1734,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           quantity: totalGuests,
           pricePerTicket: Number(pricePerTicket.toFixed(2)),
         }],
+        addons: eventAddonsPayload,
         appliedDiscountCode: null,
         notes: null,
       };
@@ -1793,16 +1822,35 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             total: finalTotal,
             guestCount: totalGuests,
           },
-          receipt: [
-            {
+          selectedAddOns: selectedAddOns.map(a => (a.addon?.addonId || a.addonId || a.id)),
+          addOnQuantities: addOnQuantities,
+          receipt: (() => {
+            const eventReceipt = [];
+            eventReceipt.push({
               title: `${currency} ${eventGuestPricing.finalUnitPrice.toFixed(2)} x ${totalGuests} ${totalGuests === 1 ? "ticket" : "tickets"}`,
-              content: `${currency} ${finalTotal.toFixed(2)}`,
-            },
-            {
+              content: `${currency} ${(eventGuestPricing.finalUnitPrice * totalGuests).toFixed(2)}`,
+              kind: "base",
+              showInCheckout: true
+            });
+            selectedAddOns.forEach(item => {
+              const addon = item.addon || item;
+              const quantity = Number(item.quantity || addon.quantity || 1) || 1;
+              const addonLineTotal = getAddonLineTotal(item);
+              eventReceipt.push({
+                title: `${addon.title || "Add-on"} × ${quantity}`,
+                content: `${currency} ${addonLineTotal.toFixed(2)}`,
+                kind: "addon",
+                showInCheckout: false
+              });
+            });
+            eventReceipt.push({
               title: "Total",
               content: `${currency} ${finalTotal.toFixed(2)}`,
-            },
-          ],
+              kind: "total",
+              showInCheckout: true
+            });
+            return eventReceipt;
+          })(),
           currency,
           finalTotal,
           ticketType: ticketTypeName,
@@ -1855,7 +1903,35 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         }
       } catch (e) {
         console.error("Event booking failed:", e?.response?.data || e?.message || e);
-        alert(e?.response?.data?.message || e?.response?.data?.error || e?.message || "Booking failed. Please try again.");
+        const errorMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || "";
+        if (e?.response?.status === 401 || errorMsg.includes("token") || errorMsg.includes("unauthorized") || errorMsg.includes("Authentication required")) {
+          // Clear invalid/expired token
+          localStorage.removeItem("jwtToken");
+          localStorage.removeItem("userInfo");
+          
+          // Save the pending booking state so the user can continue after login
+          const listingIdToSave = listing?.listingId || listing?.id || listing?.eventId || listing?.stayId;
+          if (listingIdToSave) {
+            const stateToStore = {
+              listingId: String(listingIdToSave),
+              type,
+              startDate: startDate ? startDate.format("YYYY-MM-DD") : null,
+              startTime,
+              guests,
+              selectedTicketTypeId,
+              selectedEventSlotIds,
+              privateBooking,
+              selectedAddOns: selectedAddOns.map(a => a?.addon?.addonId || a?.addonId || a?.id),
+              addOnQuantities: addOnQuantities,
+            };
+            try {
+              localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
+            } catch (err) {}
+          }
+          setShowLoginPrompt(true);
+        } else {
+          alert(errorMsg || "Booking failed. Please try again.");
+        }
       } finally {
         if (isMountedRef.current) setBookingLoading(false);
       }
@@ -2098,7 +2174,43 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       }
     } catch (e) {
       console.error("Experience booking failed:", e?.response?.data || e?.message || e);
-      alert(e?.response?.data?.message || e?.response?.data?.error || e?.message || "Booking failed. Please try again.");
+      const errorMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || "";
+      if (e?.response?.status === 401 || errorMsg.includes("token") || errorMsg.includes("unauthorized") || errorMsg.includes("Authentication required")) {
+        // Clear invalid/expired token
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("userInfo");
+        
+        // Save the pending booking state so the user can continue after login
+        const listingIdToSave = listing?.listingId || listing?.id || listing?.eventId || listing?.stayId;
+        if (listingIdToSave) {
+          const stateToStore = {
+            listingId: String(listingIdToSave),
+            type,
+            startDate: startDate ? startDate.format("YYYY-MM-DD") : null,
+            startTime,
+            guests,
+            selectedTicketTypeId,
+            selectedEventSlotIds,
+            privateBooking,
+            selectedAddOns: selectedAddOns.map(a => a?.addon?.addonId || a?.addonId || a?.id),
+            addOnQuantities: (() => {
+              const quantities = {};
+              selectedAddOns.forEach(item => {
+                const addon = item.addon || item;
+                const id = addon.addonId || addon.id;
+                quantities[id] = Number(item.quantity || addon.quantity || 1) || 1;
+              });
+              return quantities;
+            })(),
+          };
+          try {
+            localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
+          } catch (err) {}
+        }
+        setShowLoginPrompt(true);
+      } else {
+        alert(errorMsg || "Booking failed. Please try again.");
+      }
     } finally {
       if (isMountedRef.current) setBookingLoading(false);
     }

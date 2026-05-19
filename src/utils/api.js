@@ -734,6 +734,32 @@ export const getEventSlotAvailability = async (eventId) => {
   }
 };
 
+export const getEventAddons = async (eventId) => {
+  try {
+    if (!eventId) {
+      throw new Error("eventId is required");
+    }
+    const response = await ListingsAPI.get(`/events/${eventId}/addons`);
+    return response.data?.assignments || response.data || [];
+  } catch (error) {
+    console.error("Error fetching event addons:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getAvailableEventAddons = async (eventId) => {
+  try {
+    if (!eventId) {
+      throw new Error("eventId is required");
+    }
+    const response = await ListingsAPI.get(`/events/${eventId}/available-addons`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching available event addons:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // Get slots for a listing
 export const getListingSlots = async (listingId, startDate, endDate) => {
   try {
