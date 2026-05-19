@@ -1206,14 +1206,15 @@ const Main = ({
                             const isEvent = booking.category === "EVENTS" ||
                               booking.bookingData?.eventId ||
                               booking.bookingData?.businessInterestCode === "EVENTS";
-                            const viewUrl = isEvent
-                              ? `/viewdetails?id=${booking.id}&type=event`
-                              : `/viewdetails?id=${booking.id}`;
+                            const search = isEvent
+                              ? `?id=${encodeURIComponent(booking.id)}&type=event`
+                              : `?id=${encodeURIComponent(booking.id)}`;
                             return (
                               <Link
                                 key={`${booking.id}-${action.label}`}
                                 to={{
-                                  pathname: viewUrl,
+                                  pathname: "/viewdetails",
+                                  search,
                                   state: { sourceTab: displayedTab },
                                 }}
                                 className={getButtonClassName(action.variant)}
