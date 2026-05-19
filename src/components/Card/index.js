@@ -88,8 +88,10 @@ const Item = ({ className, item, row, car }) => {
               <div className={styles.cost}>{item.cost}</div>
             )}
             <div className={styles.rating}>
-              <FiveStarRating rating={item.rating} size={12} />
-              <span className={styles.number}>{item.rating}</span>
+              <div className={styles.ratingTop}>
+                <FiveStarRating rating={item.rating} size={12} />
+                <span className={styles.number}>{item.rating}</span>
+              </div>
               <span className={styles.review}>({item.reviews} reviews)</span>
             </div>
           </div>
