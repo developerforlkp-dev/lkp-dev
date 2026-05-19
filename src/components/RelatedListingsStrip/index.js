@@ -76,28 +76,39 @@ export default function RelatedListingsStrip({
   const railRef = useRef(null);
   const pauseAutoScrollRef = useRef(false);
   const autoTimerRef = useRef(null);
+  const resumeTimerRef = useRef(null);
   const [navPulse, setNavPulse] = useState({ left: false, right: false });
   const debugAutoScroll = process.env.NODE_ENV !== "production";
+
+  const clearResumeTimer = () => {
+    if (resumeTimerRef.current) {
+      window.clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  };
 
   const normalizeLoopPosition = () => {
     const el = railRef.current;
     if (!el) return;
-    const setWidth = el.scrollWidth / 3;
+    const setWidth = el.scrollWidth / repeatCount;
     if (!setWidth || !Number.isFinite(setWidth)) return;
+    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    if (maxScrollLeft <= 0) return;
 
-    // Keep viewport inside middle copy so both left and right feel circular.
-    if (el.scrollLeft < setWidth * 0.5) {
+    // If we hit either edge, jump by one logical set to preserve infinite scrolling.
+    if (el.scrollLeft <= 1) {
       if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][normalize] shift +setWidth", {
+        console.log("[RelatedListingsStrip][normalize] hit-start shift +setWidth", {
           leftBefore: el.scrollLeft,
           setWidth,
         });
       }
       el.scrollLeft += setWidth;
-    } else if (el.scrollLeft > setWidth * 2.5) {
+    } else if (el.scrollLeft >= maxScrollLeft - 1) {
       if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][normalize] shift -setWidth", {
+        console.log("[RelatedListingsStrip][normalize] hit-end shift -setWidth", {
           leftBefore: el.scrollLeft,
+          maxScrollLeft,
           setWidth,
         });
       }
@@ -130,7 +141,13 @@ export default function RelatedListingsStrip({
       };
 
       const requestAttempts = hasCategory
-        ? [{ ...basePayload, categoryType: "Primary Category", categoryValues: [resolvedCategoryId], _fallbackMode: "Primary Category" }]
+        ? [
+            { ...basePayload, categoryType: "Primary Category", categoryValues: [resolvedCategoryId], _fallbackMode: "Primary Category" },
+            firstTag ? { ...basePayload, categoryType: "Tags", categoryValues: [firstTag], _fallbackMode: "Tags" } : null,
+            firstLocation ? { ...basePayload, categoryType: "Locations", categoryValues: [firstLocation], _fallbackMode: "Locations" } : null,
+            firstSpecialLabel ? { ...basePayload, categoryType: "Special Labels", categoryValues: [firstSpecialLabel], _fallbackMode: "Special Labels" } : null,
+            { ...basePayload, _fallbackMode: "BusinessInterestOnly" },
+          ].filter(Boolean)
         : [
             firstLocation ? { ...basePayload, categoryType: "Locations", categoryValues: [firstLocation], _fallbackMode: "Locations" } : null,
             firstTag ? { ...basePayload, categoryType: "Tags", categoryValues: [firstTag], _fallbackMode: "Tags" } : null,
@@ -140,6 +157,7 @@ export default function RelatedListingsStrip({
       try {
         setLoading(true);
         let resultListings = [];
+        const seenIds = new Set();
         let usedMode = "none";
         for (const attempt of requestAttempts) {
           const { _fallbackMode, ...apiPayload } = attempt;
@@ -150,9 +168,18 @@ export default function RelatedListingsStrip({
           const response = await getFilteredListings(apiPayload);
           const listings = Array.isArray(response?.listings) ? response.listings : [];
           if (listings.length > 0) {
-            resultListings = listings;
-            usedMode = _fallbackMode;
-            break;
+            usedMode = usedMode === "none" ? _fallbackMode : `${usedMode} -> ${_fallbackMode}`;
+            listings.forEach((listing) => {
+              const uniqueId = `${getTargetId(listing, businessInterestId) ?? ""}-${getListingId(listing) ?? ""}`;
+              if (!seenIds.has(uniqueId)) {
+                seenIds.add(uniqueId);
+                resultListings.push(listing);
+              }
+            });
+            // If category result is small (1-2), continue fallback using tags/location.
+            if ((!hasCategory && resultListings.length > 0) || resultListings.length >= limit || resultListings.length > 2) {
+              break;
+            }
           }
         }
         if (!mounted) return;
@@ -185,15 +212,24 @@ export default function RelatedListingsStrip({
     const current = currentListingId == null ? null : String(currentListingId);
     return items.filter((item) => {
       if (current == null) return true;
-      return String(getTargetId(item, businessInterestId)) !== current;
+      const candidateIds = [
+        getTargetId(item, businessInterestId),
+        getListingId(item),
+        item?.id,
+        item?._id,
+        item?.itemId,
+      ]
+        .filter((v) => v !== undefined && v !== null)
+        .map((v) => String(v));
+      return !candidateIds.includes(current);
     });
   }, [items, currentListingId, businessInterestId]);
+  const repeatCount = filteredItems.length <= 3 ? 8 : 3;
 
   const loopItems = useMemo(() => {
     if (filteredItems.length === 0) return [];
-    // Triple buffer for seamless infinite loop.
-    return [...filteredItems, ...filteredItems, ...filteredItems];
-  }, [filteredItems]);
+    return Array.from({ length: repeatCount }, () => filteredItems).flat();
+  }, [filteredItems, repeatCount]);
 
   useEffect(() => {
     const el = railRef.current;
@@ -218,12 +254,15 @@ export default function RelatedListingsStrip({
     pauseAutoScrollRef.current = false;
 
     // Start from middle copy so we can move left/right infinitely.
-    const oneSetWidth = el.scrollWidth / 3;
+    const oneSetWidth = el.scrollWidth / repeatCount;
+    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    const initialLeft = Math.min(oneSetWidth, maxScrollLeft);
     if (oneSetWidth > 0) {
-      el.scrollLeft = oneSetWidth;
+      el.scrollLeft = initialLeft;
       if (debugAutoScroll) {
         console.log("[RelatedListingsStrip][init]", {
           oneSetWidth,
+          repeatCount,
           scrollWidth: el.scrollWidth,
           clientWidth: el.clientWidth,
           left: el.scrollLeft,
@@ -248,7 +287,7 @@ export default function RelatedListingsStrip({
       autoTimerRef.current = window.setInterval(() => {
         if (pauseAutoScrollRef.current) return;
         if (!el) return;
-        const setWidth = el.scrollWidth / 3;
+        const setWidth = el.scrollWidth / repeatCount;
         if (setWidth <= 0) return;
         const before = el.scrollLeft;
         el.scrollLeft = el.scrollLeft + step;
@@ -311,9 +350,10 @@ export default function RelatedListingsStrip({
         window.clearInterval(autoTimerRef.current);
         autoTimerRef.current = null;
       }
+      clearResumeTimer();
       resizeObserver.disconnect();
     };
-  }, [loading, loopItems.length, filteredItems.length]);
+  }, [loading, loopItems.length, filteredItems.length, repeatCount]);
 
   if (loading || filteredItems.length === 0) return null;
 
@@ -323,9 +363,10 @@ export default function RelatedListingsStrip({
     if (!el) return;
     normalizeLoopPosition();
     setNavPulse({ left: true, right: false });
+    clearResumeTimer();
     pauseAutoScrollRef.current = true;
     el.scrollBy({ left: -scrollByAmount, top: 0, behavior: "smooth" });
-    window.setTimeout(() => { normalizeLoopPosition(); pauseAutoScrollRef.current = false; }, 900);
+    resumeTimerRef.current = window.setTimeout(() => { normalizeLoopPosition(); pauseAutoScrollRef.current = false; }, 2000);
     window.setTimeout(() => { setNavPulse((p) => ({ ...p, left: false })); }, 240);
   };
   const scrollRight = () => {
@@ -333,9 +374,10 @@ export default function RelatedListingsStrip({
     if (!el) return;
     normalizeLoopPosition();
     setNavPulse({ left: false, right: true });
+    clearResumeTimer();
     pauseAutoScrollRef.current = true;
     el.scrollBy({ left: scrollByAmount, top: 0, behavior: "smooth" });
-    window.setTimeout(() => { normalizeLoopPosition(); pauseAutoScrollRef.current = false; }, 900);
+    resumeTimerRef.current = window.setTimeout(() => { normalizeLoopPosition(); pauseAutoScrollRef.current = false; }, 2000);
     window.setTimeout(() => { setNavPulse((p) => ({ ...p, right: false })); }, 240);
   };
 
@@ -408,6 +450,13 @@ export default function RelatedListingsStrip({
         <div
           ref={railRef}
           onScroll={normalizeLoopPosition}
+          onMouseEnter={() => {
+            clearResumeTimer();
+            pauseAutoScrollRef.current = true;
+          }}
+          onMouseLeave={() => {
+            pauseAutoScrollRef.current = false;
+          }}
           className="related-strip-scroll"
           style={{ overflowX: "auto", overflowY: "hidden", paddingBottom: 8 }}
         >
