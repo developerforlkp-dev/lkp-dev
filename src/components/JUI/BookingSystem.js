@@ -962,7 +962,7 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
               key={cell.key}
               type="button"
               disabled={!cell.isAvailable}
-              onClick={() => onDateSelect(moment(cell.key))}
+              onClick={() => onDateSelect(isSelected ? null : moment(cell.key))}
               title={cell.isPast ? "Past date" : undefined}
               style={{
                 aspectRatio: "1 / 1",
