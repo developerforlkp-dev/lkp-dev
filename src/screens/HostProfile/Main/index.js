@@ -162,27 +162,7 @@ const Main = ({ hostId }) => {
     "";
 
   // Build parametersUser from host data
-  const parametersUser = hostData
-    ? [
-        {
-          title: host?.companyName || "Host",
-          icon: "home",
-        },
-        {
-          title: "Host profile",
-          icon: "star-outline",
-        },
-      ]
-    : [
-        {
-          title: "Host",
-          icon: "home",
-        },
-        {
-          title: "Host profile",
-          icon: "star-outline",
-        },
-      ];
+  const parametersUser = [];
 
   // Loading state
   if (loading && hostId) {
@@ -222,7 +202,8 @@ const Main = ({ hostId }) => {
             className={styles.profile}
             parametersUser={parametersUser}
             socials={socials}
-            buttonText="Contact"
+            hideContactButton={true}
+            hideReportButton={true}
             info={host?.bio || ""}
             joinedDate={joinedDate}
             siteUrl={null}
