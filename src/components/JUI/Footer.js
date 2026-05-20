@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useTheme } from "./Theme";
 import { Rev, Chars } from "./UI";
 import { Instagram, Facebook, Youtube, Linkedin } from "lucide-react";
@@ -58,9 +59,9 @@ export function Footer() {
       <div className="bottom-footer-bar">
         <div className="bottom-footer-inner">
           <div className="bottom-footer-links">
-            <a href="#" className="bottom-footer-link">Privacy</a>
+            <Link to="/privacy-policy" className="bottom-footer-link">Privacy</Link>
             <span className="bottom-footer-dot">•</span>
-            <a href="#" className="bottom-footer-link">Terms & Conditions</a>
+            <Link to="/terms-of-service" className="bottom-footer-link">Terms & Conditions</Link>
             <span className="bottom-footer-dot">•</span>
             <span className="bottom-footer-text">Call Us: +91 8104 954 254</span>
           </div>
