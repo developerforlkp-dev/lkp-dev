@@ -1087,6 +1087,7 @@ const StayDetails = () => {
         guests={guests}
         setGuests={setGuests}
         selectedRooms={selectedRooms}
+        setSelectedRooms={setSelectedRooms}
         onRoomsCountChange={handleRoomCountChange}
       />
 
