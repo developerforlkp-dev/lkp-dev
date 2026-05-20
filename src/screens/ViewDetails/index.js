@@ -1657,10 +1657,16 @@ const ViewDetails = () => {
   const getStatusClass = (status) => {
     if (!status) return styles.statusDefault;
 
-    // Get original orderStatus first for accurate status class
+    // If booking.status has been overridden to "Completed" by date-based logic,
+    // respect that override before checking the raw backend orderStatus.
+    if (booking?.status === "Completed" || booking?.statusTone === "completed") {
+      return styles.statusCompleted;
+    }
+
+    // Get original orderStatus for accurate status class
     const originalStatus = booking?.originalData?.orderStatus ? String(booking.originalData.orderStatus).toUpperCase().trim() : "";
 
-    // Check original orderStatus first
+    // Check original orderStatus
     if (originalStatus === "PENDING") {
       return styles.statusPending; // Orange background for pending
     }
@@ -1860,7 +1866,13 @@ const ViewDetails = () => {
               <div className={styles.summaryValue}>
                 <span className={cn(styles.statusBadge, getStatusClass(booking.status || booking.statusTone || booking.originalData?.orderStatus))}>
                   {(() => {
-                    // Get status from original orderStatus first, then fallback to mapped status
+                    // If booking.status has been overridden to "Completed" by date-based logic,
+                    // show "Completed" regardless of the raw backend orderStatus (which may still be CONFIRMED).
+                    if (booking.status === "Completed" || booking.statusTone === "completed") {
+                      return "Completed";
+                    }
+
+                    // Get status from original orderStatus, then fallback to mapped status
                     const originalStatus = booking.originalData?.orderStatus;
                     if (originalStatus) {
                       const normalized = String(originalStatus).toUpperCase().trim();
