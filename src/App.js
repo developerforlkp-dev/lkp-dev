@@ -47,6 +47,8 @@ import { ThemeProvider } from "./components/JUI/Theme";
 import { Cursor, ProgressBar } from "./components/JUI/UI";
 import ScrollToTop from "./components/ScrollToTop";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import TermsOfService from "./screens/TermsOfService";
+import PrivacyPolicy from "./screens/PrivacyPolicy";
 
 function App() {
   // Get Google Client ID from environment variable
@@ -403,6 +405,20 @@ function App() {
               <Page separatorHeader>
                 <PlaceDetails />
               </Page>
+            )}
+          />
+          <Route
+            exact
+            path="/terms-of-service"
+            render={() => (
+              <TermsOfService />
+            )}
+          />
+          <Route
+            exact
+            path="/privacy-policy"
+            render={() => (
+              <PrivacyPolicy />
             )}
           />
           <Route

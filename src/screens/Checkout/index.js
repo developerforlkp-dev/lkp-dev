@@ -484,6 +484,7 @@ const Checkout = () => {
 
   const isStayBooking = !!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate);
   const tripTitle = isStayBooking ? "Your stay" : "Your trip";
+  const isAmountInPaise = paymentData?.paymentMethod === "razorpay";
 
   // Get first image
   const getListingImage = () => {
@@ -533,6 +534,7 @@ const Checkout = () => {
             buttonUrl="/checkout-complete"
             guests={!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate)}
             amountToPay={paymentData?.amount}
+            amountInPaise={isAmountInPaise}
             currency={paymentData?.currency || "INR"}
             paymentData={paymentData}
             dateValue={items[0]?.title}
@@ -569,6 +571,7 @@ const Checkout = () => {
             items={items}
             table={table}
             amountToPay={paymentData?.amount}
+            amountInPaise={isAmountInPaise}
             currency={paymentData?.currency || "INR"}
             hostName={hostName}
             hostAvatar={hostAvatar}

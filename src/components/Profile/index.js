@@ -15,6 +15,8 @@ const Profile = ({
   siteUrl = "https://ui8.net",
   phoneNumber,
   email,
+  hideContactButton = false,
+  hideReportButton = false,
 }) => {
   const displayJoinedDate = joinedDate || "Mar 15, 2021";
 
@@ -22,14 +24,16 @@ const Profile = ({
     <div className={cn(className, styles.profile)}>
       <div className={styles.head}>{children}</div>
       <div className={styles.body}>
-        <div className={styles.parameters}>
-          {parametersUser.map((x, index) => (
-            <div className={styles.parameter} key={index}>
-              <Icon name={x.icon} size="20" />
-              {x.title}
-            </div>
-          ))}
-        </div>
+        {parametersUser && parametersUser.length > 0 && (
+          <div className={styles.parameters}>
+            {parametersUser.map((x, index) => (
+              <div className={styles.parameter} key={index}>
+                <Icon name={x.icon} size="20" />
+                {x.title}
+              </div>
+            ))}
+          </div>
+        )}
         {info && <div className={styles.info}>{info}</div>}
         {siteUrl ? (
           <a
@@ -56,9 +60,11 @@ const Profile = ({
         ) : null}
         <div className={styles.control}>
           <div className={styles.btns}>
-            <button className={cn("button-stroke button-small", styles.button)}>
-              {buttonText}
-            </button>
+            {!hideContactButton && (
+              <button className={cn("button-stroke button-small", styles.button)}>
+                {buttonText}
+              </button>
+            )}
             <Share openUp />
             {/* <button
               className={cn("button-circle-stroke button-small", styles.button)}
@@ -81,10 +87,12 @@ const Profile = ({
           ))}
         </div>
         <div className={styles.note}>Member since {displayJoinedDate}</div>
-        <button className={styles.report}>
-          <Icon name="flag" size="12" />
-          Report this property
-        </button>
+        {!hideReportButton && (
+          <button className={styles.report}>
+            <Icon name="flag" size="12" />
+            Report this property
+          </button>
+        )}
       </div>
     </div>
   );

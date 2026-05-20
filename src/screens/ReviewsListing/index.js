@@ -21,17 +21,25 @@ const asNum = (value) => {
 
 const getLocationText = (item) => {
   if (!item || typeof item !== "object") return "Location unavailable";
-  const city = item.city || item.locationCity || item.town || "";
-  const state = item.state || item.region || "";
-  const country = item.country || "";
-  const fallback =
+  
+  // Prioritize specific/full address fields (including meetingAddress)
+  const specificAddress =
+    item.meetingAddress ||
+    item.fullAddress ||
+    item.address ||
     item.locationName ||
     item.location ||
-    item.addressLine ||
-    item.fullAddress ||
-    item.address;
+    item.addressLine;
+    
+  if (specificAddress) return specificAddress;
+
+  // Fall back to city/state/country combination if no specific address exists
+  const city = item.city || item.locationCity || item.town || item.meetingDistrict || "";
+  const state = item.state || item.region || "";
+  const country = item.country || item.meetingCountry || "";
   const parts = [city, state, country].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : (fallback || "Location unavailable");
+  
+  return parts.length > 0 ? parts.join(", ") : "Location unavailable";
 };
 
 const getCoverPhoto = (item) => {

@@ -450,11 +450,49 @@ const makeLocalDate = (dateKey) => {
 const normalizeBookingTime = (value) => {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  const match = raw.match(/^(\d{1,2})(?::(\d{1,2}))?/);
-  if (!match) return raw;
-  const hours = String(Math.min(Math.max(Number(match[1]) || 0, 0), 23)).padStart(2, "0");
-  const minutes = String(Math.min(Math.max(Number(match[2]) || 0, 0), 59)).padStart(2, "0");
-  return `${hours}:${minutes}:00`;
+
+  // Supports: "HH:mm", "HH:mm:ss", "h:mm AM/PM", and ISO datetime strings.
+  let hours = null;
+  let minutes = null;
+  let seconds = 0;
+
+  const ampmMatch = raw.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM)$/i);
+  if (ampmMatch) {
+    let h = Number(ampmMatch[1]);
+    const m = Number(ampmMatch[2]);
+    const s = Number(ampmMatch[3] || 0);
+    const marker = String(ampmMatch[4]).toUpperCase();
+    if (marker === "PM" && h < 12) h += 12;
+    if (marker === "AM" && h === 12) h = 0;
+    hours = h;
+    minutes = m;
+    seconds = s;
+  }
+
+  if (hours == null || minutes == null) {
+    const timeOnlyMatch = raw.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+    if (timeOnlyMatch) {
+      hours = Number(timeOnlyMatch[1]);
+      minutes = Number(timeOnlyMatch[2]);
+      seconds = Number(timeOnlyMatch[3] || 0);
+    }
+  }
+
+  if (hours == null || minutes == null) {
+    const isoLikeMatch = raw.match(/T(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+    if (isoLikeMatch) {
+      hours = Number(isoLikeMatch[1]);
+      minutes = Number(isoLikeMatch[2]);
+      seconds = Number(isoLikeMatch[3] || 0);
+    }
+  }
+
+  if (hours == null || minutes == null) return "";
+
+  const hh = String(Math.min(Math.max(Number(hours) || 0, 0), 23)).padStart(2, "0");
+  const mm = String(Math.min(Math.max(Number(minutes) || 0, 0), 59)).padStart(2, "0");
+  const ss = String(Math.min(Math.max(Number(seconds) || 0, 0), 59)).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
 };
 
 /**
@@ -962,7 +1000,7 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
               key={cell.key}
               type="button"
               disabled={!cell.isAvailable}
-              onClick={() => onDateSelect(moment(cell.key))}
+              onClick={() => onDateSelect(isSelected ? null : moment(cell.key))}
               title={cell.isPast ? "Past date" : undefined}
               style={{
                 aspectRatio: "1 / 1",
@@ -1003,6 +1041,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [startTime, setStartTime] = useState(null);
   const [guests, setGuests] = useState({ adults: 0, children: 0, infants: 0 });
   const totalGuests = guests.adults + guests.children;
+  const billableAdults = guests.adults;
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [dateFilteredSlots, setDateFilteredSlots] = useState([]);
   const [dateFilteredSlotsLoaded, setDateFilteredSlotsLoaded] = useState(false);
@@ -1115,8 +1154,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   ), [eventFallbackSlots, ticketApplicableSlots]);
   const eventPrice = getTicketPrice(selectedTicket, asNumber(listing?.ticketPrice) ?? asNumber(listing?.price) ?? asNumber(listing?.basePrice) ?? 0);
   const effectiveEventPrice = useMemo(() => (
-    getEffectiveTicketPrice(selectedTicket, totalGuests, eventPrice)
-  ), [selectedTicket, totalGuests, eventPrice]);
+    getEffectiveTicketPrice(selectedTicket, billableAdults, eventPrice)
+  ), [selectedTicket, billableAdults, eventPrice]);
   const eventGuestPricing = useMemo(() => (
     calculateEventGuestPricing(effectiveEventPrice.price, listing?.pricing, listing?.earlyBirdDiscounts, startDate)
   ), [effectiveEventPrice.price, listing?.pricing, listing?.earlyBirdDiscounts, startDate]);
@@ -1263,11 +1302,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     return keys;
   }, [baseTimeSlots, dateFilteredSlots, isEventBooking, listing]);
 
-  useEffect(() => {
-    if (!isEventBooking || selectedTicketTypeId || eventTickets.length === 0) return;
-    const firstTicket = eventTickets[0];
-    setSelectedTicketTypeId(String(firstTicket.id ?? firstTicket.ticketTypeId ?? firstTicket.typeId ?? "ticket-0"));
-  }, [eventTickets, isEventBooking, selectedTicketTypeId]);
+
 
   useEffect(() => {
     if (!isEventBooking || !show || !eventIdForAvailability) return;
@@ -1442,7 +1477,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const groupPricingRules = !isEventBooking
     ? (selectedSlotData?.group_booking_pricing || selectedSlotData?.groupBookingPricing || [])
     : [];
-  const groupOverridePrice = getGroupPricingTierPrice(groupPricingRules, totalGuests);
+  const groupOverridePrice = getGroupPricingTierPrice(groupPricingRules, billableAdults);
   // Effective raw base price: group tier wins when matched, else use slot/listing price
   const effectiveRawPrice = (groupOverridePrice != null && groupOverridePrice > 0)
     ? groupOverridePrice
@@ -1683,7 +1718,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const customerName = `${customerDetails.firstName || ""} ${customerDetails.lastName || ""}`.trim() || "Guest User";
       const customerEmail = customerDetails.email || "guest@example.com";
       const customerPhone = customerDetails.phone || "";
-
       if (!eventIdNum || !eventSlotIdNum || !ticketTypeId) {
         setValidationErrors({ slot: "Unable to book: event ticket or slot information is missing." });
         setShowValidation(true);
@@ -1696,14 +1730,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         eventSlotIds,
         bookingDate: dateStr,
         numberOfGuests: totalGuests,
+        childCount: guests.children || 0,
         customerName: customerName,
         customerEmail: customerEmail,
         customerPhone: customerPhone,
         customerDetails,
+        paymentMethod: "razorpay",
+        specialRequests: "",
         tickets: [{
           ticketTypeId,
           ticketTypeName,
           quantity: totalGuests,
+          childQuantity: guests.children || 0,
           pricePerTicket: Number(pricePerTicket.toFixed(2)),
         }],
         appliedDiscountCode: null,
@@ -2923,8 +2961,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           {validationErrors.ticketType && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
                         </div>
                         {eventTickets.length > 0 ? (
-                          <div style={{ position: "relative" }}>
-                            <select
+                          <div>
+                            <div style={{ position: "relative" }}>
+                              <select
                               value={selectedTicketTypeId}
                               onChange={(e) => {
                                 setSelectedTicketTypeId(e.target.value);
@@ -2955,7 +2994,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               {eventTickets.map((ticket, index) => {
                                 const ticketId = String(ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`);
                                 const ticketBasePrice = getTicketPrice(ticket, 0);
-                                const ticketEffectivePrice = getEffectiveTicketPrice(ticket, totalGuests, ticketBasePrice).price;
+                                const ticketEffectivePrice = getEffectiveTicketPrice(ticket, billableAdults, ticketBasePrice).price;
                                 const ticketGuestPrice = calculateEventGuestPricing(ticketEffectivePrice, listing?.pricing).finalUnitPrice;
                                 return (
                                   <option key={ticketId} value={ticketId}>
@@ -2963,8 +3002,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   </option>
                                 );
                               })}
-                            </select>
-                            <ChevronDown size={16} color={M} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                              </select>
+                              <ChevronDown size={16} color={M} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                            </div>
                              {eventAvailabilityLoading && (
                               <div style={{ marginTop: 4, fontSize: 11, color: M, fontWeight: 700, lineHeight: 1.2 }}>
                                 Checking availability...

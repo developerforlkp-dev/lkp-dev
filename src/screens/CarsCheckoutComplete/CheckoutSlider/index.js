@@ -4,32 +4,24 @@ import styles from "./CheckoutSlider.module.sass";
 import Slider from "react-slick";
 import Icon from "../../../components/Icon";
 
-const SlickArrow = ({ currentSlide, slideCount, children, ...props }) => (
-  <button {...props}>{children}</button>
-);
-
 const CheckoutSlider = ({ className, gallery }) => {
   const settings = {
     infinite: true,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    nextArrow: (
-      <SlickArrow>
-        <Icon name="arrow-next" size="14" />
-      </SlickArrow>
-    ),
-    prevArrow: (
-      <SlickArrow>
-        <Icon name="arrow-prev" size="14" />
-      </SlickArrow>
-    ),
+    arrows: false,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    pauseOnHover: false,
+    pauseOnFocus: false,
+    initialSlide: 0,
   };
 
   return (
     <div className={cn(className, styles.slider)}>
       <div className={styles.wrapper}>
-        <Slider className="checkout-slider" {...settings}>
+        <Slider className="checkout-slider" {...settings} key={gallery.length}>
           {gallery.map((x, index) => (
             <div className={styles.preview} key={index}>
               <img srcSet={`${x.srcSet} 2x`} src={x.src} alt="Nature" />

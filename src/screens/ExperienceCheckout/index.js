@@ -709,6 +709,7 @@ const Checkout = () => {
 
   const listingTitle = bookingData?.listingTitle || "Your trip";
   const isEventBooking = Boolean(bookingData?.eventId);
+  const isAmountInPaise = paymentData?.paymentMethod === "razorpay";
   const backUrl =
     bookingData?.returnTo ||
     (isEventBooking ? `/event?id=${bookingData.eventId}` : null);
@@ -760,6 +761,7 @@ const Checkout = () => {
             buttonUrl="/experience-checkout-complete"
             guests
             amountToPay={paymentData?.amount}
+            amountInPaise={isAmountInPaise}
             currency={paymentData?.currency || "INR"}
             dateValue={items[0]?.title}
             guestValue={items[2]?.title}
@@ -774,6 +776,7 @@ const Checkout = () => {
             table={table}
             addonDetails={addonDetails}
             amountToPay={paymentData?.amount}
+            amountInPaise={isAmountInPaise}
             currency={paymentData?.currency || "INR"}
             hostName={hostName}
             hostAvatar={hostAvatar}

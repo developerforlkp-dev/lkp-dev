@@ -1097,8 +1097,6 @@ const StayDetails = () => {
         title="More Stays You May Like"
       />
 
-      <Footer />
-
     </div>
   );
 };
