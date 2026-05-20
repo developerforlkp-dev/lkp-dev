@@ -7,7 +7,7 @@ import styles from "./Main.module.sass";
 import Icon from "../../../components/Icon";
 import Modal from "../../../components/Modal";
 import { emptyStateCopy } from "../../../mocks/bookings";
-import { cancelOrder, cancelEventOrder, getEventDetails, getListing, getCompletedOrders, getOrderCancelPreview, submitOrderReview, getEligibleBookings, getStayDetails, getListingReviews, getEventReviews, getStayReviews, validateExperienceOrEventOrder } from "../../../utils/api";
+import { cancelOrder, cancelEventOrder, getEventDetails, getListing, getCompletedOrders, getOrderCancelPreview, submitOrderReview, getEligibleBookings, getStayDetails, getListingReviews, getEventReviews, getStayReviews, validateExperienceOrEventOrder, getOrderDetails } from "../../../utils/api";
 import Rating from "../../../components/Rating";
 
 // Helper function to format image URLs
@@ -598,6 +598,9 @@ const Main = ({
   const [validationModalVisible, setValidationModalVisible] = useState(false);
   const [validationModalData, setValidationModalData] = useState({ title: "", message: "", details: "", isSuccess: false });
   const [validatedBookingId, setValidatedBookingId] = useState(null);
+  const [confirmPayModalVisible, setConfirmPayModalVisible] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState(null);
+  const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
 
   const mapValidationFailureToFriendlyMessage = (failure) => {
     const code = String(failure?.code || "UNKNOWN").toUpperCase();
@@ -669,18 +672,8 @@ const Main = ({
     try {
       const response = await validateExperienceOrEventOrder(booking.orderId);
       if (response?.canProceed === true) {
-        const isEvent = booking.category === "EVENTS" ||
-          booking.bookingData?.eventId ||
-          booking.bookingData?.businessInterestCode === "EVENTS";
-        const search = isEvent
-          ? `?id=${encodeURIComponent(booking.id)}&type=event&autopay=true`
-          : `?id=${encodeURIComponent(booking.id)}&autopay=true`;
-
-        history.push({
-          pathname: "/viewdetails",
-          search,
-          state: { sourceTab: displayedTab },
-        });
+        setSelectedBookingForPayment(booking);
+        setConfirmPayModalVisible(true);
         return;
       }
 
@@ -725,6 +718,127 @@ const Main = ({
     } finally {
       setIsCheckingAvailability(false);
       setCheckingOrderId(null);
+    }
+  };
+
+  const ensureRazorpayScript = () =>
+    new Promise((resolve, reject) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => reject(new Error("Failed to load Razorpay"));
+      document.body.appendChild(script);
+    });
+
+  const formatMoney = (amount, currency = "INR") => {
+    const value = Number(amount || 0);
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
+  const openRazorpayForBooking = async (booking) => {
+    if (!booking?.orderId || isConfirmingBooking) return;
+    setIsConfirmingBooking(true);
+
+    try {
+      const orderResponse = await getOrderDetails(booking.orderId);
+      const order = orderResponse?.order || orderResponse || {};
+      const payment = orderResponse?.payment || order?.payment || {};
+
+      const amountInPaise =
+        Number(payment?.amount) > 0
+          ? Number(payment.amount)
+          : Math.round(Number(order?.totalPrice || order?.finalAmount || booking?.bookingData?.totalPrice || 0) * 100);
+
+      const razorpayOrderId =
+        payment?.razorpayOrderId ||
+        payment?.razorpay_order_id ||
+        order?.razorpayOrderId ||
+        order?.razorpay_order_id ||
+        booking?.bookingData?.razorpayOrderId ||
+        booking?.bookingData?.razorpay_order_id;
+
+      const razorpayKeyId =
+        payment?.razorpayKeyId ||
+        payment?.razorpay_key_id ||
+        payment?.keyId ||
+        order?.razorpayKeyId ||
+        order?.razorpay_key_id ||
+        order?.keyId ||
+        localStorage.getItem("lastRazorpayKeyId") ||
+        process.env.REACT_APP_RAZORPAY_KEY_ID;
+
+      if (!razorpayOrderId) {
+        alert("Unable to confirm booking: payment order is missing.");
+        return;
+      }
+      if (!razorpayKeyId) {
+        alert("Unable to confirm booking: Razorpay key is missing.");
+        return;
+      }
+      if (!amountInPaise || amountInPaise <= 0) {
+        alert("Unable to confirm booking: amount is invalid.");
+        return;
+      }
+
+      const paymentData = {
+        orderId: booking.orderId,
+        razorpayOrderId,
+        razorpayKeyId,
+        amount: amountInPaise,
+        currency: payment?.currency || order?.currency || booking?.bookingData?.currency || "INR",
+        paymentMethod: "razorpay",
+      };
+
+      localStorage.setItem("pendingOrderId", String(booking.orderId));
+      localStorage.setItem("pendingPayment", JSON.stringify(paymentData));
+      localStorage.removeItem("razorpayPaymentSuccess");
+      localStorage.removeItem("paymentFailed");
+      localStorage.setItem("lastRazorpayKeyId", razorpayKeyId);
+
+      await ensureRazorpayScript();
+
+      setConfirmPayModalVisible(false);
+
+      const options = {
+        key: razorpayKeyId,
+        amount: amountInPaise,
+        currency: paymentData.currency,
+        order_id: razorpayOrderId,
+        name: "Little Known Planet",
+        description: booking.title || "Booking Confirmation",
+        handler: (response) => {
+          localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(response));
+          window.location.reload();
+        },
+        modal: {
+          ondismiss: () => {
+            setIsConfirmingBooking(false);
+          },
+        },
+        prefill: {
+          name: booking?.bookingData?.guest?.name || "",
+          email: booking?.bookingData?.guest?.email || "",
+          contact: booking?.bookingData?.guest?.phone || "",
+        },
+        theme: {
+          color: "#0097B2",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Error confirming booking:", err);
+      alert(err?.message || "Failed to open payment gateway.");
+    } finally {
+      setIsConfirmingBooking(false);
     }
   };
 
@@ -1637,6 +1751,159 @@ const Main = ({
                 Continue to Payment
               </Link>
             )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Slot Available Confirmation Modal */}
+      <Modal
+        visible={confirmPayModalVisible}
+        onClose={() => {
+          if (!isConfirmingBooking) setConfirmPayModalVisible(false);
+        }}
+        outerClassName={styles.cancelModalOuter}
+      >
+        <div className={styles.cancelModalContent} style={{ maxHeight: "80vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div className={styles.cancelModalHeader} style={{ flexShrink: 0 }}>
+            <h2 className={styles.cancelModalTitle} style={{ color: "#0097B2" }}>Slot Available</h2>
+            <p className={styles.cancelModalDescription}>
+              Your selected experience slot is currently available.
+              You can proceed with payment to confirm your booking.
+            </p>
+          </div>
+          
+          <div className={styles.cancelModalBody} style={{ flex: "1 1 auto", overflowY: "auto" }}>
+            <div style={{ 
+              background: "rgba(244, 245, 246, 0.05)", 
+              borderRadius: "12px", 
+              padding: "16px", 
+              margin: "4px 0 16px",
+              textAlign: "left",
+              border: "1px solid rgba(226, 232, 240, 0.1)"
+            }}>
+              <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "12px", borderBottom: "1px solid rgba(226, 232, 240, 0.1)", paddingBottom: "8px" }}>
+                Booking Summary
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                  <span style={{ color: "#777E90" }}>Experience:</span>
+                  <span style={{ fontWeight: "500", textAlign: "right" }}>{selectedBookingForPayment?.title}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#777E90" }}>Date:</span>
+                  <span style={{ fontWeight: "500" }}>{selectedBookingForPayment?.bookingData?.bookingDate || selectedBookingForPayment?.startDate}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#777E90" }}>Time Slot:</span>
+                  <span style={{ fontWeight: "500" }}>
+                    {selectedBookingForPayment?.bookingData?.bookingTime || selectedBookingForPayment?.bookingData?.bookingSlot?.name || "Confirmed Slot"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <span style={{ color: "#777E90" }}>Guests:</span>
+                  <span style={{ fontWeight: "500" }}>
+                    {(() => {
+                      const adults = selectedBookingForPayment?.bookingData?.adultsCount > 0 ? selectedBookingForPayment.bookingData.adultsCount : Math.max(0, (selectedBookingForPayment?.bookingData?.guestCount || 0) - (selectedBookingForPayment?.bookingData?.childrenCount || 0));
+                      const children = selectedBookingForPayment?.bookingData?.childrenCount || 0;
+                      if (adults > 0 || children > 0) {
+                        return `${adults} Adult${adults > 1 ? "s" : ""}${children > 0 ? `, ${children} Child${children !== 1 ? "ren" : ""}` : ""}`;
+                      }
+                      return `${selectedBookingForPayment?.bookingData?.guestCount || 0} Guest${selectedBookingForPayment?.bookingData?.guestCount === 1 ? "" : "s"}`;
+                    })()}
+                  </span>
+                </div>
+
+                {/* Price Details */}
+                <div style={{ borderTop: "1px solid rgba(226, 232, 240, 0.1)", paddingTop: "8px", marginTop: "4px" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#777E90" }}>Price Details</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    
+                    {/* Base Price */}
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                      <span style={{ color: "#777E90" }}>Base Price:</span>
+                      <span>{formatMoney(selectedBookingForPayment?.bookingData?.basePrice, selectedBookingForPayment?.bookingData?.currency)}</span>
+                    </div>
+
+                    {/* Add-ons detailed list */}
+                    {(() => {
+                      const addons = selectedBookingForPayment?.bookingData?.addons || selectedBookingForPayment?.bookingData?.selectedAddons || [];
+                      if (addons && addons.length > 0) {
+                        return (
+                          <>
+                            {addons.map((addon, idx) => (
+                              <div key={idx} style={{ display: "flex", justifyContent: "space-between", paddingLeft: "8px", fontSize: "12px", fontStyle: "italic" }}>
+                                <span style={{ color: "#777E90" }}>+ {addon.addonName || addon.name} (x{addon.quantity || 1})</span>
+                                <span>{formatMoney((parseFloat(addon.addonPrice || addon.price || 0) * (addon.quantity || 1)), selectedBookingForPayment?.bookingData?.currency)}</span>
+                              </div>
+                            ))}
+                            {selectedBookingForPayment?.bookingData?.addonsTotal > 0 && (
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                                <span style={{ color: "#777E90" }}>Add-ons Total:</span>
+                                <span>{formatMoney(selectedBookingForPayment?.bookingData?.addonsTotal, selectedBookingForPayment?.bookingData?.currency)}</span>
+                              </div>
+                            )}
+                          </>
+                        );
+                      }
+                      return null;
+                    })()}
+
+                    {/* Platform Fee */}
+                    {selectedBookingForPayment?.bookingData?.platformFee > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                        <span style={{ color: "#777E90" }}>Platform Fee:</span>
+                        <span>{formatMoney(selectedBookingForPayment?.bookingData?.platformFee, selectedBookingForPayment?.bookingData?.currency)}</span>
+                      </div>
+                    )}
+
+                    {/* Taxes */}
+                    {selectedBookingForPayment?.bookingData?.taxAmount > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                        <span style={{ color: "#777E90" }}>Taxes:</span>
+                        <span>{formatMoney(selectedBookingForPayment?.bookingData?.taxAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
+                      </div>
+                    )}
+
+                    {/* Discounts */}
+                    {selectedBookingForPayment?.bookingData?.discountAmount > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#FF6A55" }}>
+                        <span>Discount:</span>
+                        <span>-{formatMoney(selectedBookingForPayment?.bookingData?.discountAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+
+                {/* Total Payable */}
+                <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(226, 232, 240, 0.1)", paddingTop: "8px", marginTop: "4px", fontSize: "16px", fontWeight: "600" }}>
+                  <span>Total Amount:</span>
+                  <span style={{ color: "#0097B2" }}>{formatMoney(selectedBookingForPayment?.bookingData?.totalPrice || selectedBookingForPayment?.bookingData?.finalAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.cancelModalFooter} style={{ flexShrink: 0 }}>
+            <button
+              type="button"
+              className={cn("button-stroke", styles.cancelModalBtn)}
+              onClick={() => setConfirmPayModalVisible(false)}
+              disabled={isConfirmingBooking}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn("button", styles.cancelModalBtn)}
+              onClick={async () => {
+                await openRazorpayForBooking(selectedBookingForPayment);
+              }}
+              disabled={isConfirmingBooking}
+              style={{ backgroundColor: "#0097B2", borderColor: "#0097B2" }}
+            >
+              {isConfirmingBooking ? "Initializing..." : "Pay Now"}
+            </button>
           </div>
         </div>
       </Modal>
