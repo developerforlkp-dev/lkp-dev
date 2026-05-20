@@ -28,53 +28,7 @@ export function Footer() {
         zIndex: 10
       }}
     >
-      <div style={{ borderBottom: "1px solid #222", padding: "120px 36px 80px" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 100, alignItems: "center" }} className="footer-grid">
-          <div>
-            <p style={{ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: "#8C8C88", marginBottom: 24, fontWeight: 700 }}>Stay Synchronized</p>
-            <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.1, marginBottom: 32 }}>Join the Collective.</h2>
-            <div style={{ display: "flex", width: "100%", maxWidth: 500, position: "relative" }}>
-              <input 
-                type="email" placeholder="YOUR@EMAIL.LIVE"
-                style={{ 
-                  flex: 1, background: "transparent", border: "1px solid #333",
-                  color: "#FFFFFF", fontSize: 11, letterSpacing: "0.1em", padding: "20px 24px", 
-                  outline: "none", fontWeight: 500 
-                }}
-              />
-              <motion.button 
-                whileHover={{ background: "#FFFFFF", color: "#000000" }}
-                style={{ 
-                  background: "transparent", color: "#FFFFFF", border: "1px solid #333", borderLeft: 'none',
-                  fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", padding: "0 32px", 
-                  cursor: "pointer", fontWeight: 700 
-                }}
-              >
-                Connect
-              </motion.button>
-            </div>
-          </div>
-          
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60 }}>
-             <div>
-                <p style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: "#8C8C88", marginBottom: 24 }}>Exploration</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                   {["Experience", "Sanctuary", "Culinary", "Chronology"].map(l => (
-                     <motion.a key={l} href="#" whileHover={{ x: 5, color: "#0097B2" }} style={{ fontSize: 13, color: "#EBEBE6", textDecoration: "none", fontWeight: 500 }}>{l}</motion.a>
-                   ))}
-                </div>
-             </div>
-             <div>
-                <p style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: "#8C8C88", marginBottom: 24 }}>Socials</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                   {["Instagram", "X / Twitter", "Behance", "Email"].map(l => (
-                     <motion.a key={l} href="#" whileHover={{ x: 5, color: "#0097B2" }} style={{ fontSize: 13, color: "#EBEBE6", textDecoration: "none", fontWeight: 500 }}>{l}</motion.a>
-                   ))}
-                </div>
-             </div>
-          </div>
-        </div>
-      </div>
+
 
       <div style={{ padding: "80px 0", textAlign: "center", borderBottom: "1px solid #222" }}>
         <motion.h1 
