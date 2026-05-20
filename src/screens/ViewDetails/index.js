@@ -1691,16 +1691,7 @@ const ViewDetails = () => {
       : "";
 
     if (originalStatus === "PENDING" || status === "pending") {
-      const actions = [
-        {
-          label: isCheckingAvailability
-            ? "Checking..."
-            : (isConfirmingBooking ? "Opening Payment..." : "Check Availability"),
-          variant: "primary",
-          onClick: handleCheckAvailabilityAndProceed,
-          disabled: isCheckingAvailability || isConfirmingBooking,
-        },
-      ];
+      const actions = [];
       if (sourceTab !== "cancelled") {
         actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
       }
@@ -2019,9 +2010,24 @@ const ViewDetails = () => {
                 </div>
               )}
               <div className={cn(styles.paymentRow, styles.paymentTotal)}>
-                <span>Total Paid</span>
+                <span>{booking.status === "Pending" ? "Amount Payable" : "Total Paid"}</span>
                 <span>{booking.pricing.total}</span>
               </div>
+              {(booking.status === "Pending" || String(booking.originalData?.orderStatus || "").toUpperCase() === "PENDING") && (
+                <div className={styles.paymentActions}>
+                  <button
+                    type="button"
+                    className={cn("button", styles.payNowBtn)}
+                    onClick={handleCheckAvailabilityAndProceed}
+                    disabled={isCheckingAvailability || isConfirmingBooking}
+                    style={{ backgroundColor: "#0097B2", borderColor: "#0097B2" }}
+                  >
+                    {isCheckingAvailability
+                      ? "Checking Availability..."
+                      : (isConfirmingBooking ? "Opening Payment..." : "Check Availability & Pay Now")}
+                  </button>
+                </div>
+              )}
               {refundDetails && (
                 <>
                   <div className={styles.paymentRow}>
@@ -2173,22 +2179,24 @@ const ViewDetails = () => {
           </div>
         )}
 
-        <div className={cn(styles.card, styles.actionCard)}>
-          <h3 className={styles.actionTitle}>Actions</h3>
-          <div className={styles.actionButtons}>
-            {getActionButtons().map((action, index) => (
-              <button
-                key={index}
-                type="button"
-                className={getButtonClassName(action.variant)}
-                onClick={action.onClick}
-                disabled={Boolean(action.disabled)}
-              >
-                {action.label}
-              </button>
-            ))}
+        {getActionButtons().length > 0 && (
+          <div className={cn(styles.card, styles.actionCard)}>
+            <h3 className={styles.actionTitle}>Actions</h3>
+            <div className={styles.actionButtons}>
+              {getActionButtons().map((action, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={getButtonClassName(action.variant)}
+                  onClick={action.onClick}
+                  disabled={Boolean(action.disabled)}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Cancellation Modal */}
@@ -2290,64 +2298,7 @@ const ViewDetails = () => {
             </p>
           </div>
           
-          <div style={{ 
-            background: "rgba(244, 245, 246, 0.05)", 
-            borderRadius: "12px", 
-            padding: "16px", 
-            margin: "16px 0",
-            textAlign: "left",
-            border: "1px solid rgba(226, 232, 240, 0.1)"
-          }}>
-            <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "12px", borderBottom: "1px solid rgba(226, 232, 240, 0.1)", paddingBottom: "8px" }}>
-              Booking Summary
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                <span style={{ color: "#777E90" }}>Experience:</span>
-                <span style={{ fontWeight: "500", textAlign: "right" }}>{booking?.title}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#777E90" }}>Date:</span>
-                <span style={{ fontWeight: "500" }}>{booking?.bookingDate || booking?.startDate}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#777E90" }}>Time Slot:</span>
-                <span style={{ fontWeight: "500" }}>
-                  {booking?.startTime && booking?.endTime 
-                    ? `${booking.startTime} - ${booking.endTime}` 
-                    : (booking?.bookingTime || "Confirmed Slot")}
-                </span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#777E90" }}>Guests:</span>
-                <span style={{ fontWeight: "500" }}>
-                  {(() => {
-                    const adults = booking?.adultsCount > 0 ? booking.adultsCount : Math.max(0, (booking?.guestCount || 0) - (booking?.childrenCount || 0));
-                    const children = booking?.childrenCount || 0;
-                    if (adults > 0 || children > 0) {
-                      return `${adults} Adult${adults > 1 ? "s" : ""}${children > 0 ? `, ${children} Child${children !== 1 ? "ren" : ""}` : ""}`;
-                    }
-                    return `${booking?.guestCount || 0} Guest${booking?.guestCount === 1 ? "" : "s"}`;
-                  })()}
-                </span>
-              </div>
-              {booking?.addons && booking.addons.length > 0 && (
-                <div style={{ borderTop: "1px dashed rgba(226, 232, 240, 0.1)", paddingTop: "8px", marginTop: "4px" }}>
-                  <span style={{ color: "#777E90", display: "block", marginBottom: "4px" }}>Add-ons:</span>
-                  {booking.addons.map((addon, idx) => (
-                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", paddingLeft: "8px", fontSize: "13px" }}>
-                      <span style={{ color: "#777E90" }}>• {addon.name} (x{addon.quantity})</span>
-                      <span>{addon.total}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(226, 232, 240, 0.1)", paddingTop: "8px", marginTop: "4px", fontSize: "16px", fontWeight: "600" }}>
-                <span>Total Amount:</span>
-                <span style={{ color: "#0097B2" }}>{booking?.pricing?.total}</span>
-              </div>
-            </div>
-          </div>
+
 
           <div className={styles.cancelModalFooter}>
             <button
@@ -2367,7 +2318,7 @@ const ViewDetails = () => {
               disabled={isConfirmingBooking}
               style={{ backgroundColor: "#0097B2", borderColor: "#0097B2" }}
             >
-              {isConfirmingBooking ? "Initializing..." : "Pay Now"}
+              {isConfirmingBooking ? "Initializing..." : "Continue to Payment"}
             </button>
           </div>
         </div>
@@ -2522,7 +2473,7 @@ const ViewDetails = () => {
                   <div className={styles.dottedDivider}></div>
                   
                   <div className={cn(styles.receiptPriceRow, styles.invoiceTotal)}>
-                    <span className={styles.totalLabel}>Total Paid</span>
+                    <span className={styles.totalLabel}>{booking.status === "Pending" ? "Amount Payable" : "Total Paid"}</span>
                     <span className={styles.totalValue}>{booking.pricing.total}</span>
                   </div>
                 </div>

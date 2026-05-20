@@ -1761,65 +1761,87 @@ const Main = ({
         onClose={() => {
           if (!isConfirmingBooking) setConfirmPayModalVisible(false);
         }}
-        outerClassName={styles.cancelModalOuter}
+        outerClassName={styles.slotModalOuter}
       >
-        <div className={styles.cancelModalContent} style={{ maxHeight: "80vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div className={styles.cancelModalHeader} style={{ flexShrink: 0 }}>
+        <div className={styles.cancelModalContent} style={{ maxHeight: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div className={styles.cancelModalHeader} style={{ flexShrink: 0, padding: "32px 32px 16px" }}>
             <h2 className={styles.cancelModalTitle} style={{ color: "#0097B2" }}>Slot Available</h2>
-            <p className={styles.cancelModalDescription}>
+            <p className={styles.cancelModalDescription} style={{ marginBottom: 0 }}>
               Your selected experience slot is currently available.
               You can proceed with payment to confirm your booking.
             </p>
           </div>
           
-          <div className={styles.cancelModalBody} style={{ flex: "1 1 auto", overflowY: "auto" }}>
+          <div className={styles.cancelModalBody} style={{ flex: "1 1 auto", overflowY: "auto", padding: "0 32px 16px" }}>
             <div style={{ 
-              background: "rgba(244, 245, 246, 0.05)", 
-              borderRadius: "12px", 
-              padding: "16px", 
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "20px",
               margin: "4px 0 16px",
-              textAlign: "left",
-              border: "1px solid rgba(226, 232, 240, 0.1)"
+              textAlign: "left"
             }}>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "12px", borderBottom: "1px solid rgba(226, 232, 240, 0.1)", paddingBottom: "8px" }}>
-                Booking Summary
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                  <span style={{ color: "#777E90" }}>Experience:</span>
-                  <span style={{ fontWeight: "500", textAlign: "right" }}>{selectedBookingForPayment?.title}</span>
+              {/* Left Column: Booking Summary */}
+              <div style={{ 
+                background: "rgba(244, 245, 246, 0.03)", 
+                borderRadius: "12px", 
+                padding: "16px", 
+                border: "1px solid rgba(226, 232, 240, 0.08)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px"
+              }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", borderBottom: "1px solid rgba(226, 232, 240, 0.08)", paddingBottom: "8px", margin: 0 }}>
+                  Booking Summary
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                    <span style={{ color: "#777E90" }}>Experience:</span>
+                    <span style={{ fontWeight: "500", textAlign: "right" }}>{selectedBookingForPayment?.title}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#777E90" }}>Date:</span>
+                    <span style={{ fontWeight: "500" }}>{selectedBookingForPayment?.bookingData?.bookingDate || selectedBookingForPayment?.startDate}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#777E90" }}>Time Slot:</span>
+                    <span style={{ fontWeight: "500" }}>
+                      {selectedBookingForPayment?.bookingData?.bookingTime || selectedBookingForPayment?.bookingData?.bookingSlot?.name || "Confirmed Slot"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#777E90" }}>Guests:</span>
+                    <span style={{ fontWeight: "500" }}>
+                      {(() => {
+                        const adults = selectedBookingForPayment?.bookingData?.adultsCount > 0 ? selectedBookingForPayment.bookingData.adultsCount : Math.max(0, (selectedBookingForPayment?.bookingData?.guestCount || 0) - (selectedBookingForPayment?.bookingData?.childrenCount || 0));
+                        const children = selectedBookingForPayment?.bookingData?.childrenCount || 0;
+                        if (adults > 0 || children > 0) {
+                          return `${adults} Adult${adults > 1 ? "s" : ""}${children > 0 ? `, ${children} Child${children !== 1 ? "ren" : ""}` : ""}`;
+                        }
+                        return `${selectedBookingForPayment?.bookingData?.guestCount || 0} Guest${selectedBookingForPayment?.bookingData?.guestCount === 1 ? "" : "s"}`;
+                      })()}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#777E90" }}>Date:</span>
-                  <span style={{ fontWeight: "500" }}>{selectedBookingForPayment?.bookingData?.bookingDate || selectedBookingForPayment?.startDate}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#777E90" }}>Time Slot:</span>
-                  <span style={{ fontWeight: "500" }}>
-                    {selectedBookingForPayment?.bookingData?.bookingTime || selectedBookingForPayment?.bookingData?.bookingSlot?.name || "Confirmed Slot"}
-                  </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                  <span style={{ color: "#777E90" }}>Guests:</span>
-                  <span style={{ fontWeight: "500" }}>
-                    {(() => {
-                      const adults = selectedBookingForPayment?.bookingData?.adultsCount > 0 ? selectedBookingForPayment.bookingData.adultsCount : Math.max(0, (selectedBookingForPayment?.bookingData?.guestCount || 0) - (selectedBookingForPayment?.bookingData?.childrenCount || 0));
-                      const children = selectedBookingForPayment?.bookingData?.childrenCount || 0;
-                      if (adults > 0 || children > 0) {
-                        return `${adults} Adult${adults > 1 ? "s" : ""}${children > 0 ? `, ${children} Child${children !== 1 ? "ren" : ""}` : ""}`;
-                      }
-                      return `${selectedBookingForPayment?.bookingData?.guestCount || 0} Guest${selectedBookingForPayment?.bookingData?.guestCount === 1 ? "" : "s"}`;
-                    })()}
-                  </span>
-                </div>
+              </div>
 
-                {/* Price Details */}
-                <div style={{ borderTop: "1px solid rgba(226, 232, 240, 0.1)", paddingTop: "8px", marginTop: "4px" }}>
-                  <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#777E90" }}>Price Details</h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    
+              {/* Right Column: Price Details */}
+              <div style={{ 
+                background: "rgba(244, 245, 246, 0.03)", 
+                borderRadius: "12px", 
+                padding: "16px", 
+                border: "1px solid rgba(226, 232, 240, 0.08)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "16px"
+              }}>
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", borderBottom: "1px solid rgba(226, 232, 240, 0.08)", paddingBottom: "8px", margin: 0, marginBottom: "12px" }}>
+                    Price Details
+                  </h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px" }}>
                     {/* Base Price */}
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#777E90" }}>Base Price:</span>
                       <span>{formatMoney(selectedBookingForPayment?.bookingData?.basePrice, selectedBookingForPayment?.bookingData?.currency)}</span>
                     </div>
@@ -1837,7 +1859,7 @@ const Main = ({
                               </div>
                             ))}
                             {selectedBookingForPayment?.bookingData?.addonsTotal > 0 && (
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between" }}>
                                 <span style={{ color: "#777E90" }}>Add-ons Total:</span>
                                 <span>{formatMoney(selectedBookingForPayment?.bookingData?.addonsTotal, selectedBookingForPayment?.bookingData?.currency)}</span>
                               </div>
@@ -1848,36 +1870,35 @@ const Main = ({
                       return null;
                     })()}
 
-                    {/* Platform Fee */}
-                    {selectedBookingForPayment?.bookingData?.platformFee > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                        <span style={{ color: "#777E90" }}>Platform Fee:</span>
-                        <span>{formatMoney(selectedBookingForPayment?.bookingData?.platformFee, selectedBookingForPayment?.bookingData?.currency)}</span>
-                      </div>
-                    )}
-
-                    {/* Taxes */}
-                    {selectedBookingForPayment?.bookingData?.taxAmount > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                        <span style={{ color: "#777E90" }}>Taxes:</span>
-                        <span>{formatMoney(selectedBookingForPayment?.bookingData?.taxAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
+                    {/* Subtotal */}
+                    {selectedBookingForPayment?.bookingData?.subtotal > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "#777E90" }}>Subtotal:</span>
+                        <span>{formatMoney(selectedBookingForPayment?.bookingData?.subtotal, selectedBookingForPayment?.bookingData?.currency)}</span>
                       </div>
                     )}
 
                     {/* Discounts */}
                     {selectedBookingForPayment?.bookingData?.discountAmount > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#FF6A55" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", color: "#FF6A55" }}>
                         <span>Discount:</span>
                         <span>-{formatMoney(selectedBookingForPayment?.bookingData?.discountAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
                       </div>
                     )}
 
+                    {/* Taxes */}
+                    {selectedBookingForPayment?.bookingData?.taxAmount > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "#777E90" }}>Taxes (paid by you):</span>
+                        <span>{formatMoney(selectedBookingForPayment?.bookingData?.taxAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Total Payable */}
-                <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(226, 232, 240, 0.1)", paddingTop: "8px", marginTop: "4px", fontSize: "16px", fontWeight: "600" }}>
-                  <span>Total Amount:</span>
+                <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(226, 232, 240, 0.08)", paddingTop: "8px", fontSize: "16px", fontWeight: "600", margin: 0 }}>
+                  <span>{selectedBookingForPayment?.bookingData?.orderStatus === "PENDING" || selectedBookingForPayment?.status === "Pending" ? "Amount Payable:" : "Total Amount:"}</span>
                   <span style={{ color: "#0097B2" }}>{formatMoney(selectedBookingForPayment?.bookingData?.totalPrice || selectedBookingForPayment?.bookingData?.finalAmount, selectedBookingForPayment?.bookingData?.currency)}</span>
                 </div>
               </div>
