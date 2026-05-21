@@ -491,6 +491,36 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
     onNavigate(nextIndex);
   };
 
+  const navButtonStyle = {
+    position: 'absolute',
+    top: '50%',
+    width: 'clamp(46px, 5vw, 60px)',
+    height: 'clamp(46px, 5vw, 60px)',
+    borderRadius: '50%',
+    border: '1px solid rgba(255,255,255,0.34)',
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.24), rgba(255,255,255,0.08))',
+    backdropFilter: 'blur(22px) saturate(140%)',
+    WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    opacity: 0.86,
+    zIndex: 5,
+    boxShadow: '0 22px 56px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.3)',
+    outline: 'none'
+  };
+
+  const navIconStyle = (direction) => ({
+    width: 13,
+    height: 13,
+    borderTop: '2px solid rgba(255,255,255,0.94)',
+    borderRight: '2px solid rgba(255,255,255,0.94)',
+    transform: direction === 'next' ? 'translateX(-2px) rotate(45deg)' : 'translateX(2px) rotate(-135deg)',
+    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.35))',
+    pointerEvents: 'none'
+  });
+
   useEffect(() => {
     return lockBodyScroll();
   }, []);
@@ -558,75 +588,31 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
         <div style={{ position: 'absolute', bottom: 30, right: 30, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: 100, pointerEvents: 'none' }}>
           <p style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Click to close</p>
         </div>
+        {hasNavigation && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Previous image"
+              onClick={(event) => handleNavigate("prev", event)}
+              whileHover={{ opacity: 1, scale: 1.08, boxShadow: '0 24px 62px rgba(0,0,0,0.42), 0 0 34px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.36)' }}
+              whileTap={{ scale: 0.95 }}
+              style={{ ...navButtonStyle, left: 'clamp(16px, 3vw, 28px)', transform: 'translateY(-50%)' }}
+            >
+              <span style={navIconStyle('prev')} />
+            </motion.button>
+            <motion.button
+              type="button"
+              aria-label="Next image"
+              onClick={(event) => handleNavigate("next", event)}
+              whileHover={{ opacity: 1, scale: 1.08, boxShadow: '0 24px 62px rgba(0,0,0,0.42), 0 0 34px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.36)' }}
+              whileTap={{ scale: 0.95 }}
+              style={{ ...navButtonStyle, right: 'clamp(16px, 3vw, 28px)', transform: 'translateY(-50%)' }}
+            >
+              <span style={navIconStyle('next')} />
+            </motion.button>
+          </>
+        )}
       </motion.div>
-      {hasNavigation && (
-        <>
-          <motion.button
-            type="button"
-            aria-label="Previous image"
-            onClick={(event) => handleNavigate("prev", event)}
-            whileHover={{ opacity: 1, scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            style={{
-              position: 'absolute',
-              left: 'clamp(18px, 4vw, 56px)',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 'clamp(44px, 6vw, 58px)',
-              height: 'clamp(44px, 6vw, 58px)',
-              borderRadius: '50%',
-              border: '1px solid rgba(255,255,255,0.28)',
-              background: 'rgba(255,255,255,0.16)',
-              backdropFilter: 'blur(16px)',
-              color: '#FFF',
-              fontSize: 26,
-              fontWeight: 300,
-              lineHeight: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              opacity: 0.72,
-              zIndex: 2,
-              boxShadow: '0 18px 45px rgba(0,0,0,0.28)'
-            }}
-          >
-            &lt;
-          </motion.button>
-          <motion.button
-            type="button"
-            aria-label="Next image"
-            onClick={(event) => handleNavigate("next", event)}
-            whileHover={{ opacity: 1, scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            style={{
-              position: 'absolute',
-              right: 'clamp(18px, 4vw, 56px)',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 'clamp(44px, 6vw, 58px)',
-              height: 'clamp(44px, 6vw, 58px)',
-              borderRadius: '50%',
-              border: '1px solid rgba(255,255,255,0.28)',
-              background: 'rgba(255,255,255,0.16)',
-              backdropFilter: 'blur(16px)',
-              color: '#FFF',
-              fontSize: 26,
-              fontWeight: 300,
-              lineHeight: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              opacity: 0.72,
-              zIndex: 2,
-              boxShadow: '0 18px 45px rgba(0,0,0,0.28)'
-            }}
-          >
-            &gt;
-          </motion.button>
-        </>
-      )}
     </motion.div>
   );
 };
