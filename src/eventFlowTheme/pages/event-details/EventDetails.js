@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, createContext, useContext, useRef 
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
 import ProductNavbar from "../../../components/ProductNavbar";
-import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft } from "lucide-react";
+import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, Share2 } from "lucide-react";
 import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 import { X, Plus as PlusIcon } from "lucide-react";
 import { BookingSystem } from "../../../components/JUI/BookingSystem";
@@ -297,6 +297,14 @@ const ScopedStyles = () => (
       color: var(--W) !important;
       z-index: 2;
     }
+    .event-details-premium .event-hero-share {
+      position: absolute !important;
+      top: 96px !important;
+      right: 60px !important;
+      z-index: 10002 !important;
+      pointer-events: auto !important;
+      isolation: isolate;
+    }
     .event-details-premium .host-presented-label {
       color: #0097B2 !important;
       -webkit-text-fill-color: #0097B2 !important;
@@ -429,6 +437,10 @@ const ScopedStyles = () => (
         z-index: 1 !important;
         pointer-events: none !important;
       }
+      .event-details-premium .event-hero-share {
+        top: 24px !important;
+        right: 16px !important;
+      }
     }
   `}</style>
 );
@@ -470,6 +482,116 @@ function ProgressBar() {
   const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30 });
   return (
     <motion.div style={{ scaleX, transformOrigin: "left", position: "fixed", top: 0, left: 0, right: 0, height: 2, background: A, zIndex: 9996 }} />
+  );
+}
+
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { theme, tokens: { A, FG } } = useTheme();
+  const glow = A || "#0097B2";
+  const isDark = theme === "dark";
+  const surface = isDark ? "rgba(8,8,8,0.72)" : "rgba(255,255,255,0.92)";
+  const surfaceHover = isDark ? "rgba(0,151,178,0.22)" : "rgba(0,151,178,0.12)";
+  const textColor = isDark ? FG : A;
+  const borderColor = hovered ? glow : (isDark ? `${glow}66` : `${glow}4D`);
+  const shadow = hovered
+    ? isDark
+      ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 8px 28px rgba(0,0,0,0.5)`
+      : `0 0 18px ${glow}33, 0 8px 28px rgba(15,15,15,0.14)`
+    : isDark
+      ? `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.34)`
+      : "0 6px 18px rgba(15,15,15,0.12)";
+
+  const handleShare = async () => {
+    const shareUrl = url || window.location.href;
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) { }
+  };
+
+  return (
+    <motion.button
+      type="button"
+      aria-label={`Share: ${title || "this event"}`}
+      className="event-hero-share"
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: hovered ? surfaceHover : surface,
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${borderColor}`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: textColor,
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: shadow,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "Copied!" : "Share Event"}
+      </span>
+    </motion.button>
   );
 }
 
@@ -700,6 +822,10 @@ function Hero({ event }) {
       </motion.div>
 
       <ProductNavbar top={100} left={60} />
+      <HeroShareFab
+        title={title}
+        text={`Check out ${title} on Little Known Planet`}
+      />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ position: "relative", zIndex: 2, maxWidth: 1320, margin: "0 auto", padding: "64px 36px 0", width: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>
 
