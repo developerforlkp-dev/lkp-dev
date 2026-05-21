@@ -197,6 +197,77 @@ function SHdr({ idx, label }) {
   );
 }
 
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const { theme, tokens: { A, AH } } = useTheme();
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 800);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) {}
+  };
+
+  return (
+    <motion.button
+      onClick={handleShare}
+      initial={{ opacity: 0, scale: 0.8, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ delay: 0.7, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ scale: 1.07, y: -3, boxShadow: `0 14px 44px ${A}77` }}
+      whileTap={{ scale: 0.91 }}
+      style={{
+        position: "absolute",
+        top: 100,
+        right: 60,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "13px 24px",
+        background: copied ? (AH || A) : A,
+        border: "none",
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        boxShadow: `0 6px 28px ${A}55, 0 2px 8px rgba(0,0,0,0.18)`,
+        outline: "none",
+        userSelect: "none",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 2.4], opacity: [0.6, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.75, ease: "easeOut" }}
+        style={{
+          position: "absolute",
+          inset: -2,
+          borderRadius: 60,
+          background: A,
+          pointerEvents: "none",
+        }}
+      />
+      <Map size={16} strokeWidth={2.4} style={{ flexShrink: 0 }} />
+      <span style={{ position: "relative" }}>
+        {copied ? "✓ Copied!" : "Share"}
+      </span>
+    </motion.button>
+  );
+}
+
 /* ─── PLACE SECTIONS ─────────── */
 function PlaceHero({ place, galleryItems }) {
   const { tokens: { A, FG, M, W, B } } = useTheme();
@@ -301,6 +372,11 @@ function PlaceHero({ place, galleryItems }) {
         <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: M }}>Discover more</span>
         <ArrowDown size={14} color={A} />
       </motion.div>
+      <HeroShareFab
+        title={placeName}
+        text={place?.description || ""}
+        url={window.location.href}
+      />
     </section>
   );
 }
