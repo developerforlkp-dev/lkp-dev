@@ -4,6 +4,7 @@ import styles from "./RoomCards.module.sass";
 import Icon from "../../components/Icon";
 import { useTheme } from "../../components/JUI/Theme";
 import { motion, AnimatePresence } from "framer-motion";
+import { lockBodyScroll } from "../../utils/scrollLock";
 
 /* ---------- HOOKS ----------------------------------------------------- */
 function useWindowSize() {
@@ -255,12 +256,7 @@ const RoomModal = ({ room, listing, onClose }) => {
   const seasonalPeriods = listing?.seasonalPeriods || [];
 
   useEffect(() => {
-    // Background scroll lock
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
+    return lockBodyScroll();
   }, []);
 
   const formatDate = (dateStr) => {
@@ -273,7 +269,7 @@ const RoomModal = ({ room, listing, onClose }) => {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24, overflow: "hidden", overflowX: "hidden", overscrollBehavior: "contain" }}>
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -22,6 +22,7 @@ import { Footer } from "../../components/JUI/Footer";
 import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import ShareButton from "../../components/ShareButton";
+import { lockBodyScroll } from "../../utils/scrollLock";
 
 const fixImageUrl = (url) => {
   if (!url) return "";
@@ -1345,15 +1346,11 @@ function PropertyModal({ stay, onClose }) {
   };
 
   useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
+    return lockBodyScroll();
   }, []);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24, overflow: "hidden", overflowX: "hidden", overscrollBehavior: "contain" }}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

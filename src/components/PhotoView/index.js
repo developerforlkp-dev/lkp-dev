@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 import OutsideClickHandler from "react-outside-click-handler";
 import cn from "classnames";
 import styles from "./PhotoView.module.sass";
@@ -8,6 +7,7 @@ import Icon from "../Icon";
 import Share from "../Share";
 import { Link } from "react-router-dom";
 import Slider from "react-slick";
+import { lockBodyScroll } from "../../utils/scrollLock";
 
 const SlickArrow = ({ currentSlide, slideCount, children, ...props }) => (
   <button {...props}>{children}</button>
@@ -15,6 +15,8 @@ const SlickArrow = ({ currentSlide, slideCount, children, ...props }) => (
 
 const PhotoView = ({ title, initialSlide, visible, items, onClose, listingId, options }) => {
   const [current, setCurrent] = useState(initialSlide);
+  const [direction, setDirection] = useState("next");
+  const [transitionStep, setTransitionStep] = useState(0);
 
   const escFunction = useCallback(
     (e) => {
@@ -35,18 +37,8 @@ const PhotoView = ({ title, initialSlide, visible, items, onClose, listingId, op
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    const targetElement = scrollRef.current;
-    if (visible && targetElement) {
-      disableBodyScroll(targetElement);
-    }
-    return () => {
-      if (targetElement) {
-        enableBodyScroll(targetElement);
-      } else {
-        // Fallback to ensure scroll is enabled
-        enableBodyScroll(document.body);
-      }
-    };
+    if (!visible) return undefined;
+    return lockBodyScroll();
   }, [visible]);
 
   useEffect(() => {
@@ -58,11 +50,18 @@ const PhotoView = ({ title, initialSlide, visible, items, onClose, listingId, op
   const settings = {
     initialSlide: initialSlide,
     infinite: true,
-    speed: 500,
-    fade: true,
+    speed: 620,
+    cssEase: "cubic-bezier(0.22, 1, 0.36, 1)",
+    fade: false,
     slidesToShow: 1,
     slidesToScroll: 1,
     arrows: hasMultipleItems,
+    beforeChange: (oldIndex, nextIndex) => {
+      const isForward =
+        nextIndex > oldIndex || (oldIndex === items.length - 1 && nextIndex === 0);
+      setDirection(isForward ? "next" : "prev");
+      setTransitionStep((step) => step + 1);
+    },
     nextArrow: (
       <SlickArrow>
         <span aria-hidden="true">&gt;</span>
@@ -123,14 +122,19 @@ const PhotoView = ({ title, initialSlide, visible, items, onClose, listingId, op
             </div>
             <div className={styles.wrapper}>
               <Slider
-                className="photo-slider"
+                className={cn("photo-slider", styles.slider, {
+                  [styles.prev]: direction === "prev",
+                  [styles.next]: direction === "next",
+                  [styles.motionA]: transitionStep % 2 === 0,
+                  [styles.motionB]: transitionStep % 2 === 1,
+                })}
                 afterChange={handleAfterChange}
                 {...settings}
               >
                 {items.map((x, index) => (
                   <div className={styles.slide} key={index}>
                     <div className={styles.preview}>
-                      <img src={x} alt="Gallery" />
+                      <img className={styles.image} src={x} alt="Gallery" />
                     </div>
                   </div>
                 ))}

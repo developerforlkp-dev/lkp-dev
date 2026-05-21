@@ -20,8 +20,7 @@ import { createEventOrder, getEventDetails, getEventReviews, getEligibleBookings
 import Modal from "../../components/Modal";
 import LoginPromptModal from "../../components/LoginPromptModal";
 import ShareButton from "../../components/ShareButton";
-
-import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
+import { lockBodyScroll } from "../../utils/scrollLock";
 
 /* ─── HERO SHARE FAB ─────────────────────────── */
 function HeroShareFab({ title, text, url }) {
@@ -349,12 +348,7 @@ const GridGallery = ({ items, onClose, onSelect, title, A }) => {
   const galleryRef = useRef(null);
 
   useEffect(() => {
-    const target = galleryRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
+    return lockBodyScroll();
   }, []);
 
   return (
@@ -367,12 +361,33 @@ const GridGallery = ({ items, onClose, onSelect, title, A }) => {
         position: 'fixed',
         inset: 0,
         zIndex: 9990,
-        background: '#FFFFFF',
-        overflowY: 'auto',
-        padding: 'clamp(40px, 8vw, 100px) clamp(20px, 5vw, 60px)'
+        background: 'rgba(0,0,0,0.72)',
+        backdropFilter: 'blur(18px)',
+        WebkitBackdropFilter: 'blur(18px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflowY: 'hidden',
+        overflowX: 'hidden',
+        overscrollBehavior: 'contain',
+        padding: 'clamp(14px, 4vw, 36px)'
       }}
     >
-      <div style={{ maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
+      <div style={{
+        maxWidth: 1240,
+        maxHeight: 'min(86vh, 860px)',
+        width: '100%',
+        margin: '0 auto',
+        position: 'relative',
+        background: '#FFFFFF',
+        border: '1px solid rgba(255,255,255,0.18)',
+        borderRadius: 28,
+        boxShadow: '0 36px 120px rgba(0,0,0,0.5)',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        overscrollBehavior: 'contain',
+        padding: 'clamp(24px, 5vw, 48px)'
+      }}>
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -477,12 +492,7 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
   };
 
   useEffect(() => {
-    const target = modalRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
+    return lockBodyScroll();
   }, []);
 
   return (
@@ -500,7 +510,9 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '5vh 5vw'
+        padding: '5vh 5vw',
+        overflow: 'hidden',
+        overscrollBehavior: 'contain'
       }}
       onClick={onClose}
     >
