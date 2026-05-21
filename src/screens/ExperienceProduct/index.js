@@ -552,27 +552,6 @@ const ExperienceProduct = () => {
               </Rev>
             </motion.div>
           </div>
-          {/* SHARE BUTTON — bottom-left of hero */}
-          <motion.div
-            style={{ position: "absolute", bottom: 60, left: 60, opacity: fade, zIndex: 20 }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <ShareButton
-              title={listing?.title}
-              text={listing?.description || listing?.aboutListing || ""}
-              url={window.location.href}
-              imageUrl={formatImageUrl(listing?.coverPhotoUrl)}
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                backdropFilter: "blur(16px)",
-                border: `1.5px solid rgba(255,255,255,0.18)`,
-                color: "#FFFFFF",
-              }}
-              size={16}
-            />
-          </motion.div>
           {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
             <motion.div
               className="early-bird-wrapper"

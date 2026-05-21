@@ -277,18 +277,6 @@ function PlaceHero({ place, galleryItems }) {
                 <motion.span key={toDisplayString(tag)} whileHover={{ background: A, color: W, borderColor: A }} style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: M, border: `1px solid ${B}`, padding: "8px 20px", borderRadius: 40, background: W, transition: "all 0.3s" }}>{toDisplayString(tag)}</motion.span>
               ))}
             </div>
-            {/* SHARE BUTTON */}
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 20, pointerEvents: "auto" }}>
-              <ShareButton
-                title={placeName}
-                text={place?.description || ""}
-                url={window.location.href}
-                imageUrl={place?.coverImageUrl}
-                tokens={{ A, FG, B, BG: W }}
-                label="Share"
-                size={15}
-              />
-            </div>
           </motion.div>
         </div>
 

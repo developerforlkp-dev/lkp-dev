@@ -388,18 +388,6 @@ function CulinaryHero({ food, galleryItems }) {
                 <div style={{ flex: 1.5 }}><HeroStat icon={Calendar} label="Open Days" value={openDays} tokens={tokens} hideBorder /></div>
               </div>
 
-              {/* SHARE BUTTON */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 4 }}>
-                <ShareButton
-                  title={food?.menuName || food?.title}
-                  text={food?.detailedDescription || food?.shortDescription || food?.description || ""}
-                  url={window.location.href}
-                  imageUrl={food?.coverImageUrl}
-                  tokens={tokens}
-                  label="Share this"
-                  size={16}
-                />
-              </div>
             </div>
           </Rev>
 
