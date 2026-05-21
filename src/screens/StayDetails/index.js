@@ -301,11 +301,13 @@ function SHdr({ idx, label }) {
 function HeroShareFab({ title, text, url }) {
   const [copied, setCopied] = useState(false);
   const [ripple, setRipple] = useState(false);
-  const { theme, tokens: { A, AH } } = useTheme();
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
 
   const handleShare = async () => {
     setRipple(true);
-    setTimeout(() => setRipple(false), 800);
+    setTimeout(() => setRipple(false), 700);
     try {
       if (navigator.share) {
         await navigator.share({ title, text, url });
@@ -320,49 +322,75 @@ function HeroShareFab({ title, text, url }) {
   return (
     <motion.button
       onClick={handleShare}
-      initial={{ opacity: 0, scale: 0.8, y: -10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ delay: 0.7, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ scale: 1.07, y: -3, boxShadow: `0 14px 44px ${A}77` }}
-      whileTap={{ scale: 0.91 }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
       style={{
         position: "absolute",
-        top: 100,
+        top: 96,
         right: 60,
         zIndex: 200,
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        padding: "13px 24px",
-        background: copied ? (AH || A) : A,
-        border: "none",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
         borderRadius: 50,
         cursor: "pointer",
         color: "#FFFFFF",
         fontFamily: "inherit",
-        fontSize: 12,
-        fontWeight: 800,
-        letterSpacing: "0.1em",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
         textTransform: "uppercase",
-        boxShadow: `0 6px 28px ${A}55, 0 2px 8px rgba(0,0,0,0.22)`,
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
         outline: "none",
         userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
       }}
     >
       <motion.span
-        animate={ripple ? { scale: [1, 2.4], opacity: [0.6, 0] } : { scale: 1, opacity: 0 }}
-        transition={{ duration: 0.75, ease: "easeOut" }}
-        style={{
-          position: "absolute",
-          inset: -2,
-          borderRadius: 60,
-          background: A,
-          pointerEvents: "none",
-        }}
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
       />
-      <BedDouble size={16} strokeWidth={2.4} style={{ flexShrink: 0 }} />
-      <span style={{ position: "relative" }}>
-        {copied ? "✓ Copied!" : "Share"}
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Escape"}
       </span>
     </motion.button>
   );
