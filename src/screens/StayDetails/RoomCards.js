@@ -287,6 +287,7 @@ const RoomModal = ({ room, listing, onClose }) => {
       <style>{`
         .modal-body-content::-webkit-scrollbar { display: none; }
         .modal-body-content { scrollbar-width: none; -ms-overflow-style: none; }
+        .gallery-nav-button:hover { opacity: 1 !important; background: rgba(255,255,255,0.24) !important; }
       `}</style>
 
       <motion.div 
@@ -332,23 +333,23 @@ const RoomModal = ({ room, listing, onClose }) => {
               {/* Navigation Arrows */}
               {allImages.length > 1 && (
                 <>
-                  <button onClick={() => scrollGallery('prev')} style={{ 
+                  <button className="gallery-nav-button" onClick={() => scrollGallery('prev')} style={{ 
                     position: "absolute", left: isMobile ? 16 : 32, top: "50%", transform: "translateY(-50%)", 
                     width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", 
                     backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", 
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
-                    color: "#fff", zIndex: 15, transition: "all 0.3s" 
+                    color: "#fff", zIndex: 15, transition: "all 0.3s", opacity: 0.72, fontSize: isMobile ? 22 : 28, fontWeight: 300, lineHeight: 1
                   }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    &lt;
                   </button>
-                  <button onClick={() => scrollGallery('next')} style={{ 
+                  <button className="gallery-nav-button" onClick={() => scrollGallery('next')} style={{ 
                     position: "absolute", right: isMobile ? 16 : 32, top: "50%", transform: "translateY(-50%)", 
                     width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", 
                     backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", 
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
-                    color: "#fff", zIndex: 15, transition: "all 0.3s" 
+                    color: "#fff", zIndex: 15, transition: "all 0.3s", opacity: 0.72, fontSize: isMobile ? 22 : 28, fontWeight: 300, lineHeight: 1
                   }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    &gt;
                   </button>
                 </>
               )}

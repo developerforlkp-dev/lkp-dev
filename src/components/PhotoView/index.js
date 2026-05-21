@@ -53,20 +53,24 @@ const PhotoView = ({ title, initialSlide, visible, items, onClose, listingId, op
     setCurrent(initialSlide);
   }, [initialSlide]);
 
+  const hasMultipleItems = items?.length > 1;
+
   const settings = {
     initialSlide: initialSlide,
     infinite: true,
     speed: 500,
+    fade: true,
     slidesToShow: 1,
     slidesToScroll: 1,
+    arrows: hasMultipleItems,
     nextArrow: (
       <SlickArrow>
-        <Icon name="arrow-next" size="14" />
+        <span aria-hidden="true">&gt;</span>
       </SlickArrow>
     ),
     prevArrow: (
       <SlickArrow>
-        <Icon name="arrow-prev" size="14" />
+        <span aria-hidden="true">&lt;</span>
       </SlickArrow>
     ),
   };
