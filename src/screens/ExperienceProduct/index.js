@@ -3,7 +3,7 @@ import { useLocation, useParams, useHistory } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Info, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, Sparkles, Star } from "lucide-react";
+import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Info, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, Sparkles, Star, Compass, Share2 } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
 import ShareButton from "../../components/ShareButton";
@@ -53,7 +53,7 @@ const getActivityImageUrl = (activity) => {
 function ExperienceBg({ progress, src }) {
   const { tokens: { A, BG } } = useTheme();
   const scale = useTransform(progress, [0, 1], [1, 1.2]);
-  const opacity = useTransform(progress, [0, 0.8], [0.6, 0]);
+  const opacity = useTransform(progress, [0, 0.8], [1, 0]);
   const blur = useTransform(progress, [0, 0.5], [0, 10]);
 
   return (
@@ -65,6 +65,108 @@ function ExperienceBg({ progress, src }) {
       </motion.div>
       <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 60%, #080808 100%)` }} />
     </div>
+  );
+}
+
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) {}
+  };
+
+  return (
+    <motion.button
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      {/* Radial ripple on click */}
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      {/* Icon — always visible with unique animation */}
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      {/* Expandable label */}
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Journey"}
+      </span>
+    </motion.button>
   );
 }
 
@@ -552,27 +654,11 @@ const ExperienceProduct = () => {
               </Rev>
             </motion.div>
           </div>
-          {/* SHARE BUTTON — bottom-left of hero */}
-          <motion.div
-            style={{ position: "absolute", bottom: 60, left: 60, opacity: fade, zIndex: 20 }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <ShareButton
-              title={listing?.title}
-              text={listing?.description || listing?.aboutListing || ""}
-              url={window.location.href}
-              imageUrl={formatImageUrl(listing?.coverPhotoUrl)}
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                backdropFilter: "blur(16px)",
-                border: `1.5px solid rgba(255,255,255,0.18)`,
-                color: "#FFFFFF",
-              }}
-              size={16}
-            />
-          </motion.div>
+          <HeroShareFab
+            title={listing?.title}
+            text={listing?.description || listing?.aboutListing || ""}
+            url={window.location.href}
+          />
           {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
             <motion.div
               className="early-bird-wrapper"

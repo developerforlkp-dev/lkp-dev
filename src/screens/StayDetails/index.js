@@ -298,6 +298,105 @@ function SHdr({ idx, label }) {
   );
 }
 
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) { }
+  };
+
+  return (
+    <motion.button
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Escape"}
+      </span>
+    </motion.button>
+  );
+}
+
 /* ─── STAY SECTIONS ─────────── */
 function StayHeroCarousel({ stay, galleryItems = [] }) {
   const { width, isMobile } = useWindowSize();
@@ -404,30 +503,12 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
         </div>
       )}
 
-      {/* SHARE BUTTON — bottom-right corner, glass-morphism style */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5 }}
-        style={{ position: "absolute", bottom: isMobile ? 20 : 80, right: isMobile ? 20 : 80, zIndex: 50 }}
-      >
-        <ShareButton
-          title={title}
-          text={stay?.shortDescription || stay?.description || ""}
-          url={window.location.href}
-          imageUrl={stay?.coverPhotoUrl || stay?.coverImageUrl}
-          tokens={{ A, FG, B, BG: "transparent" }}
-          style={{
-            background: theme === 'dark' ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(16px)",
-            border: theme === 'dark' ? "1.5px solid rgba(255,255,255,0.15)" : `1.5px solid ${B}`,
-            color: theme === 'dark' ? "#FFF" : FG,
-            cursor: "pointer",
-          }}
-          size={isMobile ? 14 : 16}
-          showLabel={!isMobile}
-        />
-      </motion.div>
+      <HeroShareFab
+        title={title}
+        text={stay?.shortDescription || stay?.description || ""}
+        url={window.location.href}
+      />
+
     </section>
   );
 }
@@ -686,20 +767,20 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
 
     // 3. Cancellation Policy
     const cancelItems = [];
-    const summaryText = stay?.cancellationPolicySummary || 
-                        stay?.privacyAndPolicy?.cancellationPolicySummary || 
-                        stay?.listing?.cancellationPolicySummary || 
-                        stay?.stay?.cancellationPolicySummary ||
-                        stay?.generatedPolicySummary || 
-                        stay?.policySummary || 
-                        stay?.cancellation_policy_summary;
+    const summaryText = stay?.cancellationPolicySummary ||
+      stay?.privacyAndPolicy?.cancellationPolicySummary ||
+      stay?.listing?.cancellationPolicySummary ||
+      stay?.stay?.cancellationPolicySummary ||
+      stay?.generatedPolicySummary ||
+      stay?.policySummary ||
+      stay?.cancellation_policy_summary;
 
-    const templateText = stay?.cancellationPolicyTemplate || 
-                         stay?.privacyAndPolicy?.cancellationPolicyTemplate || 
-                         stay?.listing?.cancellationPolicyTemplate || 
-                         stay?.stay?.cancellationPolicyTemplate ||
-                         stay?.cancellationPolicy || 
-                         stay?.cancellationPolicyText;
+    const templateText = stay?.cancellationPolicyTemplate ||
+      stay?.privacyAndPolicy?.cancellationPolicyTemplate ||
+      stay?.listing?.cancellationPolicyTemplate ||
+      stay?.stay?.cancellationPolicyTemplate ||
+      stay?.cancellationPolicy ||
+      stay?.cancellationPolicyText;
 
     if (summaryText && summaryText.trim().length > 5 && !summaryText.toLowerCase().includes("no cancellation policy summary")) {
       cancelItems.push({ id: 'cancel-1', title: "Cancellation Terms", body: summaryText });
@@ -1144,9 +1225,9 @@ function PropertyModal({ stay, onClose }) {
 
   const name = stay.propertyName || stay.title || stay.name || "Property Details";
   const desc = stay.detailedDescription || stay.description || stay.shortDescription;
-  
+
   const capacity = stay.maxGuests || stay.guests?.adults || stay.maxAdults || null;
-  
+
   const list = stay.amenities || stay.propertyAmenities || stay.stayAmenities || stay.amenityList || [];
   const amenities = extractList(list);
 
@@ -1208,15 +1289,15 @@ function PropertyModal({ stay, onClose }) {
     [];
   const discountRate = Array.isArray(billingConfigDiscounts)
     ? Math.max(
-        0,
-        Math.min(
-          100,
-          billingConfigDiscounts.reduce((sum, discount) => {
-            const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
-            return sum + (Number.isFinite(rate) ? rate : 0);
-          }, 0)
-        )
+      0,
+      Math.min(
+        100,
+        billingConfigDiscounts.reduce((sum, discount) => {
+          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+          return sum + (Number.isFinite(rate) ? rate : 0);
+        }, 0)
       )
+    )
     : 0;
   const discountedPriceValue =
     priceValue != null ? Math.max(0, Number(priceValue) * (1 - discountRate / 100)) : null;
@@ -1235,10 +1316,10 @@ function PropertyModal({ stay, onClose }) {
 
   const scrollGallery = (dir) => {
     if (!galleryRef.current) return;
-    const nextIdx = dir === 'next' 
-      ? (galleryIndex + 1) % allImages.length 
+    const nextIdx = dir === 'next'
+      ? (galleryIndex + 1) % allImages.length
       : (galleryIndex - 1 + allImages.length) % allImages.length;
-    
+
     setGalleryIndex(nextIdx);
     const itemWidth = galleryRef.current.offsetWidth;
     galleryRef.current.scrollTo({
@@ -1273,15 +1354,15 @@ function PropertyModal({ stay, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24 }}>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} 
-        onClick={onClose} 
+        style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
+        onClick={onClose}
       />
-      
+
       <style>{`
         .modal-scrollable-content::-webkit-scrollbar { width: 6px; }
         .modal-scrollable-content::-webkit-scrollbar-thumb { background: ${B}; border-radius: 10px; }
@@ -1290,27 +1371,27 @@ function PropertyModal({ stay, onClose }) {
         .gallery-scroll-track { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: isMobile ? "100%" : 40, scale: isMobile ? 1 : 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: isMobile ? "100%" : 40, scale: isMobile ? 1 : 0.97 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        style={{ 
-          position: "relative", background: W, width: "100%", maxWidth: 1100, 
-          maxHeight: isMobile ? "100vh" : "90vh", 
+        style={{
+          position: "relative", background: W, width: "100%", maxWidth: 1100,
+          maxHeight: isMobile ? "100vh" : "90vh",
           marginTop: isMobile ? "auto" : 0,
-          borderRadius: isMobile ? "24px 24px 0 0" : 24, overflow: "hidden", display: "flex", flexDirection: "column", zIndex: 1, 
-          boxShadow: "0 40px 120px rgba(0,0,0,0.5)", border: `1px solid ${B}` 
+          borderRadius: isMobile ? "24px 24px 0 0" : 24, overflow: "hidden", display: "flex", flexDirection: "column", zIndex: 1,
+          boxShadow: "0 40px 120px rgba(0,0,0,0.5)", border: `1px solid ${B}`
         }}
       >
         {isMobile && (
           <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", width: 44, height: 5, borderRadius: 100, background: "rgba(0,0,0,0.15)", zIndex: 30 }} />
         )}
-        
-        <button onClick={onClose} style={{ 
-          position: "absolute", top: isMobile ? 20 : 24, right: isMobile ? 20 : 24, width: 40, height: 40, borderRadius: "50%", 
-          background: S, border: `1px solid ${B}`, display: "flex", alignItems: "center", 
-          justifyContent: "center", cursor: "pointer", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", 
+
+        <button onClick={onClose} style={{
+          position: "absolute", top: isMobile ? 20 : 24, right: isMobile ? 20 : 24, width: 40, height: 40, borderRadius: "50%",
+          background: S, border: `1px solid ${B}`, display: "flex", alignItems: "center",
+          justifyContent: "center", cursor: "pointer", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
           transition: "all 0.3s ease", color: FG
         }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1318,13 +1399,13 @@ function PropertyModal({ stay, onClose }) {
 
         {/* Scrollable Content Container */}
         <div className="modal-scrollable-content" style={{ overflowY: "auto", flex: 1, boxSizing: "border-box", padding: isMobile ? "40px 20px" : "48px 48px" }}>
-          
+
           {/* Top Hero Section */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1fr", gap: isMobile ? 32 : 40, marginBottom: 40, alignItems: "start" }}>
-            
+
             {/* LEFT SIDE: Large Featured Image */}
-            <div style={{ 
-              height: isMobile ? 260 : 440, overflow: "hidden", borderRadius: 20, 
+            <div style={{
+              height: isMobile ? 260 : 440, overflow: "hidden", borderRadius: 20,
               background: "#0F0F0F", position: "relative", display: "flex", flexShrink: 0,
               border: `1px solid ${B}`
             }}>
@@ -1339,40 +1420,40 @@ function PropertyModal({ stay, onClose }) {
                   </div>
 
                   {/* Gradient Overlay for Readability */}
-                  <div style={{ 
-                    position: "absolute", inset: 0, 
-                    background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)", 
-                    pointerEvents: "none", zIndex: 10 
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)",
+                    pointerEvents: "none", zIndex: 10
                   }} />
-                  
+
                   {allImages.length > 1 && (
                     <>
-                      <button onClick={() => scrollGallery('prev')} style={{ 
-                        position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", 
-                        width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", 
-                        backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)", 
-                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
-                        color: "#fff", zIndex: 15, transition: "all 0.3s" 
+                      <button onClick={() => scrollGallery('prev')} style={{
+                        position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
+                        width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", zIndex: 15, transition: "all 0.3s"
                       }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                       </button>
-                      <button onClick={() => scrollGallery('next')} style={{ 
-                        position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", 
-                        width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", 
-                        backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)", 
-                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
-                        color: "#fff", zIndex: 15, transition: "all 0.3s" 
+                      <button onClick={() => scrollGallery('next')} style={{
+                        position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+                        width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", zIndex: 15, transition: "all 0.3s"
                       }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                       </button>
                     </>
                   )}
 
-                  <div style={{ 
-                    position: "absolute", bottom: 20, right: 20, background: "rgba(0,0,0,0.6)", 
-                    backdropFilter: "blur(8px)", color: "#fff", padding: "6px 14px", borderRadius: 100, 
-                    fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", zIndex: 15, 
-                    border: "1px solid rgba(255,255,255,0.15)" 
+                  <div style={{
+                    position: "absolute", bottom: 20, right: 20, background: "rgba(0,0,0,0.6)",
+                    backdropFilter: "blur(8px)", color: "#fff", padding: "6px 14px", borderRadius: 100,
+                    fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", zIndex: 15,
+                    border: "1px solid rgba(255,255,255,0.15)"
                   }}>
                     {galleryIndex + 1} <span style={{ opacity: 0.5, margin: "0 2px" }}>/</span> {allImages.length}
                   </div>
@@ -1387,17 +1468,17 @@ function PropertyModal({ stay, onClose }) {
             {/* RIGHT SIDE: Quick Info & Title */}
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div>
-                <span style={{ 
-                  fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", 
-                  color: A, fontWeight: 800, marginBottom: 8, display: "block" 
+                <span style={{
+                  fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: A, fontWeight: 800, marginBottom: 8, display: "block"
                 }}>
                   {toDisplayString(stay.propertyType) || "Property Stay"}
                 </span>
-                
-                <h2 style={{ 
-                  fontSize: isMobile ? 32 : 40, fontWeight: 800, marginBottom: 12, 
-                  fontFamily: "var(--font-fraunces, Georgia, serif)", color: FG, 
-                  lineHeight: 1.1, letterSpacing: "-0.02em", wordBreak: "break-word" 
+
+                <h2 style={{
+                  fontSize: isMobile ? 32 : 40, fontWeight: 800, marginBottom: 12,
+                  fontFamily: "var(--font-fraunces, Georgia, serif)", color: FG,
+                  lineHeight: 1.1, letterSpacing: "-0.02em", wordBreak: "break-word"
                 }}>{name}</h2>
 
                 <p style={{ fontSize: 14, lineHeight: 1.6, color: M, fontWeight: 550, margin: 0, opacity: 0.9 }}>
@@ -1415,10 +1496,10 @@ function PropertyModal({ stay, onClose }) {
                     {amenities.slice(0, 4).map((f, i) => {
                       const IconComp = getAmenityIcon(f);
                       return (
-                        <div key={i} style={{ 
-                          display: "flex", alignItems: "center", gap: 6, 
-                          background: S, border: `1px solid ${B}`, borderRadius: 20, 
-                          padding: "6px 12px", fontSize: 11, fontWeight: 600, color: FG 
+                        <div key={i} style={{
+                          display: "flex", alignItems: "center", gap: 6,
+                          background: S, border: `1px solid ${B}`, borderRadius: 20,
+                          padding: "6px 12px", fontSize: 11, fontWeight: 600, color: FG
                         }}>
                           <IconComp size={12} color={A} />
                           <span>{f}</span>
@@ -1426,10 +1507,10 @@ function PropertyModal({ stay, onClose }) {
                       );
                     })}
                     {amenities.length > 4 && (
-                      <div style={{ 
-                        display: "flex", alignItems: "center", background: S, 
-                        border: `1px solid ${B}`, borderRadius: 20, padding: "6px 12px", 
-                        fontSize: 11, fontWeight: 700, color: M 
+                      <div style={{
+                        display: "flex", alignItems: "center", background: S,
+                        border: `1px solid ${B}`, borderRadius: 20, padding: "6px 12px",
+                        fontSize: 11, fontWeight: 700, color: M
                       }}>
                         + {amenities.length - 4} more
                       </div>
@@ -1480,7 +1561,7 @@ function PropertyModal({ stay, onClose }) {
 
               {/* CTAs */}
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                <button 
+                <button
                   onClick={() => {
                     onClose();
                     const btn = document.querySelector(".stay-booking-trigger");
@@ -1493,9 +1574,9 @@ function PropertyModal({ stay, onClose }) {
                       }, 120);
                     }
                   }}
-                  style={{ 
+                  style={{
                     background: A, color: "#fff", border: "none",
-                    padding: "14px 28px", borderRadius: 12, fontSize: 14, fontWeight: 800, 
+                    padding: "14px 28px", borderRadius: 12, fontSize: 14, fontWeight: 800,
                     cursor: "pointer", boxShadow: `0 10px 25px ${A}2a`,
                     transition: "all 0.3s ease",
                     display: "flex", alignItems: "center", justifyContent: "center"
@@ -1504,11 +1585,11 @@ function PropertyModal({ stay, onClose }) {
                   Reserve Stay
                 </button>
 
-                <button 
+                <button
                   onClick={scrollToDetails}
-                  style={{ 
+                  style={{
                     background: "transparent", border: `1px solid ${B}`, color: FG,
-                    padding: "12px 28px", borderRadius: 12, fontSize: 13, fontWeight: 700, 
+                    padding: "12px 28px", borderRadius: 12, fontSize: 13, fontWeight: 700,
                     cursor: "pointer", transition: "all 0.3s ease",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8
                   }}
@@ -1523,18 +1604,18 @@ function PropertyModal({ stay, onClose }) {
 
           {/* Divider & Full Narrative/Details */}
           <div ref={detailsRef} style={{ borderTop: `1px solid ${B}`, paddingTop: 40, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1fr", gap: isMobile ? 32 : 40 }}>
-            
+
             {/* Narrative */}
             <div>
-              <h3 style={{ 
-                fontSize: 11, fontWeight: 800, textTransform: "uppercase", 
-                letterSpacing: "0.2em", color: M, marginBottom: 16 
+              <h3 style={{
+                fontSize: 11, fontWeight: 800, textTransform: "uppercase",
+                letterSpacing: "0.2em", color: M, marginBottom: 16
               }}>
                 Property Narrative
               </h3>
-              <p style={{ 
-                fontSize: 15, lineHeight: 1.8, color: FG, 
-                fontWeight: 450, opacity: 0.9, whiteSpace: "pre-line", margin: 0 
+              <p style={{
+                fontSize: 15, lineHeight: 1.8, color: FG,
+                fontWeight: 450, opacity: 0.9, whiteSpace: "pre-line", margin: 0
               }}>
                 {desc}
               </p>
@@ -1544,9 +1625,9 @@ function PropertyModal({ stay, onClose }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {amenities.length > 0 && (
                 <div>
-                  <h3 style={{ 
-                    fontSize: 11, fontWeight: 800, textTransform: "uppercase", 
-                    letterSpacing: "0.2em", color: M, marginBottom: 20 
+                  <h3 style={{
+                    fontSize: 11, fontWeight: 800, textTransform: "uppercase",
+                    letterSpacing: "0.2em", color: M, marginBottom: 20
                   }}>
                     Amenities & Features
                   </h3>
@@ -1566,9 +1647,9 @@ function PropertyModal({ stay, onClose }) {
 
               {cancellationPolicy && (
                 <div>
-                  <h3 style={{ 
-                    fontSize: 11, fontWeight: 800, textTransform: "uppercase", 
-                    letterSpacing: "0.2em", color: M, marginBottom: 16 
+                  <h3 style={{
+                    fontSize: 11, fontWeight: 800, textTransform: "uppercase",
+                    letterSpacing: "0.2em", color: M, marginBottom: 16
                   }}>
                     Cancellation Guidelines
                   </h3>
@@ -1661,15 +1742,15 @@ function PropertyStayCard({ stay }) {
     [];
   const discountRate = Array.isArray(billingConfigDiscounts)
     ? Math.max(
-        0,
-        Math.min(
-          100,
-          billingConfigDiscounts.reduce((sum, discount) => {
-            const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
-            return sum + (Number.isFinite(rate) ? rate : 0);
-          }, 0)
-        )
+      0,
+      Math.min(
+        100,
+        billingConfigDiscounts.reduce((sum, discount) => {
+          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+          return sum + (Number.isFinite(rate) ? rate : 0);
+        }, 0)
       )
+    )
     : 0;
   const discountedPriceValue =
     priceValue != null ? Math.max(0, Number(priceValue) * (1 - discountRate / 100)) : null;
@@ -1895,11 +1976,11 @@ function PropertyStayCard({ stay }) {
             </motion.div>
           </div>
 
-          <button 
+          <button
             onClick={() => setShowModal(true)}
-            style={{ 
+            style={{
               background: AL, border: `1px solid ${A}`, color: A,
-              padding: "12px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700, 
+              padding: "12px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700,
               cursor: "pointer", whiteSpace: "nowrap",
               transition: "all 0.3s ease",
               display: "flex", alignItems: "center", justifyContent: "center"

@@ -13,7 +13,7 @@ import Browse from "../../components/Browse";
 import GuestPicker from "../../components/GuestPicker";
 import { browse2 } from "../../mocks/browse";
 import { useLocation, useHistory } from "react-router-dom";
-import { ChevronLeft, ChevronDown, FileText, Plus, Camera } from "lucide-react";
+import { ChevronLeft, ChevronDown, FileText, Plus, Camera, Ticket, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../components/JUI/Theme";
 import { createEventOrder, getEventDetails, getEventReviews, getEligibleBookings, getListingReviews } from "../../utils/api";
@@ -22,6 +22,105 @@ import LoginPromptModal from "../../components/LoginPromptModal";
 import ShareButton from "../../components/ShareButton";
 
 import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
+
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) {}
+  };
+
+  return (
+    <motion.button
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 9500,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Event"}
+      </span>
+    </motion.button>
+  );
+}
 
 const asNonEmptyString = (value) => {
   if (typeof value !== "string") return null;
@@ -1224,8 +1323,14 @@ const EventProduct = () => {
         </div>
       )}
       {/* Hero Section with Title, Actions, and Gallery */}
-      <div className={cn("section-mb64", styles.hero)} style={{ zIndex: 50 }}>
+      <div className={cn("section-mb64", styles.hero)} style={{ zIndex: 50, position: "relative" }}>
         <ProductNavbar top={100} left={60} />
+        <HeroShareFab
+          title={event?.title}
+          text={event?.description || ""}
+          url={window.location.href}
+          A={A}
+        />
         <div className={cn("container", styles.heroContainer)}>
           {/* Header with Title and Actions */}
           <div className={styles.heroHeader}>
@@ -1233,16 +1338,7 @@ const EventProduct = () => {
               <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 16 }}>
                 <h1 className={styles.heroTitle}>{event.title}</h1>
               </div>
-              <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-                <ShareButton
-                  title={event?.title}
-                  text={event?.description || ""}
-                  url={window.location.href}
-                  imageUrl={event?.coverImage || event?.gallery?.[0]}
-                  label="Share"
-                  size={15}
-                />
-              </div>
+
             </div>
             <div className={styles.heroActions}>
               <Actions />
