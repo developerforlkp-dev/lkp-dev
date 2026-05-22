@@ -52,6 +52,29 @@ import PrivacyPolicy from "./screens/PrivacyPolicy";
 import MobileBottomNavbar from "./components/MobileBottomNavbar";
 
 function App() {
+  const [isMobileOrTablet, setIsMobileOrTablet] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    setIsMobileOrTablet(mediaQuery.matches);
+
+    const handler = (e) => setIsMobileOrTablet(e.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handler);
+    } else {
+      mediaQuery.addListener(handler);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handler);
+      } else {
+        mediaQuery.removeListener(handler);
+      }
+    };
+  }, []);
+
   // Get Google Client ID from environment variable
   // Fallback to hardcoded value if env var is not set (for development/testing)
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID ||
@@ -437,7 +460,7 @@ function App() {
             )}
           />
           </Switch>
-          <MobileBottomNavbar />
+          {isMobileOrTablet && <MobileBottomNavbar />}
         </Router>
       </ThemeProvider>
     </GoogleOAuthProvider>

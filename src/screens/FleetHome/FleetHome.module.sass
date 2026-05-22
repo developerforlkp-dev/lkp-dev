@@ -43,9 +43,10 @@
     position: relative
     +t
         padding: 0 40px
+        // Space for the pill that hangs -26px below the hero edge
+        padding-top: 52px
     +m
         padding: 0 32px
-        // Space for the pill that hangs -26px below the hero edge
         padding-top: 52px
 
 .glassContainer
@@ -66,13 +67,8 @@
         background: $n1
         border: 1px solid $n3
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3)
+    // On tablet and mobile, hide entirely — cinematic pill + bottom sheet handles search instead
     +t
-        padding: 18px
-        margin-bottom: 40px
-        margin-top: -60px
-        max-width: 95%
-    // On mobile, hide entirely — cinematic pill + bottom sheet handles search instead
-    +m
         display: none !important
 
 .searchBar
@@ -642,7 +638,7 @@
             display: none !important
 
 .desktopFilters
-    +m
+    +t
         display: none !important
 
 

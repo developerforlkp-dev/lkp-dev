@@ -12,11 +12,16 @@ function injectStyles() {
   const el = document.createElement("style");
   el.id = STYLE_ID;
   el.textContent = `
-    /* ─── Search Trigger Pill ──────────────────────────────────────────── */
-    .mcsh-pill-wrap {
+    /* Hide all mobile cinematic elements on desktop by default */
+    .mcsh-pill-wrap,
+    .mcsh-sticky-pill-wrap,
+    .mcsh-backdrop,
+    .mcsh-sheet {
       display: none;
     }
-    @media (max-width: 767px) {
+
+    /* ─── Search Trigger Pill ──────────────────────────────────────────── */
+    @media (max-width: 1023px) {
       /* Pill wrap: positioned at bottom of heroSection, hanging BELOW the edge */
       .mcsh-pill-wrap {
         display: flex;
@@ -115,6 +120,7 @@ function injectStyles() {
 
       /* ─── Backdrop ─────────────────────────────────────────────────────── */
       .mcsh-backdrop {
+        display: block;
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.45);
@@ -129,6 +135,7 @@ function injectStyles() {
 
       /* ─── Bottom Sheet — LIGHT MODE (default) ──────────────────────────── */
       .mcsh-sheet {
+        display: block;
         position: fixed;
         left: 0;
         right: 0;
@@ -741,10 +748,7 @@ function injectStyles() {
       }
 
       /* ─── Floating Sticky Search Bar Pill ───────────────────────────────── */
-      .mcsh-sticky-pill-wrap {
-        display: none;
-      }
-      @media (max-width: 767px) {
+      @media (max-width: 1023px) {
         .mcsh-sticky-pill-wrap {
           display: flex;
           position: fixed;

@@ -79,6 +79,29 @@ const FleetHome = () => {
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   // Mobile cinematic bottom sheet state
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    setIsMobileOrTablet(mediaQuery.matches);
+
+    const handler = (e) => setIsMobileOrTablet(e.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handler);
+    } else {
+      mediaQuery.addListener(handler);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handler);
+      } else {
+        mediaQuery.removeListener(handler);
+      }
+    };
+  }, []);
+
   const location = useLocation();
   const history = useHistory();
   const dateItemRef = useRef(null);
@@ -577,34 +600,36 @@ const FleetHome = () => {
       <div className={styles.heroSection} style={{ position: "relative" }}>
         <HeroSection />
         {/* Mobile-only: floating search pill + bottom sheet */}
-        <MobileCinematicSearch
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedDestination={selectedDestination}
-          setSelectedDestination={setSelectedDestination}
-          selectedDate={selectedDate}
-          guests={guests}
-          showCalendar={showCalendar}
-          formattedDate={formattedDate}
-          guestCountText={guestCountText}
-          showDatePicker={showDatePicker}
-          setShowDatePicker={setShowDatePicker}
-          showGuestPicker={showGuestPicker}
-          setShowGuestPicker={setShowGuestPicker}
-          destinationSuggestions={destinationSuggestions}
-          showDestinationSuggestions={showDestinationSuggestions}
-          setShowDestinationSuggestions={setShowDestinationSuggestions}
-          activeSuggestionIndex={activeSuggestionIndex}
-          setActiveSuggestionIndex={setActiveSuggestionIndex}
-          selectDestinationSuggestion={selectDestinationSuggestion}
-          destinationRef={destinationRef}
-          sheetOpen={sheetOpen}
-          setSheetOpen={setSheetOpen}
-          handleSearch={handleSearch}
-          handleDateSelect={handleDateSelect}
-          handleGuestChange={handleGuestChange}
-          activeFilter={activeFilter}
-        />
+        {isMobileOrTablet && (
+          <MobileCinematicSearch
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedDestination={selectedDestination}
+            setSelectedDestination={setSelectedDestination}
+            selectedDate={selectedDate}
+            guests={guests}
+            showCalendar={showCalendar}
+            formattedDate={formattedDate}
+            guestCountText={guestCountText}
+            showDatePicker={showDatePicker}
+            setShowDatePicker={setShowDatePicker}
+            showGuestPicker={showGuestPicker}
+            setShowGuestPicker={setShowGuestPicker}
+            destinationSuggestions={destinationSuggestions}
+            showDestinationSuggestions={showDestinationSuggestions}
+            setShowDestinationSuggestions={setShowDestinationSuggestions}
+            activeSuggestionIndex={activeSuggestionIndex}
+            setActiveSuggestionIndex={setActiveSuggestionIndex}
+            selectDestinationSuggestion={selectDestinationSuggestion}
+            destinationRef={destinationRef}
+            sheetOpen={sheetOpen}
+            setSheetOpen={setSheetOpen}
+            handleSearch={handleSearch}
+            handleDateSelect={handleDateSelect}
+            handleGuestChange={handleGuestChange}
+            activeFilter={activeFilter}
+          />
+        )}
       </div>
 
 
