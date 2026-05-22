@@ -746,6 +746,13 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
         propItems.push({ id: `prop-0`, title: "General Rules", body: "Check-in from 2:00 PM. Check-out by 11:00 AM." });
       }
     }
+    if (stay?.ageRestriction != null && stay.ageRestriction !== "") {
+      propItems.push({ id: "age_restriction", title: "Minimum Age", body: `${stay.ageRestriction}+` });
+    }
+    propItems.push({ id: "id_required", title: "ID Required at Check-in", body: stay?.idRequiredAtCheckIn ? "Yes" : "No" });
+    propItems.push({ id: "pets_allowed", title: "Pets Allowed", body: stay?.petAllowed ? "Yes" : "No" });
+    propItems.push({ id: "couple_friendly", title: "Couple Friendly", body: stay?.coupleFriendly ? "Yes" : "No" });
+
     if (propItems.length > 0) {
       categories.push({ id: 'cat-prop', title: "Property Rules", items: propItems });
     }
