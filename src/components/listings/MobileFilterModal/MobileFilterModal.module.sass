@@ -1,15 +1,197 @@
 @import ../../../styles/helpers
 
+// ─── Modal Override — Bottom Sheet ───────────────────────────────────────────
 .modal
     :global(.outer)
-        max-width: 100%
-        width: 100%
-        max-height: 90vh
-        margin: auto 0 0
-        border-radius: 24px 24px 0 0
+        max-width: 100% !important
+        width: 100% !important
+        max-height: 88vh !important
+        margin: auto 0 0 !important
+        border-radius: 20px 20px 0 0 !important
+        padding: 0 !important
+        display: flex
+        flex-direction: column
+        overflow: hidden
+        box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.14) !important
+        +dark
+            box-shadow: 0 -4px 40px rgba(0, 0, 0, 0.5) !important
+        // Hide Modal's built-in close button
+        :global(.close)
+            display: none !important
+    :global(.outer) > div
+        padding: 0 !important
+        height: 100%
+        display: flex
+        flex-direction: column
 
+// ─── Sheet Wrapper ────────────────────────────────────────────────────────────
+.sheet
+    display: flex
+    flex-direction: column
+    height: 88vh
+    max-height: 88vh
+    overflow: hidden
+    background: $n8
+    +dark
+        background: #1A1D23
+
+// ─── Drag Handle ─────────────────────────────────────────────────────────────
+.handle
+    width: 36px
+    height: 4px
+    border-radius: 100px
+    background: $n6
+    margin: 12px auto 0
+    flex-shrink: 0
+    +dark
+        background: $n3
+
+// ─── Sticky Header ───────────────────────────────────────────────────────────
+.header
+    flex-shrink: 0
+    padding: 14px 20px 0
+    background: $n8
+    +dark
+        background: #1A1D23
+
+.headerRow
+    display: flex
+    align-items: center
+    justify-content: space-between
+    padding-bottom: 14px
+    border-bottom: 1px solid $n6
+    +dark
+        border-color: $n3
+
+// Left: close button
+.closeBtn
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 34px
+    height: 34px
+    border-radius: 50%
+    background: $n7
+    border: 1px solid $n6
+    cursor: pointer
+    transition: background .2s
+    flex-shrink: 0
+    +dark
+        background: $n3
+        border-color: $n3
+    svg
+        fill: $n3
+        +dark
+            fill: $n6
+    &:hover
+        background: $n6
+        +dark
+            background: $n2
+
+// Center: title block
+.titleBlock
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 2px
+
+.title
+    font-size: 15px
+    font-weight: 700
+    color: $n2
+    margin: 0
+    letter-spacing: -0.01em
+    +dark
+        color: $n8
+
+.subtitle
+    font-size: 11px
+    font-weight: 500
+    color: $n4
+    +dark
+        color: $n5
+
+// Right: clear all button
+.resetBtn
+    font-size: 13px
+    font-weight: 600
+    color: $n5
+    background: none
+    border: none
+    cursor: pointer
+    padding: 6px 4px
+    transition: color .2s
+    white-space: nowrap
+    flex-shrink: 0
+    +dark
+        color: $n4
+    &:hover
+        color: $n3
+        +dark
+            color: $n6
+
+.resetBtnActive
+    color: $p1
+    +dark
+        color: $p1
+    &:hover
+        color: darken(#0097B2, 8%)
+
+// ─── Scrollable Content ───────────────────────────────────────────────────────
 .content
-    padding: 24px
-    max-height: 90vh
+    flex: 1
     overflow-y: auto
+    -webkit-overflow-scrolling: touch
+    padding: 12px 0 0
+    // Subtle scrollbar
+    &::-webkit-scrollbar
+        width: 3px
+    &::-webkit-scrollbar-track
+        background: transparent
+    &::-webkit-scrollbar-thumb
+        background: $n6
+        border-radius: 10px
+        +dark
+            background: $n3
 
+// ─── Sticky Footer CTA ───────────────────────────────────────────────────────
+.footer
+    flex-shrink: 0
+    padding: 12px 20px 20px
+    background: $n8
+    border-top: 1px solid $n6
+    +dark
+        background: #1A1D23
+        border-color: $n3
+
+.footerInner
+    display: flex
+    align-items: center
+    gap: 12px
+
+.resultCount
+    font-size: 12px
+    font-weight: 500
+    color: $n4
+    white-space: nowrap
+    flex-shrink: 0
+    +dark
+        color: $n5
+
+.applyBtn
+    flex: 1
+    padding: 15px 20px
+    border-radius: 12px
+    background: $p1
+    border: none
+    font-size: 15px
+    font-weight: 700
+    color: $n8
+    cursor: pointer
+    transition: all .18s ease
+    letter-spacing: -0.01em
+    &:hover
+        background: darken(#0097B2, 5%)
+        box-shadow: 0 4px 12px rgba(0, 151, 178, 0.35)
+    &:active
+        transform: scale(0.99)
