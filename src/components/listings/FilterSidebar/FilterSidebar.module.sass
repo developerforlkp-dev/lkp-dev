@@ -1,5 +1,6 @@
 @import ../../../styles/helpers
 
+// ─── Desktop Sidebar Card ─────────────────────────────────────────────────────
 .sidebar
     width: 280px
     padding: 20px
@@ -10,7 +11,18 @@
     +dark
         background: $n1
         border-color: $n3
+    // On tablet/mobile: rendered inside bottom sheet, strip card styling
+    +t
+        width: 100%
+        padding: 0
+        background: transparent
+        border: none
+        border-radius: 0
+        +dark
+            background: transparent
+            border: none
 
+// ─── Desktop Header (hidden in bottom sheet via hideHeader prop) ───────────────
 .header
     display: flex
     justify-content: space-between
@@ -43,29 +55,67 @@
             svg
                 fill: $n6
 
+// ─── Content Wrapper ──────────────────────────────────────────────────────────
 .content
     display: flex
     flex-direction: column
-    gap: 24px
+    gap: 4px
+    +t
+        gap: 2px
 
+// ─── Premium Filter Section (ecommerce-style grouped card on mobile) ──────────
 .section
     display: flex
     flex-direction: column
     gap: 12px
+    // On tablet/mobile: render as grouped card
+    +t
+        gap: 0
+        background: $n8
+        border-radius: 16px
+        border: 1px solid $n6
+        margin-bottom: 8px
+        overflow: hidden
+        +dark
+            background: $n1
+            border-color: $n3
 
+// ─── Section Label ────────────────────────────────────────────────────────────
 .label
     +hairline-2
     color: $n5
     margin-bottom: 0
+    +t
+        padding: 16px 16px 0
+        font-size: 11px
+        font-weight: 700
+        letter-spacing: 0.08em
+        text-transform: uppercase
+        color: $n4
 
+// ─── Section inner padding wrapper (applied on tablet/mobile) ─────────────────
+// We use gap and padding directly on child containers at mobile
+
+// ─── Sort Dropdown ────────────────────────────────────────────────────────────
 .sortDropdown
     width: 100%
+    +t
+        margin: 10px 0 0
+        padding: 0 16px 16px
+        box-sizing: border-box
 
+// ─── Sort Chips (mobile redesign of sort options) ─────────────────────────────
+// Sort is rendered as a Dropdown, so we just style the wrapper better on mobile
+
+// ─── Price Range ──────────────────────────────────────────────────────────────
 .priceRange
     padding: 8px 0
     display: flex
     flex-direction: column
     gap: 12px
+    +t
+        padding: 10px 16px 16px
+        gap: 14px
 
 .priceScale
     display: flex
@@ -74,146 +124,12 @@
     +caption-2
     color: $n4
 
-.checkboxList
-    display: flex
-    flex-direction: column
-    gap: 10px
-
-.checkbox
-    width: 100%
-
-.amenitiesGrid
-    display: grid
-    grid-template-columns: repeat(2, 1fr)
-    gap: 8px
-
-.amenityChip
-    padding: 8px 12px
-    border-radius: 8px
-    border: 1px solid $n6
-    background: $n8
-    +caption-2
-    color: $n2
-    text-align: center
-    transition: all .2s
-    +dark
-        background: $n1
-        border-color: $n3
-        color: $n7
-    &:hover
-        border-color: $p4
-    &.active
-        background: $p4
-        border-color: $p4
-        color: $n8
-        +dark
-            color: $n8
-
-.ratingsList
-    display: flex
-    flex-direction: column
-    gap: 8px
-
-.ratingChip
-    display: inline-flex
-    align-items: center
-    gap: 8px
-    padding: 8px 12px
-    border-radius: 8px
-    border: 1px solid $n6
-    background: $n8
-    +caption-2
-    color: $n2
-    transition: all .2s
-    +dark
-        background: $n1
-        border-color: $n3
-        color: $n7
-    svg
-        fill: $s3
-    &:hover
-        border-color: $p4
-    &.active
-        background: $p4
-        border-color: $p4
-        color: $n8
-        +dark
-            color: $n8
-        svg
-            fill: $n8
-
-.categoriesScroll
-    display: flex
-    flex-wrap: wrap
-    gap: 8px
-    overflow: visible
-
-.categoriesScrollCollapsed
-    max-height: 128px
-    overflow: hidden
-
-.toggleMoreLess
-    align-self: flex-start
-    +caption-2
-    color: $p4
-    font-weight: 600
-    transition: opacity .2s
-    &:hover
-        opacity: .75
-    +dark
-        color: $p4
-
-.categoryChip
-    padding: 8px 16px
-    border-radius: 24px
-    border: 1px solid $n6
-    background: $n8
-    +caption-2
-    color: $n2
-    white-space: nowrap
-    transition: all .2s
-    +dark
-        background: $n1
-        border-color: $n3
-        color: $n7
-    &:hover
-        border-color: $p4
-    &.active
-        background: $p4
-        border-color: $p4
-        color: $n8
-        +dark
-            color: $n8
-
-.dateGrid
-    display: grid
-    grid-template-columns: 1fr
-    gap: 8px
-
-.dateField
-    display: flex
-    flex-direction: column
-    gap: 6px
-    span
-        +caption-2
-        color: $n4
-    input
-        width: 100%
-        padding: 10px 12px
-        border-radius: 8px
-        border: 1px solid $n6
-        background: $n8
-        color: $n2
-        +caption-2
-        +dark
-            border-color: $n3
-            background: $n1
-            color: $n8
-
 .priceInputs
     display: grid
     grid-template-columns: 1fr 1fr
-    gap: 8px
+    gap: 10px
+    +t
+        gap: 12px
 
 .priceField
     display: flex
@@ -222,15 +138,230 @@
     span
         +caption-2
         color: $n4
+        font-weight: 600
+        +t
+            font-size: 11px
     input
         width: 100%
-        padding: 10px 12px
-        border-radius: 8px
-        border: 1px solid $n6
+        padding: 12px 14px
+        border-radius: 10px
+        border: 1.5px solid $n6
         background: $n8
         color: $n2
-        +caption-2
+        font-size: 14px
+        font-weight: 500
+        outline: none
+        transition: border-color .2s
         +dark
             border-color: $n3
-            background: $n1
+            background: $n2
             color: $n8
+        &:focus
+            border-color: $p1
+        +t
+            padding: 13px 14px
+            border-radius: 10px
+            font-size: 15px
+
+// ─── Date Fields ─────────────────────────────────────────────────────────────
+.dateGrid
+    display: grid
+    grid-template-columns: 1fr
+    gap: 10px
+    +t
+        padding: 10px 16px 16px
+        gap: 12px
+
+.dateField
+    display: flex
+    flex-direction: column
+    gap: 6px
+    span
+        +caption-2
+        color: $n4
+        font-weight: 600
+        +t
+            font-size: 11px
+    input
+        width: 100%
+        padding: 12px 14px
+        border-radius: 10px
+        border: 1.5px solid $n6
+        background: $n8
+        color: $n2
+        font-size: 14px
+        font-weight: 500
+        outline: none
+        transition: border-color .2s
+        +dark
+            border-color: $n3
+            background: $n2
+            color: $n8
+        &:focus
+            border-color: $p1
+        +t
+            padding: 13px 14px
+            font-size: 15px
+
+// ─── Rating — Premium Chip Cards ─────────────────────────────────────────────
+.ratingsList
+    display: flex
+    flex-direction: column
+    gap: 8px
+    +t
+        padding: 10px 16px 16px
+        flex-direction: row
+        flex-wrap: wrap
+        gap: 10px
+
+.ratingChip
+    display: inline-flex
+    align-items: center
+    gap: 8px
+    padding: 10px 14px
+    border-radius: 10px
+    border: 1.5px solid $n6
+    background: $n8
+    +caption-bold-1
+    color: $n2
+    transition: all .18s ease
+    +dark
+        background: $n2
+        border-color: $n3
+        color: $n7
+    svg
+        fill: $s3
+        flex-shrink: 0
+    &:hover
+        border-color: $p1
+        background: rgba(0, 151, 178, 0.06)
+    &.active
+        background: $p1
+        border-color: $p1
+        color: $n8
+        box-shadow: 0 2px 8px rgba(0, 151, 178, 0.3)
+        +dark
+            color: $n8
+            box-shadow: 0 2px 12px rgba(0, 151, 178, 0.25)
+        svg
+            fill: $n8
+    // Mobile: make each chip a larger touch target
+    +t
+        flex: 1
+        min-width: calc(33% - 8px)
+        justify-content: center
+        padding: 12px 10px
+        border-radius: 12px
+        font-size: 13px
+        font-weight: 600
+
+// ─── Amenities Grid ───────────────────────────────────────────────────────────
+.amenitiesGrid
+    display: grid
+    grid-template-columns: repeat(2, 1fr)
+    gap: 8px
+    +t
+        padding: 10px 16px 16px
+        gap: 10px
+
+.amenityChip
+    padding: 11px 12px
+    border-radius: 10px
+    border: 1.5px solid $n6
+    background: $n8
+    +caption-bold-2
+    color: $n2
+    text-align: center
+    transition: all .18s ease
+    +dark
+        background: $n2
+        border-color: $n3
+        color: $n7
+    &:hover
+        border-color: $p1
+        background: rgba(0, 151, 178, 0.06)
+    &.active
+        background: $p1
+        border-color: $p1
+        color: $n8
+        box-shadow: 0 2px 8px rgba(0, 151, 178, 0.25)
+        +dark
+            color: $n8
+    +t
+        padding: 13px 10px
+        border-radius: 10px
+        font-size: 13px
+
+// ─── Property Type Checkboxes ─────────────────────────────────────────────────
+.checkboxList
+    display: flex
+    flex-direction: column
+    gap: 0
+    +t
+        padding: 4px 16px 8px
+
+.checkbox
+    width: 100%
+    +t
+        padding: 12px 0
+        border-bottom: 1px solid $n7
+        +dark
+            border-color: $n3
+        &:last-child
+            border-bottom: none
+
+// ─── Category Chips (collapsible) ────────────────────────────────────────────
+.categoriesScroll
+    display: flex
+    flex-wrap: wrap
+    gap: 8px
+    overflow: visible
+    +t
+        padding: 10px 16px 16px
+
+.categoriesScrollCollapsed
+    max-height: 128px
+    overflow: hidden
+    +t
+        max-height: 112px
+
+.toggleMoreLess
+    align-self: flex-start
+    +caption-bold-2
+    color: $p1
+    transition: opacity .2s
+    &:hover
+        opacity: .75
+    +dark
+        color: $p1
+    +t
+        padding: 0 16px 14px
+        align-self: stretch
+        text-align: left
+
+.categoryChip
+    padding: 9px 16px
+    border-radius: 100px
+    border: 1.5px solid $n6
+    background: $n8
+    +caption-bold-2
+    color: $n2
+    white-space: nowrap
+    transition: all .18s ease
+    +dark
+        background: $n2
+        border-color: $n3
+        color: $n7
+    &:hover
+        border-color: $p1
+        background: rgba(0, 151, 178, 0.06)
+    &.active
+        background: $p1
+        border-color: $p1
+        color: $n8
+        box-shadow: 0 1px 6px rgba(0, 151, 178, 0.25)
+        +dark
+            color: $n8
+    +t
+        padding: 10px 18px
+        font-size: 13px

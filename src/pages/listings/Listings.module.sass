@@ -3,13 +3,14 @@
 .section
     padding-bottom: 80px
     +m
-        padding-bottom: 64px
+        padding-bottom: 80px // extra for bottom nav bar
 
 .container
     position: relative
     +m
         padding: 0 16px
 
+// ─── Desktop Search Bar (unchanged) ──────────────────────────────────────────
 .searchBar
     display: flex
     align-items: center
@@ -25,36 +26,50 @@
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3)
     +m
         flex-direction: column
-        gap: 16px
-        padding: 20px
-        margin-bottom: 40px
+        gap: 0
+        margin-bottom: 16px
+        background: $n8
+        border-radius: 20px
+        padding: 20px 16px
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
+        +dark
+            background: $n1
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28)
+
 
 .searchField
     flex: 1
     display: flex
     align-items: center
-    gap: 16px
+    gap: 12px
     padding: 0 20px
     +m
-        padding: 0
+        padding: 14px 4px
         width: 100%
+        border-bottom: 1px solid $n6
+        +dark
+            border-bottom-color: $n3
+        &:last-of-type
+            border-bottom: none
     svg
-        fill: $n4
+        fill: $p1
         flex-shrink: 0
         +dark
-            fill: $n5
+            fill: $p1
 
 .searchFieldContent
     flex: 1
     display: flex
     flex-direction: column
-    gap: 4px
+    gap: 3px
     position: relative
 
 .searchLabel
     +caption-2
-    font-weight: 600
-    color: $n3
+    font-weight: 700
+    color: $n4
+    text-transform: uppercase
+    letter-spacing: 0.04em
     +dark
         color: $n5
 
@@ -141,6 +156,9 @@
     white-space: nowrap
     +m
         width: 100%
+        margin-top: 16px
+        padding: 15px 40px
+        border-radius: 14px
     &:hover
         background: darken(#0097B2, 5%)
         transform: translateY(-2px)
@@ -167,10 +185,93 @@
         left: -32px
         right: -32px
 
+// ─── Mobile Sort/Filter Chips Row ────────────────────────────────────────────
+.mobileSortChipsWrap
+    display: none
+    +t
+        display: block
+        overflow: hidden
+        margin-bottom: 8px
+
+.mobileSortChips
+    display: flex
+    align-items: center
+    gap: 8px
+    padding: 0 16px 12px
+    overflow-x: auto
+    -webkit-overflow-scrolling: touch
+    scrollbar-width: none
+    &::-webkit-scrollbar
+        display: none
+
+.mobileFilterChip
+    display: inline-flex
+    align-items: center
+    gap: 6px
+    padding: 9px 16px
+    border-radius: 100px
+    border: 1.5px solid $n6
+    background: $n8
+    +caption-bold-2
+    color: $n3
+    white-space: nowrap
+    flex-shrink: 0
+    cursor: pointer
+    transition: all .2s ease
+    position: relative
+    +dark
+        background: $n1
+        border-color: $n3
+        color: $n6
+    svg
+        fill: $n4
+        flex-shrink: 0
+        +dark
+            fill: $n5
+    &:hover
+        border-color: $p1
+        color: $p1
+        svg
+            fill: $p1
+    &.mobileFilterChipActive
+        background: $p1
+        border-color: $p1
+        color: $n8
+        svg
+            fill: $n8
+        +dark
+            background: $p1
+            border-color: $p1
+            color: $n8
+
+.mobileFilterChipFilters
+    // slightly distinct from sort chips — same design, just a different icon
+
+.filterBadge
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    min-width: 18px
+    height: 18px
+    padding: 0 5px
+    border-radius: 100px
+    background: $n8
+    color: $p1
+    font-size: 10px
+    font-weight: 700
+    line-height: 1
+    +dark
+        background: $n1
+        color: $p1
+    .mobileFilterChipActive &
+        background: rgba(255,255,255,0.25)
+        color: $n8
+
+// ─── Body / Layout ────────────────────────────────────────────────────────────
 .body
     margin-top: 24px
     +m
-        margin-top: 16px
+        margin-top: 8px
 
 .layout
     display: grid
@@ -220,8 +321,10 @@
     +dark
         color: $n8
     +m
-        font-size: 22px
+        font-size: 20px
+        margin-bottom: 8px
 
+// Desktop mobile filter button (legacy — hidden now in favour of chips row)
 .mobileFilterButton
     width: 100%
     display: flex
@@ -263,7 +366,7 @@
         height: 100%
         border: 0
 
-// Mobile Map View
+// ─── Mobile Map View ──────────────────────────────────────────────────────────
 .mobileMap
     position: fixed
     top: 0
@@ -322,3 +425,127 @@
         width: 100%
         height: 100%
         border: 0
+
+// ─── Mobile Sticky Search Bar (on scroll) ────────────────────────────────────
+.mobileStickySearch
+    display: none
+    +t
+        display: flex
+        align-items: center
+        gap: 10px
+        position: fixed
+        top: 0
+        left: 0
+        right: 0
+        z-index: 999
+        padding: 10px 16px
+        background: $n8
+        border-bottom: 1px solid $n6
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08)
+        transform: translateY(-100%)
+        transition: transform 0.25s ease
+        +dark
+            background: $n1
+            border-color: $n3
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35)
+
+.mobileStickySearchVisible
+    +t
+        transform: translateY(0)
+
+.mobileStickyContent
+    flex: 1
+    display: flex
+    align-items: center
+    gap: 10px
+    background: $n7
+    border: 1px solid $n6
+    border-radius: 100px
+    padding: 10px 16px
+    cursor: pointer
+    text-align: left
+    transition: background .2s
+    +dark
+        background: $n2
+        border-color: $n3
+    svg
+        fill: $n4
+        flex-shrink: 0
+        +dark
+            fill: $n5
+    &:hover
+        background: $n6
+        +dark
+            background: $n3
+
+.mobileStickyText
+    flex: 1
+    +caption-bold-1
+    color: $n2
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    +dark
+        color: $n7
+
+.mobileStickyMeta
+    +caption-2
+    color: $n4
+    white-space: nowrap
+    +dark
+        color: $n5
+
+.mobileStickyFilter
+    display: flex
+    align-items: center
+    justify-content: center
+    position: relative
+    width: 42px
+    height: 42px
+    border-radius: 50%
+    background: $n7
+    border: 1.5px solid $n6
+    cursor: pointer
+    flex-shrink: 0
+    transition: all .2s
+    +dark
+        background: $n2
+        border-color: $n3
+    svg
+        fill: $n4
+        +dark
+            fill: $n5
+    &:hover
+        border-color: $p1
+        svg
+            fill: $p1
+
+.mobileStickyFilterActive
+    background: $p1
+    border-color: $p1
+    svg
+        fill: $n8
+        +dark
+            fill: $n8
+    &:hover
+        background: darken(#0097B2, 5%)
+
+.mobileStickyFilterBadge
+    position: absolute
+    top: -4px
+    right: -4px
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    min-width: 18px
+    height: 18px
+    padding: 0 4px
+    border-radius: 100px
+    background: #0097B2
+    color: $n8
+    font-size: 10px
+    font-weight: 700
+    line-height: 1
+    border: 2px solid $n8
+    +dark
+        border-color: $n1
