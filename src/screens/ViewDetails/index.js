@@ -693,6 +693,35 @@ const ViewDetails = () => {
     setCancelError(null);
   };
 
+  const getFriendlyCancellationError = (error) => {
+    const status = Number(error?.response?.status);
+    const message = String(
+      error?.response?.data?.reason ||
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message ||
+      ""
+    );
+    const normalized = message.toLowerCase();
+    const isNoCancellationPolicy =
+      normalized.includes("cancellation not allowed") ||
+      normalized.includes("no cancellation policy") ||
+      normalized.includes("cancellation policy not defined") ||
+      normalized.includes("cancel is not allowed");
+
+    if (status === 400 && isNoCancellationPolicy) {
+      return "No cancellation available.";
+    }
+
+    return (
+      error?.response?.data?.message ||
+      error?.response?.data?.reason ||
+      error?.response?.data?.error ||
+      error?.message ||
+      "Failed to cancel booking. Please try again."
+    );
+  };
+
   const handleCancelBooking = async () => {
     if (!cancelReason.trim()) {
       setCancelError("Please provide a reason for cancellation.");
@@ -730,11 +759,7 @@ const ViewDetails = () => {
       handleCloseCancelModal();
     } catch (err) {
       console.error("Error cancelling booking:", err);
-      setCancelError(
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to cancel booking. Please try again."
-      );
+      setCancelError(getFriendlyCancellationError(err));
     } finally {
       setIsCancelling(false);
     }
@@ -1521,6 +1546,57 @@ const ViewDetails = () => {
     return `${currency} ${numericAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const formatRefundStatus = (status) => {
+    const raw = String(status || "").trim();
+    if (!raw) return "N/A";
+    if (raw.toUpperCase() === "NOT_REQUIRED") return "No Refund";
+    return raw.replaceAll("_", " ");
+  };
+
+  const getAppliedRefundPolicyText = () => {
+    const listingCancellationPolicy = booking?.listingData?.cancellationPolicyText;
+    const listingPolicyText = Array.isArray(listingCancellationPolicy)
+      ? listingCancellationPolicy.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+      : (typeof listingCancellationPolicy === "string" ? listingCancellationPolicy.trim() : "");
+
+    const policyCandidates = [
+      listingPolicyText,
+      booking?.eventData?.cancellationPolicySummary,
+      booking?.eventData?.cancellationPolicyText,
+      booking?.eventData?.cancellationPolicy,
+      booking?.stayData?.cancellationPolicySummary,
+      booking?.stayData?.cancellationPolicyText,
+      booking?.stayData?.cancellationPolicy,
+      booking?.originalData?.eventData?.cancellationPolicySummary,
+      booking?.originalData?.eventData?.cancellationPolicyText,
+      booking?.originalData?.eventData?.cancellationPolicy,
+      booking?.originalData?.stayData?.cancellationPolicySummary,
+      booking?.originalData?.stayData?.cancellationPolicyText,
+      booking?.originalData?.stayData?.cancellationPolicy,
+      refundDetails?.appliedRefundPolicy,
+      refundDetails?.appliedRefundPolicyName,
+      refundDetails?.appliedPolicy,
+      refundDetails?.refundPolicyName,
+      refundDetails?.policyName,
+      refundDetails?.policyLabel,
+      refundDetails?.policy,
+      refundDetails?.refundPolicy,
+      refundDetails?.refundPolicyText,
+      booking?.originalData?.appliedRefundPolicy,
+      booking?.originalData?.appliedRefundPolicyName,
+      booking?.originalData?.appliedPolicy,
+      booking?.originalData?.refundPolicyName,
+      booking?.originalData?.refundPolicy,
+      booking?.originalData?.refundPolicyText,
+      Array.isArray(booking?.notes?.cancellationPolicy)
+        ? booking.notes.cancellationPolicy.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+        : "",
+    ];
+
+    const firstText = policyCandidates.find((val) => typeof val === "string" && val.trim() !== "");
+    return firstText ? firstText.trim() : "";
+  };
+
   const getInitialTab = () => {
     return "host";
   };
@@ -2068,7 +2144,7 @@ const ViewDetails = () => {
                 <>
                   <div className={styles.paymentRow}>
                     <span>Refund Status</span>
-                    <span>{refundDetails.refundStatus || "N/A"}</span>
+                    <span>{formatRefundStatus(refundDetails.refundStatus)}</span>
                   </div>
                   <div className={styles.paymentRow}>
                     <span>Refund Amount</span>
@@ -2080,9 +2156,9 @@ const ViewDetails = () => {
                   </div>
                 </>
               )}
-              {booking.originalData?.razorpayOrderId && (
+              {getAppliedRefundPolicyText() && (
                 <div className={styles.paymentMethod} style={{ marginTop: '8px', fontSize: '12px', color: '#777E90' }}>
-                  <span>Order ID: {booking.originalData.razorpayOrderId}</span>
+                  <span>Applied Refund Policy: {getAppliedRefundPolicyText()}</span>
                 </div>
               )}
             </div>
