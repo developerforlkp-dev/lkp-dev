@@ -1556,39 +1556,6 @@ function PropertyModal({ stay, onClose }) {
                 </p>
               </div>
 
-              {/* Amenities Preview */}
-              {amenities.length > 0 && (
-                <div>
-                  <h4 style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: M, marginBottom: 10 }}>
-                    Amenities
-                  </h4>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {amenities.slice(0, 4).map((f, i) => {
-                      const IconComp = getAmenityIcon(f);
-                      return (
-                        <div key={i} style={{
-                          display: "flex", alignItems: "center", gap: 6,
-                          background: S, border: `1px solid ${B}`, borderRadius: 20,
-                          padding: "6px 12px", fontSize: 11, fontWeight: 600, color: FG
-                        }}>
-                          <IconComp size={12} color={A} />
-                          <span>{f}</span>
-                        </div>
-                      );
-                    })}
-                    {amenities.length > 4 && (
-                      <div style={{
-                        display: "flex", alignItems: "center", background: S,
-                        border: `1px solid ${B}`, borderRadius: 20, padding: "6px 12px",
-                        fontSize: 11, fontWeight: 700, color: M
-                      }}>
-                        + {amenities.length - 4} more
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* 2x2 Quick Info Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 {/* Capacity */}
