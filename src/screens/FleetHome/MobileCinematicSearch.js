@@ -1246,31 +1246,31 @@ export default function MobileCinematicSearch({
     experience: {
       title: "CURATE YOUR EXPERIENCE",
       subtitle: "Tailored adventures designed around your journey.",
-      placeholder: "Search experiences",
+      placeholder: "Enter Destination",
       buttonText: "Explore Now",
     },
     stays: {
       title: "FIND YOUR PERFECT STAY",
       subtitle: "Luxury spaces crafted for unforgettable escapes.",
-      placeholder: "Search stays",
+      placeholder: "Enter Destination",
       buttonText: "Find Stay",
     },
     events: {
       title: "DISCOVER LIVE EXPERIENCES",
       subtitle: "Reserve immersive moments happening around you.",
-      placeholder: "Search events",
+      placeholder: "Enter Destination",
       buttonText: "Reserve Event",
     },
     food: {
       title: "CURATE YOUR DINING EXPERIENCE",
       subtitle: "Exceptional flavors and unforgettable culinary moments.",
-      placeholder: "Find dining experiences",
+      placeholder: "Enter Destination",
       buttonText: "Discover Dining",
     },
     places: {
       title: "EXPLORE NEW DESTINATIONS",
       subtitle: "Discover beautiful places worth experiencing.",
-      placeholder: "Explore destinations",
+      placeholder: "Enter Destination",
       buttonText: "Explore Places",
     },
   };
