@@ -20,6 +20,7 @@ import Modal from "../../components/Modal";
 import LoginPromptModal from "../../components/LoginPromptModal";
 import ShareButton from "../../components/ShareButton";
 import { lockBodyScroll } from "../../utils/scrollLock";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 /* ─── HERO SHARE FAB ─────────────────────────── */
 function HeroShareFab({ title, text, url }) {
@@ -743,6 +744,9 @@ const EventProduct = () => {
   const handleBookNowRef = useRef(null);
   const [bookButtonArmed, setBookButtonArmed] = useState(Boolean(checkoutAfterGuestSelection));
   const [eligibleBookings, setEligibleBookings] = useState([]);
+
+  // Dynamic browser tab title
+  useDocumentTitle(event?.title, "Events");
 
   const hasValidJwtToken = () => {
     if (typeof window === "undefined") return false;

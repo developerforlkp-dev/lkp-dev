@@ -12,6 +12,7 @@ import HeroSection from "./HeroSection";
 import MobileCinematicSearch from "./MobileCinematicSearch";
 import { Compass, Ticket, Home, Utensils, MapPin, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const GOOGLE_MAPS_SCRIPT_ID = "google-maps-places-script";
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -133,6 +134,23 @@ const FleetHome = () => {
       setActiveFilter(filterFromPath);
     }
   }, [location.pathname]);
+
+  // Dynamic browser tab title based on active section
+  const sectionTitleMap = {
+    experience: "Experiences",
+    events: "Events",
+    stays: "Stays",
+    food: "Food",
+    places: "Places",
+  };
+  const isHomepage =
+    location.pathname === "/" ||
+    location.pathname === "/experience" ||
+    location.pathname === "/experiences";
+  // Homepage → "Little Known Planet", section pages → "Experiences | Little Known Planet" etc.
+  useDocumentTitle(
+    isHomepage ? "" : sectionTitleMap[activeFilter] || ""
+  );
 
   // Handle filter click by navigating to new URL
   const handleFilterClick = (filterId) => {

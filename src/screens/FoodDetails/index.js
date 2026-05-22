@@ -13,6 +13,7 @@ import { Footer } from "../../components/JUI/Footer";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import { getFoodDetails, getHost } from "../../utils/api";
 import ShareButton from "../../components/ShareButton";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const toDisplayString = (value) => {
   if (!value) return "";
@@ -1084,6 +1085,9 @@ const FoodDetails = () => {
   const [hostData, setHostData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Dynamic browser tab title
+  useDocumentTitle(food?.menuName || food?.title, "Food");
 
   const formatImageUrl = (url) => {
     if (!url) return null;

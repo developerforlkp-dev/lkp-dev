@@ -13,6 +13,7 @@ import { Footer } from "../../components/JUI/Footer";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import { getPlaceDetails, getHost } from "../../utils/api";
 import ShareButton from "../../components/ShareButton";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 /* ─── TOKENS & THEME ─────────── */
 const THEMES = {
@@ -628,6 +629,9 @@ const PlaceDetails = () => {
   const [hostData, setHostData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Dynamic browser tab title
+  useDocumentTitle(place?.placeName || place?.title, "Places");
 
   const formatImageUrl = (url) => {
     if (!url) return null;

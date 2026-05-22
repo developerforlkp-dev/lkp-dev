@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Page from "../../components/Page";
 import Main from "./Main";
 import { getCustomerOrders, getCompleteExpiredOrders } from "../../utils/api";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const Bookings = ({ bookingData = null }) => {
   const [orders, setOrders] = useState(null);
@@ -9,6 +10,9 @@ const Bookings = ({ bookingData = null }) => {
   const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Static browser tab title
+  useDocumentTitle("My Bookings");
 
   useEffect(() => {
     // If bookingData is provided as prop, use it directly

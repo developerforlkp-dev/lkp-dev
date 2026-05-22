@@ -22,6 +22,7 @@ import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import ShareButton from "../../components/ShareButton";
 import { lockBodyScroll } from "../../utils/scrollLock";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const fixImageUrl = (url) => {
   if (!url) return "";
@@ -930,6 +931,9 @@ const StayDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [eligibleBookings, setEligibleBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Dynamic browser tab title
+  useDocumentTitle(stay?.propertyName || stay?.title, "Stays");
 
   // Booking State
   const [checkInDate, setCheckInDate] = useState(null);

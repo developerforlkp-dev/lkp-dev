@@ -11,6 +11,7 @@ import { useTheme } from "../../../components/JUI/Theme";
 import Loader from "../../../components/Loader";
 import RelatedListingsStrip from "../../../components/RelatedListingsStrip";
 import { lockBodyScroll } from "../../../utils/scrollLock";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -2128,6 +2129,9 @@ export default function EventDetails() {
   const [error, setError] = useState(null);
   const primaryCategoryId = event?.primaryCategoryId || event?.primaryCategory?.id || event?.categoryId || event?.category?.id;
   const currentListingId = event?.eventId || event?.id || eventId;
+
+  // Dynamic browser tab title
+  useDocumentTitle(event?.title, "Events");
 
   useEffect(() => {
     let mounted = true;
