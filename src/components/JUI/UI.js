@@ -1,28 +1,12 @@
 import React, { useEffect, useRef } from "react";
-import { motion, useScroll, useSpring, useMotionValue, useInView, useTransform, animate } from "framer-motion";
+import { motion, useScroll, useSpring, useInView, useTransform, animate } from "framer-motion";
 import { useTheme } from "./Theme";
 
 export const E = [0.22, 1, 0.36, 1];
 
 /* ─── CURSOR ─────────────────────────────────────── */
 export function Cursor() {
-  const { tokens: { A } } = useTheme();
-  const x = useMotionValue(-200), y = useMotionValue(-200);
-  const sx = useSpring(x, { stiffness: 120, damping: 20 });
-  const sy = useSpring(y, { stiffness: 120, damping: 20 });
-  
-  useEffect(() => {
-    const fn = (e) => { x.set(e.clientX); y.set(e.clientY) };
-    window.addEventListener("mousemove", fn);
-    return () => window.removeEventListener("mousemove", fn);
-  }, [x, y]);
-
-  return (
-    <>
-      <motion.div id="cur-dot" style={{ left: x, top: y, position: 'fixed', pointerEvents: 'none', zIndex: 9999, width: 8, height: 8, background: A, borderRadius: '50%', transform: 'translate(-50%, -50%)' }} />
-      <motion.div id="cur-ring" style={{ left: sx, top: sy, position: 'fixed', pointerEvents: 'none', zIndex: 9998, width: 40, height: 40, border: `1px solid ${A}`, borderRadius: '50%', transform: 'translate(-50%, -50%)' }} />
-    </>
-  );
+  return null;
 }
 
 /* ─── SCROLL PROGRESS ────────────────────────────── */

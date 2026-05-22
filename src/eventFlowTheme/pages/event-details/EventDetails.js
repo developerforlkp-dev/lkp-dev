@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, createContext, useContext, useRef } from "react";
 import { Link, useLocation, useHistory } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView, animate } from "framer-motion";
 import ProductNavbar from "../../../components/ProductNavbar";
 import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, Share2 } from "lucide-react";
 import { X, Plus as PlusIcon } from "lucide-react";
@@ -356,11 +356,9 @@ const ScopedStyles = () => (
     .event-details-premium {
       font-family: var(--font-inter, system-ui, sans-serif);
       overflow-x: hidden;
-      cursor: none;
       transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
     }
-    .event-details-premium a, .event-details-premium button { cursor: none; }
     @keyframes marquee-l { from{transform:translateX(0)} to{transform:translateX(-50%)} }
     @keyframes marquee-r { from{transform:translateX(-50%)} to{transform:translateX(0)} }
     @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-16px) rotate(1deg)} }
@@ -407,9 +405,6 @@ const ScopedStyles = () => (
     .event-details-premium .venue-map-wrap:hover .venue-map-frame {
       filter: grayscale(0) contrast(1);
     }
-    
-    #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); transition: background 0.3s; }
-    #cur-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid var(--AL); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s, border-color 0.3s; }
     
     .gallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: start; height: 850px; overflow: hidden; border-radius: 40px; }
     .artist-row { display: grid; grid-template-columns: 80px 1fr 150px; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--B); align-items: center; cursor: default; transition: padding 0.3s, background 0.3s; }
@@ -549,24 +544,6 @@ const formatTime12h = (timeStr) => {
 
   return `${hour12}:${minutes} ${ampm}`;
 };
-function Cursor() {
-  const { tokens: { A, AL } } = useTheme();
-  const x = useMotionValue(-200), y = useMotionValue(-200);
-  const sx = useSpring(x, { stiffness: 120, damping: 20 });
-  const sy = useSpring(y, { stiffness: 120, damping: 20 });
-  useEffect(() => {
-    const fn = (e) => { x.set(e.clientX); y.set(e.clientY) };
-    window.addEventListener("mousemove", fn);
-    return () => window.removeEventListener("mousemove", fn);
-  }, [x, y]);
-  return (
-    <>
-      <motion.div id="cur-dot" style={{ left: x, top: y, background: A }} />
-      <motion.div id="cur-ring" style={{ left: sx, top: sy, borderColor: AL }} />
-    </>
-  );
-}
-
 function ProgressBar() {
   const { tokens: { A } } = useTheme();
   const { scrollYProgress } = useScroll();
@@ -1344,6 +1321,18 @@ function Rules({ event }) {
   const cancellationPolicy = event?.cancellationPolicySummary || event?.cancellationPolicy || event?.cancellationPolicyText || "Cancellation policy will be shared before booking.";
   
   const guestRequirements = Array.isArray(event?.guestRequirements) ? event.guestRequirements : [];
+  const minimumAgeRaw = event?.minimumAge ?? event?.minimum_age ?? event?.minAge ?? event?.min_age;
+  const minimumAge = minimumAgeRaw != null && String(minimumAgeRaw).trim() !== "" ? `${minimumAgeRaw}+` : null;
+  const dressCodeRaw = event?.dressCode ?? event?.dress_code;
+  const dressCode = Array.isArray(dressCodeRaw)
+    ? dressCodeRaw.map((item) => String(item || "").trim()).filter(Boolean).join(", ")
+    : (typeof dressCodeRaw === "string" ? dressCodeRaw.trim() : "");
+  const attendeeGuidelines = [
+    ...(minimumAge ? [{ key: "minimumAge", label: "Minimum Age", value: minimumAge }] : []),
+    ...(dressCode ? [{ key: "dressCode", label: "Dress Code", value: dressCode }] : []),
+    { key: "infantsAllowed", label: "Infants Allowed", value: event?.infantsAllowed === true ? "Yes" : "No" },
+    { key: "idProofRequired", label: "ID Proof Required", value: event?.idProofRequired === true ? "Yes" : "No" },
+  ];
 
   const displayRules = [
     { id: 1, title: "Check-in Instructions", body: checkInInstructions },
@@ -1448,6 +1437,52 @@ function Rules({ event }) {
                   </div>
                 )}
               </div>
+
+              {attendeeGuidelines.length > 0 && (
+                <>
+                  <h3 style={{ fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", color: A, fontWeight: 800, margin: "44px 0 18px" }}>
+                    Attendee Guidelines
+                  </h3>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))",
+                      gap: 14,
+                      alignItems: "stretch"
+                    }}
+                  >
+                    {attendeeGuidelines.map((item, index) => (
+                      <motion.article
+                        key={item.key}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.25 }}
+                        transition={{ duration: 0.42, delay: index * 0.06, ease: E }}
+                        whileHover={{ y: -4, borderColor: `${A}66`, boxShadow: `0 10px 28px ${A}1F` }}
+                        style={{
+                          borderRadius: 18,
+                          border: `1px solid ${B}`,
+                          background: `linear-gradient(165deg, ${W} 0%, ${AL || BG} 100%)`,
+                          padding: "16px 16px 18px",
+                          minHeight: 120,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          transition: "box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.03)"
+                        }}
+                      >
+                        <p style={{ margin: 0, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: M, fontWeight: 700 }}>
+                          {item.label}
+                        </p>
+                        <p className="font-display" style={{ margin: "10px 0 0", fontSize: "clamp(1.35rem, 2.1vw, 1.9rem)", lineHeight: 1.15, color: FG, fontWeight: 700, overflowWrap: "anywhere" }}>
+                          {item.value}
+                        </p>
+                      </motion.article>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </Rev>
         </div>
@@ -2198,7 +2233,6 @@ export default function EventDetails() {
   return (
     <ScopedThemeProvider>
       <ScopedStyles />
-      <Cursor />
       <ProgressBar />
       <Hero event={event} />
       <About event={event} />
