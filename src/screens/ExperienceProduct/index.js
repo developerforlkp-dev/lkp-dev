@@ -24,6 +24,7 @@ import Page from "../../components/Page";
 import PhotoView from "../../components/PhotoView";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import { lockBodyScroll } from "../../utils/scrollLock";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -559,6 +560,9 @@ const ExperienceProduct = () => {
     hostData?.displayName ||
     hostData?.name ||
     "Host";
+
+  // Dynamic browser tab title
+  useDocumentTitle(listing?.title, "Experiences");
 
   const handleUpdateAddonQuantity = (addon, delta) => {
     const addonId = addon.addonId || addon.id;
