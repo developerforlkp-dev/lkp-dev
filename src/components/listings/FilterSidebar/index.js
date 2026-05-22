@@ -140,6 +140,7 @@ const FilterSidebar = ({
   sortingOptions,
   businessInterest,
   businessInterestFilters,
+  hideHeader = false,
 }) => {
   const normalizedInterest = String(businessInterest || "").toUpperCase();
   const isStayInterest = normalizedInterest === "STAY" || normalizedInterest === "STAYS";
@@ -391,13 +392,15 @@ const FilterSidebar = ({
 
   return (
     <div className={styles.sidebar}>
-      <div className={styles.header}>
-        <h3 className={cn("h4", styles.title)}>Filters</h3>
-        <button className={styles.resetButton} onClick={onReset}>
-          <Icon name="close-circle-fill" size="20" />
-          Reset
-        </button>
-      </div>
+      {!hideHeader && (
+        <div className={styles.header}>
+          <h3 className={cn("h4", styles.title)}>Filters</h3>
+          <button className={styles.resetButton} onClick={onReset}>
+            <Icon name="close-circle-fill" size="20" />
+            Reset
+          </button>
+        </div>
+      )}
 
       <div className={styles.content}>
         {/* Sort Dropdown */}
