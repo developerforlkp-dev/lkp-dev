@@ -3339,10 +3339,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 )}
               </div>
 
-            </>
-              )}
-          </div>
-
               {/* Footer — outside scrollable content, always pinned at bottom of popup */}
         <div className="booking-modal-footer" style={{ flexShrink: 0, padding: "16px 28px", background: BG, borderTop: `1px solid ${B}`, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 -4px 20px rgba(0,0,0,0.06)` }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
