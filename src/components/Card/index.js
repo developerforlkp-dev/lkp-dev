@@ -5,7 +5,7 @@ import styles from "./Card.module.sass";
 import Icon from "../Icon";
 import FiveStarRating from "../FiveStarRating";
 
-const Item = ({ className, item, row, car }) => {
+const Item = ({ className, item, row, car, hidePrice }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   // Use default image if item.src is an Azure blob URL without SAS token
   // SAS token URLs (with sig= and sv= query params) should work
@@ -16,6 +16,9 @@ const Item = ({ className, item, row, car }) => {
     ? defaultImage 
     : (item.src || defaultImage);
   const imageSrcSet = imageSrc; // Use same logic for srcSet
+
+  const isStay = item.url && item.url.includes("stay-details");
+  const shouldHidePrice = hidePrice || isStay;
 
   return (
     <Link
@@ -59,7 +62,7 @@ const Item = ({ className, item, row, car }) => {
       <div className={styles.body}>
         <div className={styles.line}>
           <div className={styles.title}>{item.title}</div>
-          {item.hasPrice && item.priceActual && (
+          {!shouldHidePrice && item.hasPrice && item.priceActual && (
             <div className={styles.price}>
               <div className={styles.old}>{item.priceOld}</div>
               <div className={styles.actual}>{item.priceActual}</div>
@@ -84,7 +87,7 @@ const Item = ({ className, item, row, car }) => {
             </div>
           )}
           <div className={styles.flex}>
-            {item.hasPrice && item.cost && (
+            {!shouldHidePrice && item.hasPrice && item.cost && (
               <div className={styles.cost}>{item.cost}</div>
             )}
             <div className={styles.rating}>
