@@ -1811,6 +1811,7 @@ const StayBookingSystem = ({
 
                     {/* Stay Allocation Summary */}
                     {(() => {
+                      return null;
                       const isPropertyBased = stay?.bookingScope === "Property-Based";
                       if (isPropertyBased) return null;
 
