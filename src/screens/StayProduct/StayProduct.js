@@ -950,7 +950,6 @@ const BookingSidebar = ({
           }
           style={{
             opacity: isCapacityExceeded ? 0.6 : (availabilityLoading ? 0.7 : 1),
-            pointerEvents: isCapacityExceeded ? "none" : "auto",
             backgroundColor: isCapacityExceeded ? A : undefined
           }}
         >

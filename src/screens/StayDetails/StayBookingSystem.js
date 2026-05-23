@@ -948,6 +948,7 @@ const StayBookingSystem = ({
   const isBlockedDay = (day) => blockedDateKeys.has(moment(day).format("YYYY-MM-DD"));
 
   const handleReserve = async () => {
+    if (loading) return;
     if (pricing.isOver) {
       handleAddAnotherRoom();
       return;
@@ -2008,6 +2009,7 @@ const StayBookingSystem = ({
                         whileHover={{ scale: isDisabled ? 1 : 1.02 }}
                         whileTap={{ scale: isDisabled ? 1 : 0.98 }}
                         onClick={handleReserve}
+                        disabled={isDisabled}
                         style={{
                           padding: "12px 32px",
                           background: loading ? B : A,
@@ -2019,8 +2021,7 @@ const StayBookingSystem = ({
                           cursor: isDisabled ? "not-allowed" : "pointer",
                           boxShadow: isDisabled ? "none" : `0 10px 20px ${A}33`,
                           transition: "0.3s",
-                          opacity: isCapacityExceeded ? 0.6 : (loading ? 0.7 : 1),
-                          pointerEvents: isDisabled ? "none" : "auto"
+                          opacity: isCapacityExceeded ? 0.6 : (loading ? 0.7 : 1)
                         }}
                       >
                         {buttonText}
