@@ -632,7 +632,7 @@ function PolicyItem({ rule, A, FG, M, B, S }) {
   return (
     <motion.div key={rule.id} style={{ borderBottom: `1px solid ${B}` }}>
       <button onClick={() => setOp(!op)}
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "30px 20px", background: "none", border: "none", cursor: "none", textAlign: "left" }}>
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "30px 20px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <FileText size={20} color={op ? A : M} />
           <motion.span animate={{ color: op ? A : FG }} style={{ fontSize: 16, fontWeight: 700 }}>{rule.title}</motion.span>
