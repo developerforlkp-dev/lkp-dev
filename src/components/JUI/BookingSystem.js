@@ -20,8 +20,8 @@ const asNumber = (value) => {
 const asDate = (value) => {
   if (!value) return null;
   // If the backend sends UTC strings but they are actually local times, strip the Z
-  const normalizedValue = typeof value === "string" && value.endsWith("Z") 
-    ? value.slice(0, -1) 
+  const normalizedValue = typeof value === "string" && value.endsWith("Z")
+    ? value.slice(0, -1)
     : value;
   const date = new Date(normalizedValue);
   return Number.isNaN(date.getTime()) ? null : date;
@@ -30,12 +30,12 @@ const asDate = (value) => {
 const formatSaleDate = (date) => (
   date
     ? date.toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })
     : ""
 );
 
@@ -137,12 +137,12 @@ const getSlotLabel = (slot, index = 0) => (
 const getSlotAccessKeys = (slot, index = 0) => {
   const rawIds = slot && typeof slot === "object"
     ? [
-        slot.eventSlotId,
-        slot.event_slot_id,
-        slot.slotId,
-        slot.slot_id,
-        slot.id,
-      ]
+      slot.eventSlotId,
+      slot.event_slot_id,
+      slot.slotId,
+      slot.slot_id,
+      slot.id,
+    ]
     : [slot];
   const ids = rawIds
     .map((value) => {
@@ -309,7 +309,7 @@ const calculateEventGuestPricing = (unitPrice, pricing = {}, earlyBirdDiscounts 
   const baseUnitPrice = asNumber(unitPrice) ?? 0;
   const discount = pricing?.discount || {};
   const tax = pricing?.tax || {};
-  
+
   const promoDiscountRate = getRateFromPricing(
     discount.customer,
     discount.guest,
@@ -326,13 +326,13 @@ const calculateEventGuestPricing = (unitPrice, pricing = {}, earlyBirdDiscounts 
     const bDate = moment(bookingDate).startOf('day');
     const daysInAdvance = bDate.diff(today, 'days');
 
-    const applicableDiscounts = earlyBirdDiscounts.filter(d => 
+    const applicableDiscounts = earlyBirdDiscounts.filter(d =>
       d.isActive !== false && daysInAdvance >= (asNumber(d.daysInAdvance) ?? 0)
     );
-    
+
     if (applicableDiscounts.length > 0) {
       // Use the discount with the highest percentage if multiple apply
-      const bestDiscount = applicableDiscounts.reduce((prev, current) => 
+      const bestDiscount = applicableDiscounts.reduce((prev, current) =>
         ((asNumber(current.percentage) ?? 0) > (asNumber(prev.percentage) ?? 0)) ? current : prev
       );
       earlyBirdDiscountRate = (asNumber(bestDiscount.percentage) ?? 0);
@@ -348,7 +348,7 @@ const calculateEventGuestPricing = (unitPrice, pricing = {}, earlyBirdDiscounts 
     pricing?.taxRate,
     tax.total
   );
-  
+
   const discountAmount = baseUnitPrice * (discountRate / 100);
   const promoDiscountAmount = baseUnitPrice * (promoDiscountRate / 100);
   const earlyBirdDiscountAmount = baseUnitPrice * (earlyBirdDiscountRate / 100);
@@ -509,12 +509,12 @@ const formatTime12h = (timeStr) => {
   if (!timeStr || typeof timeStr !== "string") return timeStr;
   const match = timeStr.trim().match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (!match) return timeStr;
-  
+
   const hours = parseInt(match[1], 10);
   const minutes = match[2];
   const ampm = hours >= 12 ? "PM" : "AM";
   const hour12 = hours % 12 || 12;
-  
+
   return `${hour12}:${minutes} ${ampm}`;
 };
 
@@ -1056,7 +1056,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const hasHandledUnavailableRef = useRef(false);
   const [show, setShow] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
-  
+
   // Real State management
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
@@ -1075,7 +1075,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [showDateWarning, setShowDateWarning] = useState(false);
 
 
-  
+
 
   const isEventBooking = type === "event";
 
@@ -1670,12 +1670,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const showPrivateBookingToggle = experienceSupportsPrivateBooking && selectedSlotPrivateBookingAvailable;
   const privateBookingMessage = experienceSupportsPrivateBooking && !isEventBooking && selectedDateKey && dateFilteredSlotsLoaded
     ? (selectedSlotHasPrivateBooking
-        ? "This slot already has a private booking. Choose another slot."
-        : !dateHasPrivateBookingAvailable
+      ? "This slot already has a private booking. Choose another slot."
+      : !dateHasPrivateBookingAvailable
         ? "No private booking available for this date."
         : (startTime && !selectedSlotPrivateBookingAvailable
-            ? "This slot does not have private booking. Choose another slot."
-            : ""))
+          ? "This slot does not have private booking. Choose another slot."
+          : ""))
     : "";
   const selectedSlotSeatLimit = getSlotSeatLimit(selectedSlotData);
   const guestSeatLimit = isEventBooking ? undefined : selectedSlotSeatLimit;
@@ -1686,12 +1686,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const bookingGuestLimit = isEventBooking
     ? (eventGuestLimits.length > 0 ? Math.min(...eventGuestLimits) : undefined)
     : guestSeatLimit;
-  const rawExperiencePrice = selectedSlotData?.pricePerPerson 
+  const rawExperiencePrice = selectedSlotData?.pricePerPerson
     || listing?.timeSlots?.[0]?.pricePerPerson
     || listing?.pricing?.basePrice
     || listing?.basePrice
-    || listing?.price 
-    || listing?.b2cPrice 
+    || listing?.price
+    || listing?.b2cPrice
     || "0";
 
   // Group pricing: override rawExperiencePrice if guest count matches a tier
@@ -1737,7 +1737,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const hasChildPricing = childrenAllowed && rawChildPrice > 0 && guests.children > 0;
   const baseAdultPricePerPerson = parseFloat(effectiveRawPrice || 0);
   const baseChildPricePerChild = hasChildPricing ? parseFloat(rawChildPrice || 0) : baseAdultPricePerPerson;
-  
+
   const data = {
     price: extractedPrice,
     unit: isEventBooking ? "ticket" : (type === "stay" ? "night" : "person"),
@@ -1855,7 +1855,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         };
         try {
           localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
-        } catch (e) {}
+        } catch (e) { }
       }
 
       setShowLoginPrompt(true);
@@ -2012,7 +2012,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         const order = res?.order || res;
         const payment = res?.payment || res?.data?.payment || res?.order?.payment || order?.payment || null;
         const orderId = order?.orderId || order?.id || res?.orderId || res?.id;
-        
+
         const extractedRZP = extractRazorpayCredentials(res);
 
         const razorpayOrderId = payment?.razorpayOrderId || order?.razorpayOrderId || res?.razorpayOrderId || order?.razorpay_order_id || res?.razorpay_order_id || extractedRZP.razorpayOrderId;
@@ -2045,7 +2045,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         }
 
         if (razorpayKeyId) {
-          try { localStorage.setItem("lastRazorpayKeyId", razorpayKeyId); } catch (e) {}
+          try { localStorage.setItem("lastRazorpayKeyId", razorpayKeyId); } catch (e) { }
         }
 
         const bookingData = {
@@ -2138,7 +2138,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           };
           localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(freePaymentSuccess));
           localStorage.setItem("checkoutBooking", JSON.stringify(bookingData));
-          
+
           history.replace("/experience-checkout-complete", {
             bookingData,
             paymentSuccess: freePaymentSuccess
@@ -2157,7 +2157,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       }
       return;
     }
-    
+
     const dateStr = startDate.format("YYYY-MM-DD");
     const slotId = getSlotId(selectedSlotData);
     const bookingTime = normalizeBookingTime(
@@ -2176,7 +2176,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     const guestsObj = { ...guests, guests: totalGuests };
     const addOnQuantities = {};
     const receipt = [];
-    
+
     // Adult row
     if (guests.adults > 0) {
       const adultLineTotal = parseFloat(extractedPrice || 0) * guests.adults;
@@ -2197,7 +2197,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         showInCheckout: true
       });
     }
-    
+
     selectedAddOns.forEach(item => {
       const addon = item.addon || item;
       const id = addon.addonId || addon.id;
@@ -2218,7 +2218,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       kind: "total",
       showInCheckout: true
     });
-    
+
     const bookingData = {
       listingId: listingId,
       listingTitle: listing?.title || listing?.name || "Experience",
@@ -2314,7 +2314,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const order = res?.order || res?.data?.order || res;
       const payment = res?.payment || res?.data?.payment || order?.payment || null;
       const orderId = order?.orderId || order?.id || res?.orderId || res?.id || res?.data?.orderId || res?.data?.id;
-      
+
       const extractedRZP = extractRazorpayCredentials(res);
 
       const razorpayOrderId =
@@ -2376,7 +2376,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         };
         localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(freePaymentSuccess));
         localStorage.setItem("checkoutBooking", JSON.stringify(bookingData));
-        
+
         history.replace("/experience-checkout-complete", {
           bookingData,
           paymentSuccess: freePaymentSuccess
@@ -2501,14 +2501,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       <AnimatePresence>
         {show && (
           <div className="booking-modal-wrapper" style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflow: "auto" }}>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShow(false)}
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)" }} 
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)" }}
             />
-            
+
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -2709,9 +2709,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       background: ${B}55;
                     }
                   `}</style>
-                  
+
                   <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                    <button 
+                    <button
                       className="addon-scroll-btn"
                       onClick={() => {
                         const container = document.getElementById("header-addons-scroll");
@@ -2721,7 +2721,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     >
                       <ChevronLeft size={18} />
                     </button>
-                    
+
                     <div id="header-addons-scroll" style={{
                       display: "flex",
                       overflowX: "auto",
@@ -2742,7 +2742,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                         const isSelected = selectedAddOns.some(a => (a.addonId || a.id) === addonId);
                         const quantity = selectedAddOns.find(a => (a.addonId || a.id) === addonId)?.quantity || 1;
                         const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
-                        
+
                         const handleCardClick = () => {
                           if (!onUpdateAddonQuantity) return;
                           if (!isSelected) {
@@ -2751,16 +2751,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             onUpdateAddonQuantity(addon, -1);
                           }
                         };
-                        
-                        const priceLabel = addon.price > 0 
+
+                        const priceLabel = addon.price > 0
                           ? `₹${addon.price}`
                           : "Free";
-                        
+
                         const typeLabel = pricingType === "Group" ? "Group" : "Per Item";
-                        
+
                         return (
-                          <div 
-                            key={i} 
+                          <div
+                            key={i}
                             onClick={handleCardClick}
                             className="addon-card-item"
                             style={{
@@ -2784,7 +2784,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                 </span>
                               </p>
                             </div>
-                            
+
                             <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                               {isSelected ? (
                                 pricingType === "Group" ? (
@@ -2797,8 +2797,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   </button>
                                 ) : (
                                   <div className="addon-qty-ctrl-panel">
-                                    <button 
-                                      onClick={() => onUpdateAddonQuantity && onUpdateAddonQuantity(addon, -1)} 
+                                    <button
+                                      onClick={() => onUpdateAddonQuantity && onUpdateAddonQuantity(addon, -1)}
                                       className="addon-qty-panel-btn"
                                       style={{ color: A }}
                                     >
@@ -2807,8 +2807,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                     <span style={{ fontSize: 11, fontWeight: 700, minWidth: 12, textAlign: "center", color: A }}>
                                       {quantity}
                                     </span>
-                                    <button 
-                                      onClick={() => onUpdateAddonQuantity && onUpdateAddonQuantity(addon, 1)} 
+                                    <button
+                                      onClick={() => onUpdateAddonQuantity && onUpdateAddonQuantity(addon, 1)}
                                       className="addon-qty-panel-btn"
                                       style={{ color: A }}
                                     >
@@ -2830,8 +2830,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                         );
                       })}
                     </div>
-                    
-                    <button 
+
+                    <button
                       className="addon-scroll-btn"
                       onClick={() => {
                         const container = document.getElementById("header-addons-scroll");
@@ -2848,538 +2848,539 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch" }}>
 
 
-              {/* Closed state — all dates have passed */}
-              {isExperienceClosed ? (
-                <div className="booking-modal-closed" style={{ padding: "60px 40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: `${B}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-                    <Clock size={32} color={M} />
-                  </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: FG }}>This experience is closed</div>
-                  <div style={{ fontSize: 14, color: M, fontWeight: 500, maxWidth: 340, lineHeight: 1.6 }}>
-                    All available dates and time slots for this experience have passed. Please check back later or contact the host for upcoming schedules.
-                  </div>
-                  <button
-                    onClick={() => setShow(false)}
-                    style={{ marginTop: 8, padding: "12px 32px", background: A, color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer" }}
-                  >
-                    Close
-                  </button>
-                </div>
-              ) : (
-              <div className="booking-grid" style={{ display: "grid", gridTemplateColumns: "1.1fr 1.3fr", gap: 1, background: B }}>
-                {/* Left Column: Date & Ticket */}
-                <div className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: validationErrors.date ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
-                      01. Select Date
-                      {validationErrors.date && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
+                {/* Closed state — all dates have passed */}
+                {isExperienceClosed ? (
+                  <div className="booking-modal-closed" style={{ padding: "60px 40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: "50%", background: `${B}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                      <Clock size={32} color={M} />
                     </div>
-                    <div style={{
-                      borderRadius: 20,
-                      padding: 4,
-                      border: `1px solid ${validationErrors.date ? `${E}44` : "transparent"}`,
-                      background: validationErrors.date ? EL : "transparent",
-                      transition: "0.3s"
-                    }}>
-                      {isEventBooking ? (
-                        <EventInlineCalendar
-                          selectedDate={startDate}
-                          onDateSelect={(date) => {
-                            setStartDate(date);
-                            setGuests({ adults: 0, children: 0, infants: 0 });
-                            setShowDateWarning(false);
-                            setValidationErrors(prev => {
-                              const next = { ...prev };
-                              delete next.date;
-                              return next;
-                            });
-                          }}
-                          availableDateKeys={eventAvailableDateKeys}
-                          tokens={{ A, AL, BG, FG, M, B, S, W }}
-                          emptyMessage="No available dates for this event."
-                        />
-                      ) : (
-                        <EventInlineCalendar
-                          selectedDate={startDate}
-                          onDateSelect={(date) => {
-                            setStartDate(date);
-                            setGuests({ adults: 0, children: 0, infants: 0 });
-                            setShowDateWarning(false);
-                            setValidationErrors(prev => {
-                              const next = { ...prev };
-                              delete next.date;
-                              return next;
-                            });
-                          }}
-                          availableDateKeys={experienceAvailableDateKeys}
-                          tokens={{ A, AL, BG, FG, M, B, S, W }}
-                          emptyMessage="No available dates for this experience."
-                          hasTodayValidSlots={hasTodayValidSlots}
-                        />
-                      )}
+                    <div style={{ fontSize: 22, fontWeight: 800, color: FG }}>This experience is closed</div>
+                    <div style={{ fontSize: 14, color: M, fontWeight: 500, maxWidth: 340, lineHeight: 1.6 }}>
+                      All available dates and time slots for this experience have passed. Please check back later or contact the host for upcoming schedules.
                     </div>
+                    <button
+                      onClick={() => setShow(false)}
+                      style={{ marginTop: 8, padding: "12px 32px", background: A, color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer" }}
+                    >
+                      Close
+                    </button>
                   </div>
+                ) : (
+                  <div className="booking-grid" style={{ display: "grid", gridTemplateColumns: "1.1fr 1.3fr", gap: 1, background: B }}>
+                    {/* Left Column: Date & Ticket */}
+                    <div className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: validationErrors.date ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
+                          01. Select Date
+                          {validationErrors.date && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
+                        </div>
+                        <div style={{
+                          borderRadius: 20,
+                          padding: 4,
+                          border: `1px solid ${validationErrors.date ? `${E}44` : "transparent"}`,
+                          background: validationErrors.date ? EL : "transparent",
+                          transition: "0.3s"
+                        }}>
+                          {isEventBooking ? (
+                            <EventInlineCalendar
+                              selectedDate={startDate}
+                              onDateSelect={(date) => {
+                                setStartDate(date);
+                                setGuests({ adults: 0, children: 0, infants: 0 });
+                                setShowDateWarning(false);
+                                setValidationErrors(prev => {
+                                  const next = { ...prev };
+                                  delete next.date;
+                                  return next;
+                                });
+                              }}
+                              availableDateKeys={eventAvailableDateKeys}
+                              tokens={{ A, AL, BG, FG, M, B, S, W }}
+                              emptyMessage="No available dates for this event."
+                            />
+                          ) : (
+                            <EventInlineCalendar
+                              selectedDate={startDate}
+                              onDateSelect={(date) => {
+                                setStartDate(date);
+                                setGuests({ adults: 0, children: 0, infants: 0 });
+                                setShowDateWarning(false);
+                                setValidationErrors(prev => {
+                                  const next = { ...prev };
+                                  delete next.date;
+                                  return next;
+                                });
+                              }}
+                              availableDateKeys={experienceAvailableDateKeys}
+                              tokens={{ A, AL, BG, FG, M, B, S, W }}
+                              emptyMessage="No available dates for this experience."
+                              hasTodayValidSlots={hasTodayValidSlots}
+                            />
+                          )}
+                        </div>
+                      </div>
 
-                  {/* Removed Ticket Type from Left Column */}
-                </div>
-
-                {/* Right Column: Slots & Guests */}
-                <div className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: validationErrors.slot ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
-                      02. {isEventBooking ? "Choose Slot" : "Select Time"}
-                      {validationErrors.slot && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
+                      {/* Removed Ticket Type from Left Column */}
                     </div>
 
-                    <AnimatePresence>
-                      {showDateWarning && !startDate && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10, height: 0 }}
-                          animate={{ opacity: 1, y: 0, height: "auto" }}
-                          exit={{ opacity: 0, y: -10, height: 0 }}
-                          style={{
-                            overflow: "hidden"
-                          }}
-                        >
-                          <div style={{
-                            marginBottom: 16,
-                            padding: "14px 16px",
-                            background: EL,
-                            border: `1px solid ${E}33`,
-                            borderRadius: 16,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            color: E,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            boxShadow: `0 4px 12px ${E}11`
-                          }}>
-                            <AlertCircle size={16} />
-                            <span>Select a date before choosing a time slot.</span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    
-                    {isEventBooking ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
-                          {(() => {
-                            if (!startDate) {
-                              return (
-                                <div style={{
-                                  gridColumn: "1 / -1",
-                                  padding: "20px 16px",
-                                  textAlign: "center",
-                                  color: M,
-                                  fontWeight: 700,
-                                  background: BG,
-                                  borderRadius: 16,
-                                  border: `1.5px dashed ${B}`,
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: 8
-                                }}>
-                                  <Calendar size={18} color={A} style={{ opacity: 0.85 }} />
-                                  <span>Please select a date to view available slots.</span>
-                                </div>
-                              );
-                            }
-
-                            const validSlotsForDate = eventSlots.filter((slot) => {
-                              const slotKeys = new Set();
-                              addDateRangeKeys(slotKeys, slot.slotStartDate || slot.slotDate || slot.date || slot.eventDate || slot.startDate, slot.slotEndDate || slot.endDate || slot.end_date);
-                              // All slots are shown — no ticket-based filtering here.
-                              // Ticket dropdown is filtered AFTER the user picks a slot.
-                              return slotKeys.size === 0 || slotKeys.has(selectedDateKey);
-                            });
-
-                            if (startDate && validSlotsForDate.length === 0) {
-                              return <div style={{ gridColumn: "span 2", padding: "24px 20px", textAlign: "center", color: E, fontWeight: 700, background: EL, borderRadius: 16, border: `1px solid ${E}22`, fontSize: 13 }}>No booking slots are available for this day</div>;
-                            }
-
-                            return validSlotsForDate.map((slot, index) => {
-                              const slotId = String(slot.eventSlotId ?? slot.id);
-                              const isSelected = selectedEventSlotIds.includes(slotId);
-                              const slotLabel = slot.slotName && slot.slotName !== slot.startTime ? slot.slotName : null;
-                              const slotStartTime = formatTime12h(slot.startTime || slot.slotName);
-                              const slotEndTime = formatTime12h(slot.endTime);
-                              const slotTimeDisplay = slotEndTime ? `${slotStartTime} - ${slotEndTime}` : slotStartTime;
-                              return (
-                                <button
-                                  key={slotId}
-                                  onClick={() => {
-                                    // Slots are always clickable — no startDate gate.
-                                    // Always enforce single-slot selection.
-                                    const alreadySelected = selectedEventSlotIds.includes(slotId);
-                                    if (alreadySelected) {
-                                      // Deselect
-                                      setSelectedEventSlotIds([]);
-                                      setStartTime(null);
-                                      setSelectedTicketTypeId("");
-                                    } else {
-                                      // Select this slot
-                                      setSelectedEventSlotIds([slotId]);
-                                      setStartTime(slot.slotName || null);
-                                      setSelectedTicketTypeId(""); // Reset ticket when slot changes
-                                      setValidationErrors(prev => {
-                                        const next = { ...prev };
-                                        delete next.slot;
-                                        delete next.ticketType;
-                                        return next;
-                                      });
-                                    }
-                                  }}
-                                  style={{
-                                    padding: "10px 12px",
-                                    borderRadius: 16,
-                                    border: `1.5px solid ${isSelected ? A : B}`,
-                                    background: isSelected ? AL : BG,
-                                    color: isSelected ? A : FG,
-                                    fontSize: 13,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    textAlign: "center",
-                                    transition: "0.2s",
-                                    opacity: startDate ? 1 : 0.6,
-                                  }}
-                                >
-                                  {slotLabel && (
-                                    <span style={{ display: "block", marginBottom: 2 }}>{slotLabel}</span>
-                                  )}
-                                  <span style={{ display: "block", fontSize: 10, opacity: 0.85, marginTop: slotLabel ? 0 : 2 }}>
-                                    {slotTimeDisplay}
-                                  </span>
-                                </button>
-                              );
-                            });
-                          })()}
+                    {/* Right Column: Slots & Guests */}
+                    <div className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: validationErrors.slot ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
+                          02. {isEventBooking ? "Choose Slot" : "Select Time"}
+                          {validationErrors.slot && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
                         </div>
 
-                        {/* Ticket Section directly below the slots grid */}
-                        {selectedEventSlotIds.length > 0 && (
-                          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 8 }}>
-                            <div style={{ fontSize: 11, color: validationErrors.ticketType ? E : A, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
-                              03. Ticket Option
-                              {validationErrors.ticketType && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
-                            </div>
+                        <AnimatePresence>
+                          {showDateWarning && !startDate && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, height: 0 }}
+                              animate={{ opacity: 1, y: 0, height: "auto" }}
+                              exit={{ opacity: 0, y: -10, height: 0 }}
+                              style={{
+                                overflow: "hidden"
+                              }}
+                            >
+                              <div style={{
+                                marginBottom: 16,
+                                padding: "14px 16px",
+                                background: EL,
+                                border: `1px solid ${E}33`,
+                                borderRadius: 16,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 12,
+                                color: E,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                boxShadow: `0 4px 12px ${E}11`
+                              }}>
+                                <AlertCircle size={16} />
+                                <span>Select a date before choosing a time slot.</span>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
 
-                            {ticketsForSelectedSlot.length > 0 ? (
-                              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                {ticketsForSelectedSlot.map((ticket, index) => {
-                                  const ticketId = String(ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`);
-                                  const isSelected = String(selectedTicketTypeId) === ticketId;
-                                  const ticketBasePrice = getTicketPrice(ticket, 0);
-                                  const ticketEffectivePrice = getEffectiveTicketPrice(ticket, billableAdults, ticketBasePrice).price;
-                                  const ticketGuestPrice = calculateEventGuestPricing(ticketEffectivePrice, listing?.pricing).finalUnitPrice;
+                        {isEventBooking ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+                              {(() => {
+                                if (!startDate) {
                                   return (
-                                    <div
-                                      key={ticketId}
+                                    <div style={{
+                                      gridColumn: "1 / -1",
+                                      padding: "20px 16px",
+                                      textAlign: "center",
+                                      color: M,
+                                      fontWeight: 700,
+                                      background: BG,
+                                      borderRadius: 16,
+                                      border: `1.5px dashed ${B}`,
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: 8
+                                    }}>
+                                      <Calendar size={18} color={A} style={{ opacity: 0.85 }} />
+                                      <span>Please select a date to view available slots.</span>
+                                    </div>
+                                  );
+                                }
+
+                                const validSlotsForDate = eventSlots.filter((slot) => {
+                                  const slotKeys = new Set();
+                                  addDateRangeKeys(slotKeys, slot.slotStartDate || slot.slotDate || slot.date || slot.eventDate || slot.startDate, slot.slotEndDate || slot.endDate || slot.end_date);
+                                  // All slots are shown — no ticket-based filtering here.
+                                  // Ticket dropdown is filtered AFTER the user picks a slot.
+                                  return slotKeys.size === 0 || slotKeys.has(selectedDateKey);
+                                });
+
+                                if (startDate && validSlotsForDate.length === 0) {
+                                  return <div style={{ gridColumn: "span 2", padding: "24px 20px", textAlign: "center", color: E, fontWeight: 700, background: EL, borderRadius: 16, border: `1px solid ${E}22`, fontSize: 13 }}>No booking slots are available for this day</div>;
+                                }
+
+                                return validSlotsForDate.map((slot, index) => {
+                                  const slotId = String(slot.eventSlotId ?? slot.id);
+                                  const isSelected = selectedEventSlotIds.includes(slotId);
+                                  const slotLabel = slot.slotName && slot.slotName !== slot.startTime ? slot.slotName : null;
+                                  const slotStartTime = formatTime12h(slot.startTime || slot.slotName);
+                                  const slotEndTime = formatTime12h(slot.endTime);
+                                  const slotTimeDisplay = slotEndTime ? `${slotStartTime} - ${slotEndTime}` : slotStartTime;
+                                  return (
+                                    <button
+                                      key={slotId}
                                       onClick={() => {
-                                        setSelectedTicketTypeId(ticketId);
-                                        setValidationErrors(prev => {
-                                          const next = { ...prev };
-                                          delete next.ticketType;
-                                          return next;
-                                        });
+                                        // Slots are always clickable — no startDate gate.
+                                        // Always enforce single-slot selection.
+                                        const alreadySelected = selectedEventSlotIds.includes(slotId);
+                                        if (alreadySelected) {
+                                          // Deselect
+                                          setSelectedEventSlotIds([]);
+                                          setStartTime(null);
+                                          setSelectedTicketTypeId("");
+                                        } else {
+                                          // Select this slot
+                                          setSelectedEventSlotIds([slotId]);
+                                          setStartTime(slot.slotName || null);
+                                          setSelectedTicketTypeId(""); // Reset ticket when slot changes
+                                          setValidationErrors(prev => {
+                                            const next = { ...prev };
+                                            delete next.slot;
+                                            delete next.ticketType;
+                                            return next;
+                                          });
+                                        }
                                       }}
                                       style={{
-                                        padding: "12px 16px",
+                                        padding: "10px 12px",
                                         borderRadius: 16,
                                         border: `1.5px solid ${isSelected ? A : B}`,
                                         background: isSelected ? AL : BG,
+                                        color: isSelected ? A : FG,
+                                        fontSize: 13,
+                                        fontWeight: 700,
                                         cursor: "pointer",
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
+                                        textAlign: "center",
                                         transition: "0.2s",
-                                        boxShadow: isSelected ? `0 4px 12px ${A}11` : "none"
+                                        opacity: startDate ? 1 : 0.6,
                                       }}
                                     >
-                                      <div>
-                                        <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? A : FG }}>
-                                          {getTicketName(ticket, index)}
+                                      {slotLabel && (
+                                        <span style={{ display: "block", marginBottom: 2 }}>{slotLabel}</span>
+                                      )}
+                                      <span style={{ display: "block", fontSize: 10, opacity: 0.85, marginTop: slotLabel ? 0 : 2 }}>
+                                        {slotTimeDisplay}
+                                      </span>
+                                    </button>
+                                  );
+                                });
+                              })()}
+                            </div>
+
+                            {/* Ticket Section directly below the slots grid */}
+                            {selectedEventSlotIds.length > 0 && (
+                              <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 8 }}>
+                                <div style={{ fontSize: 11, color: validationErrors.ticketType ? E : A, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
+                                  03. Ticket Option
+                                  {validationErrors.ticketType && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Required</span>}
+                                </div>
+
+                                {ticketsForSelectedSlot.length > 0 ? (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                    {ticketsForSelectedSlot.map((ticket, index) => {
+                                      const ticketId = String(ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`);
+                                      const isSelected = String(selectedTicketTypeId) === ticketId;
+                                      const ticketBasePrice = getTicketPrice(ticket, 0);
+                                      const ticketEffectivePrice = getEffectiveTicketPrice(ticket, billableAdults, ticketBasePrice).price;
+                                      const ticketGuestPrice = calculateEventGuestPricing(ticketEffectivePrice, listing?.pricing).finalUnitPrice;
+                                      return (
+                                        <div
+                                          key={ticketId}
+                                          onClick={() => {
+                                            setSelectedTicketTypeId(ticketId);
+                                            setValidationErrors(prev => {
+                                              const next = { ...prev };
+                                              delete next.ticketType;
+                                              return next;
+                                            });
+                                          }}
+                                          style={{
+                                            padding: "12px 16px",
+                                            borderRadius: 16,
+                                            border: `1.5px solid ${isSelected ? A : B}`,
+                                            background: isSelected ? AL : BG,
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            transition: "0.2s",
+                                            boxShadow: isSelected ? `0 4px 12px ${A}11` : "none"
+                                          }}
+                                        >
+                                          <div>
+                                            <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? A : FG }}>
+                                              {getTicketName(ticket, index)}
+                                            </div>
+                                            {ticket.description && (
+                                              <div style={{ fontSize: 11, color: M, marginTop: 2 }}>
+                                                {ticket.description}
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? A : FG }}>
+                                            ₹{Number(ticketGuestPrice || 0).toFixed(2)}
+                                          </div>
                                         </div>
-                                        {ticket.description && (
-                                          <div style={{ fontSize: 11, color: M, marginTop: 2 }}>
-                                            {ticket.description}
+                                      );
+                                    })}
+
+                                    {/* Selected Ticket Extra Info */}
+                                    {selectedTicketTypeId && selectedTicket && (
+                                      <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 4 }}>
+                                        {eventAvailabilityLoading && (
+                                          <div style={{ fontSize: 11, color: M, fontWeight: 700 }}>
+                                            Checking availability...
+                                          </div>
+                                        )}
+                                        {!eventAvailabilityLoading && selectedTicketSoldOut && (
+                                          <div style={{ fontSize: 11, color: "#d14343", fontWeight: 800 }}>
+                                            Ticket sold out.
+                                          </div>
+                                        )}
+                                        {!eventAvailabilityLoading && !selectedTicketSoldOut && (selectedTicketAvailabilityTotal !== undefined || selectedTicketRemainingTickets !== undefined) && (
+                                          <div style={{ padding: "6px 12px", background: AL, borderRadius: 8, border: `1px solid ${A}33`, alignSelf: "flex-start", display: "inline-block" }}>
+                                            <span style={{ fontSize: 11, color: A, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}>
+                                              <Sparkles size={12} />
+                                              {selectedTicketRemainingTickets !== undefined ? `Only ${selectedTicketRemainingTickets} seat${selectedTicketRemainingTickets === 1 ? "" : "s"} left (${selectedTicketRemainingTickets} spot${selectedTicketRemainingTickets === 1 ? "" : "s"} remaining)` : "Available"}
+                                              {selectedTicketAvailabilityTotal !== undefined ? ` out of ${selectedTicketAvailabilityTotal} total` : ""}
+                                            </span>
                                           </div>
                                         )}
                                       </div>
-                                      <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? A : FG }}>
-                                        ₹{Number(ticketGuestPrice || 0).toFixed(2)}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-
-                                {/* Selected Ticket Extra Info */}
-                                {selectedTicketTypeId && selectedTicket && (
-                                  <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 4 }}>
-                                    {eventAvailabilityLoading && (
-                                      <div style={{ fontSize: 11, color: M, fontWeight: 700 }}>
-                                        Checking availability...
-                                      </div>
                                     )}
-                                    {!eventAvailabilityLoading && selectedTicketSoldOut && (
-                                      <div style={{ fontSize: 11, color: "#d14343", fontWeight: 800 }}>
-                                        Ticket sold out.
-                                      </div>
-                                    )}
-                                    {!eventAvailabilityLoading && !selectedTicketSoldOut && (selectedTicketAvailabilityTotal !== undefined || selectedTicketRemainingTickets !== undefined) && (
-                                      <div style={{ padding: "6px 12px", background: AL, borderRadius: 8, border: `1px solid ${A}33`, alignSelf: "flex-start", display: "inline-block" }}>
-                                        <span style={{ fontSize: 11, color: A, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}>
-                                          <Sparkles size={12} />
-                                          {selectedTicketRemainingTickets !== undefined ? `Only ${selectedTicketRemainingTickets} seat${selectedTicketRemainingTickets === 1 ? "" : "s"} left (${selectedTicketRemainingTickets} spot${selectedTicketRemainingTickets === 1 ? "" : "s"} remaining)` : "Available"}
-                                          {selectedTicketAvailabilityTotal !== undefined ? ` out of ${selectedTicketAvailabilityTotal} total` : ""}
-                                        </span>
-                                      </div>
-                                    )}
+                                  </div>
+                                ) : (
+                                  <div style={{ padding: "12px 16px", background: BG, border: `1px solid ${B}`, borderRadius: 16, fontSize: 12, color: M, opacity: 0.65, fontWeight: 600, fontStyle: "italic" }}>
+                                    No tickets available for this slot.
                                   </div>
                                 )}
                               </div>
-                            ) : (
-                              <div style={{ padding: "12px 16px", background: BG, border: `1px solid ${B}`, borderRadius: 16, fontSize: 12, color: M, opacity: 0.65, fontWeight: 600, fontStyle: "italic" }}>
-                                No tickets available for this slot.
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ position: "relative" }}>
+                            <div
+                              onClick={startDate ? () => setShowTimePicker(!showTimePicker) : () => setShowDateWarning(true)}
+                              title={startDate ? undefined : "Please select a date first"}
+                              style={{
+                                padding: "10px 14px",
+                                background: (validationErrors.slot || (showDateWarning && !startDate)) ? EL : BG,
+                                border: `1px solid ${(validationErrors.slot || (showDateWarning && !startDate)) ? `${E}44` : B}`,
+                                borderRadius: 16,
+                                cursor: "pointer",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                transition: "0.3s",
+                                opacity: startDate ? 1 : 0.6,
+                                boxShadow: (showDateWarning && !startDate) ? `0 0 15px ${E}22` : "none",
+                              }}
+                            >
+                              <span style={{ fontSize: 14, fontWeight: 600, color: startTime ? FG : (validationErrors.slot ? E : M) }}>{formatTime12h(startTime) || "Select Time"}</span>
+                              <ChevronDown size={18} color={validationErrors.slot ? E : M} />
+                            </div>
+                            {showTimePicker && (
+                              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, zIndex: 100, background: BG, border: `1px solid ${B}`, borderRadius: 16, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "8px" }}>
+                                <TimeSlotsPicker
+                                  visible={true}
+                                  onClose={() => setShowTimePicker(false)}
+                                  onTimeSelect={(t) => {
+                                    if (!startDate) return;
+                                    setStartTime(t);
+                                    setShowTimePicker(false);
+                                    setValidationErrors(prev => {
+                                      const next = { ...prev };
+                                      delete next.slot;
+                                      return next;
+                                    });
+                                  }}
+                                  selectedTime={startTime}
+                                  timeSlots={timeSlots}
+                                  selectedDate={startDate}
+                                  plain
+                                />
                               </div>
+                            )}
+                            {slotsLoading && (
+                              <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
+                                Checking slot availability...
+                              </div>
+                            )}
+                            {slotsError && (
+                              <div style={{ marginTop: 10, fontSize: 12, color: "#d14343", fontWeight: 700 }}>
+                                {slotsError}
+                              </div>
+                            )}
+                            {!slotsLoading && !slotsError && privateBookingMessage && (
+                              <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
+                                {privateBookingMessage}
+                              </div>
+                            )}
+                            {showPrivateBookingToggle && (
+                              <button
+                                type="button"
+                                onClick={() => setPrivateBooking((value) => !value)}
+                                style={{
+                                  marginTop: 12,
+                                  width: "100%",
+                                  padding: "14px 16px",
+                                  borderRadius: 16,
+                                  border: `1px solid ${privateBooking ? A : B}`,
+                                  background: privateBooking ? AL : BG,
+                                  color: privateBooking ? A : FG,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  cursor: "pointer",
+                                  fontSize: 13,
+                                  fontWeight: 800
+                                }}
+                              >
+                                <span>Private booking</span>
+                                <span
+                                  style={{
+                                    width: 42,
+                                    height: 24,
+                                    borderRadius: 999,
+                                    background: privateBooking ? A : B,
+                                    padding: 3,
+                                    display: "flex",
+                                    justifyContent: privateBooking ? "flex-end" : "flex-start",
+                                    transition: "0.2s"
+                                  }}
+                                >
+                                  <span style={{ width: 18, height: 18, borderRadius: "50%", background: W, display: "block" }} />
+                                </span>
+                              </button>
                             )}
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div style={{ position: "relative" }}>
-                        <div 
-                          onClick={startDate ? () => setShowTimePicker(!showTimePicker) : () => setShowDateWarning(true)}
-                          title={startDate ? undefined : "Please select a date first"}
+
+                      <div>
+                        <div style={{ fontSize: 11, color: validationErrors.adults ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
+                          {isEventBooking ? "04. Guests" : "03. Guests"}
+                          {validationErrors.adults && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Min 1 Adult Required</span>}
+                        </div>
+                        <div
+                          title={!(startDate && startTime && (isEventBooking ? selectedTicketTypeId : true)) ? (isEventBooking ? "Please select slot and ticket first" : "Please select date and time first") : undefined}
                           style={{
-                            padding: "10px 14px",
-                            background: (validationErrors.slot || (showDateWarning && !startDate)) ? EL : BG,
-                            border: `1px solid ${(validationErrors.slot || (showDateWarning && !startDate)) ? `${E}44` : B}`,
-                            borderRadius: 16,
-                            cursor: "pointer",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                            opacity: (startDate && startTime && (isEventBooking ? selectedTicketTypeId : true)) ? 1 : 0.5,
+                            pointerEvents: (startDate && startTime && (isEventBooking ? selectedTicketTypeId : true)) ? "auto" : "none",
+                            transition: "0.3s"
+                          }}
+                        >
+                          <div style={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            transition: "0.3s",
-                            opacity: startDate ? 1 : 0.6,
-                            boxShadow: (showDateWarning && !startDate) ? `0 0 15px ${E}22` : "none",
-                          }}
-                        >
-                          <span style={{ fontSize: 14, fontWeight: 600, color: startTime ? FG : (validationErrors.slot ? E : M) }}>{formatTime12h(startTime) || "Select Time"}</span>
-                          <ChevronDown size={18} color={validationErrors.slot ? E : M} />
-                        </div>
-                        {showTimePicker && (
-                          <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, zIndex: 100, background: BG, border: `1px solid ${B}`, borderRadius: 16, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "8px" }}>
-                            <TimeSlotsPicker 
-                              visible={true}
-                              onClose={() => setShowTimePicker(false)}
-                              onTimeSelect={(t) => { 
-                                if (!startDate) return;
-                                setStartTime(t); 
-                                setShowTimePicker(false); 
-                                setValidationErrors(prev => {
-                                  const next = { ...prev };
-                                  delete next.slot;
-                                  return next;
-                                });
-                              }}
-                              selectedTime={startTime}
-                              timeSlots={timeSlots}
-                              selectedDate={startDate}
-                              plain
-                            />
-                          </div>
-                        )}
-                        {slotsLoading && (
-                          <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
-                            Checking slot availability...
-                          </div>
-                        )}
-                        {slotsError && (
-                          <div style={{ marginTop: 10, fontSize: 12, color: "#d14343", fontWeight: 700 }}>
-                            {slotsError}
-                          </div>
-                        )}
-                        {!slotsLoading && !slotsError && privateBookingMessage && (
-                          <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
-                            {privateBookingMessage}
-                          </div>
-                        )}
-                        {showPrivateBookingToggle && (
-                          <button
-                            type="button"
-                            onClick={() => setPrivateBooking((value) => !value)}
-                            style={{
-                              marginTop: 12,
-                              width: "100%",
-                              padding: "14px 16px",
-                              borderRadius: 16,
-                              border: `1px solid ${privateBooking ? A : B}`,
-                              background: privateBooking ? AL : BG,
-                              color: privateBooking ? A : FG,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              cursor: "pointer",
-                              fontSize: 13,
-                              fontWeight: 800
-                            }}
-                          >
-                            <span>Private booking</span>
-                            <span
-                              style={{
-                                width: 42,
-                                height: 24,
-                                borderRadius: 999,
-                                background: privateBooking ? A : B,
-                                padding: 3,
-                                display: "flex",
-                                justifyContent: privateBooking ? "flex-end" : "flex-start",
-                                transition: "0.2s"
-                              }}
-                            >
-                              <span style={{ width: 18, height: 18, borderRadius: "50%", background: W, display: "block" }} />
-                            </span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: 11, color: validationErrors.adults ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
-                      {isEventBooking ? "04. Guests" : "03. Guests"}
-                      {validationErrors.adults && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Min 1 Adult Required</span>}
-                    </div>
-                    <div 
-                      title={!(startDate && startTime && (isEventBooking ? selectedTicketTypeId : true)) ? (isEventBooking ? "Please select slot and ticket first" : "Please select date and time first") : undefined}
-                      style={{ 
-                        display: "flex", 
-                        flexDirection: "column", 
-                        gap: 8,
-                        opacity: (startDate && startTime && (isEventBooking ? selectedTicketTypeId : true)) ? 1 : 0.5,
-                        pointerEvents: (startDate && startTime && (isEventBooking ? selectedTicketTypeId : true)) ? "auto" : "none",
-                        transition: "0.3s"
-                      }}
-                    >
-                      <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "10px 14px",
-                        background: validationErrors.adults ? EL : BG,
-                        border: `1px solid ${validationErrors.adults ? `${E}44` : B}`,
-                        borderRadius: 16,
-                        transition: "0.3s"
-                      }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Adults</span>
-                        <Counter
-                          value={guests.adults}
-                          setValue={(v) => {
-                            updateGuestsWithinSeatLimit(p => ({ ...p, adults: v }));
-                            if (v >= 1) {
-                              setValidationErrors(prev => {
-                                const next = { ...prev };
-                                delete next.adults;
-                                return next;
-                              });
-                            }
-                          }}
-                          min={0}
-                          max={adultMax}
-                        />
-                      </div>
-                      {childrenAllowed && (
-                        <div style={{ padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Children</span>
+                            padding: "10px 14px",
+                            background: validationErrors.adults ? EL : BG,
+                            border: `1px solid ${validationErrors.adults ? `${E}44` : B}`,
+                            borderRadius: 16,
+                            transition: "0.3s"
+                          }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Adults</span>
                             <Counter
-                              value={guests.children}
-                              setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, children: v }))}
+                              value={guests.adults}
+                              setValue={(v) => {
+                                updateGuestsWithinSeatLimit(p => ({ ...p, adults: v }));
+                                if (v >= 1) {
+                                  setValidationErrors(prev => {
+                                    const next = { ...prev };
+                                    delete next.adults;
+                                    return next;
+                                  });
+                                }
+                              }}
                               min={0}
-                              max={childMax}
+                              max={adultMax}
                             />
                           </div>
-                          {showExperienceChildAgeHint && (
-                            <div style={{ marginTop: 6, fontSize: 10, fontWeight: 500, color: M, lineHeight: 1.2 }}>
-                              Child age: {childAgeFrom}-{childAgeTo} years
+                          {childrenAllowed && (
+                            <div style={{ padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Children</span>
+                                <Counter
+                                  value={guests.children}
+                                  setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, children: v }))}
+                                  min={0}
+                                  max={childMax}
+                                />
+                              </div>
+                              {showExperienceChildAgeHint && (
+                                <div style={{ marginTop: 6, fontSize: 10, fontWeight: 500, color: M, lineHeight: 1.2 }}>
+                                  Child age: {childAgeFrom}-{childAgeTo} years
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                    {guestSeatLimit !== undefined && (
-                      <div style={{ marginTop: 8, padding: "6px 12px", background: AL, borderRadius: 8, border: `1px solid ${A}33`, display: "inline-block" }}>
-                        <span style={{ fontSize: 11, color: A, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}>
-                          <Sparkles size={12} />
-                          {guestSeatLimit > 0 ? `Only ${guestSeatLimit} seat${guestSeatLimit === 1 ? "" : "s"} left (${guestSeatLimit} spot${guestSeatLimit === 1 ? "" : "s"} remaining)` : "No seats remaining"}
-                        </span>
+                        {guestSeatLimit !== undefined && (
+                          <div style={{ marginTop: 8, padding: "6px 12px", background: AL, borderRadius: 8, border: `1px solid ${A}33`, display: "inline-block" }}>
+                            <span style={{ fontSize: 11, color: A, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}>
+                              <Sparkles size={12} />
+                              {guestSeatLimit > 0 ? `Only ${guestSeatLimit} seat${guestSeatLimit === 1 ? "" : "s"} left (${guestSeatLimit} spot${guestSeatLimit === 1 ? "" : "s"} remaining)` : "No seats remaining"}
+                            </span>
+                          </div>
+                        )}
+                        {isEventBooking && selectedTicketMaxPerBooking !== undefined && (
+                          <div style={{ marginTop: 4, fontSize: 10, color: M, fontWeight: 600, lineHeight: 1.2 }}>
+                            Max {selectedTicketMaxPerBooking} ticket{selectedTicketMaxPerBooking === 1 ? "" : "s"} per booking.
+                          </div>
+                        )}
+                        {isEventBooking && effectiveEventPrice.tier && (
+                          <div style={{ marginTop: 4, fontSize: 11, color: A, fontWeight: 800, lineHeight: 1.2 }}>
+                            Group price: ₹{Number(effectiveEventPrice.price || 0).toFixed(2)} / ticket.
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {isEventBooking && selectedTicketMaxPerBooking !== undefined && (
-                      <div style={{ marginTop: 4, fontSize: 10, color: M, fontWeight: 600, lineHeight: 1.2 }}>
-                        Max {selectedTicketMaxPerBooking} ticket{selectedTicketMaxPerBooking === 1 ? "" : "s"} per booking.
-                      </div>
-                    )}
-                    {isEventBooking && effectiveEventPrice.tier && (
-                      <div style={{ marginTop: 4, fontSize: 11, color: A, fontWeight: 800, lineHeight: 1.2 }}>
-                        Group price: ₹{Number(effectiveEventPrice.price || 0).toFixed(2)} / ticket.
-                      </div>
-                    )}
-                  </div>
 
-                    {/* Price Summary removed to align with Event popup behavior */}
+                      {/* Price Summary removed to align with Event popup behavior */}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               </div>
 
-              {!isExperienceClosed && (
-                <>
-                  {/* Footer Button */}
-                  <div className="booking-modal-footer" style={{ padding: "16px 28px", background: BG, borderTop: `1px solid ${B}88`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Total amount</span>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(finalTotal || 0).toFixed(2)}</span>
-                      <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      disabled={bookingLoading}
-                      onClick={handleReserve}
-                      style={{
-                        padding: "12px 32px",
-                        background: (canReserve || showValidation) ? A : B,
-                        color: "#FFF",
-                        borderRadius: 16,
-                        border: "none",
-                        fontSize: 15,
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        boxShadow: (canReserve || showValidation) ? `0 10px 30px ${A}44` : "none",
-                        transition: "0.3s"
-                      }}
-                    >
-                      {bookingLoading ? "Processing..." : reserveLabel}
-                    </motion.button>
-                  </div>
-                  
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
-                    <ShieldCheck size={12} />
-                    <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
-                  </div>
-                </>
+            </>
               )}
-            </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+
+              {/* Footer — outside scrollable content, always pinned at bottom of popup */}
+        <div className="booking-modal-footer" style={{ flexShrink: 0, padding: "16px 28px", background: BG, borderTop: `1px solid ${B}`, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 -4px 20px rgba(0,0,0,0.06)` }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Total amount</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(finalTotal || 0).toFixed(2)}</span>
+            <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={bookingLoading}
+            onClick={handleReserve}
+            style={{
+              padding: "12px 32px",
+              background: (canReserve || showValidation) ? A : B,
+              color: "#FFF",
+              borderRadius: 16,
+              border: "none",
+              fontSize: 15,
+              fontWeight: 800,
+              cursor: "pointer",
+              boxShadow: (canReserve || showValidation) ? `0 10px 30px ${A}44` : "none",
+              transition: "0.3s"
+            }}
+          >
+            {bookingLoading ? "Processing..." : reserveLabel}
+          </motion.button>
+        </div>
+
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
+          <ShieldCheck size={12} />
+          <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
+        </div>
+      </motion.div>
+    </div >
+        )
+}
+      </AnimatePresence >
       <LoginPromptModal
         visible={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
@@ -3420,16 +3421,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           .booking-modal-column { padding: 32px 20px !important; }
           .booking-modal-footer { 
             flex-direction: column !important; 
-            gap: 24px !important; 
-            padding: 24px 20px !important; 
+            gap: 16px !important; 
+            padding: 20px !important; 
             align-items: stretch !important;
             text-align: center !important;
-            position: sticky !important;
-            bottom: 0 !important;
+            flex-shrink: 0 !important;
             background: ${BG} !important;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 -8px 24px rgba(0,0,0,0.12) !important;
+            border-top: 1px solid ${B} !important;
           }
-          .booking-modal-footer button { width: 100% !important; }
+          .booking-modal-footer button { width: 100% !important; padding: 14px 20px !important; font-size: 16px !important; }
           .booking-modal-closed { padding: 40px 20px !important; }
           
           .booking-trigger {
