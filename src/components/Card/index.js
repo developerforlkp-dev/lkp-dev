@@ -93,9 +93,15 @@ const Item = ({ className, item, row, car, hidePrice }) => {
             <div className={styles.rating}>
               <div className={styles.ratingTop}>
                 <FiveStarRating rating={item.rating} size={12} />
-                <span className={styles.number}>{item.rating}</span>
+                <span className={styles.number}>
+                  {typeof item.rating === "number" && !Number.isInteger(item.rating)
+                    ? item.rating.toFixed(1)
+                    : item.rating}
+                </span>
               </div>
-              <span className={styles.review}>({item.reviews} reviews)</span>
+              {item.reviews > 0 || !item.rating ? (
+                <span className={styles.review}>({item.reviews || 0} review{item.reviews === 1 ? "" : "s"})</span>
+              ) : null}
             </div>
           </div>
         </div>
