@@ -6,6 +6,7 @@ import BrowseItem from "../../../components/Browse/Item";
 import DestinationCard from "../DestinationCard";
 import Destination from "../../../components/Destination";
 import HorizontalScroll from "../../../components/HorizontalScroll";
+import Icon from "../../../components/Icon";
 import styles from "../FleetHome.module.sass";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 
@@ -375,12 +376,12 @@ export const CardCarousel = ({ section, listings, className }) => {
             </div>
           )}
         </div>
-        {section.description && (
-          <p className={styles.sectionSubtitle}>{section.description}</p>
-        )}
       </div>
+      {section.description && (
+        <p className={styles.sectionSubtitle}>{section.description}</p>
+      )}
       <div className={styles.horizontalScrollWrapper}>
-        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+        <HorizontalScroll className={cn(styles.horizontalScroll, styles.horizontalScrollSquare)} gap={24}>
           {browseItems.map((item) => (
             <BrowseItem
               className={styles.browseCardSquare}
@@ -414,10 +415,10 @@ export const CardGrid = ({ section, listings, className }) => {
             </div>
           )}
         </div>
-        {section.description && (
-          <p className={styles.sectionSubtitle}>{section.description}</p>
-        )}
       </div>
+      {section.description && (
+        <p className={styles.sectionSubtitle}>{section.description}</p>
+      )}
       <div className={styles.horizontalScrollWrapper}>
         <HorizontalScroll className={styles.horizontalScroll} gap={24}>
           {cardItems.map((item) => (
@@ -449,12 +450,12 @@ export const CardDestination = ({ section, listings, className }) => {
             </div>
           )}
         </div>
-        {section.description && (
-          <p className={styles.sectionSubtitle}>{section.description}</p>
-        )}
       </div>
+      {section.description && (
+        <p className={styles.sectionSubtitle}>{section.description}</p>
+      )}
       <div className={styles.horizontalScrollWrapper}>
-        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+        <HorizontalScroll className={cn(styles.horizontalScroll, styles.horizontalScrollOval)} gap={24}>
           {destinationItems.map((item) => (
             <DestinationCard
               className={styles.destinationCard}
@@ -488,12 +489,12 @@ export const CardDestinationHorizontal = ({ section, listings, className }) => {
             </div>
           )}
         </div>
-        {section.description && (
-          <p className={styles.sectionSubtitle}>{section.description}</p>
-        )}
       </div>
+      {section.description && (
+        <p className={styles.sectionSubtitle}>{section.description}</p>
+      )}
       <div className={styles.horizontalScrollWrapper}>
-        <HorizontalScroll className={styles.horizontalScroll} gap={24}>
+        <HorizontalScroll className={cn(styles.horizontalScroll, styles.horizontalScrollFullWidth)} gap={16}>
           {destinationItems.map((item) => (
             <Destination
               className={styles.destinationCardHorizontal}
