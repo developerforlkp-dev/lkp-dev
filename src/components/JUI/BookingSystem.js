@@ -3724,7 +3724,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           .booking-modal-closed { padding: 40px 20px !important; }
           
           .booking-trigger {
-            bottom: 24px !important;
+            bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
             right: 20px !important;
             left: 20px !important;
             width: calc(100% - 40px) !important;
@@ -3735,6 +3735,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             letter-spacing: 0.05em !important;
             text-transform: uppercase !important;
             box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+            z-index: 2000 !important;
+            transform: translateZ(0) !important;
+            will-change: transform !important;
           }
           
           .booking-trigger-message {

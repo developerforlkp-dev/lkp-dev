@@ -1524,7 +1524,7 @@ const ExperienceProduct = () => {
         }
 
         @media(max-width: 900px) { 
-          main { padding-bottom: 100px !important; }
+          main { padding-bottom: 160px !important; } /* Increased from 100px to accommodate sticky CTA */
           .hero-stats { grid-template-columns: 1fr !important; gap: 40px !important; } 
           .gal-grid { grid-template-columns: 1fr 1fr !important; grid-auto-rows: 240px !important; gap: 8px !important; }
           .details-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
@@ -1550,11 +1550,14 @@ const ExperienceProduct = () => {
           .overview-card { padding: 20px 12px !important; }
           .overview-card p:first-of-type { font-size: 16px !important; }
           .details-inner { padding: 24px 16px !important; margin: 24px -16px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; }
-          .activity-item { gap: 16px !important; margin-bottom: 32px !important; }
-          .activity-item > div:first-child { display: none; }
-          .activity-item > div:last-child { flex-direction: column !important; gap: 12px !important; }
-          .activity-item img { width: 100% !important; height: 180px !important; }
-          .activity-item > div:last-child > div:first-child { width: 100% !important; height: 180px !important; }
+          .activity-item { gap: 12px !important; margin-bottom: 24px !important; }
+          .activity-item > div:first-child { display: block !important; width: 12px !important; height: 12px !important; border-width: 2px !important; margin-top: 6px !important; }
+          .activity-item > div:last-child { flex-direction: row !important; gap: 12px !important; align-items: flex-start !important; }
+          .activity-item img { width: 84px !important; height: 84px !important; border-radius: 12px !important; }
+          .activity-item > div:last-child > div:first-child { width: 84px !important; height: 84px !important; flex-shrink: 0 !important; }
+          .activity-item > div:last-child > div:last-child { gap: 2px !important; }
+          .activity-item span.font-display { font-size: 1.1rem !important; }
+          .activity-item p { font-size: 12px !important; margin-top: 4px !important; line-height: 1.4 !important; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
           .prep-grid { gap: 32px !important; }
           .prep-grid h3 { font-size: 1.8rem !important; margin-bottom: 20px !important; }
           .host-grid { gap: 32px !important; }
@@ -1564,10 +1567,14 @@ const ExperienceProduct = () => {
           .gallery-item { height: 240px !important; width: 200px !important; }
           .early-bird-wrapper { bottom: 20px !important; right: 20px !important; }
           
-          /* Addons mobile */
-          .addon-item { align-items: flex-start !important; padding: 16px !important; gap: 16px !important; }
-          .addon-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
-          .addon-actions { width: 100%; justify-content: flex-start !important; }
+          /* Addons mobile - Compact Horizontal Card Layout */
+          .addon-item { align-items: center !important; padding: 12px 16px !important; gap: 12px !important; }
+          .addon-item > div:first-child { width: 56px !important; height: 56px !important; border-radius: 12px !important; }
+          .addon-header { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; margin-bottom: 4px !important; }
+          .addon-header p { font-size: 14px !important; }
+          .addon-actions { width: auto !important; }
+          .addon-actions button { padding: 0 12px !important; height: 28px !important; font-size: 10px !important; }
+          .addon-item > div:last-child > p:first-of-type { font-size: 12px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 0 !important; }
         }
       `}</style>
     </Page>
