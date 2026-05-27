@@ -576,6 +576,8 @@ const ExperienceProduct = () => {
   const [loading, setLoading] = useState(true);
   const [photoVisible, setPhotoVisible] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [activityPhotoVisible, setActivityPhotoVisible] = useState(false);
+  const [activityPhotoSrc, setActivityPhotoSrc] = useState(null);
   const [gridVisible, setGridVisible] = useState(false);
   const [eligibleBookings, setEligibleBookings] = useState([]);
   const unavailableRedirectRef = useRef(false);
@@ -1214,7 +1216,10 @@ const ExperienceProduct = () => {
                             style={{ display: "flex", gap: 24, alignItems: "flex-start", flex: 1, willChange: "transform" }}
                           >
                             {activityImageUrl && (
-                              <div style={{ width: 120, height: 90, borderRadius: 16, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S }}>
+                              <div 
+                                style={{ width: 120, height: 90, borderRadius: 16, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S, cursor: "pointer" }}
+                                onClick={() => { setActivityPhotoSrc(activityImageUrl); setActivityPhotoVisible(true); }}
+                              >
                                 <img
                                   src={activityImageUrl}
                                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -1552,11 +1557,55 @@ const ExperienceProduct = () => {
           .overview-card { padding: 20px 12px !important; }
           .overview-card p:first-of-type { font-size: 16px !important; }
           .details-inner { padding: 24px 16px !important; margin: 24px -16px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; }
-          .activity-item { gap: 16px !important; margin-bottom: 32px !important; }
-          .activity-item > div:first-child { display: none; }
-          .activity-item > div:last-child { flex-direction: column !important; gap: 12px !important; }
-          .activity-item img { width: 100% !important; height: 180px !important; }
-          .activity-item > div:last-child > div:first-child { width: 100% !important; height: 180px !important; }
+          .activity-item { gap: 12px !important; margin-bottom: 24px !important; }
+          .activity-item > div:first-child { 
+            width: 10px !important; 
+            height: 10px !important; 
+            margin-top: 8px !important; 
+            border-width: 2px !important;
+            display: block !important; 
+          }
+          .activity-item > div:last-child { 
+            flex-direction: row !important; 
+            gap: 16px !important; 
+            padding: 12px !important; 
+            border-radius: 16px !important;
+            background: #fff !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04) !important;
+            border: 1px solid #eaeaea !important;
+            align-items: center !important;
+          }
+          .activity-item img { width: 100% !important; height: 100% !important; }
+          .activity-item > div:last-child > div:first-child { 
+            /* This targets either the image or the text wrapper if image is missing. But usually all have images or none. */
+            width: 64px !important; 
+            height: 64px !important; 
+            border-radius: 10px !important; 
+          }
+          .activity-item > div:last-child > div:last-child { 
+            gap: 2px !important; 
+          }
+          .activity-item > div:last-child > div:last-child > div:first-child { 
+            gap: 4px !important; 
+            flex-direction: column !important; 
+            align-items: flex-start !important; 
+          }
+          .activity-item > div:last-child > div:last-child > div:first-child > span:first-child { 
+            font-size: 10px !important; 
+          }
+          .activity-item > div:last-child > div:last-child > div:first-child > span:last-child { 
+            font-size: 14px !important; 
+            line-height: 1.2 !important; 
+          }
+          .activity-item > div:last-child > div:last-child > p { 
+            font-size: 12px !important; 
+            line-height: 1.4 !important; 
+            margin-top: 4px !important; 
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+          }
           .prep-grid { gap: 32px !important; }
           .prep-grid h3 { font-size: 1.8rem !important; margin-bottom: 20px !important; }
           .host-grid { gap: 32px !important; }
@@ -1653,6 +1702,15 @@ const ExperienceProduct = () => {
           }
         }
       `}</style>
+      
+      <AnimatePresence>
+        {activityPhotoVisible && activityPhotoSrc && (
+          <FullScreenImage
+            src={activityPhotoSrc}
+            onClose={() => setActivityPhotoVisible(false)}
+          />
+        )}
+      </AnimatePresence>
     </Page>
   );
 };
