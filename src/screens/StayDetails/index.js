@@ -1857,8 +1857,16 @@ function PropertyStayCard({ stay }) {
 
   const list = stay?.amenities || stay?.propertyAmenities || stay?.stayAmenities || stay?.amenityList || [];
   const amenities = extractList(list);
-  const visibleAmenities = amenities.slice(0, 4);
-  const extraCount = amenities.length - 4;
+
+  const allImages = [];
+  const coverP = stay?.coverPhotoUrl || stay?.coverImageUrl || stay?.coverPhoto || stay?.coverImage || stay?.imageUrl;
+  if (coverP) allImages.push(coverP);
+  const med = stay?.media || stay?.images || stay?.stayMedia || stay?.listingMedia || [];
+  med.forEach(m => {
+    const u = typeof m === "string" ? m : m.url || m.src || m.imageUrl || m.fileUrl || m.blobName;
+    if (u && !allImages.includes(u)) allImages.push(u);
+  });
+  const totalPhotos = Math.max(1, allImages.length);
 
   return (
     <motion.div
@@ -1940,6 +1948,38 @@ function PropertyStayCard({ stay }) {
             setCoverLoaded(true);
           }}
         />
+        
+        {/* Total Photo Count */}
+        <div style={{
+          position: "absolute", top: 12, left: 12, zIndex: 10,
+          background: S, color: FG, padding: "4px 8px", borderRadius: 6,
+          fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)", border: `1px solid ${B}66`
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          1 / {totalPhotos}
+        </div>
+
+        {/* View Photos Button */}
+        <div style={{
+          position: "absolute", bottom: 12, left: 12, zIndex: 10
+        }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowModal(true);
+            }}
+            style={{
+              background: S, color: FG, border: `1px solid ${B}66`,
+              padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            View Photos
+          </button>
+        </div>
       </motion.div>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16 }}>
         <div>
@@ -1954,7 +1994,7 @@ function PropertyStayCard({ stay }) {
 
         {amenities.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "4px 0" }}>
-            {visibleAmenities.map((amenity, idx) => {
+            {amenities.map((amenity, idx) => {
               const IconComp = getAmenityIcon(amenity);
               return (
                 <div
@@ -1963,7 +2003,7 @@ function PropertyStayCard({ stay }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "rgba(255, 255, 255, 0.4)",
+                    background: S,
                     border: `1px solid ${B}66`,
                     borderRadius: 20,
                     padding: "6px 12px",
@@ -1980,24 +2020,6 @@ function PropertyStayCard({ stay }) {
                 </div>
               );
             })}
-            {extraCount > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: S,
-                  border: `1px solid ${B}66`,
-                  borderRadius: 20,
-                  padding: "6px 12px",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: M,
-                  backdropFilter: "blur(4px)"
-                }}
-              >
-                + {extraCount} more
-              </div>
-            )}
           </div>
         )}
 
@@ -2010,9 +2032,7 @@ function PropertyStayCard({ stay }) {
                 border: `1px solid ${B}99`,
                 borderRadius: 10,
                 padding: "10px 14px",
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
+                background: S,
                 boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
                 minWidth: 150
               }}
@@ -2027,9 +2047,7 @@ function PropertyStayCard({ stay }) {
                 border: `1px solid ${B}99`,
                 borderRadius: 10,
                 padding: "10px 14px",
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
+                background: S,
                 boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
                 minWidth: 150
               }}
@@ -2044,9 +2062,7 @@ function PropertyStayCard({ stay }) {
                 border: `1px solid ${B}99`,
                 borderRadius: 10,
                 padding: "10px 14px",
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
+                background: S,
                 boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
                 minWidth: 170
               }}
@@ -2074,17 +2090,6 @@ function PropertyStayCard({ stay }) {
             </motion.div>
           </div>
 
-          <button
-            onClick={() => setShowModal(true)}
-            style={{
-              background: AL, border: `1px solid ${A}`, color: A,
-              padding: "12px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-              cursor: "pointer", whiteSpace: "nowrap",
-              transition: "all 0.3s ease",
-              display: "flex", alignItems: "center", justifyContent: "center"
-            }}>
-            View Details
-          </button>
         </div>
       </div>
 
