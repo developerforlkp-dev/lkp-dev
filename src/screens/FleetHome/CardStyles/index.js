@@ -184,6 +184,40 @@ const getEntityUrl = (listing, id) => {
   return buildExperienceUrl(listing.title || "experience", resolvedId);
 };
 
+const getPrimaryCategoryLabel = (listing) => {
+  if (!listing || typeof listing !== "object") return null;
+
+  const primaryCategory = listing.primaryCategory;
+
+  const directLabel =
+    listing.primaryCategoryName ??
+    listing.categoryName ??
+    listing.category ??
+    listing.categoryLabel;
+
+  if (typeof directLabel === "string" && directLabel.trim()) {
+    return directLabel.trim();
+  }
+
+  if (primaryCategory && typeof primaryCategory === "object") {
+    const nestedLabel =
+      primaryCategory.name ??
+      primaryCategory.title ??
+      primaryCategory.label ??
+      primaryCategory.categoryName;
+
+    if (typeof nestedLabel === "string" && nestedLabel.trim()) {
+      return nestedLabel.trim();
+    }
+  }
+
+  if (typeof primaryCategory === "string" && primaryCategory.trim()) {
+    return primaryCategory.trim();
+  }
+
+  return null;
+};
+
 // Transform API listing to Card component format
 const transformListingToCard = (listing, section) => {
   const id = getEntityId(listing);
@@ -212,7 +246,7 @@ const transformListingToCard = (listing, section) => {
     priceOld: null,
     cost: priceDisplay, // Only show price if individualPrice exists
     options: [],
-    categoryText: null,
+    categoryText: getPrimaryCategoryLabel(listing),
     comment: null,
     avatar: null,
   };
