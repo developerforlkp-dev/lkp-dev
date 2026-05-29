@@ -1248,20 +1248,19 @@ function Venue({ event, hostName }) {
                   {event?.venueDescription || event?.description?.slice(0, 200) || "Join us at this premier location for an unforgettable experience."}
                 </p>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {event?.venueName && (
-                    <p style={{ fontSize: 14, color: M, margin: 0 }}><span style={{ color: FG, fontWeight: 700 }}>Venue Name: </span>{event?.venueName}</p>
-                  )}
-                  <p style={{ fontSize: 14, color: M, margin: 0 }}><span style={{ color: FG, fontWeight: 700 }}>Address: </span>{event?.venueFullAddress || "Venue details to be updated"}</p>
-                  {event?.district && (
-                    <p style={{ fontSize: 14, color: M, margin: 0 }}><span style={{ color: FG, fontWeight: 700 }}>District: </span>{event?.district}</p>
-                  )}
-                  {event?.state && (
-                    <p style={{ fontSize: 14, color: M, margin: 0 }}><span style={{ color: FG, fontWeight: 700 }}>State: </span>{event?.state}</p>
-                  )}
-                  {displayHostName && (
-                    <p style={{ fontSize: 14, color: M, margin: 0 }}><span style={{ color: FG, fontWeight: 700 }}>Host name: </span>{displayHostName}</p>
-                  )}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {[
+                    event?.venueName ? { label: "Venue Name", value: event.venueName } : null,
+                    { label: "Address", value: event?.venueFullAddress || "Venue details to be updated" },
+                    event?.district ? { label: "District", value: event.district } : null,
+                    event?.state ? { label: "State", value: event.state } : null,
+                    displayHostName ? { label: "Host Name", value: displayHostName } : null,
+                  ].filter(Boolean).map((row, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 24, padding: "20px 0", borderBottom: `1px solid ${B}` }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", color: A, textTransform: "uppercase" }}>{row.label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: FG, lineHeight: 1.5 }}>{row.value}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <div style={{ marginTop: 40 }}>
