@@ -233,6 +233,22 @@ const ReviewsListing = () => {
                           <span>{Number.isFinite(rating) ? rating.toFixed(1) : "0.0"}</span>
                         </div>
                         <p className={styles.comment}>&ldquo;{comment}&rdquo;</p>
+                        
+                        {rev.vendorResponse && (
+                          <div className={styles.vendorResponse}>
+                            <div className={styles.vendorResponseTitle}>
+                              Response from Host
+                            </div>
+                            <div className={styles.vendorResponseText}>
+                              {rev.vendorResponse}
+                            </div>
+                            {rev.vendorRespondedAt && (
+                              <div className={styles.vendorResponseDate}>
+                                {moment(rev.vendorRespondedAt).format("MMM DD, YYYY")}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
