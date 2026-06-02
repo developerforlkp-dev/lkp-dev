@@ -426,31 +426,6 @@ const CommentsProduct = ({
                         {comment}
                       </p>
                     )}
-
-                    {rev.vendorResponse && (
-                      <div
-                        style={{
-                          marginTop: 12,
-                          marginLeft: 48,
-                          padding: 16,
-                          background: "#F4F5F7",
-                          borderRadius: 12,
-                          border: `1px solid #E6E8EC`,
-                        }}
-                      >
-                        <p style={{ fontSize: 12, fontWeight: 700, color: "#23262F", marginBottom: 6 }}>
-                          Response from Host
-                        </p>
-                        <p style={{ fontSize: 13, color: "#353945", lineHeight: 1.5, margin: 0 }}>
-                          {rev.vendorResponse}
-                        </p>
-                        {rev.vendorRespondedAt && (
-                          <p style={{ fontSize: 11, color: "#777E90", marginTop: 8, margin: 0 }}>
-                            {formatDate(rev.vendorRespondedAt)}
-                          </p>
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
               })}
