@@ -2316,6 +2316,21 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                       <p style={{ fontSize: 15, color: FG, lineHeight: 1.8, fontStyle: "italic", opacity: 0.9 }}>
                         &ldquo;{rev.comment || rev.text || "An absolutely wonderful stay. Everything was perfectly arranged and the host was incredibly helpful throughout our visit."}&rdquo;
                       </p>
+                      {rev.vendorResponse && (
+                        <div style={{ marginTop: 16, padding: "16px 20px", background: S, borderRadius: 12, border: `1px solid ${B}` }}>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: FG, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0, paddingBottom: 6 }}>
+                            Response from Host
+                          </p>
+                          <p style={{ fontSize: 14, color: FG, lineHeight: 1.6, margin: 0, opacity: 0.9 }}>
+                            {rev.vendorResponse}
+                          </p>
+                          {rev.vendorRespondedAt && (
+                            <p style={{ fontSize: 11, color: M, marginTop: 8, margin: 0 }}>
+                              {moment(rev.vendorRespondedAt).format("MMM DD, YYYY")}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Rev>

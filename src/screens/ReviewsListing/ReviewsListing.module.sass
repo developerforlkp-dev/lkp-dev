@@ -65,8 +65,12 @@
     gap: 8px
     color: $n4
     +body-2
+    +dark
+        color: $n6
     svg
         fill: $n4
+        +dark
+            fill: $n6
 
 .ratingBubble
     width: 140px
@@ -96,6 +100,8 @@
     gap: 6px
     color: $n4
     +caption-1
+    +dark
+        color: $n5
     svg
         fill: #FFBC00
 
@@ -163,6 +169,8 @@
     +caption-2
     color: $n4
     white-space: nowrap
+    +dark
+        color: $n5
 
 .rowRating
     margin-top: 6px
@@ -171,6 +179,8 @@
     gap: 5px
     color: $n3
     +caption-bold-2
+    +dark
+        color: $n6
     svg
         fill: #FFBC00
 
@@ -181,6 +191,41 @@
     line-height: 1.6
     +dark
         color: $n6
+
+.vendorResponse
+    margin-top: 16px
+    padding: 16px
+    background: $n7
+    border-radius: 12px
+    border: 1px solid $n6
+    text-align: left
+    +dark
+        background: $n3
+        border-color: $n2
+
+.vendorResponseTitle
+    font-size: 11px
+    font-weight: 700
+    color: $n2
+    margin-bottom: 8px
+    text-transform: uppercase
+    letter-spacing: 0.05em
+    +dark
+        color: $n8
+
+.vendorResponseText
+    font-size: 14px
+    color: $n3
+    line-height: 1.6
+    +dark
+        color: $n6
+
+.vendorResponseDate
+    font-size: 11px
+    color: $n4
+    margin-top: 8px
+    +dark
+        color: $n5
 
 .pagination
     display: flex
