@@ -2275,7 +2275,7 @@ function ExperiencePolicies({ listing }) {
 }
 
 function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [], onReviewSubmitted }) {
-  const { tokens: { A, FG, M, B, W, S, BG } } = useTheme();
+  const { tokens: { A, FG, M, B, W, S, BG, AL } } = useTheme();
   const routerHistory = useHistory();
 
   const normalizedReviews = useMemo(() => {
