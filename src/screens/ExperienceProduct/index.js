@@ -13,7 +13,6 @@ import Icon from "../../components/Icon";
 import {
   getListing,
   getHost,
-  getLeadDetails,
   getListingReviews,
   getEligibleBookings,
   submitOrderReview,
@@ -735,7 +734,7 @@ const ExperienceProduct = () => {
 
           const leadId = data.leadId || data.lead_id || data.host?.leadId || data.leadUserId;
           if (leadId) {
-            getLeadDetails(leadId).then(resp => mounted && setLeadData(resp)).catch(e => console.warn(e));
+            getHost(leadId).then(resp => mounted && setLeadData(resp.host || resp)).catch(e => console.warn(e));
           }
 
         }
@@ -1359,7 +1358,7 @@ const ExperienceProduct = () => {
                   {displayHostName}
                 </h3>
                 <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: A, marginBottom: 24 }}>Host</p>
-                <p style={{ fontSize: 13, color: M, lineHeight: 1.8, flex: 1 }}>{hostData?.about || ""}</p>
+                <p style={{ fontSize: 13, color: M, lineHeight: 1.8, flex: 1 }}>{hostData?.bio || hostData?.about || ""}</p>
                 {(hostPhone || hostEmail) && (
                   <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12, borderTop: `1px solid ${B}`, paddingTop: 24 }}>
                     {hostPhone ? (
