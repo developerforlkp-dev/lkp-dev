@@ -780,6 +780,30 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
                 : <span className={styles.priceOnRequest}>Price on request</span>
               }
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowModal(true);
+              }}
+              style={{
+                marginTop: 8,
+                background: "transparent",
+                color: A,
+                border: "none",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: 0,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em"
+              }}
+            >
+              View Details
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
           </div>
         </div>
 
