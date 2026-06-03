@@ -69,7 +69,7 @@ function ExperienceBg({ progress, src }) {
         <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 40%, ${A}44 0%, transparent 60%)` }} />
         <motion.div animate={{ opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 7, repeat: Infinity, delay: 2 }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 70% 60%, ${A}33 0%, transparent 50%)` }} />
       </motion.div>
-      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 40%, ${BG}CC 70%, ${BG} 100%)` }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 40%, #000000CC 70%, #000000 100%)` }} />
     </div>
   );
 }
@@ -1490,6 +1490,7 @@ const ExperienceProduct = () => {
           color: #20242C !important;
           -webkit-text-fill-color: #20242C !important;
           text-shadow: none !important;
+          -webkit-text-stroke: 1px #FFFFFF !important;
         }
         [data-theme='light'] .hero-section .hero-subtitle {
           color: #008CA5 !important;
@@ -1502,8 +1503,8 @@ const ExperienceProduct = () => {
           text-shadow: none !important;
         }
         [data-theme='light'] .hero-section .hero-stats .hero-stat-desc {
-          color: #2E2E2E !important;
-          -webkit-text-fill-color: #2E2E2E !important;
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF !important;
           text-shadow: none !important;
         }
         [data-theme='light'] .hero-section .hero-stats .hero-stat-box {
@@ -1515,6 +1516,7 @@ const ExperienceProduct = () => {
           color: #FFFFFF !important;
           -webkit-text-fill-color: #FFFFFF !important;
           text-shadow: none !important;
+          -webkit-text-stroke: 1px #FFFFFF !important;
         }
         [data-theme='dark'] .hero-section .hero-subtitle {
           color: var(--A, #0097B2) !important;
@@ -1527,8 +1529,8 @@ const ExperienceProduct = () => {
           text-shadow: none !important;
         }
         [data-theme='dark'] .hero-section .hero-stats .hero-stat-desc {
-          color: #E6E6E3 !important;
-          -webkit-text-fill-color: #E6E6E3 !important;
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF !important;
           text-shadow: none !important;
         }
         [data-theme='dark'] .hero-section .hero-stats .hero-stat-box {
