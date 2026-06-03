@@ -315,8 +315,8 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
   // Determine status mapping
   const statusMap = {
-    // Treat pending bookings as cancelled for tab placement
-    PENDING: "Cancelled",
+    // Treat pending bookings as pending for tab placement
+    PENDING: "Pending",
     CONFIRMED: "Upcoming",
     SUCCESS: "Upcoming",
     PAID: "Upcoming",
@@ -602,6 +602,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 const tabs = [
   { id: "upcoming", label: "Upcoming" },
   { id: "completed", label: "Completed" },
+  { id: "pending", label: "Pending" },
   { id: "cancelled", label: "Cancelled" },
 ];
 
@@ -614,6 +615,9 @@ const actionsByStatus = {
     { label: "View Details", variant: "primary" },
     { label: "Leave review", variant: "secondary" },
   ],
+  Pending: [
+    { label: "View Details", variant: "primary" },
+  ],
   Cancelled: [
     { label: "View Details", variant: "primary" },
   ],
@@ -623,6 +627,10 @@ const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
   const baseActions = actionsByStatus[booking?.status] || [];
 
   if (tabId === "cancelled") {
+    return baseActions.filter((a) => a.label === "View Details");
+  }
+
+  if (tabId === "pending") {
     const validActions = baseActions.filter((a) => a.label === "View Details");
     if (booking?.category === "EXPERIENCE" && String(booking?.bookingData?.orderStatus || "").toUpperCase() === "PENDING") {
       validActions.unshift({ label: "Check Availability", variant: "secondary" });
@@ -1023,10 +1031,11 @@ const Main = ({
   }, [propBookingData, propCompletedOrders, initialTabSet]);
 
   const countsByTab = useMemo(() => {
-    // Count upcoming, completed (date-overridden), and cancelled from regular bookings
+    // Count upcoming, completed (date-overridden), pending, and cancelled from regular bookings
     const categorized = transformedBookings.reduce((acc, booking) => {
       const tabId = booking.statusTone === "upcoming" ? "upcoming"
         : booking.statusTone === "completed" ? "completed"
+          : booking.statusTone === "pending" ? "pending"
           : "cancelled";
       acc[tabId] = (acc[tabId] || 0) + 1;
       return acc;
@@ -1055,10 +1064,11 @@ const Main = ({
       );
       result = [...dateOverridden, ...transformedCompletedBookings];
     } else {
-      // For upcoming and cancelled tabs, exclude date-overridden completed bookings
+      // For upcoming, pending, and cancelled tabs, exclude date-overridden completed bookings
       result = transformedBookings.filter((booking) => {
         const tabId = booking.statusTone === "upcoming" ? "upcoming"
           : booking.statusTone === "completed" ? null  // exclude — goes to completed tab
+            : booking.statusTone === "pending" ? "pending"
             : "cancelled";
         return tabId === displayedTab;
       });
