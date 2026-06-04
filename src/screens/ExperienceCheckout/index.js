@@ -719,16 +719,16 @@ const Checkout = () => {
   const getListingImage = () => {
     if (stayImageUrl) return stayImageUrl;
     const image = bookingData?.roomImage || bookingData?.listingImage;
-    if (!image) return "";
+    if (!image) return "/images/content/photo-1.1.jpg";
     // If it's an array, get the first item
     if (Array.isArray(image)) {
-      return image[0]?.url || image[0] || "";
+      return image[0]?.url || image[0] || "/images/content/photo-1.1.jpg";
     }
     // If it's a string, return it
     if (typeof image === 'string') {
       return formatImageUrl(image);
     }
-    return "";
+    return "/images/content/photo-1.1.jpg";
   };
   const listingImage = getListingImage();
   const hostName = bookingData?.hostName || "Host";
@@ -781,4 +781,3 @@ const Checkout = () => {
 };
 
 export default Checkout;
-
