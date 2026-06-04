@@ -152,10 +152,14 @@ function App() {
             )}
           />
 
-                                        <Route
+                                                  <Route
             exact
             path="/event"
-            render={() => <EventFlowHome />}
+            render={() => (
+              <Page separatorHeader fooferHide>
+                <EventFlowHome />
+              </Page>
+            )}
           />
           <Route
             exact
@@ -308,6 +312,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
