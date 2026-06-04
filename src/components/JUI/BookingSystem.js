@@ -2272,7 +2272,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           eventSlotIds,
           listingTitle: listing?.title || "Event Booking",
           listingImage: listing?.coverPhotoUrl || listing?.listingMedia?.[0]?.url || "",
-          returnTo: `/event-details?id=${eventIdNum}`,
+          returnTo: `/event?id=${eventIdNum}`,
           bookingSummary: {
             date: dateStr,
             time: selectedEventSlots.map((slot) => slot.startTime || slot.slotName).filter(Boolean).join(", "),
@@ -3842,3 +3842,5 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     </>
   );
 }
+
+

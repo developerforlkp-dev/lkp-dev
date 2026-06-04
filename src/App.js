@@ -8,6 +8,7 @@ import ExperienceCategory from "./screens/ExperienceCategory";
 import ExperienceProduct from "./screens/ExperienceProduct";
 import ExperienceCheckout from "./screens/ExperienceCheckout";
 import ExperienceCheckoutComplete from "./screens/ExperienceCheckoutComplete";
+import EventFlowHome from "./eventFlowTheme/pages/home";
 import FullPhoto from "./screens/FullPhoto";
 import HostProfile from "./screens/HostProfile";
 import ProfileUser from "./screens/ProfileUser";
@@ -21,7 +22,6 @@ import Bookings from "./screens/Bookings";
 import ViewDetails from "./screens/ViewDetails";
 import FleetHome from "./screens/FleetHome";
 import Listings from "./pages/listings";
-import EventProduct from "./screens/EventProduct";
 
 import StayProduct from "./screens/StayProduct";
 import StayDetails from "./screens/StayDetails";
@@ -124,16 +124,7 @@ function App() {
               <ExperienceProduct />
             )}
           />
-          <Route
-            exact
-            path="/event-product"
-            render={() => (
-              <Page separatorHeader>
-                <EventProduct />
-              </Page>
-            )}
-          />
-          <Route
+                                                  <Route
             exact
             path="/experience-checkout"
             render={() => (
@@ -161,6 +152,11 @@ function App() {
             )}
           />
 
+                                        <Route
+            exact
+            path="/event"
+            render={() => <EventFlowHome />}
+          />
           <Route
             exact
             path="/messages"
@@ -312,4 +308,8 @@ function App() {
 }
 
 export default App;
+
+
+
+
 
