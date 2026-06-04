@@ -9,6 +9,8 @@ import ExperienceProduct from "./screens/ExperienceProduct";
 import ExperienceCheckout from "./screens/ExperienceCheckout";
 import ExperienceCheckoutComplete from "./screens/ExperienceCheckoutComplete";
 import EventFlowHome from "./eventFlowTheme/pages/home";
+import Checkout from "./screens/Checkout";
+import CheckoutComplete from "./screens/CheckoutComplete";
 import FullPhoto from "./screens/FullPhoto";
 import HostProfile from "./screens/HostProfile";
 import ProfileUser from "./screens/ProfileUser";
@@ -158,6 +160,24 @@ function App() {
             render={() => (
               <Page separatorHeader fooferHide>
                 <EventFlowHome />
+              </Page>
+            )}
+          />
+                    <Route
+            exact
+            path="/checkout"
+            render={() => (
+              <Page separatorHeader>
+                <Checkout />
+              </Page>
+            )}
+          />
+          <Route
+            exact
+            path="/checkout-complete"
+            render={() => (
+              <Page separatorHeader>
+                <CheckoutComplete />
               </Page>
             )}
           />
@@ -312,6 +332,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
