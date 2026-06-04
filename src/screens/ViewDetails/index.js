@@ -612,6 +612,17 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
   // Extract stay amenities/policies if available
   if (stayData) {
+    const stayCheckInMethod = pickText(stayData.checkInMethod);
+    const stayCheckInInstruction = pickText(stayData.checkInInstructions);
+
+    if (stayCheckInMethod) {
+      result.notes.hostInstructions.push(`Check-in Method: ${stayCheckInMethod}`);
+    }
+
+    if (stayCheckInInstruction) {
+      result.notes.hostInstructions.push(`Check-in Instructions: ${stayCheckInInstruction}`);
+    }
+
     if (stayData.houseRules && !result.notes.hostInstructions.length) {
       result.notes.hostInstructions = Array.isArray(stayData.houseRules)
         ? stayData.houseRules
@@ -1688,7 +1699,7 @@ const ViewDetails = () => {
       <div className={cn("section", styles.section)}>
         <div className={cn("container", styles.container)}>
           <div className={styles.notFound}>
-            <h2>Loading booking details...</h2>
+            <p style={{ fontSize: "1.2rem", fontWeight: "500" }}>Loading booking details...</p>
           </div>
         </div>
       </div>

@@ -1119,6 +1119,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const isMountedRef = useRef(true);
   const hasHandledUnavailableRef = useRef(false);
   const [show, setShow] = useState(false);
+  const [renderContent, setRenderContent] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
 
   // Real State management
@@ -1210,16 +1211,23 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     };
   }, []);
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is open and handle deferred content rendering
   useEffect(() => {
     if (show) {
       document.body.style.overflow = "hidden";
+      if (window.innerWidth <= 768) {
+        // On mobile, defer the heavy render so the opening animation starts instantly
+        const timer = setTimeout(() => setRenderContent(true), 50);
+        return () => clearTimeout(timer);
+      } else {
+        setRenderContent(true);
+      }
     } else {
       document.body.style.overflow = "";
+      // Unmount content after exit animation finishes
+      const timer = setTimeout(() => setRenderContent(false), 300);
+      return () => clearTimeout(timer);
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [show]);
 
   const eventTickets = useMemo(() => {
@@ -2761,7 +2769,17 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 flexDirection: "column"
               }}
             >
-              {/* Header */}
+              {!renderContent ? (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 60 }}>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    style={{ width: 24, height: 24, border: `2px solid ${A}33`, borderTopColor: A, borderRadius: "50%" }}
+                  />
+                </div>
+              ) : (
+                <>
+                  {/* Header */}
               <div className="booking-modal-header" style={{ padding: "16px 28px", borderBottom: `1px solid ${B}88`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
                 <div style={{ flexShrink: 0 }}>
                   <h2 style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 2, lineHeight: "1.2" }}>
@@ -3672,6 +3690,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           <ShieldCheck size={12} />
           <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
         </div>
+                </>
+              )}
       </motion.div>
     </div >
         )
