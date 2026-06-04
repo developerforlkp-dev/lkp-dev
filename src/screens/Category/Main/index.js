@@ -11,7 +11,7 @@ const Main = () => {
     <div className={cn("section-mb80", styles.section)}>
       <div className={cn("container", styles.container)}>
         <div className={styles.preview}>
-          <img src="/images/content/main-pic-6.jpg" alt="Main" />
+          <img src="" alt="Main" />
           <div className={styles.wrap}>
             <h1 className={cn("hero", styles.title)}>South Island</h1>
             <div className={cn("info", styles.info)}>
@@ -55,3 +55,4 @@ const Main = () => {
 };
 
 export default Main;
+

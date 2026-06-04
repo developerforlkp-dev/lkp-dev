@@ -6,22 +6,22 @@ import Form from "../Form";
 
 const gallery = [
   {
-    src: "/images/content/planning-pic-1.png",
-    srcSet: "/images/content/planning-pic-1@2x.png",
-    srcDark: "/images/content/planning-pic-dark-1.png",
-    srcSetDark: "/images/content/planning-pic-dark-1@2x.png",
+    src: "",
+    srcSet: "",
+    srcDark: "",
+    srcSetDark: "",
   },
   {
-    src: "/images/content/planning-pic-2.png",
-    srcSet: "/images/content/planning-pic-2@2x.png",
-    srcDark: "/images/content/planning-pic-dark-2.png",
-    srcSetDark: "/images/content/planning-pic-dark-2@2x.png",
+    src: "",
+    srcSet: "",
+    srcDark: "",
+    srcSetDark: "",
   },
   {
-    src: "/images/content/planning-pic-3.png",
-    srcSet: "/images/content/planning-pic-3@2x.png",
-    srcDark: "/images/content/planning-pic-dark-3.png",
-    srcSetDark: "/images/content/planning-pic-dark-3@2x.png",
+    src: "",
+    srcSet: "",
+    srcDark: "",
+    srcSetDark: "",
   },
 ];
 
@@ -74,3 +74,4 @@ const Planning = ({ classSection, title }) => {
 };
 
 export default Planning;
+

@@ -280,18 +280,18 @@ const normalizeArtists = (rawArtists, fallbackImages) => {
 // Dummy event data with all required fields
 const dummyEventData = {
   eventId: 1,
-  coverImage: "/images/content/main-pic-1.jpg",
+  coverImage: "",
   title: "Summer Music Festival 2024",
   description: "Join us for an unforgettable weekend of live music, art, and community. Featuring top artists from around the world, local food vendors, and interactive art installations. This is a family-friendly event with activities for all ages.",
   gallery: [
-    "/images/content/main-pic-2.jpg",
-    "/images/content/main-pic-3.jpg",
-    "/images/content/main-pic-4.jpg",
-    "/images/content/main-pic-5.jpg",
-    "/images/content/main-pic-6.jpg",
-    "/images/content/browse-pic-1.jpg",
-    "/images/content/browse-pic-2.jpg",
-    "/images/content/browse-pic-3.jpg",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
   ],
   startDate: "2024-07-15",
   startTime: "14:00",
@@ -324,22 +324,22 @@ const dummyEventData = {
     {
       title: "Join me in an exclusive lounge",
       description: "I'd love to get to know you and hear what the spirit of the Paralympics means to you.",
-      image: "/images/content/main-pic-2.jpg",
+      image: "",
     },
     {
       title: "Hear the story behind my medals",
       description: "Behind each medal is the journey of an athlete who kept going, despite adversity.",
-      image: "/images/content/main-pic-3.jpg",
+      image: "",
     },
     {
       title: "The Paralympic mindset",
       description: "I'll share the skills I've gained through competing in the Paralympics for 30 years.",
-      image: "/images/content/main-pic-4.jpg",
+      image: "",
     },
     {
       title: "Reflect on your own resilience",
       description: "I'll guide you through a mindset exercise to unlock the strengths that have come out of your setbacks.",
-      image: "/images/content/main-pic-5.jpg",
+      image: "",
     },
   ],
 };
@@ -1559,7 +1559,7 @@ const EventProduct = () => {
                 }}
               >
                 <img
-                  src={selectedHeroImage || "/images/content/main-pic-1.jpg"}
+                  src={selectedHeroImage || ""}
                   alt={event.title}
                 />
               </div>
@@ -2057,3 +2057,5 @@ const EventProduct = () => {
 };
 
 export default EventProduct;
+
+

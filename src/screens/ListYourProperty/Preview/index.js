@@ -13,8 +13,8 @@ const item = [
     rating: "4.8",
     reviews: "12",
     cost: "$200 total",
-    src: "/images/content/card-pic-5.jpg",
-    srcSet: "/images/content/card-pic-5@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/",
     options: [
       {
@@ -46,3 +46,4 @@ const Preview = ({ className, onClose }) => {
 };
 
 export default Preview;
+

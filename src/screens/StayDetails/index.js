@@ -2102,7 +2102,7 @@ function PropertyStayCard({ stay }) {
     (Array.isArray(stay?.listingMedia) && stay.listingMedia[0]
       ? (stay.listingMedia[0].url || stay.listingMedia[0].blobName || stay.listingMedia[0].fileUrl)
       : null) ||
-    "/images/content/card-pic-13.jpg";
+    "";
 
   const checkInRaw = stay?.checkInTime || stay?.checkinTime || stay?.check_in_time || "14:00";
   const checkOutRaw = stay?.checkOutTime || stay?.checkoutTime || stay?.check_out_time || "11:00";
@@ -2252,7 +2252,7 @@ function PropertyStayCard({ stay }) {
           }}
           onLoad={() => setCoverLoaded(true)}
           onError={(e) => {
-            e.currentTarget.src = "/images/content/card-pic-13.jpg";
+            e.currentTarget.src = "";
             setCoverLoaded(true);
           }}
         />
@@ -2738,4 +2738,5 @@ function StayLocation({ stay }) {
 }
 
 export default StayDetails;
+
 

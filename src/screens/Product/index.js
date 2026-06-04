@@ -30,11 +30,11 @@ const breadcrumbs = [
 ];
 
 const gallery = [
-  "/images/content/photo-4.1.jpg",
-  "/images/content/photo-4.2.jpg",
-  "/images/content/photo-4.3.jpg",
-  "/images/content/photo-4.4.jpg",
-  "/images/content/photo-4.5.jpg",
+  "",
+  "",
+  "",
+  "",
+  "",
 ];
 
 const options = [
@@ -106,3 +106,4 @@ const ExperienceProduct = () => {
 };
 
 export default ExperienceProduct;
+

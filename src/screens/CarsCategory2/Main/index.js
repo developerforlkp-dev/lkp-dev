@@ -9,7 +9,7 @@ const Main = () => {
   return (
     <div className={cn("section-mb80", styles.section)}>
       <div className={styles.bg}>
-        <img src="/images/content/bg-flight-1.jpg" alt="Flight" />
+        <img src="" alt="Flight" />
       </div>
       <div className={cn("container", styles.container)}>
         <Panel
@@ -57,3 +57,4 @@ const Main = () => {
 };
 
 export default Main;
+

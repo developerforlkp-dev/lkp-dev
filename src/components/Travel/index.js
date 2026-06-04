@@ -29,44 +29,44 @@ const items = [
 
 const gallery = [
   {
-    src: "/images/content/travel-pic-1.jpg",
-    srcSet: "/images/content/travel-pic-1@2x.jpg",
+    src: "",
+    srcSet: "",
     images: [
       {
-        src: "/images/content/appraisal-pic-1.png",
-        srcSet: "/images/content/appraisal-pic-1@2x.png",
-        srcDark: "/images/content/appraisal-pic-dark-1.png",
-        srcSetDark: "/images/content/appraisal-pic-dark-1@2x.png",
+        src: "",
+        srcSet: "",
+        srcDark: "",
+        srcSetDark: "",
       },
       {
-        src: "/images/content/appraisal-pic-1.png",
-        srcSet: "/images/content/appraisal-pic-1@2x.png",
-        srcDark: "/images/content/appraisal-pic-dark-1.png",
-        srcSetDark: "/images/content/appraisal-pic-dark-1@2x.png",
+        src: "",
+        srcSet: "",
+        srcDark: "",
+        srcSetDark: "",
       },
       {
-        src: "/images/content/appraisal-pic-1.png",
-        srcSet: "/images/content/appraisal-pic-1@2x.png",
-        srcDark: "/images/content/appraisal-pic-dark-1.png",
-        srcSetDark: "/images/content/appraisal-pic-dark-1@2x.png",
+        src: "",
+        srcSet: "",
+        srcDark: "",
+        srcSetDark: "",
       },
     ],
   },
   {
-    src: "/images/content/travel-pic-1.jpg",
-    srcSet: "/images/content/travel-pic-1@2x.jpg",
+    src: "",
+    srcSet: "",
     images: [
       {
-        src: "/images/content/appraisal-pic-1.png",
-        srcSet: "/images/content/appraisal-pic-1@2x.png",
-        srcDark: "/images/content/appraisal-pic-dark-1.png",
-        srcSetDark: "/images/content/appraisal-pic-dark-1@2x.png",
+        src: "",
+        srcSet: "",
+        srcDark: "",
+        srcSetDark: "",
       },
       {
-        src: "/images/content/appraisal-pic-1.png",
-        srcSet: "/images/content/appraisal-pic-1@2x.png",
-        srcDark: "/images/content/appraisal-pic-dark-1.png",
-        srcSetDark: "/images/content/appraisal-pic-dark-1@2x.png",
+        src: "",
+        srcSet: "",
+        srcDark: "",
+        srcSetDark: "",
       },
     ],
   },
@@ -167,3 +167,4 @@ const Travel = () => {
 };
 
 export default Travel;
+

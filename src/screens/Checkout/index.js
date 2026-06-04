@@ -555,14 +555,14 @@ const Checkout = () => {
   const getListingImage = () => {
     if (stayImageUrl) return stayImageUrl;
     const image = bookingData?.roomImage || bookingData?.listingImage;
-    if (!image) return "/images/content/photo-checkout.jpg";
+    if (!image) return "";
     if (Array.isArray(image)) {
-      return image[0]?.url || image[0] || "/images/content/photo-checkout.jpg";
+      return image[0]?.url || image[0] || "";
     }
     if (typeof image === 'string') {
       return formatImageUrl(image);
     }
-    return "/images/content/photo-checkout.jpg";
+    return "";
   };
   const listingImage = getListingImage();
   const hostInfo = bookingData?.listing?.host || stayDetails?.host || stayDetails?.listing?.host;
@@ -649,3 +649,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
+

@@ -30,11 +30,11 @@ const breadcrumbs = [
 ];
 
 const gallery = [
-  "/images/content/photo-3.1.jpg",
-  "/images/content/photo-3.2.jpg",
-  "/images/content/photo-3.3.jpg",
-  "/images/content/photo-3.4.jpg",
-  "/images/content/photo-3.5.jpg",
+  "",
+  "",
+  "",
+  "",
+  "",
 ];
 
 const options = [
@@ -112,3 +112,4 @@ const CarsProduct = () => {
 };
 
 export default CarsProduct;
+

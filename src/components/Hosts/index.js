@@ -12,8 +12,8 @@ const items = [
     location: "Gaylordside",
     avatar: "/images/content/host-avatar-1.jpg",
     rating: "4.9",
-    src: "/images/content/host-pic-1.jpg",
-    srcSet: "/images/content/host-pic-1@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/host-profile",
   },
   {
@@ -21,8 +21,8 @@ const items = [
     location: "Gaylordside",
     avatar: "/images/content/host-avatar-2.jpg",
     rating: "4.8",
-    src: "/images/content/host-pic-2.jpg",
-    srcSet: "/images/content/host-pic-2@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/host-profile",
   },
   {
@@ -30,8 +30,8 @@ const items = [
     location: "Gaylordside",
     avatar: "/images/content/host-avatar-3.jpg",
     rating: "5.0",
-    src: "/images/content/host-pic-3.jpg",
-    srcSet: "/images/content/host-pic-3@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/host-profile",
   },
   {
@@ -39,8 +39,8 @@ const items = [
     location: "Gaylordside",
     avatar: "/images/content/host-avatar-4.jpg",
     rating: "4.9",
-    src: "/images/content/host-pic-4.jpg",
-    srcSet: "/images/content/host-pic-4@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/host-profile",
   },
   {
@@ -48,8 +48,8 @@ const items = [
     location: "Gaylordside",
     avatar: "/images/content/host-avatar-1.jpg",
     rating: "4.9",
-    src: "/images/content/host-pic-1.jpg",
-    srcSet: "/images/content/host-pic-1@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/host-profile",
   },
   {
@@ -57,8 +57,8 @@ const items = [
     location: "Gaylordside",
     avatar: "/images/content/host-avatar-2.jpg",
     rating: "4.8",
-    src: "/images/content/host-pic-2.jpg",
-    srcSet: "/images/content/host-pic-2@2x.jpg",
+    src: "",
+    srcSet: "",
     url: "/host-profile",
   },
 ];
@@ -130,3 +130,4 @@ const Hosts = ({ classSection }) => {
 };
 
 export default Hosts;
+

@@ -9,32 +9,32 @@ const items = [
   {
     title: "Luxury resort at the sea",
     places: "9,326 places",
-    image: "/images/content/adventure-pic-1.svg",
+    image: "",
   },
   {
     title: "Camping amidst the wild",
     places: "12,326 places",
-    image: "/images/content/adventure-pic-2.svg",
+    image: "",
   },
   {
     title: "Luxury resort at the sea",
     places: "5,326 places",
-    image: "/images/content/adventure-pic-3.svg",
+    image: "",
   },
   {
     title: "Luxury resort at the sea",
     places: "9,326 places",
-    image: "/images/content/adventure-pic-1.svg",
+    image: "",
   },
   {
     title: "Camping amidst the wild",
     places: "12,326 places",
-    image: "/images/content/adventure-pic-2.svg",
+    image: "",
   },
   {
     title: "Luxury resort at the sea",
     places: "5,326 places",
-    image: "/images/content/adventure-pic-3.svg",
+    image: "",
   },
 ];
 
@@ -110,3 +110,4 @@ const Adventure = () => {
 };
 
 export default Adventure;
+

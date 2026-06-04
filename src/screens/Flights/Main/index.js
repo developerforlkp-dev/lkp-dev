@@ -15,9 +15,9 @@ const Main = () => {
           <picture>
             <source
               media="(max-width: 767px)"
-              srcSet="/images/content/main-pic-mobile-3.jpg"
+              srcSet=""
             />
-            <img src="/images/content/main-pic-3.jpg" alt="Main" />
+            <img src="" alt="Main" />
           </picture>
           <div className={styles.wrap}>
             <h1 className={cn("hero", styles.title)}>LKP</h1>
@@ -83,3 +83,4 @@ const Main = () => {
 };
 
 export default Main;
+

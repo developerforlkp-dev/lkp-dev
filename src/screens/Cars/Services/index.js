@@ -5,19 +5,19 @@ import Item from "./Item";
 
 const services = [
   {
-    image: "/images/content/smile.svg",
+    image: "",
     title: "1+M reviewers",
     content:
       "We realize ideas from simple to complex, everything becomes easy to use and reach the most potential customers.",
   },
   {
-    image: "/images/content/lightning.svg",
+    image: "",
     title: "24/7 customer service",
     content:
       "We realize ideas from simple to complex, everything becomes easy to use and reach the most potential customers.",
   },
   {
-    image: "/images/content/gift.svg",
+    image: "",
     title: "Free cancellation",
     content:
       "We realize ideas from simple to complex, everything becomes easy to use and reach the most potential customers.",
@@ -46,3 +46,4 @@ const Services = () => {
 };
 
 export default Services;
+

@@ -150,7 +150,7 @@ const CheckoutComplete = () => {
     const rawImg = stayImageUrl || booking?.roomImage || booking?.listingImage;
     const img = rawImg && typeof rawImg === 'string' && !rawImg.startsWith('http') && !rawImg.startsWith('/')
       ? formatImageUrl(rawImg)
-      : (rawImg || "/images/content/slider-pic-1.jpg");
+      : (rawImg || "");
 
     return [
       { src: img, srcSet: img },
@@ -535,3 +535,4 @@ const CheckoutComplete = () => {
   };
 
   export default CheckoutComplete;
+

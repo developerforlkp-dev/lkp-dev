@@ -3,12 +3,12 @@ import cn from "classnames";
 import styles from "./Brands.module.sass";
 
 const brands = [
-  "/images/content/rotashow.svg",
-  "/images/content/waves.png",
-  "/images/content/velocity9.svg",
-  "/images/content/travelers.png",
-  "/images/content/goldlines.svg",
-  "/images/content/rotashow.svg",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
 ];
 
 const Brands = () => {
@@ -30,3 +30,4 @@ const Brands = () => {
 };
 
 export default Brands;
+

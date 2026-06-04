@@ -12,9 +12,9 @@ import html2pdf from "html2pdf.js";
 
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
-  if (!url) return "/images/content/card-pic-13.jpg";
+  if (!url) return "";
   const raw = String(url).trim();
-  if (!raw) return "/images/content/card-pic-13.jpg";
+  if (!raw) return "";
 
   // If already a full URL, return as is
   if (raw.startsWith("http://") || raw.startsWith("https://")) {
@@ -491,7 +491,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       asNonEmptyString(eventData?.coverImage) ||
       asNonEmptyString(apiBooking?.eventDetails?.eventCoverImageUrl) ||
       asNonEmptyString(apiBooking?.coverPhotoUrl) ||
-      "/images/content/card-pic-13.jpg";
+      "";
   } else {
     let stayCoverPhoto = null;
     if (stayData) {
@@ -512,7 +512,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       stayCoverPhoto ||
       apiBooking?.listingCoverPhoto ||
       apiBooking?.coverPhotoUrl ||
-      "/images/content/card-pic-13.jpg";
+      "";
   }
 
 
@@ -1354,7 +1354,7 @@ const ViewDetails = () => {
               maxGuests: apiBookingData.listingMaxGuests || apiBookingData.maxGuests || null,
               status: apiBookingData.listingStatus || apiBookingData.status || "",
               // Use cover photo from order as fallback
-              coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || "/images/content/card-pic-13.jpg",
+              coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || "",
             };
           }
         }
@@ -1402,7 +1402,7 @@ const ViewDetails = () => {
             categoryName: apiBookingData.listingCategory || apiBookingData.category || categoryName,
             maxGuests: apiBookingData.listingMaxGuests || apiBookingData.maxGuests || null,
             status: apiBookingData.listingStatus || apiBookingData.status || "",
-            coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || stayData?.coverImageUrl || "/images/content/card-pic-13.jpg",
+            coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || stayData?.coverImageUrl || "",
           };
         }
 
@@ -1898,7 +1898,7 @@ const ViewDetails = () => {
             }}
             onError={(e) => {
               console.warn("⚠️ Banner image failed to load:", booking.bannerImage.src);
-              e.currentTarget.src = "/images/content/card-pic-13.jpg";
+              e.currentTarget.src = "";
               e.currentTarget.removeAttribute("srcset");
             }}
           />
@@ -2751,4 +2751,5 @@ const ViewDetails = () => {
 };
 
 export default ViewDetails;
+
 

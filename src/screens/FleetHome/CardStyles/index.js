@@ -16,7 +16,7 @@ import { buildExperienceUrl } from "../../../utils/experienceUrl";
 
 // Helper to format image URL from API
 const formatImageUrl = (url) => {
-  if (!url) return "/images/content/card-pic-13.jpg";
+  if (!url) return "";
 
   // If already a full URL, check if it's an Azure blob with SAS token
   if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -29,7 +29,7 @@ const formatImageUrl = (url) => {
         return url;
       }
       // No SAS token, fallback to default image
-      return "/images/content/card-pic-13.jpg";
+      return "";
     }
     // Not an Azure blob URL, return as-is
     return url;
@@ -40,14 +40,14 @@ const formatImageUrl = (url) => {
   if (url.includes("/") && !url.startsWith("/")) {
     // This would create an Azure blob URL which requires auth
     // Return default image instead to prevent failed requests
-    return "/images/content/card-pic-13.jpg";
+    return "";
   }
 
   if (url.startsWith("/")) {
     return url;
   }
 
-  return "/images/content/card-pic-13.jpg";
+  return "";
 };
 
 const getEntityId = (listing) => {
@@ -620,4 +620,5 @@ export const HomepageSectionCard = ({ section, listings, className }) => {
 
 // Export helper functions for use in other components
 export { transformListingToCard, transformListingToBrowse, transformListingToDestination, transformListingToDestinationHorizontal, formatImageUrl };
+
 

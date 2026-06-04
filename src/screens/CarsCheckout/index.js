@@ -63,7 +63,7 @@ const Checkout = () => {
           />
           <PriceDetails
             className={styles.price}
-            image="/images/content/bmw.jpg"
+            image=""
             title="BMW i1 – 2021"
             items={items}
             table={table}
@@ -75,3 +75,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
+

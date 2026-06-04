@@ -1245,7 +1245,7 @@ const ExperienceProduct = () => {
                                   alt={it.name}
                                   onError={(e) => {
                                     e.target.onerror = null;
-                                    e.target.src = "/images/content/photo-1.1.jpg";
+                                    e.target.src = "";
                                   }}
                                 />
                               </div>
@@ -2463,3 +2463,4 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
 }
 
 export default ExperienceProduct;
+

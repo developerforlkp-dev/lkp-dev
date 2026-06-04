@@ -21,16 +21,16 @@ const breadcrumbs = [
 
 const gallery = [
   {
-    src: "/images/content/slider-pic-2.jpg",
-    srcSet: "/images/content/slider-pic-2@2x.jpg",
+    src: "",
+    srcSet: "",
   },
   {
-    src: "/images/content/slider-pic-2.jpg",
-    srcSet: "/images/content/slider-pic-2@2x.jpg",
+    src: "",
+    srcSet: "",
   },
   {
-    src: "/images/content/slider-pic-2.jpg",
-    srcSet: "/images/content/slider-pic-2@2x.jpg",
+    src: "",
+    srcSet: "",
   },
 ];
 
@@ -96,3 +96,4 @@ const CarsCheckoutComplete = () => {
 };
 
 export default CarsCheckoutComplete;
+
