@@ -5,6 +5,7 @@ import styles from "./CreditCard.module.sass";
 import TextInput from "../../TextInput";
 import TextArea from "../../TextArea";
 import Checkbox from "../../Checkbox";
+import { validateStayOrder } from "../../../utils/api";
 
 const cards = [
   {
@@ -45,6 +46,26 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       script.onerror = () => reject(new Error("Failed to load Razorpay"));
       document.body.appendChild(script);
     });
+
+  const getStayValidationMessage = (responseData) => {
+    const firstFailure = Array.isArray(responseData?.failures) && responseData.failures.length > 0
+      ? responseData.failures[0]
+      : null;
+
+    if (typeof firstFailure === "string" && firstFailure.trim()) {
+      return firstFailure;
+    }
+
+    if (firstFailure && typeof firstFailure === "object") {
+      return firstFailure.message || firstFailure.details || firstFailure.reason || null;
+    }
+
+    if (Array.isArray(responseData?.unavailableRooms) && responseData.unavailableRooms.length > 0) {
+      return responseData.unavailableRooms.join(", ");
+    }
+
+    return responseData?.details || responseData?.message || responseData?.error || null;
+  };
 
   const handleConfirmClick = async () => {
     if (isProcessing) return;
@@ -102,6 +123,31 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
           return null;
         }
       })();
+
+      if (bookingData?.isStay && bookingData?.orderId) {
+        try {
+          const validationResponse = await validateStayOrder(bookingData.orderId);
+          if (validationResponse?.canProceed !== true) {
+            const validationMessage =
+              getStayValidationMessage(validationResponse) ||
+              "This stay is no longer available for the selected dates. Please try different dates or room selections.";
+            localStorage.removeItem("pendingPayment");
+            alert(validationMessage);
+            setIsProcessing(false);
+            return;
+          }
+        } catch (validationError) {
+          const responseData = validationError?.response?.data;
+          const validationMessage =
+            getStayValidationMessage(responseData) ||
+            "This stay is no longer available for the selected dates. Please try different dates or room selections.";
+          localStorage.removeItem("pendingPayment");
+          console.error("❌ Stay validation failed before payment:", validationError);
+          alert(validationMessage);
+          setIsProcessing(false);
+          return;
+        }
+      }
 
       const options = {
         key: payment.razorpayKeyId,

@@ -8,6 +8,110 @@ import { createStayOrder, getStayRoomAvailability } from "../../utils/api";
 import Counter from "../../components/Counter";
 import LoginPromptModal from "../../components/LoginPromptModal";
 
+const createEmptyBookingErrorPopup = () => ({
+  visible: false,
+  title: "",
+  message: "",
+  isSameDay: false,
+  variant: "error",
+});
+
+const getAvailabilityIssueFromResponse = ({ availabilityData, availabilityError, stay, selectedRooms = [] }) => {
+  const errorPayload = availabilityError?.response?.data;
+  const payload = errorPayload || availabilityData || {};
+  const isPropertyBased = stay?.bookingScope === "Property-Based" || stay?.bookingScope === "Property Based";
+  const defaultMessage = isPropertyBased
+    ? "This property is no longer available for the selected dates. Please choose a different check-in or check-out."
+    : "These room dates are no longer available. Please choose different dates or room selections.";
+
+  const responseMessage =
+    payload?.details ||
+    payload?.message ||
+    payload?.error ||
+    (Array.isArray(payload?.unavailableRooms) && payload.unavailableRooms.length > 0
+      ? payload.unavailableRooms.join(", ")
+      : "");
+
+  if (availabilityError) {
+    return {
+      title: isPropertyBased ? "Property unavailable" : "Rooms unavailable",
+      message: responseMessage || defaultMessage,
+    };
+  }
+
+  const explicitFalseFlag = [
+    payload?.isAvailable,
+    payload?.available,
+    payload?.propertyAvailable,
+    payload?.canBook,
+    payload?.bookable,
+    payload?.canProceed,
+  ].find((value) => value === false);
+
+  if (explicitFalseFlag === false || (Array.isArray(payload?.unavailableRooms) && payload.unavailableRooms.length > 0)) {
+    return {
+      title: isPropertyBased ? "Property unavailable" : "Rooms unavailable",
+      message: responseMessage || defaultMessage,
+    };
+  }
+
+  const rooms = Array.isArray(payload?.roomAvailability)
+    ? payload.roomAvailability
+    : Array.isArray(payload?.rooms)
+      ? payload.rooms
+      : Array.isArray(payload?.availableRooms)
+        ? payload.availableRooms
+        : [];
+
+  if (!isPropertyBased) {
+    if (rooms.length === 0) {
+      return {
+        title: "No rooms available",
+        message: "No rooms are available for these dates right now. Please try a different date range.",
+      };
+    }
+
+    if (selectedRooms.length > 0) {
+      const roomAvailabilityById = new Map(
+        rooms.map((room) => [
+          String(room?.roomId ?? room?.id ?? room?.roomTypeId ?? room?.room_type_id),
+          room,
+        ])
+      );
+
+      for (const selectedRoom of selectedRooms) {
+        const selectedRoomId = String(selectedRoom?.roomId ?? selectedRoom?.id ?? "");
+        const matchedRoom = roomAvailabilityById.get(selectedRoomId);
+
+        if (!matchedRoom) {
+          return {
+            title: "Selected room unavailable",
+            message: "One of your selected room types is no longer available for these dates. Please pick another room.",
+          };
+        }
+
+        const availableUnits = Number(
+          matchedRoom?.units ??
+          matchedRoom?.availableRooms ??
+          matchedRoom?.availableUnits ??
+          matchedRoom?.totalRooms ??
+          0
+        );
+        const requestedUnits = Number(selectedRoom?.count || 0);
+
+        if (Number.isFinite(availableUnits) && requestedUnits > availableUnits) {
+          return {
+            title: "Not enough rooms available",
+            message: `Only ${availableUnits} room${availableUnits === 1 ? "" : "s"} are available for the selected room type on these dates.`,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
 const StayInlineCalendar = ({ 
   checkInDate, 
   checkOutDate, 
@@ -312,7 +416,7 @@ const StayBookingSystem = ({
   const [validationError, setValidationError] = useState("");
   const [selectionMode, setSelectionMode] = useState("check-in");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [bookingErrorPopup, setBookingErrorPopup] = useState({ visible: false, title: "", message: "", isSameDay: false });
+  const [bookingErrorPopup, setBookingErrorPopup] = useState(createEmptyBookingErrorPopup);
 
   const handleRoomCountChangeWithReset = (roomId, count) => {
     onRoomsCountChange(roomId, count);
@@ -372,10 +476,12 @@ const StayBookingSystem = ({
   }, [show]);
 
   const lastDeps = useRef("");
+  const lastAvailabilityIssueKey = useRef("");
   useEffect(() => {
     const currentDeps = `${checkInDate?.format("YYYY-MM-DD") || ""}-${checkOutDate?.format("YYYY-MM-DD") || ""}-${guests.adults}-${guests.children}`;
     if (lastDeps.current && lastDeps.current !== currentDeps) {
       setValidationError("");
+      setBookingErrorPopup((prev) => (prev?.isSameDay ? prev : createEmptyBookingErrorPopup()));
     }
     lastDeps.current = currentDeps;
   }, [checkInDate, checkOutDate, guests]);
@@ -438,6 +544,7 @@ const StayBookingSystem = ({
   };
   const [loading, setLoading] = useState(false);
   const [availabilityData, setAvailabilityData] = useState(null);
+  const [availabilityError, setAvailabilityError] = useState(null);
   const [fetchingAvailability, setFetchingAvailability] = useState(false);
   const stayRoomsCatalog = useMemo(
     () => (stay?.rooms || stay?.roomTypes || stay?.room_types || []),
@@ -491,16 +598,26 @@ const StayBookingSystem = ({
     if (show && (stay?.stayId || stay?.id) && checkInDate && checkOutDate) {
       let cancelled = false;
       const load = async () => {
-        if (!cancelled) setFetchingAvailability(true);
+        if (!cancelled) {
+          setFetchingAvailability(true);
+          setAvailabilityError(null);
+        }
         try {
           const data = await getStayRoomAvailability(
             stay.stayId || stay.id,
             checkInDate.format("YYYY-MM-DD"),
             checkOutDate.format("YYYY-MM-DD")
           );
-          if (!cancelled && data) setAvailabilityData(data);
+          if (!cancelled) {
+            setAvailabilityData(data || null);
+            setAvailabilityError(null);
+          }
         } catch (e) {
           console.error("❌ Failed to fetch real-time room pricing:", e);
+          if (!cancelled) {
+            setAvailabilityData(null);
+            setAvailabilityError(e);
+          }
         } finally {
           if (!cancelled) setFetchingAvailability(false);
         }
@@ -511,6 +628,51 @@ const StayBookingSystem = ({
       };
     }
   }, [show, stay?.stayId, stay?.id, checkInDate, checkOutDate]);
+
+  useEffect(() => {
+    if (!show || !checkInDate || !checkOutDate) {
+      setAvailabilityData(null);
+      setAvailabilityError(null);
+      setFetchingAvailability(false);
+    }
+  }, [show, checkInDate, checkOutDate]);
+
+  const availabilityIssue = useMemo(() => {
+    if (!show || !checkInDate || !checkOutDate || fetchingAvailability) return null;
+    return getAvailabilityIssueFromResponse({
+      availabilityData,
+      availabilityError,
+      stay,
+      selectedRooms,
+    });
+  }, [show, checkInDate, checkOutDate, fetchingAvailability, availabilityData, availabilityError, stay, selectedRooms]);
+
+  useEffect(() => {
+    if (!show || !checkInDate || !checkOutDate || !availabilityIssue) {
+      if (!availabilityIssue) {
+        lastAvailabilityIssueKey.current = "";
+      }
+      return;
+    }
+
+    const issueKey = [
+      checkInDate.format("YYYY-MM-DD"),
+      checkOutDate.format("YYYY-MM-DD"),
+      availabilityIssue.title,
+      availabilityIssue.message,
+    ].join("|");
+
+    if (lastAvailabilityIssueKey.current === issueKey) return;
+    lastAvailabilityIssueKey.current = issueKey;
+
+    setBookingErrorPopup({
+      visible: true,
+      title: availabilityIssue.title,
+      message: availabilityIssue.message,
+      isSameDay: false,
+      variant: "availability",
+    });
+  }, [show, checkInDate, checkOutDate, availabilityIssue]);
 
   const resolvedSelectedRooms = useMemo(() => {
     if (!stay || !Array.isArray(selectedRooms)) return [];
@@ -980,6 +1142,17 @@ const StayBookingSystem = ({
 
   const handleReserve = async () => {
     if (loading) return;
+    if (fetchingAvailability) return;
+    if (availabilityIssue) {
+      setBookingErrorPopup({
+        visible: true,
+        title: availabilityIssue.title,
+        message: availabilityIssue.message,
+        isSameDay: false,
+        variant: "availability",
+      });
+      return;
+    }
     if (pricing.isOver) {
       handleAddAnotherRoom();
       return;
@@ -1029,7 +1202,7 @@ const StayBookingSystem = ({
     }
 
     setLoading(true);
-    setBookingErrorPopup({ visible: false, title: "", message: "" });
+    setBookingErrorPopup(createEmptyBookingErrorPopup());
     try {
       const isPropertyBased = stay?.bookingScope === "Property-Based";
       const extraAdultsCount = Math.max(0, (guests.adults || 1) - pricing.baseAdultsLimit);
@@ -1356,6 +1529,11 @@ const StayBookingSystem = ({
         : resolvedSelectedRooms.map(r => `${r.count}x ${r.roomName || r.name}`).join(", ");
 
       const bookingData = {
+        orderId:
+          orderResponse?.orderId ||
+          response?.orderId ||
+          response?.data?.orderId ||
+          null,
         stayId: payload.stayId,
         leadUserId: stay?.leadUserId,
         listingTitle: stay.propertyName || stay.title || "Stay",

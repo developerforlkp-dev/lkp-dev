@@ -2115,6 +2115,11 @@ const StayProduct = () => {
       }
 
       const stayBookingData = {
+        orderId:
+          response?.order?.orderId ||
+          response?.orderId ||
+          response?.data?.orderId ||
+          null,
         stayId: Number(stayId),
         listingTitle: stay?.propertyName || stay?.title || stay?.name || "Stay",
         listingImage: coverImg,
