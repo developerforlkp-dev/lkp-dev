@@ -1273,15 +1273,21 @@ const StayBookingSystem = ({
       if (isPresent(finalGuestPrice)) receipt.push({ title: "Final Guest Price", content: formatMoney(finalGuestPrice) });
 
       const nightsFromOrder = firstNumber(orderResponse?.numberOfNights, pricing.nightsCount) || 1;
-      const nightlyFromOrder = firstNumber(orderResponse?.pricePerNight, pricing.originalPerNight) || 0;
+      const nightlyFromOrder = isPropertyBased
+        ? (firstNumber(orderResponse?.pricePerNight, pricing.originalPerNight) || 0)
+        : (firstNumber(pricing.originalPerNight, orderResponse?.pricePerNight) || 0);
       const totalFromOrder = firstNumber(orderResponse?.totalPrice, orderResponse?.finalPrice, backendTotalRupees, pricing.finalTotal) || 0;
       const nightlyExtraAdults = Number(extraAdultsCount || 0) * Number(pricing.activeExtraAdultPrice || 0);
       const nightlyExtraChildren = Number(extraChildrenCount || 0) * Number(pricing.activeExtraChildPrice || 0);
       const nightlyExtras = nightlyExtraAdults + nightlyExtraChildren;
       const nightlyBaseOnly = Math.max(0, Number(nightlyFromOrder || 0) - nightlyExtras);
+      const fallbackBaseStayTotal = Math.max(0, Number(nightlyBaseOnly || 0) * Number(nightsFromOrder || 1));
+      const baseStayDisplayTotal = isPropertyBased
+        ? (firstNumber(basePrice, fallbackBaseStayTotal) || 0)
+        : fallbackBaseStayTotal;
 
       const frontendReceipt = [
-        { title: `Base Stay (${nightsFromOrder} night${nightsFromOrder !== 1 ? "s" : ""})`, content: `${currency} ${Number(nightlyBaseOnly * nightsFromOrder).toFixed(2)}` },
+        { title: `Base Stay (${nightsFromOrder} night${nightsFromOrder !== 1 ? "s" : ""})`, content: `${currency} ${Number(baseStayDisplayTotal).toFixed(2)}` },
         { title: "Adults", content: `${guests.adults || 0}` },
         { title: "Children", content: `${guests.children || 0}` },
       ];
@@ -1302,7 +1308,6 @@ const StayBookingSystem = ({
         : 0;
 
       // Display calculation should use gross stay total = base + extra adults + extra children
-      const baseStayDisplayTotal = Number(nightlyBaseOnly || 0) * Number(nightsFromOrder || 1);
       const extraAdultDisplayTotal = Number(extraAdultsCount || 0) * Number(pricing.activeExtraAdultPrice || 0) * Number(nightsFromOrder || 1);
       const extraChildDisplayTotal = Number(extraChildrenCount || 0) * Number(pricing.activeExtraChildPrice || 0) * Number(nightsFromOrder || 1);
       const grossBeforeDiscount = baseStayDisplayTotal + extraAdultDisplayTotal + extraChildDisplayTotal;
