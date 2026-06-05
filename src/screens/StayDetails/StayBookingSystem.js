@@ -793,9 +793,8 @@ const StayBookingSystem = ({
     const nights = Math.max(1, nightsCount);
     const grossSubtotal = totalOriginalPerNight * nights;
     const longStayDiscountAmount = grossSubtotal * (appliedDiscountPercent / 100);
-    const subtotalAfterLongStay = Math.max(0, grossSubtotal - longStayDiscountAmount);
-    const billingConfigDiscountAmount = subtotalAfterLongStay * (billingConfigDiscountRate / 100);
-    const preTaxSubtotal = Math.max(0, subtotalAfterLongStay - billingConfigDiscountAmount);
+    const billingConfigDiscountAmount = grossSubtotal * (billingConfigDiscountRate / 100);
+    const preTaxSubtotal = Math.max(0, grossSubtotal - longStayDiscountAmount - billingConfigDiscountAmount);
     const discountAmount = longStayDiscountAmount + billingConfigDiscountAmount;
     const discountedPerNight = preTaxSubtotal / nights;
 
