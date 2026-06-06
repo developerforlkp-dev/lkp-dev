@@ -18,6 +18,7 @@ const PriceDetails = ({
   addonDetails,
   onRemoveAddOn,
   amountToPay,
+  amountInPaise = false,
   currency = "INR",
   hostName,
   hostAvatar,
@@ -34,7 +35,8 @@ const PriceDetails = ({
   // Format amount - Razorpay amounts are in paise (smallest currency unit), so divide by 100 for INR
   const formatAmount = (amount) => {
     if (!amount) return null;
-    const amountInRupees = amount > 1000 ? (amount / 100).toFixed(2) : amount.toFixed(2);
+    const numericAmount = Number(amount) || 0;
+    const amountInRupees = amountInPaise ? (numericAmount / 100).toFixed(2) : numericAmount.toFixed(2);
     return `${currency} ${amountInRupees}`;
   };
 

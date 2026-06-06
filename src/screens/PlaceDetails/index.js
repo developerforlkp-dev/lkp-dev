@@ -1,19 +1,44 @@
 import React, { useEffect, useState, useMemo, createContext, useContext, useRef } from "react";
+import useDarkMode from "use-dark-mode";
 import { useLocation, Link, useHistory } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Calendar, ArrowDown, ExternalLink, Map, Navigation,
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
-import ProductNavbar from "../../components/ProductNavbar";
 import Browse from "../../components/Browse";
 import { browse2 } from "../../mocks/browse";
 import { Footer } from "../../components/JUI/Footer";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
-import { getPlaceDetails, getHost } from "../../utils/api";
+import { getPlaceDetails, getHost, getHostContent } from "../../utils/api";
 import ShareButton from "../../components/ShareButton";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
+
+/* ─── RESPONSIVE HOOK ─────────── */
+function useWindowSize() {
+  const [size, setSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1200,
+    height: typeof window !== "undefined" ? window.innerHeight : 800,
+    isMobile: typeof window !== "undefined" ? window.innerWidth <= 768 : false,
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => {
+      setSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+        isMobile: window.innerWidth <= 768,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return size;
+}
 
 /* ─── TOKENS & THEME ─────────── */
 const THEMES = {
@@ -33,7 +58,8 @@ const ThemeContext = createContext({ theme: "light", toggleTheme: () => { }, tok
 const useTheme = () => useContext(ThemeContext);
 
 function ScopedThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light");
+  const darkMode = useDarkMode(false);
+  const theme = darkMode.value ? "dark" : "light";
   const wrapperRef = useRef(null);
 
   useEffect(() => {
@@ -47,7 +73,7 @@ function ScopedThemeProvider({ children }) {
     }
   }, [theme]);
 
-  const toggleTheme = () => setTheme(prev => prev === "light" ? "dark" : "light");
+  const toggleTheme = () => darkMode.toggle();
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, tokens: THEMES[theme] }}>
@@ -62,24 +88,58 @@ const E = [0.22, 1, 0.36, 1];
 
 const ScopedStyles = () => (
   <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Italianno&family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap');
+
     .place-details-premium {
-      font-family: var(--font-inter, system-ui, sans-serif);
+      font-family: 'Inter', var(--font-inter), system-ui, sans-serif;
       overflow-x: hidden;
-      cursor: none;
       transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
     }
-    .place-details-premium a, .place-details-premium button { cursor: none; }
     @keyframes marquee-l { from{transform:translateX(0)} to{transform:translateX(-50%)} }
     @keyframes marquee-r { from{transform:translateX(-50%)} to{transform:translateX(0)} }
     @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-16px) rotate(1deg)} }
     
-    .place-details-premium .font-display { font-family: var(--font-fraunces, Georgia, serif); }
+    @keyframes marquee-hero-l {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+    @keyframes marquee-hero-r {
+      0% { transform: translate3d(-50%, 0, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+    
+    .place-details-premium .font-display { font-family: 'Fraunces', var(--font-fraunces), Georgia, serif; }
+    .place-details-premium .font-cursive { font-family: 'Italianno', cursive; }
     .place-details-premium .mq-l { display: flex; white-space: nowrap; animation: marquee-l 30s linear infinite; }
     .place-details-premium .mq-r { display: flex; white-space: nowrap; animation: marquee-r 34s linear infinite; }
     
-    #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); }
-    #cur-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid var(--AL); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%, -50%); }
+    .place-details-premium .marquee-hero-track-l {
+      display: flex;
+      gap: 40px;
+      width: max-content;
+      animation: marquee-hero-l 90s linear infinite;
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .place-details-premium .marquee-hero-track-r {
+      display: flex;
+      gap: 40px;
+      width: max-content;
+      animation: marquee-hero-r 100s linear infinite;
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    
+    .place-details-premium .no-scrollbar::-webkit-scrollbar {
+      display: none !important;
+    }
+    .place-details-premium .no-scrollbar {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
     
     @media(max-width:768px){
       .place-details-premium .desk-only { display: none !important; }
@@ -99,23 +159,7 @@ const toDisplayString = (value) => {
 };
 
 /* ─── UI COMPONENTS ─────────── */
-function Cursor() {
-  const { tokens: { A, AL } } = useTheme();
-  const x = useMotionValue(-200), y = useMotionValue(-200);
-  const sx = useSpring(x, { stiffness: 120, damping: 20 });
-  const sy = useSpring(y, { stiffness: 120, damping: 20 });
-  useEffect(() => {
-    const fn = (e) => { x.set(e.clientX); y.set(e.clientY) };
-    window.addEventListener("mousemove", fn);
-    return () => window.removeEventListener("mousemove", fn);
-  }, [x, y]);
-  return (
-    <>
-      <motion.div id="cur-dot" style={{ left: x, top: y, background: A }} />
-      <motion.div id="cur-ring" style={{ left: sx, top: sy, borderColor: AL }} />
-    </>
-  );
-}
+// Cursor component removed
 
 function ProgressBar() {
   const { tokens: { A } } = useTheme();
@@ -197,47 +241,128 @@ function SHdr({ idx, label }) {
   );
 }
 
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) {}
+  };
+
+  return (
+    <motion.button
+      className="premium-share-fab"
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Location"}
+      </span>
+    </motion.button>
+  );
+}
+
 /* ─── PLACE SECTIONS ─────────── */
 function PlaceHero({ place, galleryItems }) {
   const { tokens: { A, FG, M, W, B } } = useTheme();
   const r = useRef(null);
   const { scrollYProgress } = useScroll({ target: r, offset: ["start start", "end start"] });
 
-  const baseX = useMotionValue(0);
-  const [drag, setDrag] = useState(false);
-
-  useAnimationFrame((t, delta) => {
-    if (!drag) {
-      // Increased speed from 0.04 to 0.12 for better visibility
-      baseX.set(baseX.get() - delta * 0.12);
-    }
-  });
-
   // Split gallery items into two rows
   const row1 = galleryItems.slice(0, Math.ceil(galleryItems.length / 2));
   const row2 = galleryItems.slice(Math.ceil(galleryItems.length / 2));
 
   const itemWidth1 = 440, itemWidth2 = 520, gap = 40;
-  // Ensure we have at least one item width for range
-  const range1 = Math.max((row1.length || 1) * (itemWidth1 + gap), 1);
-  const range2 = Math.max((row2.length || 1) * (itemWidth2 + gap), 1);
 
-  const x1 = useTransform(baseX, (v) => {
-    // Standard modulo for seamless loop
-    const modX = ((v % range1) - range1) % range1;
-    return `${modX}px`;
-  });
+  // Build a true infinite loop by repeating rowItems to exceed viewport width, and then doubling it
+  const buildMarqueeRow = (rowItems) => {
+    if (!rowItems || rowItems.length === 0) return [];
+    const repeatCount = Math.ceil(8 / rowItems.length);
+    const baseSet = Array(repeatCount).fill(rowItems).flat();
+    return [...baseSet, ...baseSet];
+  };
 
-  const x2 = useTransform(baseX, (v) => {
-    // Reverse or different speed for row 2
-    const modX = ((-v * 0.8 % range2) - range2) % range2;
-    return `${modX}px`;
-  });
-
-  // Duplicate items enough times to fill large screens (min 12 items)
-  const fillCount = 12;
-  const items1 = row1.length ? Array(fillCount).fill(row1).flat() : Array(fillCount).fill("https://picsum.photos/seed/p1/400/500");
-  const items2 = row2.length ? Array(fillCount).fill(row2).flat() : Array(fillCount).fill("https://picsum.photos/seed/p3/400/500");
+  const trackItems1 = useMemo(() => buildMarqueeRow(row1), [row1]);
+  const trackItems2 = useMemo(() => buildMarqueeRow(row2), [row2]);
 
   const placeName = place?.placeName || place?.title || "COASTAL GEM";
 
@@ -260,14 +385,18 @@ function PlaceHero({ place, galleryItems }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap, position: "relative", zIndex: 10 }}>
-        <motion.div style={{ x: x1, y: useTransform(scrollYProgress, [0, 0.3], [0, -40]), display: "flex", gap, paddingLeft: gap }}>
-          {items1.map((img, i) => (
-            <motion.div key={i} whileHover={{ scale: 1.05, rotate: 1, zIndex: 100 }} style={{ flexShrink: 0, width: itemWidth1, height: itemWidth1 * 1.25, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)", transition: "transform 0.4s" }}>
-              <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-            </motion.div>
-          ))}
+        {/* Row 1 - moves right to left (0 to -50%) */}
+        <motion.div style={{ y: useTransform(scrollYProgress, [0, 0.3], [0, -40]), display: "flex", width: "100vw", overflow: "hidden" }}>
+          <div className="marquee-hero-track-l" style={{ paddingLeft: gap }}>
+            {trackItems1.map((img, i) => (
+              <motion.div key={i} whileHover={{ scale: 1.05, rotate: 1, zIndex: 100 }} style={{ flexShrink: 0, width: itemWidth1, height: itemWidth1 * 1.25, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)", transition: "transform 0.4s" }}>
+                <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
 
+        {/* Floating Destination Card in center */}
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 50, pointerEvents: "none" }}>
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: E }} style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(40px)", padding: "50px 80px", borderRadius: 40, border: `1px solid ${B}`, textAlign: "center", boxShadow: "0 60px 120px -20px rgba(0,0,0,0.15)" }}>
             <p className="font-mono" style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 16 }}>{toDisplayString(place?.category) || "DESTINATION"}</p>
@@ -277,42 +406,31 @@ function PlaceHero({ place, galleryItems }) {
                 <motion.span key={toDisplayString(tag)} whileHover={{ background: A, color: W, borderColor: A }} style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: M, border: `1px solid ${B}`, padding: "8px 20px", borderRadius: 40, background: W, transition: "all 0.3s" }}>{toDisplayString(tag)}</motion.span>
               ))}
             </div>
-            {/* SHARE BUTTON */}
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 20, pointerEvents: "auto" }}>
-              <ShareButton
-                title={placeName}
-                text={place?.description || ""}
-                url={window.location.href}
-                imageUrl={place?.coverImageUrl}
-                tokens={{ A, FG, B, BG: W }}
-                label="Share"
-                size={15}
-              />
-            </div>
           </motion.div>
         </div>
 
-        <motion.div style={{ x: x2, y: useTransform(scrollYProgress, [0, 0.3], [0, 40]), display: "flex", gap, paddingLeft: 100 }}>
-          {items2.map((img, i) => (
-            <motion.div key={i} whileHover={{ scale: 1.05, rotate: -1, zIndex: 100 }} style={{ flexShrink: 0, width: itemWidth2, height: itemWidth2 * 0.75, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)", transition: "transform 0.4s" }}>
-              <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-            </motion.div>
-          ))}
+        {/* Row 2 - moves left to right (-50% to 0) */}
+        <motion.div style={{ y: useTransform(scrollYProgress, [0, 0.3], [0, 40]), display: "flex", width: "100vw", overflow: "hidden" }}>
+          <div className="marquee-hero-track-r" style={{ paddingLeft: 100 }}>
+            {trackItems2.map((img, i) => (
+              <motion.div key={i} whileHover={{ scale: 1.05, rotate: -1, zIndex: 100 }} style={{ flexShrink: 0, width: itemWidth2, height: itemWidth2 * 0.75, borderRadius: 24, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.1)", transition: "transform 0.4s" }}>
+                <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       </div>
-
-      <motion.div
-        onPan={(e, info) => baseX.set(baseX.get() + info.delta.x)}
-        onPanStart={() => setDrag(true)}
-        onPanEnd={() => setDrag(false)}
-        style={{ position: "absolute", inset: 0, zIndex: 100, cursor: drag ? "grabbing" : "grab" }}
-      />
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
         style={{ position: "absolute", bottom: 40, left: "50%", x: "-50%", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, zIndex: 60 }}>
         <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: M }}>Discover more</span>
         <ArrowDown size={14} color={A} />
       </motion.div>
+      <HeroShareFab
+        title={placeName}
+        text={place?.description || ""}
+        url={window.location.href}
+      />
     </section>
   );
 }
@@ -385,7 +503,14 @@ function DestAbout({ place, hostData, hostAvatar }) {
                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Curator</p>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <img src={hostAvatar || "https://picsum.photos/seed/host/40/40"} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} alt="" />
-                    <p style={{ fontSize: 15, fontWeight: 700, color: FG }}>{hostData?.displayName || "Lead Curator"}</p>
+                    <div>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: FG, margin: 0 }}>
+                        {hostData?.host?.firstName ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() : (hostData?.host?.displayName || hostData?.displayName || "Lead Curator")}
+                      </p>
+                      {(hostData?.host?.bio || hostData?.bio) && (
+                        <p style={{ fontSize: 12, color: M, marginTop: 4, fontStyle: "italic", margin: "4px 0 0 0" }}>{hostData?.host?.bio || hostData?.bio}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -438,10 +563,10 @@ function Logistics({ place, hostData }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               <div style={{ padding: 48, border: `1px solid ${B}`, borderRadius: 32, background: W }}>
                 <p style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Official Inquiries</p>
-                <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{hostData?.displayName || "Tourism Authority"}</h3>
+                <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{hostData?.host?.displayName || hostData?.displayName || "Tourism Authority"}</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  <a href={`tel:${hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                    <Phone size={18} color={A} /> {hostData?.phone || "Contact via App"}
+                  <a href={`tel:${hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
+                    <Phone size={18} color={A} /> {hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone || "Contact via App"}
                   </a>
                   <a href="#" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
                     <Globe size={18} color={A} /> {place?.website || "Official Portal"}
@@ -547,8 +672,807 @@ function GoodToKnow({ place }) {
   );
 }
 
+/* ─── MOBILE COMPONENTS ─────────── */
+
+function MobileHero({ place, galleryItems }) {
+  const { theme, tokens } = useTheme();
+  const { A, FG, M, BG, W, B } = tokens;
+  const history = useHistory();
+  const placeName = place?.placeName || place?.title || "COASTAL GEM";
+
+  const images = galleryItems && galleryItems.length ? galleryItems : ["https://picsum.photos/seed/destination/800/1000"];
+
+  return (
+    <section style={{ background: BG, paddingTop: 90, position: "relative", overflow: "hidden" }}>
+      {/* Hero Back Button */}
+      <button
+        type="button"
+        className="premium-back-button"
+        onClick={() => history.goBack()}
+        aria-label="Go back"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      {/* Hero Share Button */}
+      <HeroShareFab
+        title={placeName}
+        text={place?.description || ""}
+        url={window.location.href}
+      />
+
+      {/* Layered Image Stack / Peeking Slider */}
+      <div style={{
+        display: "flex",
+        gap: 16,
+        overflowX: "auto",
+        padding: "16px 24px",
+        scrollSnapType: "x mandatory",
+        WebkitOverflowScrolling: "touch"
+      }} className="no-scrollbar">
+        {images.map((img, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: i * 0.1, ease: E }}
+            style={{
+              flexShrink: 0,
+              width: "calc(100vw - 64px)", // leaves space on left/right for peeking next/prev images
+              height: "45vh",
+              borderRadius: 28,
+              overflow: "hidden",
+              border: `1.5px solid ${B}`,
+              boxShadow: theme === "dark" ? "0 20px 40px rgba(0,0,0,0.5)" : "0 20px 40px rgba(0,0,0,0.08)",
+              scrollSnapAlign: "center",
+              position: "relative"
+            }}
+          >
+            {/* Soft Ambient Zoom Effect */}
+            <motion.img
+              src={img}
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              alt=""
+            />
+            {/* Subtle bottom shadow overlay inside card */}
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4) 100%)",
+              pointerEvents: "none"
+            }} />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Overlapping Content Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, ease: E, delay: 0.2 }}
+        style={{
+          marginTop: "-48px",
+          marginLeft: 24,
+          marginRight: 24,
+          marginBottom: 32,
+          padding: "24px 20px",
+          borderRadius: 24,
+          background: theme === "dark" ? "rgba(10, 10, 10, 0.78)" : "rgba(255, 255, 255, 0.84)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: `1.5px solid ${theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+          boxShadow: theme === "dark" ? "0 25px 50px rgba(0,0,0,0.4)" : "0 25px 50px rgba(0,0,0,0.06)",
+          zIndex: 10,
+          position: "relative"
+        }}
+      >
+        <p className="font-mono" style={{
+          fontSize: 9,
+          letterSpacing: "0.35em",
+          textTransform: "uppercase",
+          color: A,
+          fontWeight: 800,
+          margin: "0 0 8px 0"
+        }}>
+          {toDisplayString(place?.category) || "DESTINATION"}
+        </p>
+
+        <h1 className="font-display" style={{
+          fontSize: 22,
+          fontWeight: 700,
+          color: FG,
+          lineHeight: 1.3,
+          letterSpacing: "-0.01em",
+          margin: "0 0 14px 0"
+        }}>
+          {placeName.toUpperCase()}
+        </h1>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {[place?.city, place?.placeType].filter(Boolean).map(tag => (
+            <span key={toDisplayString(tag)} style={{
+              fontSize: 9,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: FG,
+              border: `1px solid ${A}33`,
+              padding: "5px 12px",
+              borderRadius: 16,
+              background: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
+              fontWeight: 600
+            }}>
+              {toDisplayString(tag)}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
+function MobileQuickFacts({ place }) {
+  const { tokens: { A, B, FG, M, S, W } } = useTheme();
+  const facts = [
+    { label: "Timings", val: place?.timings || place?.openingHours || "06:00 - 20:00", icon: Clock },
+    { label: "Entry Fee", val: place?.entryFee || "Free Entry", icon: Ticket },
+    { label: "Best Time", val: place?.bestTimeToVisit || "Year Round", icon: Star },
+    { label: "Rating", val: `${place?.rating || place?.averageRating || "4.8"} Rating`, icon: Star },
+  ];
+
+  return (
+    <section style={{ background: S, borderBottom: `1px solid ${B}`, padding: "24px 16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {facts.map((f, i) => (
+          <div key={f.label} style={{
+            background: W,
+            border: `1.5px solid ${B}`,
+            borderRadius: 20,
+            padding: "14px 12px",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.02)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10
+          }}>
+            <div style={{
+              background: `${A}12`,
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0
+            }}>
+              <f.icon size={14} color={A} fill={f.icon === Star ? A : "none"} />
+            </div>
+            <div>
+              <p style={{ fontSize: 8, letterSpacing: "0.08em", textTransform: "uppercase", color: M, margin: "0 0 2px 0" }}>{f.label}</p>
+              <p style={{ fontSize: 11, fontWeight: 700, color: FG, margin: 0 }}>{f.val}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MobileAbout({ place, hostData, hostAvatar }) {
+  const { tokens: { A, FG, M, B, W } } = useTheme();
+  return (
+    <section style={{ background: W, padding: "40px 16px" }}>
+      <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 10 }}>
+        About the Destination
+      </p>
+      
+      <h2 className="font-display" style={{
+        fontSize: 26,
+        fontWeight: 700,
+        color: FG,
+        lineHeight: 1.2,
+        marginBottom: 16
+      }}>
+        {place?.placeName || "Experience the local heritage."}
+      </h2>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+        {[toDisplayString(place?.category), place?.city, "Historical", "Vibrant"].filter(Boolean).map(tag => (
+          <div key={tag} style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 12px",
+            background: "#f8f8f8",
+            borderRadius: 10,
+            border: `1px solid ${B}`
+          }}>
+            <User size={10} color={A} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: FG }}>{tag}</span>
+          </div>
+        ))}
+      </div>
+
+      <p style={{ fontSize: 13, lineHeight: 1.7, color: M, marginBottom: 24, margin: "0 0 24px 0" }}>
+        {place?.description || "Discover the hidden gems and vibrant culture of this unique location. From historical landmarks to modern attractions, there is something for everyone."}
+      </p>
+
+      {/* Curator & Location Card */}
+      <div style={{
+        borderTop: `1px solid ${B}`,
+        paddingTop: 20,
+        display: "flex",
+        flexDirection: "column",
+        gap: 16
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{ fontSize: 8, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 4 }}>Location</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>{place?.city || "Discovery Town"}</p>
+          </div>
+          <div>
+            <p style={{ fontSize: 8, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 4, textAlign: "right" }}>Curator</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img src={hostAvatar || "https://picsum.photos/seed/host/40/40"} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} alt="" />
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>
+                  {hostData?.host?.firstName ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() : (hostData?.host?.displayName || hostData?.displayName || "Lead Curator")}
+                </p>
+                {(hostData?.host?.bio || hostData?.bio) && (
+                  <p style={{ fontSize: 11, color: M, margin: "4px 0 0 0", fontStyle: "italic" }}>{hostData?.host?.bio || hostData?.bio}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileGallery({ galleryItems }) {
+  const { tokens: { B, S, W, A } } = useTheme();
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  if (!galleryItems || galleryItems.length === 0) return null;
+
+  const openLightbox = (index) => {
+    setActiveIdx(index);
+    setLightboxOpen(true);
+  };
+
+  const nextImg = () => {
+    setActiveIdx((prev) => (prev + 1) % galleryItems.length);
+  };
+
+  const prevImg = () => {
+    setActiveIdx((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
+  };
+
+  return (
+    <section style={{ background: S, padding: "36px 0" }}>
+      <div style={{ padding: "0 16px", marginBottom: 16 }}>
+        <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 4 }}>
+          Gallery
+        </p>
+        <h3 className="font-display" style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
+          Visual Journeys
+        </h3>
+      </div>
+
+      {/* Horizontal Scroll Image Cards */}
+      <div style={{
+        display: "flex",
+        gap: 14,
+        overflowX: "auto",
+        padding: "0 16px 8px 16px",
+        scrollSnapType: "x mandatory"
+      }} className="no-scrollbar">
+        {galleryItems.map((img, i) => (
+          <div
+            key={i}
+            onClick={() => openLightbox(i)}
+            style={{
+              flexShrink: 0,
+              width: 240,
+              height: 160,
+              borderRadius: 20,
+              overflow: "hidden",
+              border: `1.5px solid ${B}`,
+              boxShadow: "0 10px 24px rgba(0,0,0,0.04)",
+              scrollSnapAlign: "start",
+              cursor: "pointer"
+            }}
+          >
+            <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+          </div>
+        ))}
+      </div>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.95)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              zIndex: 10000,
+              padding: "24px 16px"
+            }}
+          >
+            {/* Top Bar */}
+            <div style={{ display: "flex", justifycontent: "space-between", alignItems: "center", color: "#FFF" }}>
+              <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.05em" }}>
+                {activeIdx + 1} / {galleryItems.length}
+              </span>
+              <button
+                onClick={() => setLightboxOpen(false)}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "none",
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#FFF",
+                  cursor: "pointer"
+                }}
+              >
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            {/* Main Image */}
+            <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button
+                onClick={prevImg}
+                style={{
+                  position: "absolute",
+                  left: 8,
+                  background: "rgba(255,255,255,0.1)",
+                  border: "none",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#FFF",
+                  cursor: "pointer",
+                  zIndex: 10
+                }}
+              >
+                <ChevronLeft size={24} />
+              </button>
+
+              <motion.img
+                key={activeIdx}
+                src={galleryItems[activeIdx]}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 12 }}
+                alt=""
+              />
+
+              <button
+                onClick={nextImg}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  background: "rgba(255,255,255,0.1)",
+                  border: "none",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#FFF",
+                  cursor: "pointer",
+                  zIndex: 10
+                }}
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
+
+            {/* Bottom Bar Indicator */}
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 8,
+              overflowX: "auto",
+              paddingBottom: 8
+            }}>
+              {galleryItems.map((_, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setActiveIdx(idx)}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: idx === activeIdx ? A : "rgba(255,255,255,0.3)",
+                    transition: "all 0.3s"
+                  }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
+function MobileItinerary({ place }) {
+  const { tokens: { A, B, FG, M, W, S } } = useTheme();
+  const steps = [
+    { title: "Discovery Phase", desc: "Explore the primary landmarks and architectural wonders of this unique location." },
+    { title: "Local Immersion", desc: "Engage with the local culture and hidden gems that define the heart of the area." },
+    { title: "Sunset Perspective", desc: "End your journey with breathtaking panoramic views as the day transitions to night." }
+  ];
+
+  return (
+    <section style={{ background: W, padding: "40px 16px" }}>
+      <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 6 }}>
+        HIGHLIGHTS & ITINERARY
+      </p>
+      <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+        Curated Experience Plan
+      </h3>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 24, position: "relative" }}>
+        {/* Vertical Line */}
+        <div style={{
+          position: "absolute",
+          left: 17,
+          top: 8,
+          bottom: 8,
+          width: 2,
+          background: `linear-gradient(to bottom, ${A}, ${B})`
+        }} />
+
+        {steps.map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 16, position: "relative", zIndex: 1 }}>
+            {/* Step Marker */}
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: W,
+              border: `2px solid ${A}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 12,
+              color: A,
+              flexShrink: 0,
+              boxShadow: "0 4px 10px rgba(0,0,0,0.05)"
+            }}>
+              {i + 1}
+            </div>
+
+            {/* Content */}
+            <div style={{
+              background: S,
+              border: `1.5px solid ${B}`,
+              borderRadius: 20,
+              padding: "16px 14px",
+              flex: 1,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.01)"
+            }}>
+              <h4 style={{ fontSize: 14, fontWeight: 700, color: FG, marginBottom: 6, margin: "0 0 6px 0" }}>{s.title}</h4>
+              <p style={{ fontSize: 11, color: M, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MobileGoodToKnow({ place }) {
+  const { tokens: { A, B, FG, M, W, S } } = useTheme();
+  return (
+    <section style={{ background: S, padding: "40px 16px", borderTop: `1px solid ${B}`, borderBottom: `1px solid ${B}` }}>
+      <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 6 }}>
+        SAFETY & GUIDANCE
+      </p>
+      <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+        Good To Know
+      </h3>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 32 }}>
+        {/* What to Carry */}
+        <div style={{ background: W, padding: 18, borderRadius: 20, border: `1.5px solid ${B}` }}>
+          <h4 style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: FG, marginBottom: 12, margin: "0 0 12px 0" }}>
+            <Briefcase size={14} color={A} /> What to Carry
+          </h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"].map(item => (
+              <span key={item} style={{
+                fontSize: 10,
+                color: M,
+                background: S,
+                padding: "5px 10px",
+                borderRadius: 10,
+                border: `1px solid ${B}`,
+                fontWeight: 500
+              }}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Things to Avoid */}
+        <div style={{ background: "#fff5f5", border: "1.5px solid #fee2e2", padding: 18, borderRadius: 20 }}>
+          <h4 style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 10, margin: "0 0 10px 0" }}>
+            <XCircle size={14} color="#ef4444" /> Things to Avoid
+          </h4>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            {["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"].map(item => (
+              <li key={item} style={{ fontSize: 11, color: "#b91c1c", display: "flex", alignItems: "center", gap: 8, fontWeight: 500 }}>
+                <XCircle size={10} color="#ef4444" /> {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Community Feedback */}
+      <div style={{ background: W, border: `1.5px solid ${B}`, borderRadius: 20, padding: 20 }}>
+        <h4 className="font-display" style={{ fontSize: 18, fontWeight: 700, color: FG, marginBottom: 4, margin: "0 0 4px 0" }}>Community Feedback</h4>
+        <p style={{ fontSize: 11, color: M, marginBottom: 16, margin: "0 0 16px 0" }}>Share your recent experience or suggest updates for this location.</p>
+        <textarea
+          placeholder="Share your thoughts..."
+          style={{
+            width: "100%",
+            height: 90,
+            background: S,
+            border: `1.5px solid ${B}`,
+            borderRadius: 12,
+            padding: 10,
+            fontSize: 12,
+            marginBottom: 14,
+            outline: "none",
+            resize: "none",
+            fontFamily: "inherit",
+            boxSizing: "border-box"
+          }}
+        />
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          style={{
+            width: "100%",
+            padding: 12,
+            background: A,
+            color: "#FFF",
+            border: "none",
+            borderRadius: 10,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            cursor: "pointer"
+          }}
+        >
+          Submit Updates
+        </motion.button>
+      </div>
+    </section>
+  );
+}
+
+function MobileLogistics({ place, hostData }) {
+  const { tokens: { A, B, FG, M, W, S } } = useTheme();
+
+  return (
+    <section style={{ background: W, padding: "40px 16px" }} id="logistics-section">
+      <p style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 6 }}>
+        LOCATION & LOGISTICS
+      </p>
+      <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+        Access & Assistance
+      </h3>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {/* Address Card */}
+        <div style={{ background: S, border: `1.5px solid ${B}`, borderRadius: 20, padding: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+            <div>
+              <h4 style={{ fontSize: 8, letterSpacing: "0.08em", textTransform: "uppercase", color: M, marginBottom: 4, margin: "0 0 4px 0" }}>Address</h4>
+              <p style={{ fontSize: 12, color: FG, fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
+                {place?.address || "Explore the local maps for the exact navigation details."}
+              </p>
+            </div>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${place?.placeName}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: A,
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                textDecoration: "none",
+                flexShrink: 0,
+                boxShadow: "0 4px 12px rgba(0, 151, 178, 0.2)"
+              }}
+            >
+              <Navigation size={15} color="#FFF" />
+            </a>
+          </div>
+
+          <div style={{ borderTop: `1.5px solid ${B}`, paddingTop: 14 }}>
+            <h4 style={{ fontSize: 8, letterSpacing: "0.08em", textTransform: "uppercase", color: M, marginBottom: 10, margin: "0 0 10px 0" }}>Getting There</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { l: "Nearest Station", d: "3 km" },
+                { l: "City Center", d: place?.distance || "5 km" },
+                { l: "Airport", d: "25 km" },
+              ].map(loc => (
+                <div key={loc.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: M }}>{loc.l}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>{loc.d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Curator Card */}
+        <div style={{ padding: 18, border: `1.5px solid ${B}`, borderRadius: 20, background: S }}>
+          <p style={{ fontSize: 8, letterSpacing: "0.08em", textTransform: "uppercase", color: M, marginBottom: 12, margin: "0 0 12px 0" }}>Official Inquiries</p>
+          <h4 className="font-display" style={{ fontSize: 16, fontWeight: 700, color: FG, marginBottom: 16, margin: "0 0 16px 0" }}>
+            {hostData?.host?.displayName || hostData?.displayName || "Tourism Authority"}
+          </h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <a href={`tel:${hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", fontSize: 12, color: FG, fontWeight: 600 }}>
+              <Phone size={14} color={A} /> {hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone || "Contact via App"}
+            </a>
+            <a href={place?.website || "#"} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", fontSize: 12, color: FG, fontWeight: 600 }}>
+              <Globe size={14} color={A} /> {place?.website ? "Official Website" : "Official Portal"}
+            </a>
+          </div>
+        </div>
+
+        {/* Peak Season Info */}
+        <div style={{ padding: 18, border: `1.5px solid ${B}`, borderRadius: 20, background: A, color: "#FFF", boxShadow: "0 8px 20px rgba(0, 151, 178, 0.12)" }}>
+          <h4 style={{ fontSize: 8, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: 8, margin: "0 0 8px 0" }}>Prime Visit</h4>
+          <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 4, color: "#FFF", margin: "0 0 4px 0" }}>Peak Season</p>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", lineHeight: 1.5, margin: 0 }}>
+            October to March is ideal for exploring the open-air heritage and coastal views.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileCTA({ place }) {
+  const { tokens: { A, B, FG, W } } = useTheme();
+
+  const handleInquire = () => {
+    const el = document.getElementById("logistics-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  return (
+    <div style={{
+      position: "sticky",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      background: W,
+      borderTop: `1.5px solid ${B}`,
+      padding: "10px 16px 16px 16px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      zIndex: 999
+    }}>
+      <div>
+        <p style={{ fontSize: 9, color: "#777", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Destination</p>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>
+          {place?.placeName || place?.title || "Explore"}
+        </h4>
+      </div>
+      <motion.button
+        whileTap={{ scale: 0.96 }}
+        onClick={handleInquire}
+        style={{
+          background: A,
+          color: "#FFF",
+          border: "none",
+          padding: "10px 16px",
+          borderRadius: 10,
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: "0.05em",
+          cursor: "pointer"
+        }}
+      >
+        Inquire & Plan
+      </motion.button>
+    </div>
+  );
+}
+
+function MobilePlaceDetails({
+  place,
+  galleryItems,
+  hostData,
+  hostAvatar,
+  primaryCategoryId,
+  currentListingId,
+  unavailablePopup
+}) {
+  return (
+    <>
+      {unavailablePopup}
+      
+      {/* 1. Hero Image with floating content */}
+      <MobileHero place={place} galleryItems={galleryItems} />
+
+      {/* 2. Quick Info Chips */}
+      <MobileQuickFacts place={place} />
+
+      {/* 3. About Place */}
+      <MobileAbout place={place} hostData={hostData} hostAvatar={hostAvatar} />
+
+      {/* 4. Gallery with Lightbox */}
+      <MobileGallery galleryItems={galleryItems} />
+
+      {/* 5. Highlights & Itinerary */}
+      <MobileItinerary place={place} />
+
+      {/* 6. Good to Know */}
+      <MobileGoodToKnow place={place} />
+
+      {/* 7. Logistics */}
+      <MobileLogistics place={place} hostData={hostData} />
+
+      {/* 8. Booking / CTA */}
+      <MobileCTA place={place} />
+
+      {/* 9. Related Listings Strip */}
+      <div style={{ padding: "0 16px" }}>
+        <RelatedListingsStrip
+          businessInterestId={4}
+          primaryCategoryId={primaryCategoryId}
+          currentListingId={currentListingId}
+          title="More Places To Explore"
+        />
+      </div>
+
+      {/* 10. Footer */}
+      <Footer />
+    </>
+  );
+}
+
 /* ─── MAIN COMPONENT ─────────── */
 const PlaceDetails = () => {
+  const { isMobile } = useWindowSize();
   const location = useLocation();
   const history = useHistory();
   const params = new URLSearchParams(location.search);
@@ -558,6 +1482,32 @@ const PlaceDetails = () => {
   const [hostData, setHostData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unavailablePopupOpen, setUnavailablePopupOpen] = useState(false);
+  const unavailableRedirectRef = useRef(false);
+
+  // Dynamic browser tab title
+  useDocumentTitle(place?.placeName || place?.title, "Places");
+
+  const isPlaceUnavailable = (payload) => {
+    if (!payload || typeof payload !== "object") return true;
+    const status = String(
+      payload?.status ||
+      payload?.listingStatus ||
+      payload?.state ||
+      payload?.approvalStatus ||
+      payload?.publishStatus ||
+      ""
+    ).trim().toUpperCase();
+    if (["DISABLED", "DRAFT", "INACTIVE", "UNPUBLISHED", "REJECTED"].includes(status)) return true;
+    if (payload?.isActive === false || payload?.is_active === false) return true;
+    return false;
+  };
+
+  const showUnavailablePopupAndRedirect = () => {
+    setLoading(false);
+    unavailableRedirectRef.current = true;
+    setUnavailablePopupOpen(true);
+  };
 
   const formatImageUrl = (url) => {
     if (!url) return null;
@@ -577,6 +1527,10 @@ const PlaceDetails = () => {
         setLoading(true);
         const data = await getPlaceDetails(id);
         if (!mounted) return;
+        if (isPlaceUnavailable(data)) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
 
         if (data) {
           const normalizedData = {
@@ -601,12 +1555,25 @@ const PlaceDetails = () => {
 
           const hostId = data.hostId || data.host?.hostId || data.leadUserId;
           if (hostId) {
-            getHost(hostId).then(h => mounted && setHostData(h || null)).catch(e => console.warn(e));
+            getHostContent(hostId).then(h => mounted && setHostData(h || null)).catch(e => console.warn(e));
           }
         }
         setLoading(false);
       } catch (e) {
         console.error("Failed to load place details", e);
+        const statusCode = Number(e?.response?.status);
+        const message = String(e?.response?.data?.message || e?.response?.data?.error || e?.message || "");
+        const isUnavailable =
+          /status\s*:\s*disabled/i.test(message) ||
+          /status\s*:\s*draft/i.test(message) ||
+          /no\s*longer\s*available/i.test(message) ||
+          /not\s*found/i.test(message) ||
+          statusCode === 404 ||
+          statusCode === 410;
+        if (isUnavailable) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
         setLoading(false);
       }
     };
@@ -614,15 +1581,52 @@ const PlaceDetails = () => {
     return () => { mounted = false; };
   }, [id]);
 
+  const handleUnavailablePopupClose = () => {
+    setUnavailablePopupOpen(false);
+    if (unavailableRedirectRef.current) {
+      unavailableRedirectRef.current = false;
+      history.replace("/");
+    }
+  };
+
+  const unavailablePopup = (
+    <AnimatePresence>
+      {unavailablePopupOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <motion.div
+            initial={{ y: 16, scale: 0.98, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 8, scale: 0.98, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ width: "100%", maxWidth: 420, background: "var(--S)", color: "var(--FG)", border: "1px solid var(--B)", borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.28)", padding: 20 }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: "var(--FG)" }}>Place Unavailable</div>
+            <div style={{ fontSize: 14, lineHeight: 1.6, color: "var(--M)" }}>Place no longer available.</div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+              <button type="button" onClick={handleUnavailablePopupClose} style={{ border: "none", background: "var(--A)", color: "#FFFFFF", borderRadius: 10, padding: "10px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                Go to Home
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   const hostAvatar = useMemo(() => {
-    const avatarUrl = hostData?.profilePhotoUrl || place?.host?.profilePhotoUrl;
+    const avatarUrl = hostData?.host?.profilePhotoUrl || hostData?.profilePhotoUrl || place?.host?.profilePhotoUrl;
     return avatarUrl ? formatImageUrl(avatarUrl) : null;
   }, [hostData, place]);
 
   const primaryCategoryId = place?.primaryCategoryId || place?.primaryCategory?.id || place?.categoryId || place?.category?.id;
   const currentListingId = place?.placeId || place?.id || id;
 
-  if (loading && !place) {
+  if (loading && !place && !unavailablePopupOpen) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
         <Loader />
@@ -630,12 +1634,38 @@ const PlaceDetails = () => {
     );
   }
 
+  if (unavailablePopupOpen) {
+    return (
+      <ScopedThemeProvider>
+        <ScopedStyles />
+        {unavailablePopup}
+      </ScopedThemeProvider>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <ScopedThemeProvider>
+        <ScopedStyles />
+        <ProgressBar />
+        <MobilePlaceDetails
+          place={place}
+          galleryItems={galleryItems}
+          hostData={hostData}
+          hostAvatar={hostAvatar}
+          primaryCategoryId={primaryCategoryId}
+          currentListingId={currentListingId}
+          unavailablePopup={unavailablePopup}
+        />
+      </ScopedThemeProvider>
+    );
+  }
+
   return (
     <ScopedThemeProvider>
       <ScopedStyles />
       <ProgressBar />
-      <Cursor />
-      <ProductNavbar top={100} left={60} />
+      {unavailablePopup}
 
       <PlaceHero place={place} galleryItems={galleryItems} />
 

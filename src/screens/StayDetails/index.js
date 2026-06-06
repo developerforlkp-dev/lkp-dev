@@ -1,32 +1,72 @@
 import React, { useEffect, useState, useMemo, createContext, useContext, useRef, useCallback } from "react";
+import ReactDOM from "react-dom";
 import { useLocation, useHistory, Link } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   Wifi, Waves, Sparkles, Dumbbell, Umbrella, Plane, GlassWater, Utensils,
   Phone, Clock, FileText, MapPin, ChevronDown, CheckCircle, Info, Building,
   ArrowRight, ShieldCheck, Mail, Globe, Map, Navigation, ArrowDown, Car, AirVent,
-  Users, DoorOpen, Bed, Bath, Maximize, Calendar, Star, Share2, Heart, ArrowLeft
+  Users, DoorOpen, Bed, Bath, Maximize, Calendar, Star, Share2, Heart, ArrowLeft,
+  Tv, Coffee, ChevronLeft, Plus
 } from "lucide-react";
 import moment from "moment";
 import cn from "classnames";
 import Page from "../../components/Page";
-import ProductNavbar from "../../components/ProductNavbar";
 import Loader from "../../components/Loader";
 import Icon from "../../components/Icon";
 import RoomCards from "./RoomCards";
-import { getStayDetails, getHost, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview } from "../../utils/api";
+import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview } from "../../utils/api";
 import StayBookingSystem from "./StayBookingSystem";
 import { useTheme, THEMES } from "../../components/JUI/Theme";
 import { Footer } from "../../components/JUI/Footer";
 import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import ShareButton from "../../components/ShareButton";
+import { lockBodyScroll } from "../../utils/scrollLock";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const fixImageUrl = (url) => {
   if (!url) return "";
   let u = typeof url === 'string' ? url : (url.url || url.src || url.mediaUrl || url.coverImageUrl || url.coverPhotoUrl || "");
   if (!u || typeof u !== 'string') return "";
   return u.replace(/%25/g, '%');
+};
+
+const getStayLocationParts = (stay) => {
+  const location = stay?.location || stay?.locationName || stay?.fullAddress || "";
+  const city = stay?.city || stay?.locationCity || stay?.town || "";
+  const cityArea = stay?.cityArea || "";
+  const district = stay?.district || stay?.meetingDistrict || "";
+  const state = stay?.state || stay?.province || stay?.region || "";
+  const uniqueValues = [location, cityArea, city, district, state]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .filter((value, index, arr) => arr.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index);
+
+  return {
+    location,
+    cityArea,
+    city,
+    district,
+    state,
+    heroText:
+      [cityArea, district, state]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .filter((value, index, arr) => arr.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .join(", ") ||
+      [cityArea, state]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .filter((value, index, arr) => arr.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .join(", ") ||
+      [city, state]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .filter((value, index, arr) => arr.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .join(", ") ||
+      uniqueValues.slice(-2).join(", "),
+  };
 };
 
 const E = [0.22, 1, 0.36, 1];
@@ -61,11 +101,9 @@ const ScopedStyles = () => (
     .stay-details-premium {
       font-family: var(--font-inter, system-ui, sans-serif);
       overflow-x: hidden;
-      cursor: none;
       transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
     }
-    .stay-details-premium a, .stay-details-premium button { cursor: none; }
     @keyframes marquee-l { from{transform:translateX(0)} to{transform:translateX(-50%)} }
     @keyframes marquee-r { from{transform:translateX(-50%)} to{transform:translateX(0)} }
     @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-16px) rotate(1deg)} }
@@ -73,9 +111,6 @@ const ScopedStyles = () => (
     .stay-details-premium .font-display { font-family: var(--font-fraunces, Georgia, serif); }
     .stay-details-premium .mq-l { display: flex; white-space: nowrap; animation: marquee-l 30s linear infinite; }
     .stay-details-premium .mq-r { display: flex; white-space: nowrap; animation: marquee-r 34s linear infinite; }
-    
-    #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); }
-    #cur-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid var(--AL); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%, -50%); }
     
     .shimmer-cta {
       position: relative;
@@ -111,9 +146,6 @@ const ScopedStyles = () => (
       .stay-details-premium .desk-only { display: none !important; }
       .pol-contact-grid, .amenities-grid, .location-grid, .reviews-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
       .property-stay-card { grid-template-columns: 1fr !important; }
-      .stay-details-premium #cur-dot, .stay-details-premium #cur-ring { display: none !important; }
-      .stay-details-premium { cursor: auto !important; }
-      .stay-details-premium a, .stay-details-premium button { cursor: pointer !important; }
     }
     
     @media(max-width:480px){
@@ -133,23 +165,7 @@ const toDisplayString = (value) => {
 };
 
 /* ─── UI COMPONENTS ─────────── */
-function Cursor() {
-  const { tokens: { A, AL } } = useTheme();
-  const x = useMotionValue(-200), y = useMotionValue(-200);
-  const sx = useSpring(x, { stiffness: 120, damping: 20 });
-  const sy = useSpring(y, { stiffness: 120, damping: 20 });
-  useEffect(() => {
-    const fn = (e) => { x.set(e.clientX); y.set(e.clientY) };
-    window.addEventListener("mousemove", fn);
-    return () => window.removeEventListener("mousemove", fn);
-  }, [x, y]);
-  return (
-    <>
-      <motion.div id="cur-dot" style={{ left: x, top: y, background: A }} />
-      <motion.div id="cur-ring" style={{ left: sx, top: sy, borderColor: AL }} />
-    </>
-  );
-}
+// Cursor component removed
 
 function ProgressBar() {
   const { tokens: { A } } = useTheme();
@@ -297,12 +313,162 @@ function SHdr({ idx, label }) {
   );
 }
 
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) { }
+  };
+
+  return (
+    <motion.button
+      className="premium-share-fab"
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Escape"}
+      </span>
+    </motion.button>
+  );
+}
+
+/* ─── EARLY BIRD TICKER ─────────── */
+const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!discounts || discounts.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % discounts.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [discounts]);
+
+  if (!discounts || discounts.length === 0) return null;
+
+  return (
+    <div style={{ display: "grid", height: 15, alignItems: "center", overflow: "hidden" }}>
+      <AnimatePresence>
+        <motion.span
+          key={index}
+          initial={{ y: 15, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -15, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          style={{
+            gridArea: "1 / 1",
+            fontSize: 10,
+            letterSpacing: "0.3em",
+            textTransform: "uppercase",
+            color: FG || "#FFFFFF",
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            display: "block"
+          }}
+        >
+          <span style={{ opacity: 0.8 }}>Book</span>{" "}
+          <span style={{ color: A, fontSize: 11, fontWeight: 900 }}>
+            {discounts[index].daysInAdvance} Days
+          </span>{" "}
+          <span style={{ opacity: 0.8 }}>Advance:</span>{" "}
+          <span style={{ color: isDark === false ? "#059669" : "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+            {discounts[index].percentage}% OFF
+          </span>
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 /* ─── STAY SECTIONS ─────────── */
 function StayHeroCarousel({ stay, galleryItems = [] }) {
+  const history = useHistory();
   const { width, isMobile } = useWindowSize();
   const { theme, tokens: { A, BG, FG, M, S, B, W } } = useTheme();
   const title = stay?.propertyName || stay?.title || "STAY EXPERIENCE";
   const items = galleryItems.slice(0, 5);
+  const { heroText } = getStayLocationParts(stay);
 
   // Infinite Loop Logic for images only
   const x = useMotionValue(0);
@@ -383,7 +549,7 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
             <h1 className="font-display" style={{ fontSize: isMobile ? "clamp(1.5rem, 6.5vw, 2rem)" : "clamp(2rem, 5vw, 5rem)", fontWeight: 800, color: theme === 'dark' ? "#FFF" : FG, lineHeight: 0.9, letterSpacing: "-0.03em", wordBreak: "break-word" }}>{title.toUpperCase()}</h1>
             <div style={{ marginTop: isMobile ? 12 : 24, display: "flex", alignItems: "center", gap: 8, color: theme === 'dark' ? "#FFF" : FG }}>
               <MapPin size={isMobile ? 14 : 18} />
-              <span style={{ fontSize: isMobile ? 12 : 16, fontWeight: 700, letterSpacing: "0.1em" }}>{stay?.city}, {stay?.state}</span>
+              <span style={{ fontSize: isMobile ? 12 : 16, fontWeight: 700, letterSpacing: "0.1em" }}>{heroText || "Location not available"}</span>
             </div>
           </div>
         </Rev>
@@ -403,30 +569,43 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
         </div>
       )}
 
-      {/* SHARE BUTTON — bottom-right corner, glass-morphism style */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5 }}
-        style={{ position: "absolute", bottom: isMobile ? 20 : 80, right: isMobile ? 20 : 80, zIndex: 50 }}
+      {/* Early Bird Overlay */}
+      {!isMobile && stay?.earlyBirdDiscounts?.some(d => d.isActive) && (
+        <div style={{
+          position: "absolute",
+          bottom: 40,
+          right: 40,
+          zIndex: 40,
+          background: theme === 'dark' ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(20px)",
+          padding: "16px 24px",
+          borderRadius: 24,
+          border: theme === 'dark' ? "1px solid rgba(255,255,255,0.1)" : `1px solid ${B}`,
+          boxShadow: theme === 'dark' ? "0 20px 50px rgba(0,0,0,0.3)" : `0 20px 50px ${M}22`,
+          display: "flex",
+          alignItems: "center",
+          gap: 12
+        }}>
+          <Sparkles size={20} color={A} />
+          <EarlyBirdTicker discounts={stay.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={theme === 'dark' ? "#FFF" : FG} isDark={theme === "dark"} />
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="premium-back-button"
+        onClick={() => history.goBack()}
+        aria-label="Go back"
       >
-        <ShareButton
-          title={title}
-          text={stay?.shortDescription || stay?.description || ""}
-          url={window.location.href}
-          imageUrl={stay?.coverPhotoUrl || stay?.coverImageUrl}
-          tokens={{ A, FG, B, BG: "transparent" }}
-          style={{
-            background: theme === 'dark' ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(16px)",
-            border: theme === 'dark' ? "1.5px solid rgba(255,255,255,0.15)" : `1.5px solid ${B}`,
-            color: theme === 'dark' ? "#FFF" : FG,
-            cursor: "pointer",
-          }}
-          size={isMobile ? 14 : 16}
-          showLabel={!isMobile}
-        />
-      </motion.div>
+        <ChevronLeft size={20} />
+      </button>
+
+      <HeroShareFab
+        title={title}
+        text={stay?.shortDescription || stay?.description || ""}
+        url={window.location.href}
+      />
+
     </section>
   );
 }
@@ -561,7 +740,7 @@ function PolicyItem({ rule, A, FG, M, B, S }) {
   return (
     <motion.div key={rule.id} style={{ borderBottom: `1px solid ${B}` }}>
       <button onClick={() => setOp(!op)}
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "30px 20px", background: "none", border: "none", cursor: "none", textAlign: "left" }}>
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "30px 20px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <FileText size={20} color={op ? A : M} />
           <motion.span animate={{ color: op ? A : FG }} style={{ fontSize: 16, fontWeight: 700 }}>{rule.title}</motion.span>
@@ -663,6 +842,13 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
         propItems.push({ id: `prop-0`, title: "General Rules", body: "Check-in from 2:00 PM. Check-out by 11:00 AM." });
       }
     }
+    if (stay?.ageRestriction != null && stay.ageRestriction !== "") {
+      propItems.push({ id: "age_restriction", title: "Minimum Age", body: `${stay.ageRestriction}+` });
+    }
+    propItems.push({ id: "id_required", title: "ID Required at Check-in", body: stay?.idRequiredAtCheckIn ? "Yes" : "No" });
+    propItems.push({ id: "pets_allowed", title: "Pets Allowed", body: stay?.petAllowed ? "Yes" : "No" });
+    propItems.push({ id: "couple_friendly", title: "Couple Friendly", body: stay?.coupleFriendly ? "Yes" : "No" });
+
     if (propItems.length > 0) {
       categories.push({ id: 'cat-prop', title: "Property Rules", items: propItems });
     }
@@ -685,20 +871,20 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
 
     // 3. Cancellation Policy
     const cancelItems = [];
-    const summaryText = stay?.cancellationPolicySummary || 
-                        stay?.privacyAndPolicy?.cancellationPolicySummary || 
-                        stay?.listing?.cancellationPolicySummary || 
-                        stay?.stay?.cancellationPolicySummary ||
-                        stay?.generatedPolicySummary || 
-                        stay?.policySummary || 
-                        stay?.cancellation_policy_summary;
+    const summaryText = stay?.cancellationPolicySummary ||
+      stay?.privacyAndPolicy?.cancellationPolicySummary ||
+      stay?.listing?.cancellationPolicySummary ||
+      stay?.stay?.cancellationPolicySummary ||
+      stay?.generatedPolicySummary ||
+      stay?.policySummary ||
+      stay?.cancellation_policy_summary;
 
-    const templateText = stay?.cancellationPolicyTemplate || 
-                         stay?.privacyAndPolicy?.cancellationPolicyTemplate || 
-                         stay?.listing?.cancellationPolicyTemplate || 
-                         stay?.stay?.cancellationPolicyTemplate ||
-                         stay?.cancellationPolicy || 
-                         stay?.cancellationPolicyText;
+    const templateText = stay?.cancellationPolicyTemplate ||
+      stay?.privacyAndPolicy?.cancellationPolicyTemplate ||
+      stay?.listing?.cancellationPolicyTemplate ||
+      stay?.stay?.cancellationPolicyTemplate ||
+      stay?.cancellationPolicy ||
+      stay?.cancellationPolicyText;
 
     if (summaryText && summaryText.trim().length > 5 && !summaryText.toLowerCase().includes("no cancellation policy summary")) {
       cancelItems.push({ id: 'cancel-1', title: "Cancellation Terms", body: summaryText });
@@ -793,6 +979,9 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
                       {primaryName}
                     </h3>
                     <p style={{ fontSize: 14, color: M }}>Property Representative</p>
+                    {(hostData?.host?.bio || hostData?.bio) && (
+                      <p style={{ fontSize: 13, color: M, lineHeight: 1.8, marginTop: 12, fontStyle: "italic" }}>{hostData?.host?.bio || hostData?.bio}</p>
+                    )}
                   </div>
                 </div>
 
@@ -865,6 +1054,11 @@ const StayDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [eligibleBookings, setEligibleBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unavailablePopupOpen, setUnavailablePopupOpen] = useState(false);
+  const unavailableRedirectRef = useRef(false);
+
+  // Dynamic browser tab title
+  useDocumentTitle(stay?.propertyName || stay?.title, "Stays");
 
   // Booking State
   const [checkInDate, setCheckInDate] = useState(null);
@@ -872,6 +1066,27 @@ const StayDetails = () => {
   const [guests, setGuests] = useState({ adults: 1, children: 0 });
   const [selectedRooms, setSelectedRooms] = useState([]); // Array of {roomId, mealPlan, count}
   const [bookingLoading, setBookingLoading] = useState(false);
+
+  const isStayUnavailable = (payload) => {
+    if (!payload || typeof payload !== "object") return true;
+    const status = String(
+      payload?.status ||
+      payload?.listingStatus ||
+      payload?.state ||
+      payload?.approvalStatus ||
+      payload?.publishStatus ||
+      ""
+    ).trim().toUpperCase();
+    if (["DISABLED", "DRAFT", "INACTIVE", "UNPUBLISHED", "REJECTED"].includes(status)) return true;
+    if (payload?.isActive === false || payload?.is_active === false) return true;
+    return false;
+  };
+
+  const showUnavailablePopupAndRedirect = () => {
+    setLoading(false);
+    unavailableRedirectRef.current = true;
+    setUnavailablePopupOpen(true);
+  };
 
   const formatImageUrl = (url) => {
     if (!url) return null;
@@ -886,10 +1101,21 @@ const StayDetails = () => {
     const rid = String(roomId);
     setSelectedRooms(prev => {
       const exists = prev.find(r => r.roomId === rid);
-      if (exists) return prev.filter(r => r.roomId !== rid);
+      if (exists) {
+        const filtered = prev.filter(r => r.roomId !== rid);
+        if (filtered.length === 0) {
+          const stayRoomsCatalog = stay?.rooms || stay?.roomTypes || stay?.room_types || [];
+          if (stayRoomsCatalog.length > 0) {
+            const firstRoom = stayRoomsCatalog[0];
+            const firstRoomId = String(firstRoom.roomId ?? firstRoom.id ?? firstRoom.roomTypeId ?? firstRoom.room_type_id);
+            return [{ roomId: firstRoomId, mealPlan: "EP", count: 1 }];
+          }
+        }
+        return filtered;
+      }
       return [...prev, { roomId: rid, mealPlan: mealPlan || "EP", count: 1 }];
     });
-  }, []);
+  }, [stay]);
 
   const handleRoomCountChange = useCallback((roomId, count) => {
     const rid = String(roomId);
@@ -936,6 +1162,10 @@ const StayDetails = () => {
         setLoading(true);
         const data = await getStayDetails(id);
         if (!mounted) return;
+        if (isStayUnavailable(data)) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
 
         if (data) {
           setStay(data);
@@ -957,7 +1187,7 @@ const StayDetails = () => {
           setGalleryItems(galleryImages.filter(u => u && !seen.has(u) && seen.add(u)));
 
           const hostId = data.hostId || data.host?.hostId || data.leadUserId || data.userId;
-          if (hostId) getHost(hostId).then(h => mounted && setHostData(h || null)).catch(e => console.warn(e));
+          if (hostId) getHostContent(hostId).then(h => mounted && setHostData(h || null)).catch(e => console.warn(e));
 
           // Fetch reviews using stay-specific API
           getStayReviews(id).then(resp => {
@@ -980,12 +1210,62 @@ const StayDetails = () => {
         setLoading(false);
       } catch (e) {
         console.error("Failed to load stay details", e);
+        const statusCode = Number(e?.response?.status);
+        const message = String(e?.response?.data?.message || e?.response?.data?.error || e?.message || "");
+        const isUnavailable =
+          /status\s*:\s*disabled/i.test(message) ||
+          /status\s*:\s*draft/i.test(message) ||
+          /no\s*longer\s*available/i.test(message) ||
+          /not\s*found/i.test(message) ||
+          statusCode === 404 ||
+          statusCode === 410;
+        if (isUnavailable) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
         setLoading(false);
       }
     };
     load();
     return () => { mounted = false; };
   }, [id]);
+
+  const handleUnavailablePopupClose = () => {
+    setUnavailablePopupOpen(false);
+    if (unavailableRedirectRef.current) {
+      unavailableRedirectRef.current = false;
+      history.replace("/");
+    }
+  };
+
+  const unavailablePopup = (
+    <AnimatePresence>
+      {unavailablePopupOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <motion.div
+            initial={{ y: 16, scale: 0.98, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 8, scale: 0.98, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ width: "100%", maxWidth: 420, background: S, color: FG, border: `1px solid ${B}`, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.28)", padding: 20 }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: FG }}>Stay Unavailable</div>
+            <div style={{ fontSize: 14, lineHeight: 1.6, color: M }}>Stay no longer available.</div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+              <button type="button" onClick={handleUnavailablePopupClose} style={{ border: "none", background: "#0097B2", color: W, borderRadius: 10, padding: "10px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                Go to Home
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   const hostAvatar = useMemo(() => {
     const avatarUrl = hostData?.host?.profilePhotoUrl || hostData?.host?.profilePhoto || stay?.host?.profilePhotoUrl || stay?.host?.profilePhoto;
@@ -1010,10 +1290,19 @@ const StayDetails = () => {
   const primaryCategoryId = stay?.primaryCategoryId || stay?.primaryCategory?.id || stay?.categoryId || stay?.category?.id;
   const currentListingId = stay?.stayId || stay?.id || id;
 
-  if (loading && !stay) {
+  if (loading && !stay && !unavailablePopupOpen) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
         <Loader />
+      </div>
+    );
+  }
+
+  if (unavailablePopupOpen) {
+    return (
+      <div className="stay-details-premium" style={{ minHeight: "100vh", background: BG, color: FG }}>
+        <ScopedStyles />
+        {unavailablePopup}
       </div>
     );
   }
@@ -1023,8 +1312,8 @@ const StayDetails = () => {
   return (
     <div className="stay-details-premium" style={{ minHeight: "100vh", background: BG, color: FG }}>
       <ScopedStyles />
+      {unavailablePopup}
 
-      <ProductNavbar top={isMobile ? 90 : 100} left={isMobile ? 16 : 60} />
 
       <StayHeroCarousel stay={stay} galleryItems={galleryItems} />
 
@@ -1087,6 +1376,7 @@ const StayDetails = () => {
         guests={guests}
         setGuests={setGuests}
         selectedRooms={selectedRooms}
+        setSelectedRooms={setSelectedRooms}
         onRoomsCountChange={handleRoomCountChange}
       />
 
@@ -1097,16 +1387,769 @@ const StayDetails = () => {
         title="More Stays You May Like"
       />
 
-      <Footer />
-
     </div>
   );
 };
 
+const extractList = (arr) => {
+  if (!Array.isArray(arr) || arr.length === 0) return [];
+  return arr.map(item => {
+    if (typeof item === "string") return item;
+    return item?.name || item?.amenityName || item?.facilityName || item?.amenity || item?.facility || item?.label || item?.title || item?.value || "";
+  }).filter(Boolean);
+};
+
+const AMENITY_ICONS = {
+  wifi: Wifi,
+  ac: AirVent,
+  air: AirVent,
+  parking: Car,
+  pool: Waves,
+  swimming: Waves,
+  breakfast: Coffee,
+  food: Utensils,
+  tv: Tv,
+  television: Tv,
+  kitchen: Utensils,
+  gym: Dumbbell,
+  fitness: Dumbbell,
+  spa: Sparkles,
+  default: CheckCircle
+};
+
+const getAmenityIcon = (name) => {
+  const lower = String(name).toLowerCase();
+  for (const [key, icon] of Object.entries(AMENITY_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return AMENITY_ICONS.default;
+};
+
+function PropertyModal({ stay, onClose }) {
+  const { isMobile } = useWindowSize();
+  const { tokens: { A, FG, M, B, W, S, BG, AL } } = useTheme();
+  const detailsRef = useRef(null);
+
+  const name = stay.propertyName || stay.title || stay.name || "Property Details";
+  const desc = stay.detailedDescription || stay.description || stay.shortDescription;
+
+  const capacity = stay.maxGuests || stay.guests?.adults || stay.maxAdults || null;
+
+  const list = stay.amenities || stay.propertyAmenities || stay.stayAmenities || stay.amenityList || [];
+  const amenities = extractList(list);
+
+  const formatTime12h = (value, fallback = "") => {
+    if (!value) return fallback;
+    const raw = String(value).trim();
+    const parsed = moment(raw, ["HH:mm:ss", "HH:mm", "h:mm A", "h:mmA"], true);
+    if (!parsed.isValid()) return raw;
+    return parsed.format("h:mm A");
+  };
+
+  const checkInRaw = stay.checkInTime || stay.checkinTime || stay.check_in_time || "14:00";
+  const checkOutRaw = stay.checkOutTime || stay.checkoutTime || stay.check_out_time || "11:00";
+  const checkInText = formatTime12h(checkInRaw, "2:00 PM");
+  const checkOutText = formatTime12h(checkOutRaw, "11:00 AM");
+
+  const cancellationPolicy = stay.cancellationPolicy || stay.cancellationPolicySummary || stay.cancellationPolicyText;
+
+  const toAmount = (value) => {
+    if (value === null || value === undefined || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const toDateOnly = (value) => {
+    if (!value) return null;
+    const m = moment(value, ["YYYY-MM-DD", moment.ISO_8601], true);
+    return m.isValid() ? m.startOf("day") : null;
+  };
+
+  const basePrice =
+    toAmount(stay.fullPropertyB2cPrice) ??
+    toAmount(stay.fullPropertyb2cPrice) ??
+    toAmount(stay.full_property_b2c_price) ??
+    toAmount(stay.b2cPrice) ??
+    toAmount(stay.pricePerNight) ??
+    toAmount(stay.startingPrice) ??
+    toAmount(stay.price);
+  const seasonalPeriods = Array.isArray(stay.seasonalPricing)
+    ? stay.seasonalPricing
+    : (Array.isArray(stay.seasonalPricings) ? stay.seasonalPricings : []);
+  const today = moment().startOf("day");
+  const activeSeason = seasonalPeriods.find((period) => {
+    const start = toDateOnly(period?.startDate || period?.start_date);
+    const end = toDateOnly(period?.endDate || period?.end_date);
+    if (!start || !end) return false;
+    return today.isSameOrAfter(start) && today.isSameOrBefore(end);
+  });
+  const seasonalB2CPrice =
+    activeSeason?.b2cPrice ??
+    activeSeason?.b2cprice ??
+    activeSeason?.pricePerNight ??
+    activeSeason?.price ??
+    null;
+  const priceValue = seasonalB2CPrice ?? basePrice;
+
+  const billingConfigDiscounts =
+    stay.billingConfig?.discounts ||
+    stay.billing_config?.discounts ||
+    [];
+  const discountRate = Array.isArray(billingConfigDiscounts)
+    ? Math.max(
+      0,
+      Math.min(
+        100,
+        billingConfigDiscounts.reduce((sum, discount) => {
+          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+          return sum + (Number.isFinite(rate) ? rate : 0);
+        }, 0)
+      )
+    )
+    : 0;
+  const discountedPriceValue =
+    priceValue != null ? Math.max(0, Number(priceValue) * (1 - discountRate / 100)) : null;
+
+  const allImages = [];
+  const coverPhoto = stay.coverPhotoUrl || stay.coverImageUrl || stay.coverPhoto || stay.coverImage || stay.imageUrl;
+  if (coverPhoto) allImages.push(coverPhoto);
+  const media = stay.media || stay.images || stay.stayMedia || [];
+  media.forEach(m => {
+    const u = typeof m === "string" ? m : m.url || m.src || m.imageUrl;
+    if (u && !allImages.includes(u)) allImages.push(u);
+  });
+
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const galleryRef = useRef(null);
+
+  const scrollGallery = (dir) => {
+    if (!galleryRef.current) return;
+    const nextIdx = dir === 'next'
+      ? (galleryIndex + 1) % allImages.length
+      : (galleryIndex - 1 + allImages.length) % allImages.length;
+
+    setGalleryIndex(nextIdx);
+    const itemWidth = galleryRef.current.offsetWidth;
+    galleryRef.current.scrollTo({
+      left: nextIdx * itemWidth,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleGalleryScroll = () => {
+    if (!galleryRef.current) return;
+    const scrollLeft = galleryRef.current.scrollLeft;
+    const itemWidth = galleryRef.current.offsetWidth;
+    if (itemWidth > 0) {
+      const idx = Math.round(scrollLeft / itemWidth);
+      if (idx !== galleryIndex && idx >= 0 && idx < allImages.length) {
+        setGalleryIndex(idx);
+      }
+    }
+  };
+
+  const scrollToDetails = () => {
+    detailsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    return lockBodyScroll();
+  }, []);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24, overflow: "hidden", overflowX: "hidden", overscrollBehavior: "contain" }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
+        onClick={onClose}
+      />
+
+      <style>{`
+        .modal-scrollable-content::-webkit-scrollbar { width: 6px; }
+        .modal-scrollable-content::-webkit-scrollbar-thumb { background: ${B}; border-radius: 10px; }
+        .modal-scrollable-content { scrollbar-width: thin; scrollbar-color: ${B} transparent; }
+        .gallery-scroll-track::-webkit-scrollbar { display: none; }
+        .gallery-scroll-track { -ms-overflow-style: none; scrollbar-width: none; }
+        .gallery-nav-button:hover { opacity: 1 !important; background: rgba(255,255,255,0.24) !important; }
+      `}</style>
+
+      <motion.div
+        initial={{ opacity: 0, y: isMobile ? "100%" : 40, scale: isMobile ? 1 : 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: isMobile ? "100%" : 40, scale: isMobile ? 1 : 0.97 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: "relative", background: W, width: "100%", maxWidth: 1100,
+          maxHeight: isMobile ? "100vh" : "90vh",
+          marginTop: isMobile ? "auto" : 0,
+          borderRadius: isMobile ? "24px 24px 0 0" : 24, overflow: "hidden", display: "flex", flexDirection: "column", zIndex: 1,
+          boxShadow: "0 40px 120px rgba(0,0,0,0.5)", border: `1px solid ${B}`
+        }}
+      >
+        {isMobile && (
+          <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", width: 44, height: 5, borderRadius: 100, background: "rgba(0,0,0,0.15)", zIndex: 30 }} />
+        )}
+
+        <button onClick={onClose} style={{
+          position: "absolute", top: isMobile ? 20 : 24, right: isMobile ? 20 : 24, width: 40, height: 40, borderRadius: "50%",
+          background: S, border: `1px solid ${B}`, display: "flex", alignItems: "center",
+          justifyContent: "center", cursor: "pointer", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+          transition: "all 0.3s ease", color: FG
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        {/* Scrollable Content Container */}
+        <div className="modal-scrollable-content" style={{ overflowY: "auto", flex: 1, boxSizing: "border-box", padding: isMobile ? "40px 20px" : "48px 48px" }}>
+
+          {/* Top Hero Section */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1fr", gap: isMobile ? 32 : 40, marginBottom: 40, alignItems: "start" }}>
+
+            {/* LEFT SIDE: Large Featured Image */}
+            <div style={{
+              height: isMobile ? 260 : 440, overflow: "hidden", borderRadius: 20,
+              background: "#0F0F0F", position: "relative", display: "flex", flexShrink: 0,
+              border: `1px solid ${B}`
+            }}>
+              {allImages.length > 0 ? (
+                <>
+                  <div ref={galleryRef} onScroll={handleGalleryScroll} className="gallery-scroll-track" style={{ display: "flex", width: "100%", height: "100%", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                    {allImages.map((img, i) => (
+                      <div key={i} style={{ minWidth: "100%", height: "100%", scrollSnapAlign: "start", position: "relative" }}>
+                        <img src={fixImageUrl(img)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: galleryIndex === i ? 1 : 0.8, transition: "opacity 0.6s ease" }} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Gradient Overlay for Readability */}
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)",
+                    pointerEvents: "none", zIndex: 10
+                  }} />
+
+                  {allImages.length > 1 && (
+                    <>
+                      <button className="gallery-nav-button" onClick={() => scrollGallery('prev')} style={{
+                        position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
+                        width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", zIndex: 15, transition: "all 0.3s", opacity: 0.72, fontSize: 22, fontWeight: 300, lineHeight: 1
+                      }}>
+                        &lt;
+                      </button>
+                      <button className="gallery-nav-button" onClick={() => scrollGallery('next')} style={{
+                        position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+                        width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", zIndex: 15, transition: "all 0.3s", opacity: 0.72, fontSize: 22, fontWeight: 300, lineHeight: 1
+                      }}>
+                        &gt;
+                      </button>
+                    </>
+                  )}
+
+                  <div style={{
+                    position: "absolute", bottom: 20, right: 20, background: "rgba(0,0,0,0.6)",
+                    backdropFilter: "blur(8px)", color: "#fff", padding: "6px 14px", borderRadius: 100,
+                    fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", zIndex: 15,
+                    border: "1px solid rgba(255,255,255,0.15)"
+                  }}>
+                    {galleryIndex + 1} <span style={{ opacity: 0.5, margin: "0 2px" }}>/</span> {allImages.length}
+                  </div>
+                </>
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: S }}>
+                  <Building size="48" color={A} />
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT SIDE: Quick Info & Title */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div>
+                <span style={{
+                  fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: A, fontWeight: 800, marginBottom: 8, display: "block"
+                }}>
+                  {toDisplayString(stay.propertyType) || "Property Stay"}
+                </span>
+
+                <h2 style={{
+                  fontSize: isMobile ? 32 : 40, fontWeight: 800, marginBottom: 12,
+                  fontFamily: "var(--font-fraunces, Georgia, serif)", color: FG,
+                  lineHeight: 1.1, letterSpacing: "-0.02em", wordBreak: "break-word"
+                }}>{name}</h2>
+
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: M, fontWeight: 550, margin: 0, opacity: 0.9 }}>
+                  {stay.shortDescription || "Entire-property booking with curated comfort and premium amenities."}
+                </p>
+              </div>
+
+              {/* 2x2 Quick Info Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                {/* Capacity */}
+                <div style={{ padding: "12px 16px", background: S, borderRadius: 14, border: `1px solid ${B}`, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.08em" }}>Capacity</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{capacity != null ? `${capacity} Guests` : "Full Property"}</span>
+                </div>
+
+                {/* Price */}
+                <div style={{ padding: "12px 16px", background: S, borderRadius: 14, border: `1px solid ${B}`, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.08em" }}>Nightly Price</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: FG, display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 4 }}>
+                    {priceValue != null ? (
+                      <>
+                        {discountRate > 0 && (
+                          <span style={{ fontSize: 11, color: M, textDecoration: "line-through", fontWeight: 500 }}>
+                            ₹{Number(priceValue).toLocaleString("en-IN")}
+                          </span>
+                        )}
+                        <span>₹{Number(discountRate > 0 ? discountedPriceValue : priceValue).toLocaleString("en-IN")}</span>
+                      </>
+                    ) : (
+                      "On Request"
+                    )}
+                  </span>
+                </div>
+
+                {/* Check-in */}
+                <div style={{ padding: "12px 16px", background: S, borderRadius: 14, border: `1px solid ${B}`, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.08em" }}>Check-in</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>After {checkInText}</span>
+                </div>
+
+                {/* Check-out */}
+                <div style={{ padding: "12px 16px", background: S, borderRadius: 14, border: `1px solid ${B}`, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.08em" }}>Check-out</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>Before {checkOutText}</span>
+                </div>
+              </div>
+
+              {/* CTAs */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+                <button
+                  onClick={() => {
+                    onClose();
+                    const btn = document.querySelector(".stay-booking-trigger");
+                    if (btn) {
+                      setTimeout(() => {
+                        const target = btn;
+                        if (target && typeof target.click === 'function') {
+                          target.click();
+                        }
+                      }, 120);
+                    }
+                  }}
+                  style={{
+                    background: A, color: "#fff", border: "none",
+                    padding: "14px 28px", borderRadius: 12, fontSize: 14, fontWeight: 800,
+                    cursor: "pointer", boxShadow: `0 10px 25px ${A}2a`,
+                    transition: "all 0.3s ease",
+                    display: "flex", alignItems: "center", justifyContent: "center"
+                  }}
+                >
+                  Reserve Stay
+                </button>
+
+                <button
+                  onClick={scrollToDetails}
+                  style={{
+                    background: "transparent", border: `1px solid ${B}`, color: FG,
+                    padding: "12px 28px", borderRadius: 12, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", transition: "all 0.3s ease",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                  }}
+                >
+                  View Full Details
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Divider & Full Narrative/Details */}
+          <div ref={detailsRef} style={{ borderTop: `1px solid ${B}`, paddingTop: 40, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1fr", gap: isMobile ? 32 : 40 }}>
+
+            {/* Narrative */}
+            <div>
+              <h3 style={{
+                fontSize: 11, fontWeight: 800, textTransform: "uppercase",
+                letterSpacing: "0.2em", color: M, marginBottom: 16
+              }}>
+                Property Narrative
+              </h3>
+              <p style={{
+                fontSize: 15, lineHeight: 1.8, color: FG,
+                fontWeight: 450, opacity: 0.9, whiteSpace: "pre-line", margin: 0
+              }}>
+                {desc}
+              </p>
+            </div>
+
+            {/* Side features */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+              {amenities.length > 0 && (
+                <div>
+                  <h3 style={{
+                    fontSize: 11, fontWeight: 800, textTransform: "uppercase",
+                    letterSpacing: "0.2em", color: M, marginBottom: 20
+                  }}>
+                    Amenities & Features
+                  </h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 20px" }}>
+                    {amenities.map((f, i) => {
+                      const IconComp = getAmenityIcon(f);
+                      return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <IconComp size={15} color={A} />
+                          <span style={{ fontSize: 13, color: FG, fontWeight: 600 }}>{f}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {cancellationPolicy && (
+                <div>
+                  <h3 style={{
+                    fontSize: 11, fontWeight: 800, textTransform: "uppercase",
+                    letterSpacing: "0.2em", color: M, marginBottom: 16
+                  }}>
+                    Cancellation Guidelines
+                  </h3>
+                  <div style={{ padding: 20, background: S, borderRadius: 16, border: `1px solid ${B}` }}>
+                    <p style={{ fontSize: 13, lineHeight: 1.6, color: FG, fontWeight: 500, opacity: 0.85, margin: 0 }}>
+                      {cancellationPolicy}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClose }) => {
+  const { theme, tokens: { BG, A } } = useTheme();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
+
+  const textMain = isDark ? '#FFF' : '#141414';
+  const pillBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)';
+  const pillBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const pillText = A || '#0097B2';
+
+  const btnBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+  const btnBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const btnHoverBg = isDark ? 'rgba(255,255,255,0.2)' : '#FFFFFF';
+
+  const hasNavigation = Array.isArray(items) && items.length > 1 && typeof onNavigate === "function";
+
+  useEffect(() => {
+    return lockBodyScroll();
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'clamp(16px, 4vw, 40px)',
+      }}
+      onClick={onClose}
+    >
+      <style>{`
+        .fs-modal-box {
+          width: 100%;
+          max-width: 1400px;
+          height: 85vh;
+          background: ${isDark ? '#0A0A0A' : '#FFFFFF'};
+          border-radius: 32px;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+          display: flex;
+          overflow: hidden;
+          position: relative;
+          transform: translateZ(0);
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+        
+        .fs-left-pane {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          background: ${isDark ? '#141414' : '#FFFFFF'};
+        }
+        
+        .fs-right-pane {
+          width: clamp(200px, 20vw, 300px);
+          display: flex;
+          flex-direction: column;
+          border-left: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          background: ${isDark ? '#0A0A0A' : '#FAFAFA'};
+        }
+        
+        .fs-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        
+        .fs-image-container {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .fs-image {
+          object-fit: contain !important;
+          width: 100% !important;
+          height: 100% !important;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
+          position: absolute;
+          top: 0;
+          left: 0;
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        
+        .fs-thumbnail-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          scrollbar-width: none;
+        }
+        
+        .fs-nav-btn {
+          position: absolute;
+          top: 50%;
+          margin-top: -24px;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: ${btnBg};
+          border: 1px solid ${btnBorder};
+          color: ${textMain};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(20px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          z-index: 10;
+        }
+        .fs-nav-left {
+          left: 24px;
+        }
+        .fs-nav-right {
+          right: 24px;
+        }
+        
+        .fs-thumbnail-list::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .fs-thumb {
+          width: 100%;
+          aspect-ratio: 4/3;
+          border-radius: 12px;
+          overflow: hidden;
+          cursor: pointer;
+          opacity: 0.5;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          box-sizing: border-box;
+          transform: scale(0.98);
+        }
+        
+        .fs-thumb:hover {
+          opacity: 0.8;
+        }
+        
+        .fs-thumb.active {
+          opacity: 1;
+          border: 3px solid ${A || '#0097B2'};
+          box-shadow: 0 10px 24px ${A ? A + '40' : 'rgba(0,151,178,0.25)'};
+          transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+          .fs-modal-box {
+            flex-direction: column;
+            height: 90vh;
+            border-radius: 24px 24px 0 0;
+            margin-top: auto;
+            align-self: flex-end;
+          }
+          
+          .fs-right-pane {
+            width: 100%;
+            height: clamp(100px, 15vh, 140px);
+            border-left: none;
+            border-top: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          }
+          
+          .fs-thumbnail-list {
+            flex-direction: row;
+            overflow-y: hidden;
+            overflow-x: auto;
+            padding: 16px 20px;
+            align-items: center;
+          }
+          
+          .fs-thumb {
+            width: clamp(80px, 25vw, 140px);
+            height: 100%;
+            flex-shrink: 0;
+          }
+          
+          .fs-header {
+            padding: 16px 20px;
+          }
+          
+          .fs-image-container {
+            padding: 0;
+          }
+          .fs-image {
+            padding: 12px;
+          }
+          .fs-nav-btn {
+            width: 40px;
+            height: 40px;
+            margin-top: -20px;
+          }
+          .fs-nav-left { left: 12px; }
+          .fs-nav-right { right: 12px; }
+        }
+      `}</style>
+
+      <motion.div
+        className="fs-modal-box"
+        initial={{ y: 50, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 50, opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        {/* LEFT PANE - Image Viewer */}
+        <div className="fs-left-pane">
+          <div className="fs-header">
+            {hasNavigation ? (
+              <div style={{ background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+                {currentIndex + 1} <span style={{ opacity: 0.3, margin: '0 6px', color: textMain }}>/</span> <span style={{ color: textMain }}>{items.length}</span>
+              </div>
+            ) : <div />}
+
+            <motion.button
+              onClick={onClose}
+              whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+              whileTap={{ scale: 0.92 }}
+              style={{ width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+            >
+              <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
+            </motion.button>
+          </div>
+
+          <div className="fs-image-container">
+            <AnimatePresence>
+              <motion.img
+                className="fs-image"
+                key={src}
+                src={src}
+                initial={{ opacity: 0, scale: 0.98, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'brightness(1)' }}
+                exit={{ opacity: 0, scale: 1.02, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                alt="Viewer"
+              />
+            </AnimatePresence>
+
+            {hasNavigation && (
+              <>
+                <motion.button
+                  className="fs-nav-btn fs-nav-left"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex - 1 + items.length) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} />
+                </motion.button>
+                <motion.button
+                  className="fs-nav-btn fs-nav-right"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex + 1) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} style={{ transform: 'rotate(180deg)' }} />
+                </motion.button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT PANE - Thumbnails */}
+        {hasNavigation && (
+          <div className="fs-right-pane">
+            <div className="fs-thumbnail-list">
+              {items.map((thumbSrc, idx) => (
+                <div
+                  key={idx}
+                  className={`fs-thumb ${idx === currentIndex ? 'active' : ''}`}
+                  onClick={() => onNavigate(idx)}
+                >
+                  <img src={thumbSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumbnail ${idx + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </motion.div>
+    </motion.div>
+  );
+};
+
 function PropertyStayCard({ stay }) {
-  const { tokens: { FG, M, B, W, S, A } } = useTheme();
+  const { tokens: { FG, M, B, W, S, A, AL } } = useTheme();
+  const { isMobile } = useWindowSize();
   const [coverLoaded, setCoverLoaded] = useState(false);
   const [isHoveringCover, setIsHoveringCover] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
   const toDateOnly = (value) => {
     if (!value) return null;
     const m = moment(value, ["YYYY-MM-DD", moment.ISO_8601], true);
@@ -1129,7 +2172,7 @@ function PropertyStayCard({ stay }) {
     (Array.isArray(stay?.listingMedia) && stay.listingMedia[0]
       ? (stay.listingMedia[0].url || stay.listingMedia[0].blobName || stay.listingMedia[0].fileUrl)
       : null) ||
-    "/images/content/card-pic-13.jpg";
+    "";
 
   const checkInRaw = stay?.checkInTime || stay?.checkinTime || stay?.check_in_time || "14:00";
   const checkOutRaw = stay?.checkOutTime || stay?.checkoutTime || stay?.check_out_time || "11:00";
@@ -1173,20 +2216,33 @@ function PropertyStayCard({ stay }) {
     [];
   const discountRate = Array.isArray(billingConfigDiscounts)
     ? Math.max(
-        0,
-        Math.min(
-          100,
-          billingConfigDiscounts.reduce((sum, discount) => {
-            const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
-            return sum + (Number.isFinite(rate) ? rate : 0);
-          }, 0)
-        )
+      0,
+      Math.min(
+        100,
+        billingConfigDiscounts.reduce((sum, discount) => {
+          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+          return sum + (Number.isFinite(rate) ? rate : 0);
+        }, 0)
       )
+    )
     : 0;
   const discountedPriceValue =
     priceValue != null ? Math.max(0, Number(priceValue) * (1 - discountRate / 100)) : null;
   const showSeasonal = seasonalB2CPrice != null;
   const propertyName = stay?.propertyName || stay?.title || stay?.name || "Property Stay";
+
+  const list = stay?.amenities || stay?.propertyAmenities || stay?.stayAmenities || stay?.amenityList || [];
+  const amenities = extractList(list);
+
+  const allImages = [];
+  const coverP = stay?.coverPhotoUrl || stay?.coverImageUrl || stay?.coverPhoto || stay?.coverImage || stay?.imageUrl;
+  if (coverP) allImages.push(coverP);
+  const med = stay?.media || stay?.images || stay?.stayMedia || stay?.listingMedia || [];
+  med.forEach(m => {
+    const u = typeof m === "string" ? m : m.url || m.src || m.imageUrl || m.fileUrl || m.blobName;
+    if (u && !allImages.includes(u)) allImages.push(u);
+  });
+  const totalPhotos = Math.max(1, allImages.length);
 
   return (
     <motion.div
@@ -1196,17 +2252,18 @@ function PropertyStayCard({ stay }) {
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       style={{
         display: "grid",
-        gridTemplateColumns: "320px 1fr",
-        gap: 24,
+        gridTemplateColumns: isMobile ? "1fr" : "320px 1fr",
+        gap: isMobile ? 16 : 24,
         background: W,
         border: `1px solid ${B}`,
         borderRadius: 12,
-        padding: 20,
+        padding: isMobile ? 16 : 20,
         marginBottom: 24,
       }}
       className="property-stay-card"
     >
       <motion.div
+        onClick={() => setShowModal(true)}
         whileHover={{ scale: 1.02, y: -2 }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         style={{
@@ -1214,7 +2271,8 @@ function PropertyStayCard({ stay }) {
           overflow: "hidden",
           background: "linear-gradient(120deg, rgba(230,236,246,0.9), rgba(242,246,252,0.9))",
           minHeight: 200,
-          position: "relative"
+          position: "relative",
+          cursor: "pointer"
         }}
         onHoverStart={() => setIsHoveringCover(true)}
         onHoverEnd={() => setIsHoveringCover(false)}
@@ -1264,10 +2322,42 @@ function PropertyStayCard({ stay }) {
           }}
           onLoad={() => setCoverLoaded(true)}
           onError={(e) => {
-            e.currentTarget.src = "/images/content/card-pic-13.jpg";
+            e.currentTarget.src = "";
             setCoverLoaded(true);
           }}
         />
+        
+        {/* Total Photo Count */}
+        <div style={{
+          position: "absolute", top: 12, left: 12, zIndex: 10,
+          background: S, color: FG, padding: "4px 8px", borderRadius: 6,
+          fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)", border: `1px solid ${B}66`
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          1 / {totalPhotos}
+        </div>
+
+        {/* View Photos Button */}
+        <div style={{
+          position: "absolute", bottom: 12, left: 12, zIndex: 10
+        }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowModal(true);
+            }}
+            style={{
+              background: S, color: FG, border: `1px solid ${B}66`,
+              padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            View Photos
+          </button>
+        </div>
       </motion.div>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16 }}>
         <div>
@@ -1279,78 +2369,129 @@ function PropertyStayCard({ stay }) {
             Entire-property booking with curated comfort and premium amenities.
           </p>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-          <motion.div
-            whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
-            transition={{ duration: 0.2 }}
-            style={{
-              border: `1px solid ${B}99`,
-              borderRadius: 10,
-              padding: "10px 14px",
-              background: "rgba(255,255,255,0.55)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-              minWidth: 150
-            }}
-          >
-            <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Check-in</div>
-            <div style={{ fontSize: 14, color: FG, fontWeight: 700, marginTop: 4 }}>{checkInText}</div>
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
-            transition={{ duration: 0.2 }}
-            style={{
-              border: `1px solid ${B}99`,
-              borderRadius: 10,
-              padding: "10px 14px",
-              background: "rgba(255,255,255,0.55)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-              minWidth: 150
-            }}
-          >
-            <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Check-out</div>
-            <div style={{ fontSize: 14, color: FG, fontWeight: 700, marginTop: 4 }}>{checkOutText}</div>
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
-            transition={{ duration: 0.2 }}
-            style={{
-              border: `1px solid ${B}99`,
-              borderRadius: 10,
-              padding: "10px 14px",
-              background: "rgba(255,255,255,0.55)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-              minWidth: 170
-            }}
-          >
-            <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Price</div>
-            {priceValue != null ? (
-              <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                {discountRate > 0 && (
-                  <span style={{ fontSize: 13, color: M, textDecoration: "line-through", opacity: 0.8 }}>
-                    {"\u20B9"}{Number(priceValue).toLocaleString("en-IN")}
+
+        {amenities.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "4px 0" }}>
+            {amenities.map((amenity, idx) => {
+              const IconComp = getAmenityIcon(amenity);
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: S,
+                    border: `1px solid ${B}66`,
+                    borderRadius: 20,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: FG,
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
+                    backdropFilter: "blur(4px)",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  <IconComp size={12} color={A} />
+                  <span>{amenity}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, width: "100%" }}>
+          <div style={{ 
+            display: isMobile ? "grid" : "flex", 
+            gridTemplateColumns: isMobile ? "1fr 1fr" : "unset",
+            flexWrap: "wrap", 
+            gap: 12,
+            width: isMobile ? "100%" : "auto"
+          }}>
+            <motion.div
+              whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+              transition={{ duration: 0.2 }}
+              style={{
+                border: `1px solid ${B}99`,
+                borderRadius: 10,
+                padding: "10px 14px",
+                background: S,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+                minWidth: isMobile ? 0 : 150
+              }}
+            >
+              <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Check-in</div>
+              <div style={{ fontSize: 14, color: FG, fontWeight: 700, marginTop: 4 }}>{checkInText}</div>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+              transition={{ duration: 0.2 }}
+              style={{
+                border: `1px solid ${B}99`,
+                borderRadius: 10,
+                padding: "10px 14px",
+                background: S,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+                minWidth: isMobile ? 0 : 150
+              }}
+            >
+              <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Check-out</div>
+              <div style={{ fontSize: 14, color: FG, fontWeight: 700, marginTop: 4 }}>{checkOutText}</div>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -3, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+              transition={{ duration: 0.2 }}
+              style={{
+                border: `1px solid ${B}99`,
+                borderRadius: 10,
+                padding: "10px 14px",
+                background: S,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+                minWidth: isMobile ? 0 : 170,
+                gridColumn: isMobile ? "1 / -1" : "auto"
+              }}
+            >
+              <div style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Price</div>
+              {priceValue != null ? (
+                <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  {discountRate > 0 && (
+                    <span style={{ fontSize: 13, color: M, textDecoration: "line-through", opacity: 0.8 }}>
+                      {"\u20B9"}{Number(priceValue).toLocaleString("en-IN")}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 16, color: FG, fontWeight: 800 }}>
+                    {"\u20B9"}{Number(discountRate > 0 ? discountedPriceValue : priceValue).toLocaleString("en-IN")} / night
                   </span>
-                )}
-                <span style={{ fontSize: 16, color: FG, fontWeight: 800 }}>
-                  {"\u20B9"}{Number(discountRate > 0 ? discountedPriceValue : priceValue).toLocaleString("en-IN")} / night
-                </span>
-              </div>
-            ) : (
-              <div style={{ fontSize: 16, color: FG, fontWeight: 800, marginTop: 4 }}>Price on request</div>
-            )}
-            {showSeasonal && (
-              <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Seasonal B2C Price
-              </div>
-            )}
-          </motion.div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 16, color: FG, fontWeight: 800, marginTop: 4 }}>Price on request</div>
+              )}
+              {showSeasonal && (
+                <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Seasonal B2C Price
+                </div>
+              )}
+            </motion.div>
+          </div>
+
         </div>
       </div>
+
+      {ReactDOM.createPortal(
+        <AnimatePresence>
+          {showModal && (
+            <FullScreenImage
+              src={allImages[galleryIndex]}
+              items={allImages}
+              currentIndex={galleryIndex}
+              onNavigate={setGalleryIndex}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 }
@@ -1550,6 +2691,12 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                       <p style={{ fontSize: 15, color: FG, lineHeight: 1.8, fontStyle: "italic", opacity: 0.9 }}>
                         &ldquo;{rev.comment || rev.text || "An absolutely wonderful stay. Everything was perfectly arranged and the host was incredibly helpful throughout our visit."}&rdquo;
                       </p>
+                      {rev?.vendorResponse && (
+                        <div style={{ marginTop: 16, padding: "12px 16px", background: S, borderLeft: `3px solid ${A}`, borderRadius: "0 8px 8px 0" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Response from Host</div>
+                          <p style={{ fontSize: 13, color: M, margin: 0, lineHeight: 1.5 }}>{rev.vendorResponse}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Rev>
@@ -1589,6 +2736,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
 function StayLocation({ stay }) {
   const { isMobile } = useWindowSize();
   const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const { city, district, state } = getStayLocationParts(stay);
 
   // Robustly extract coordinates
   const lat = stay?.latitude || stay?.latitude_decimal || stay?.lat || stay?.meetingLatitude || stay?.listingLatitude;
@@ -1596,8 +2744,6 @@ function StayLocation({ stay }) {
 
   // Robustly extract the full address from various possible backend fields
   const address = stay?.address || stay?.fullAddress || stay?.location || stay?.meetingAddress || [stay?.city, stay?.state, stay?.country].filter(Boolean).join(", ");
-  const city = stay?.city || stay?.district || "Destination";
-  const state = stay?.state || stay?.province || "N/A";
   const country = stay?.country || "N/A";
 
   // Build the query: Prefer coordinates for pinpoint accuracy, fallback to address
@@ -1609,10 +2755,11 @@ function StayLocation({ stay }) {
 
   const detailRows = [
     { label: "ADDRESS", value: address },
-    { label: "DISTRICT", value: city },
-    { label: "STATE", value: state },
+    { label: "CITY", value: city },
+    { label: "DISTRICT", value: district || city || "N/A" },
+    { label: "STATE", value: state || "N/A" },
     { label: "COUNTRY", value: country },
-  ];
+  ].filter((row) => row.value);
 
   return (
     <section style={{ background: W, padding: isMobile ? "80px 24px" : "120px 36px", borderTop: `1px solid ${B}` }}>
@@ -1623,19 +2770,12 @@ function StayLocation({ stay }) {
           {/* Left Column: Location Card */}
           <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 24 : 32 }}>
             <h2 className="font-display" style={{ fontSize: isMobile ? 32 : 48, fontWeight: 700, color: FG }}>Location</h2>
-            <div style={{ background: S, borderRadius: 2, overflow: "hidden", border: `1px solid ${B}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
-              {/* Card Header Area */}
-              <div style={{ padding: isMobile ? "20px" : "24px 32px", background: BG, borderBottom: `1px solid ${B}` }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                  <MapPin size={20} color={A} style={{ marginTop: 4 }} />
-                  <div>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: FG, marginBottom: 4 }}>{city}</p>
-                    <p style={{ fontSize: 13, color: M, lineHeight: 1.5 }}>{address}</p>
-                  </div>
-                </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <MapPin size={24} color={A} />
+                <p style={{ fontSize: 18, fontWeight: 700, color: FG, margin: 0 }}>{stay?.locationName || (address ? address.split(',')[0] : null) || city || stay?.propertyName || stay?.title || stay?.name || "Location"}</p>
               </div>
-              {/* Map Area */}
-              <div style={{ height: isMobile ? 300 : 400, position: "relative" }}>
+              <div style={{ background: W, border: `1px solid ${B}`, height: isMobile ? 320 : 400, position: "relative", overflow: "hidden", borderRadius: 16 }}>
                 <iframe
                   title="Property Location Map"
                   width="100%"
@@ -1668,4 +2808,5 @@ function StayLocation({ stay }) {
 }
 
 export default StayDetails;
+
 

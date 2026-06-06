@@ -4,7 +4,6 @@ import moment from "moment";
 import OutsideClickHandler from "react-outside-click-handler";
 import styles from "./EventProduct.module.sass";
 import Page from "../../components/Page";
-import ProductNavbar from "../../components/ProductNavbar";
 import Icon from "../../components/Icon";
 import Loader from "../../components/Loader";
 import Actions from "../../components/Actions";
@@ -13,15 +12,162 @@ import Browse from "../../components/Browse";
 import GuestPicker from "../../components/GuestPicker";
 import { browse2 } from "../../mocks/browse";
 import { useLocation, useHistory } from "react-router-dom";
-import { ChevronLeft, ChevronDown, FileText, Plus, Camera } from "lucide-react";
+import { ChevronLeft, ChevronDown, FileText, Plus, Camera, Ticket, Share2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../components/JUI/Theme";
 import { createEventOrder, getEventDetails, getEventReviews, getEligibleBookings, getListingReviews } from "../../utils/api";
 import Modal from "../../components/Modal";
 import LoginPromptModal from "../../components/LoginPromptModal";
 import ShareButton from "../../components/ShareButton";
+import { lockBodyScroll } from "../../utils/scrollLock";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
-import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
+
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) {}
+  };
+
+  return (
+    <motion.button
+      className="premium-share-fab"
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 9500,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Event"}
+      </span>
+    </motion.button>
+  );
+}
+
+const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!discounts || discounts.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % discounts.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [discounts]);
+
+  if (!discounts || discounts.length === 0) return null;
+
+  return (
+    <div style={{ display: "grid", height: 15, alignItems: "center", overflow: "hidden" }}>
+      <AnimatePresence>
+        <motion.span
+          key={index}
+          initial={{ y: 15, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -15, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          style={{
+            gridArea: "1 / 1",
+            fontSize: 10,
+            letterSpacing: "0.3em",
+            textTransform: "uppercase",
+            color: FG || "#FFFFFF",
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            display: "block"
+          }}
+        >
+          <span style={{ opacity: 0.8 }}>Book</span>{" "}
+          <span style={{ color: A, fontSize: 11, fontWeight: 900 }}>
+            {discounts[index].daysInAdvance} Days
+          </span>{" "}
+          <span style={{ opacity: 0.8 }}>Advance:</span>{" "}
+          <span style={{ color: isDark === false ? "#059669" : "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+            {discounts[index].percentage}% OFF
+          </span>
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const asNonEmptyString = (value) => {
   if (typeof value !== "string") return null;
@@ -245,135 +391,24 @@ const dummyEventData = {
   ],
 };
 
-/* ─── GRID GALLERY MODAL ────────────────────────── */
-const GridGallery = ({ items, onClose, onSelect, title, A }) => {
-  const galleryRef = useRef(null);
-
-  useEffect(() => {
-    const target = galleryRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      ref={galleryRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9990,
-        background: '#FFFFFF',
-        overflowY: 'auto',
-        padding: 'clamp(40px, 8vw, 100px) clamp(20px, 5vw, 60px)'
-      }}
-    >
-      <div style={{ maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 60 }}
-        >
-          <div>
-            <p style={{ fontSize: 10, letterSpacing: '0.8em', textTransform: 'uppercase', color: A, fontWeight: 800, marginBottom: 20 }}>Visual Anthology</p>
-            <h2 style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, color: '#141414', lineHeight: 0.9, letterSpacing: '-0.04em' }} className="font-display">
-              {title}
-            </h2>
-          </div>
-          <motion.button
-            whileHover={{ rotate: 90, scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            style={{
-              background: 'rgba(0,0,0,0.03)',
-              border: `1px solid rgba(0,0,0,0.08)`,
-              color: '#000',
-              width: 'clamp(56px, 10vw, 80px)',
-              height: 'clamp(56px, 10vw, 80px)',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.3s',
-              flexShrink: 0,
-              marginLeft: 20
-            }}
-          >
-            <Plus size={32} style={{ transform: 'rotate(45deg)' }} color="#000" />
-          </motion.button>
-        </motion.div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))',
-          gap: 'clamp(16px, 3vw, 32px)',
-          gridAutoRows: 'clamp(250px, 40vh, 400px)'
-        }}>
-          {items.map((img, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: (i % 3) * 0.1 }}
-              whileHover={{ y: -10, scale: 1.02 }}
-              onClick={() => onSelect(i)}
-              style={{
-                borderRadius: 24,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                background: '#F4F4F4',
-                border: '1px solid rgba(0,0,0,0.05)',
-                position: 'relative',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
-              }}
-            >
-              <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 1 }}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '24px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: A, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Plus size={16} color="#FFF" />
-                  </div>
-                  <span style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700 }}>Expand View</span>
-                </div>
-              </motion.div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 /* ─── MODAL IMAGE POPUP ────────────────────────── */
-const FullScreenImage = ({ src, onClose }) => {
-  const modalRef = useRef(null);
+const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClose }) => {
+  const { theme, tokens: { BG, A } } = useTheme();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
+  
+  const textMain = isDark ? '#FFF' : '#141414';
+  const pillBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)';
+  const pillBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const pillText = A || '#0097B2';
+  
+  const btnBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+  const btnBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const btnHoverBg = isDark ? 'rgba(255,255,255,0.2)' : '#FFFFFF';
+
+  const hasNavigation = Array.isArray(items) && items.length > 1 && typeof onNavigate === "function";
 
   useEffect(() => {
-    const target = modalRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
+    return lockBodyScroll();
   }, []);
 
   return (
@@ -381,55 +416,278 @@ const FullScreenImage = ({ src, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      ref={modalRef}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(10px)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '5vh 5vw'
+        padding: 'clamp(16px, 4vw, 40px)',
       }}
       onClick={onClose}
     >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 30 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 30 }}
+      <style>{`
+        .fs-modal-box {
+          width: 100%;
+          max-width: 1400px;
+          height: 85vh;
+          background: ${isDark ? '#0A0A0A' : '#FFFFFF'};
+          border-radius: 32px;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+          display: flex;
+          overflow: hidden;
+          position: relative;
+          transform: translateZ(0);
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+        
+        .fs-left-pane {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          background: ${isDark ? '#141414' : '#FFFFFF'};
+        }
+        
+        .fs-right-pane {
+          width: clamp(200px, 20vw, 300px);
+          display: flex;
+          flex-direction: column;
+          border-left: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          background: ${isDark ? '#0A0A0A' : '#FAFAFA'};
+        }
+        
+        .fs-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        
+        .fs-image-container {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .fs-image {
+          object-fit: contain !important;
+          width: 100% !important;
+          height: 100% !important;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
+          position: absolute;
+          top: 0;
+          left: 0;
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        
+        .fs-thumbnail-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          scrollbar-width: none;
+        }
+        
+        .fs-nav-btn {
+          position: absolute;
+          top: 50%;
+          margin-top: -24px;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: ${btnBg};
+          border: 1px solid ${btnBorder};
+          color: ${textMain};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(20px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          z-index: 10;
+        }
+        .fs-nav-left {
+          left: 24px;
+        }
+        .fs-nav-right {
+          right: 24px;
+        }
+        
+        .fs-thumbnail-list::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .fs-thumb {
+          width: 100%;
+          aspect-ratio: 4/3;
+          border-radius: 12px;
+          overflow: hidden;
+          cursor: pointer;
+          opacity: 0.5;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          box-sizing: border-box;
+          transform: scale(0.98);
+        }
+        
+        .fs-thumb:hover {
+          opacity: 0.8;
+        }
+        
+        .fs-thumb.active {
+          opacity: 1;
+          border: 3px solid ${A || '#0097B2'};
+          box-shadow: 0 10px 24px ${A ? A + '40' : 'rgba(0,151,178,0.25)'};
+          transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+          .fs-modal-box {
+            flex-direction: column;
+            height: 90vh;
+            border-radius: 24px 24px 0 0;
+            margin-top: auto;
+            align-self: flex-end;
+          }
+          
+          .fs-right-pane {
+            width: 100%;
+            height: clamp(100px, 15vh, 140px);
+            border-left: none;
+            border-top: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          }
+          
+          .fs-thumbnail-list {
+            flex-direction: row;
+            overflow-y: hidden;
+            overflow-x: auto;
+            padding: 16px 20px;
+            align-items: center;
+          }
+          
+          .fs-thumb {
+            width: clamp(80px, 25vw, 140px);
+            height: 100%;
+            flex-shrink: 0;
+          }
+          
+          .fs-header {
+            padding: 16px 20px;
+          }
+          
+          .fs-image-container {
+            padding: 0;
+          }
+          .fs-image {
+            padding: 12px;
+          }
+          .fs-nav-btn {
+            width: 40px;
+            height: 40px;
+            margin-top: -20px;
+          }
+          .fs-nav-left { left: 12px; }
+          .fs-nav-right { right: 12px; }
+        }
+      `}</style>
+
+      <motion.div 
+        className="fs-modal-box"
+        initial={{ y: 50, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 50, opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          height: '100%',
-          maxWidth: '1200px',
-          maxHeight: '80vh',
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'zoom-out',
-          borderRadius: 32,
-          overflow: 'hidden',
-          boxShadow: '0 50px 100px rgba(0,0,0,0.6)',
-          background: '#000'
-        }}
       >
-        <img
-          src={src}
-          onClick={onClose}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'block',
-            objectFit: 'cover'
-          }}
-          alt="Popup"
-        />
-        <div style={{ position: 'absolute', bottom: 30, right: 30, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: 100, pointerEvents: 'none' }}>
-          <p style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Click to close</p>
+        
+        {/* LEFT PANE - Image Viewer */}
+        <div className="fs-left-pane">
+          <div className="fs-header">
+            {hasNavigation ? (
+              <div style={{ background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+                {currentIndex + 1} <span style={{ opacity: 0.3, margin: '0 6px', color: textMain }}>/</span> <span style={{ color: textMain }}>{items.length}</span>
+              </div>
+            ) : <div />}
+            
+            <motion.button
+              onClick={onClose}
+              whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+              whileTap={{ scale: 0.92 }}
+              style={{ width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+            >
+              <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
+            </motion.button>
+          </div>
+
+          <div className="fs-image-container">
+            <AnimatePresence>
+              <motion.img
+                className="fs-image"
+                key={src}
+                src={src}
+                initial={{ opacity: 0, scale: 0.98, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'brightness(1)' }}
+                exit={{ opacity: 0, scale: 1.02, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                alt="Viewer"
+              />
+            </AnimatePresence>
+
+            {hasNavigation && (
+              <>
+                <motion.button
+                  className="fs-nav-btn fs-nav-left"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex - 1 + items.length) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} />
+                </motion.button>
+                <motion.button
+                  className="fs-nav-btn fs-nav-right"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex + 1) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} style={{ transform: 'rotate(180deg)' }} />
+                </motion.button>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* RIGHT PANE - Thumbnails */}
+        {hasNavigation && (
+          <div className="fs-right-pane">
+            <div className="fs-thumbnail-list">
+              {items.map((thumbSrc, idx) => (
+                <div
+                  key={idx}
+                  className={`fs-thumb ${idx === currentIndex ? 'active' : ''}`}
+                  onClick={() => onNavigate(idx)}
+                >
+                  <img src={thumbSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumbnail ${idx + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </motion.div>
     </motion.div>
   );
@@ -501,7 +759,7 @@ function PolicyItem({ req }) {
 const EventProduct = () => {
   const location = useLocation();
   const history = useHistory();
-  const { tokens: { A, B } } = useTheme();
+  const { tokens: { A, B, FG, M, S, W }, theme } = useTheme();
   const searchParams = new URLSearchParams(location.search);
   const eventIdFromQuery =
     searchParams.get("id") ||
@@ -530,7 +788,6 @@ const EventProduct = () => {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [photoVisible, setPhotoVisible] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [gridVisible, setGridVisible] = useState(false);
   const [guests, setGuests] = useState({
     adults: asNumber(preselectedGuestsFromState?.adults) ?? 1,
     children: asNumber(preselectedGuestsFromState?.children) ?? 0,
@@ -548,6 +805,40 @@ const EventProduct = () => {
   const handleBookNowRef = useRef(null);
   const [bookButtonArmed, setBookButtonArmed] = useState(Boolean(checkoutAfterGuestSelection));
   const [eligibleBookings, setEligibleBookings] = useState([]);
+  const [unavailablePopupOpen, setUnavailablePopupOpen] = useState(false);
+  const unavailableRedirectRef = useRef(false);
+
+  const earlyBirdDiscountRate = useMemo(() => {
+    if (!event?.earlyBirdDiscounts) return 0;
+    const daysInAdvance = moment(event.startDate || moment()).diff(moment().startOf('day'), 'days');
+    const validTiers = event.earlyBirdDiscounts.filter(tier => tier.isActive && tier.daysInAdvance <= daysInAdvance);
+    if (validTiers.length === 0) return 0;
+    return Math.max(...validTiers.map(t => t.percentage));
+  }, [event?.earlyBirdDiscounts, event?.startDate]);
+
+  const isEventUnavailable = (payload) => {
+    if (!payload || typeof payload !== "object") return true;
+    const status = String(
+      payload?.status ||
+      payload?.publishStatus ||
+      payload?.listingStatus ||
+      payload?.state ||
+      payload?.approvalStatus ||
+      ""
+    ).trim().toUpperCase();
+    if (["DISABLED", "DRAFT", "INACTIVE", "UNPUBLISHED", "REJECTED"].includes(status)) return true;
+    if (payload?.isActive === false || payload?.is_active === false) return true;
+    return false;
+  };
+
+  const showUnavailablePopupAndRedirect = () => {
+    setLoading(false);
+    unavailableRedirectRef.current = true;
+    setUnavailablePopupOpen(true);
+  };
+
+  // Dynamic browser tab title
+  useDocumentTitle(event?.title, "Events");
 
   const hasValidJwtToken = () => {
     if (typeof window === "undefined") return false;
@@ -584,6 +875,10 @@ const EventProduct = () => {
         }).catch(e => console.warn("❌ Error fetching event eligibility:", e));
 
         const payload = await getEventDetails(eventId);
+        if (isEventUnavailable(payload)) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
 
         const derivedId = payload?.eventId ?? payload?.event_id ?? payload?.id ?? payload?._id ?? eventId;
 
@@ -754,6 +1049,19 @@ const EventProduct = () => {
         }).catch(e => console.warn("Error fetching event reviews:", e));
       } catch (e) {
         if (!mounted) return;
+        const statusCode = Number(e?.response?.status);
+        const message = String(e?.response?.data?.message || e?.response?.data?.error || e?.message || "");
+        const isUnavailable =
+          /status\s*:\s*disabled/i.test(message) ||
+          /status\s*:\s*draft/i.test(message) ||
+          /no\s*longer\s*available/i.test(message) ||
+          /not\s*found/i.test(message) ||
+          statusCode === 404 ||
+          statusCode === 410;
+        if (isUnavailable) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
         const status = e?.response?.status;
         if (status === 401 || status === 403) {
           setError("Please login to view this event.");
@@ -772,6 +1080,43 @@ const EventProduct = () => {
       mounted = false;
     };
   }, [eventId]);
+
+  const handleUnavailablePopupClose = () => {
+    setUnavailablePopupOpen(false);
+    if (unavailableRedirectRef.current) {
+      unavailableRedirectRef.current = false;
+      history.replace("/");
+    }
+  };
+
+  const unavailablePopup = (
+    <AnimatePresence>
+      {unavailablePopupOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <motion.div
+            initial={{ y: 16, scale: 0.98, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 8, scale: 0.98, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ width: "100%", maxWidth: 420, background: S, color: FG, border: `1px solid ${B}`, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.28)", padding: 20 }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: FG }}>Event Unavailable</div>
+            <div style={{ fontSize: 14, lineHeight: 1.6, color: M }}>Event no longer available.</div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+              <button type="button" onClick={handleUnavailablePopupClose} style={{ border: "none", background: A, color: W, borderRadius: 10, padding: "10px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                Go to Home
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   useEffect(() => {
     if (!event) return;
@@ -1015,7 +1360,9 @@ const EventProduct = () => {
       console.log("🔑 Extracted razorpayOrderId:", razorpayOrderId);
 
       // Calculate total amount (in paise for Razorpay)
-      const totalAmount = quantity * pricePerTicket;
+      const baseAmount = quantity * pricePerTicket;
+      const discountAmount = earlyBirdDiscountRate > 0 ? baseAmount * (earlyBirdDiscountRate / 100) : 0;
+      const totalAmount = baseAmount - discountAmount;
       // Use amount from payment response if available, otherwise calculate
       const amountInPaise = payment?.amount || Math.round(totalAmount * 100);
 
@@ -1051,8 +1398,12 @@ const EventProduct = () => {
         receipt: [
           {
             title: `${currency} ${pricePerTicket.toFixed(2)} x ${numberOfGuests} ${numberOfGuests === 1 ? 'ticket' : 'tickets'}`,
-            content: `${currency} ${totalAmount.toFixed(2)}`,
+            content: `${currency} ${baseAmount.toFixed(2)}`,
           },
+          ...(discountAmount > 0 ? [{
+            title: `Early Bird Discount (${earlyBirdDiscountRate}%)`,
+            content: `- ${currency} ${discountAmount.toFixed(2)}`,
+          }] : []),
           {
             title: "Total",
             content: `${currency} ${totalAmount.toFixed(2)}`,
@@ -1189,12 +1540,16 @@ const EventProduct = () => {
     { title: "facebook", url: "https://www.facebook.com/ui8.net/" },
   ];
 
-  if (loading) {
+  if (loading && !unavailablePopupOpen) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
         <Loader />
       </div>
     );
+  }
+
+  if (unavailablePopupOpen) {
+    return <div className={styles.eventProduct}>{unavailablePopup}</div>;
   }
 
   if (!event) {
@@ -1218,14 +1573,55 @@ const EventProduct = () => {
   return (
     <div className={styles.eventProduct}>
       <LoginPromptModal visible={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
+      {unavailablePopup}
       {error && (
         <div style={{ padding: "1rem", textAlign: "center", backgroundColor: "#fee", color: "#c33" }}>
           <p>⚠️ {error}</p>
         </div>
       )}
-      {/* Hero Section with Title, Actions, and Gallery */}
-      <div className={cn("section-mb64", styles.hero)} style={{ zIndex: 50 }}>
-        <ProductNavbar top={100} left={60} />
+      <div className={cn("section-mb64", styles.hero)} style={{ zIndex: 50, position: "relative" }}>
+        <button
+          type="button"
+          className="premium-back-button"
+          onClick={() => history.goBack()}
+          aria-label="Go back"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <HeroShareFab
+          title={event?.title}
+          text={event?.description || ""}
+          url={window.location.href}
+          A={A}
+        />
+        {event?.earlyBirdDiscounts?.some(d => d.isActive) && (
+          <motion.div
+            className="early-bird-wrapper"
+            style={{ position: "absolute", bottom: 60, right: 60, zIndex: 100 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <motion.div
+              animate={{ y: [0, -12, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                background: theme === "light" ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.03)",
+                backdropFilter: "blur(12px)",
+                padding: "12px 24px",
+                borderRadius: 100,
+                border: `1px solid ${A}33`,
+                boxShadow: `0 10px 30px rgba(0,0,0,0.2), inset 0 0 20px ${A}11`,
+                whiteSpace: "nowrap"
+              }}
+            >
+              <Sparkles color={A} size={14} />
+              <EarlyBirdTicker discounts={event.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={FG} isDark={theme === "dark"} />
+            </motion.div>
+          </motion.div>
+        )}
         <div className={cn("container", styles.heroContainer)}>
           {/* Header with Title and Actions */}
           <div className={styles.heroHeader}>
@@ -1233,16 +1629,7 @@ const EventProduct = () => {
               <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 16 }}>
                 <h1 className={styles.heroTitle}>{event.title}</h1>
               </div>
-              <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-                <ShareButton
-                  title={event?.title}
-                  text={event?.description || ""}
-                  url={window.location.href}
-                  imageUrl={event?.coverImage || event?.gallery?.[0]}
-                  label="Share"
-                  size={15}
-                />
-              </div>
+
             </div>
             <div className={styles.heroActions}>
               <Actions />
@@ -1256,7 +1643,8 @@ const EventProduct = () => {
               <div
                 className={styles.heroMainImage}
                 onClick={() => {
-                  setGridVisible(true);
+                  setPhotoIndex(0);
+                  setPhotoVisible(true);
                 }}
               >
                 <img
@@ -1275,7 +1663,8 @@ const EventProduct = () => {
                       key={imgIdx}
                       className={styles.heroGridImage}
                       onClick={() => {
-                        setGridVisible(true);
+                        setPhotoIndex(imgIdx);
+                        setPhotoVisible(true);
                       }}
                     >
                       <img
@@ -1288,7 +1677,8 @@ const EventProduct = () => {
                           className={styles.showAllPhotos}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setGridVisible(true);
+                            setPhotoIndex(0);
+                            setPhotoVisible(true);
                           }}
                         >
                           <Icon name="image" size="20" />
@@ -1303,25 +1693,15 @@ const EventProduct = () => {
           )}
         </div>
 
-        <AnimatePresence>
-          {gridVisible && !photoVisible && (
-            <GridGallery
-              items={allImages}
-              onClose={() => setGridVisible(false)}
-              onSelect={(index) => {
-                setPhotoIndex(index);
-                setPhotoVisible(true);
-              }}
-              title={event?.title}
-              A={A}
-            />
-          )}
-        </AnimatePresence>
+
 
         <AnimatePresence>
           {photoVisible && (
             <FullScreenImage
               src={allImages[photoIndex] || (allImages.length > 0 ? allImages[0] : "/images/content/placeholder.jpg")}
+              items={allImages}
+              currentIndex={photoIndex}
+              onNavigate={setPhotoIndex}
               onClose={() => setPhotoVisible(false)}
             />
           )}
@@ -1354,7 +1734,8 @@ const EventProduct = () => {
                     key={i}
                     whileHover={{ scale: 0.98 }}
                     onClick={() => {
-                      setGridVisible(true);
+                      setPhotoIndex(i);
+                      setPhotoVisible(true);
                     }}
                     style={{ width: "clamp(300px, 25vw, 450px)", height: 400, borderRadius: 24, overflow: "hidden", flexShrink: 0, border: `1px solid ${B}`, cursor: "pointer" }}
                   >
@@ -1467,7 +1848,17 @@ const EventProduct = () => {
                 </div>
                 <div className={styles.eventDetailItem}>
                   <Icon name="star" size="18" />
-                  <span>Music</span>
+                  <span>
+                    {(() => {
+                      const category = event?.category || "Music";
+                      if (category === "Others") {
+                        return event?.categoryOtherDescription && event.categoryOtherDescription.trim() !== ""
+                          ? event.categoryOtherDescription
+                          : "Others";
+                      }
+                      return category;
+                    })()}
+                  </span>
                 </div>
                 {/* Guest/Attendee Selector */}
                 <div
@@ -1571,6 +1962,13 @@ const EventProduct = () => {
                 </div>
               )}
 
+              {earlyBirdDiscountRate > 0 && (
+                <div style={{ background: `${A}15`, border: `1px solid ${A}40`, borderRadius: 8, padding: "12px", display: "flex", alignItems: "center", gap: 8, marginBottom: 24, marginTop: -8 }}>
+                  <span style={{ fontSize: 16 }}>🏷</span>
+                  <span style={{ color: A, fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>Early Bird Discount Applied</span>
+                </div>
+              )}
+
               {/* Total Price and Book Button Section */}
               <div className={styles.bookingFooter}>
                 <div className={styles.totalPriceSection}>
@@ -1580,8 +1978,22 @@ const EventProduct = () => {
                       const selectedType = event.ticketTypes?.find(t => t.id === selectedTicketType) || event.ticketTypes?.[0] || { price: event.ticketPrice || 0 };
                       const totalGuests = guests.adults + guests.children;
                       const unitPrice = asNumber(selectedType?.price) ?? asNumber(event.ticketPrice) ?? 0;
-                      const totalPrice = totalGuests * unitPrice;
-                      return `${displayCurrency} ${totalPrice.toFixed(2)}`;
+                      const basePrice = totalGuests * unitPrice;
+                      const totalPrice = earlyBirdDiscountRate > 0 ? basePrice * (1 - earlyBirdDiscountRate / 100) : basePrice;
+                      
+                      return (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                          {earlyBirdDiscountRate > 0 && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                              <span style={{ fontSize: 13, textDecoration: "line-through", color: M }}>{displayCurrency} {basePrice.toFixed(2)}</span>
+                              <span style={{ fontSize: 11, background: `${A}20`, color: A, padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>{earlyBirdDiscountRate}% OFF</span>
+                            </div>
+                          )}
+                          <span style={{ color: earlyBirdDiscountRate > 0 ? (theme === "dark" ? "#4ADE80" : "#059669") : "inherit" }}>
+                            {displayCurrency} {totalPrice.toFixed(2)}
+                          </span>
+                        </div>
+                      );
                     })()}
                   </span>
                 </div>

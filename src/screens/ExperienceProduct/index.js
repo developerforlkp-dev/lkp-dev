@@ -3,7 +3,7 @@ import { useLocation, useParams, useHistory } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Info, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, Sparkles, Star } from "lucide-react";
+import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, Sparkles, Star, Compass, Share2 } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
 import ShareButton from "../../components/ShareButton";
@@ -13,6 +13,7 @@ import Icon from "../../components/Icon";
 import {
   getListing,
   getHost,
+  getHostContent,
   getLeadDetails,
   getListingReviews,
   getEligibleBookings,
@@ -21,10 +22,10 @@ import {
 import Rating from "../../components/Rating";
 import { buildExperienceUrl, extractExperienceIdFromSlugAndId } from "../../utils/experienceUrl";
 import Page from "../../components/Page";
-import ProductNavbar from "../../components/ProductNavbar";
 import PhotoView from "../../components/PhotoView";
-import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
+import { lockBodyScroll } from "../../utils/scrollLock";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -51,152 +52,151 @@ const getActivityImageUrl = (activity) => {
 
 /* ─── KINETIC BACKGROUND ────────────────────────── */
 function ExperienceBg({ progress, src }) {
-  const { tokens: { A, BG } } = useTheme();
+  const { tokens: { A, BG }, theme } = useTheme();
   const scale = useTransform(progress, [0, 1], [1, 1.2]);
-  const opacity = useTransform(progress, [0, 0.8], [0.6, 0]);
+  const opacity = useTransform(progress, [0, 0.8], [1, 0]);
   const blur = useTransform(progress, [0, 0.5], [0, 10]);
+
+  const isDark = theme === "dark";
+  const imgFilter = isDark
+    ? "brightness(0.45) contrast(1.1)"
+    : "brightness(0.9) contrast(1.05)";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
       <motion.div style={{ scale, opacity, filter: `blur(${blur}px)`, width: "100%", height: "100%", position: "relative" }}>
-        <img src={src || "/gallery/concert.png"} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.5) contrast(1.1)" }} alt="" />
+        <img src={src || "/gallery/concert.png"} style={{ width: "100%", height: "100%", objectFit: "cover", filter: imgFilter }} alt="" />
         <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 40%, ${A}44 0%, transparent 60%)` }} />
         <motion.div animate={{ opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 7, repeat: Infinity, delay: 2 }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 70% 60%, ${A}33 0%, transparent 50%)` }} />
       </motion.div>
-      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 60%, #080808 100%)` }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 40%, #000000CC 70%, #000000 100%)` }} />
     </div>
   );
 }
 
-/* ─── GRID GALLERY MODAL ────────────────────────── */
-const GridGallery = ({ items, onClose, onSelect, title, A }) => {
-  const galleryRef = useRef(null);
+/* ─── HERO SHARE FAB ─────────────────────────── */
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { tokens: { A } } = useTheme();
+  const glow = A || "#0097B2";
 
-  useEffect(() => {
-    const target = galleryRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
-  }, []);
+  const handleShare = async () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) { }
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      ref={galleryRef}
+    <motion.button
+      className="premium-share-fab"
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9990,
-        background: '#FFFFFF',
-        overflowY: 'auto',
-        padding: 'clamp(40px, 8vw, 100px) clamp(20px, 5vw, 60px)'
+        position: "absolute",
+        top: 96,
+        right: 60,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: "rgba(0,151,178,0.13)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${glow}55`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: hovered
+          ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 6px 24px rgba(0,0,0,0.4)`
+          : `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.28)`,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
       }}
     >
-      <div style={{ maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 60 }}
-        >
-          <div>
-            <p style={{ fontSize: 10, letterSpacing: '0.8em', textTransform: 'uppercase', color: A, fontWeight: 800, marginBottom: 20 }}>Visual Anthology</p>
-            <h2 style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, color: '#141414', lineHeight: 0.9, letterSpacing: '-0.04em' }} className="font-display">
-              {title}
-            </h2>
-          </div>
-          <motion.button
-            whileHover={{ rotate: 90, scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            style={{
-              background: 'rgba(0,0,0,0.03)',
-              border: `1px solid rgba(0,0,0,0.08)`,
-              color: '#000',
-              width: 'clamp(56px, 10vw, 80px)',
-              height: 'clamp(56px, 10vw, 80px)',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.3s',
-              flexShrink: 0,
-              marginLeft: 20
-            }}
-          >
-            <Plus size={32} style={{ transform: 'rotate(45deg)' }} color="#000" />
-          </motion.button>
-        </motion.div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))',
-          gap: 'clamp(16px, 3vw, 32px)',
-          gridAutoRows: 'clamp(250px, 40vh, 400px)'
-        }}>
-          {items.map((img, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: (i % 3) * 0.1 }}
-              whileHover={{ y: -10, scale: 1.02 }}
-              onClick={() => onSelect(i)}
-              style={{
-                borderRadius: 24,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                background: '#F4F4F4',
-                border: '1px solid rgba(0,0,0,0.05)',
-                position: 'relative',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
-              }}
-            >
-              <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 1 }}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '24px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: A, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Plus size={16} color="#FFF" />
-                  </div>
-                  <span style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700 }}>Expand View</span>
-                </div>
-              </motion.div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+      {/* Radial ripple on click */}
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      {/* Icon — always visible with unique animation */}
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      {/* Expandable label */}
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "✓ Copied!" : "Share Journey"}
+      </span>
+    </motion.button>
   );
 }
 
+
+
 /* ─── MODAL IMAGE POPUP ────────────────────────── */
-const FullScreenImage = ({ src, onClose }) => {
-  const modalRef = useRef(null);
+const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClose }) => {
+  const { theme, tokens: { BG, A } } = useTheme();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
+
+  const textMain = isDark ? '#FFF' : '#141414';
+  const pillBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)';
+  const pillBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const pillText = A || '#0097B2';
+
+  const btnBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+  const btnBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const btnHoverBg = isDark ? 'rgba(255,255,255,0.2)' : '#FFFFFF';
+
+  const hasNavigation = Array.isArray(items) && items.length > 1 && typeof onNavigate === "function";
 
   useEffect(() => {
-    const target = modalRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
+    return lockBodyScroll();
   }, []);
 
   return (
@@ -204,62 +204,284 @@ const FullScreenImage = ({ src, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      ref={modalRef}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(10px)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '5vh 5vw'
+        padding: 'clamp(16px, 4vw, 40px)',
       }}
       onClick={onClose}
     >
+      <style>{`
+        .fs-modal-box {
+          width: 100%;
+          max-width: 1400px;
+          height: 85vh;
+          background: ${isDark ? '#0A0A0A' : '#FFFFFF'};
+          border-radius: 32px;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+          display: flex;
+          overflow: hidden;
+          position: relative;
+          transform: translateZ(0);
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+        
+        .fs-left-pane {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          background: ${isDark ? '#141414' : '#FFFFFF'};
+        }
+        
+        .fs-right-pane {
+          width: clamp(200px, 20vw, 300px);
+          display: flex;
+          flex-direction: column;
+          border-left: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          background: ${isDark ? '#0A0A0A' : '#FAFAFA'};
+        }
+        
+        .fs-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        
+        .fs-image-container {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .fs-image {
+          object-fit: contain !important;
+          width: 100% !important;
+          height: 100% !important;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
+          position: absolute;
+          top: 0;
+          left: 0;
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        
+        .fs-thumbnail-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          scrollbar-width: none;
+        }
+        
+        .fs-nav-btn {
+          position: absolute;
+          top: 50%;
+          margin-top: -24px;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: ${btnBg};
+          border: 1px solid ${btnBorder};
+          color: ${textMain};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(20px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          z-index: 10;
+        }
+        .fs-nav-left {
+          left: 24px;
+        }
+        .fs-nav-right {
+          right: 24px;
+        }
+        
+        .fs-thumbnail-list::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .fs-thumb {
+          width: 100%;
+          aspect-ratio: 4/3;
+          border-radius: 12px;
+          overflow: hidden;
+          cursor: pointer;
+          opacity: 0.5;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          box-sizing: border-box;
+          transform: scale(0.98);
+        }
+        
+        .fs-thumb:hover {
+          opacity: 0.8;
+        }
+        
+        .fs-thumb.active {
+          opacity: 1;
+          border: 3px solid ${A || '#0097B2'};
+          box-shadow: 0 10px 24px ${A ? A + '40' : 'rgba(0,151,178,0.25)'};
+          transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+          .fs-modal-box {
+            flex-direction: column;
+            height: 90vh;
+            border-radius: 24px 24px 0 0;
+            margin-top: auto;
+            align-self: flex-end;
+          }
+          
+          .fs-right-pane {
+            width: 100%;
+            height: clamp(100px, 15vh, 140px);
+            border-left: none;
+            border-top: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          }
+          
+          .fs-thumbnail-list {
+            flex-direction: row;
+            overflow-y: hidden;
+            overflow-x: auto;
+            padding: 16px 20px;
+            align-items: center;
+          }
+          
+          .fs-thumb {
+            width: clamp(80px, 25vw, 140px);
+            height: 100%;
+            flex-shrink: 0;
+          }
+          
+          .fs-header {
+            padding: 16px 20px;
+          }
+          
+          .fs-image-container {
+            padding: 0;
+          }
+          .fs-image {
+            padding: 12px;
+          }
+          .fs-nav-btn {
+            width: 40px;
+            height: 40px;
+            margin-top: -20px;
+          }
+          .fs-nav-left { left: 12px; }
+          .fs-nav-right { right: 12px; }
+        }
+      `}</style>
+
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 30 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 30 }}
+        className="fs-modal-box"
+        initial={{ y: 50, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 50, opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          height: '100%',
-          maxWidth: '1200px',
-          maxHeight: '80vh',
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'zoom-out',
-          borderRadius: 32,
-          overflow: 'hidden',
-          boxShadow: '0 50px 100px rgba(0,0,0,0.6)',
-          background: '#000'
-        }}
       >
-        <img
-          src={src}
-          onClick={onClose}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'block',
-            objectFit: 'cover' // This fills the container, making it feel much "larger"
-          }}
-          alt="Popup"
-        />
-        {/* Subtle indicator that it's a popup */}
-        <div style={{ position: 'absolute', bottom: 30, right: 30, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: 100, pointerEvents: 'none' }}>
-          <p style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Click to close</p>
+
+        {/* LEFT PANE - Image Viewer */}
+        <div className="fs-left-pane">
+          <div className="fs-header">
+            {hasNavigation ? (
+              <div style={{ background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+                {currentIndex + 1} <span style={{ opacity: 0.3, margin: '0 6px', color: textMain }}>/</span> <span style={{ color: textMain }}>{items.length}</span>
+              </div>
+            ) : <div />}
+
+            <motion.button
+              onClick={onClose}
+              whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+              whileTap={{ scale: 0.92 }}
+              style={{ width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+            >
+              <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
+            </motion.button>
+          </div>
+
+          <div className="fs-image-container">
+            <AnimatePresence>
+              <motion.img
+                className="fs-image"
+                key={src}
+                src={src}
+                initial={{ opacity: 0, scale: 0.98, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'brightness(1)' }}
+                exit={{ opacity: 0, scale: 1.02, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                alt="Viewer"
+              />
+            </AnimatePresence>
+
+            {hasNavigation && (
+              <>
+                <motion.button
+                  className="fs-nav-btn fs-nav-left"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex - 1 + items.length) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} />
+                </motion.button>
+                <motion.button
+                  className="fs-nav-btn fs-nav-right"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex + 1) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} style={{ transform: 'rotate(180deg)' }} />
+                </motion.button>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* RIGHT PANE - Thumbnails */}
+        {hasNavigation && (
+          <div className="fs-right-pane">
+            <div className="fs-thumbnail-list">
+              {items.map((thumbSrc, idx) => (
+                <div
+                  key={idx}
+                  className={`fs-thumb ${idx === currentIndex ? 'active' : ''}`}
+                  onClick={() => onNavigate(idx)}
+                >
+                  <img src={thumbSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumbnail ${idx + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </motion.div>
     </motion.div>
   );
 };
 
-const EarlyBirdTicker = ({ discounts, A }) => {
+const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -286,18 +508,18 @@ const EarlyBirdTicker = ({ discounts, A }) => {
             fontSize: 10,
             letterSpacing: "0.3em",
             textTransform: "uppercase",
-            color: "#FFFFFF",
+            color: FG || "#FFFFFF",
             fontWeight: 800,
             whiteSpace: "nowrap",
             display: "block"
           }}
         >
-          <span style={{ opacity: 0.7 }}>Book</span>{" "}
+          <span style={{ opacity: 0.8 }}>Book</span>{" "}
           <span style={{ color: A, fontSize: 11, fontWeight: 900 }}>
             {discounts[index].daysInAdvance} Days
           </span>{" "}
-          <span style={{ opacity: 0.7 }}>Advance:</span>{" "}
-          <span style={{ color: "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+          <span style={{ opacity: 0.8 }}>Advance:</span>{" "}
+          <span style={{ color: isDark === false ? "#059669" : "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
             {discounts[index].percentage}% OFF
           </span>
         </motion.span>
@@ -321,6 +543,7 @@ const ExperienceProduct = () => {
   const [leadData, setLeadData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [unavailablePopupOpen, setUnavailablePopupOpen] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -345,9 +568,70 @@ const ExperienceProduct = () => {
   const [loading, setLoading] = useState(true);
   const [photoVisible, setPhotoVisible] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [gridVisible, setGridVisible] = useState(false);
+  const [activityPhotoVisible, setActivityPhotoVisible] = useState(false);
+  const [activityPhotoIndex, setActivityPhotoIndex] = useState(0);
+
+  const activityImages = useMemo(() => {
+    return (listing?.keyActivities || [])
+      .map(it => getActivityImageUrl(it))
+      .filter(Boolean);
+  }, [listing?.keyActivities]);
   const [eligibleBookings, setEligibleBookings] = useState([]);
-  const hostLeadUserId = hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
+  const unavailableRedirectRef = useRef(false);
+  const hostLeadUserId = hostData?.host?.leadUserId || hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
+  const leadIdForProfile = leadData?.leadId || leadData?.id || listing?.leadId || listing?.lead_id || listing?.host?.leadId || null;
+  const displayHostName =
+    [leadData?.firstName, leadData?.lastName].filter(Boolean).join(" ").trim() ||
+    [hostData?.host?.firstName, hostData?.host?.lastName].filter(Boolean).join(" ").trim() ||
+    [hostData?.firstName, hostData?.lastName].filter(Boolean).join(" ").trim() ||
+    hostData?.host?.displayName ||
+    hostData?.displayName ||
+    hostData?.host?.name ||
+    hostData?.name ||
+    "Host";
+  const hostPhone =
+    leadData?.phoneNumber ||
+    leadData?.contactNumber ||
+    leadData?.altPhoneNumber ||
+    hostData?.host?.phoneNumber ||
+    hostData?.phoneNumber ||
+    hostData?.host?.phone ||
+    hostData?.phone ||
+    hostData?.mobile ||
+    hostData?.contactNumber ||
+    listing?.host?.phoneNumber ||
+    listing?.host?.phone ||
+    listing?.host?.mobile ||
+    listing?.host?.contactNumber ||
+    "";
+  const hostEmail =
+    leadData?.email ||
+    leadData?.altEmail ||
+    hostData?.host?.email ||
+    hostData?.email ||
+    hostData?.emailAddress ||
+    listing?.host?.email ||
+    listing?.host?.emailAddress ||
+    "";
+
+  const isListingUnavailable = (payload) => {
+    if (!payload || typeof payload !== "object") return true;
+    const status = String(payload?.status || payload?.listingStatus || payload?.state || payload?.approvalStatus || "").trim().toUpperCase();
+    if (status === "DISABLED" || status === "DRAFT" || status === "INACTIVE" || status === "UNPUBLISHED" || status === "REJECTED") {
+      return true;
+    }
+    if (payload?.isActive === false || payload?.is_active === false) return true;
+    return false;
+  };
+
+  const showUnavailablePopupAndRedirect = () => {
+    setLoading(false);
+    unavailableRedirectRef.current = true;
+    setUnavailablePopupOpen(true);
+  };
+
+  // Dynamic browser tab title
+  useDocumentTitle(listing?.title, "Experiences");
 
   const handleUpdateAddonQuantity = (addon, delta) => {
     const addonId = addon.addonId || addon.id;
@@ -407,6 +691,11 @@ const ExperienceProduct = () => {
         const data = await getListing(id);
         if (!mounted) return;
 
+        if (isListingUnavailable(data)) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
+
         if (data) {
           setListing(data);
           const galleryImages = [];
@@ -427,7 +716,7 @@ const ExperienceProduct = () => {
 
           const hostId = data.hostId || data.host?.id || data.host?.hostId || data.leadUserId || data.host?.leadUserId;
           if (hostId) {
-            getHost(hostId).then(resp => {
+            getHostContent(hostId).then(resp => {
               if (mounted) {
                 setHostData(resp.host || resp);
               }
@@ -462,16 +751,43 @@ const ExperienceProduct = () => {
             getLeadDetails(leadId).then(resp => mounted && setLeadData(resp)).catch(e => console.warn(e));
           }
 
-          setLoading(false);
         }
+        setLoading(false);
       } catch (e) {
         console.error(e);
+        const errorMessage = String(
+          e?.response?.data?.message ||
+          e?.response?.data?.error ||
+          e?.message ||
+          ""
+        );
+        const statusCode = Number(e?.response?.status);
+        const isUnavailable =
+          /status\s*:\s*disabled/i.test(errorMessage) ||
+          /status\s*:\s*draft/i.test(errorMessage) ||
+          /no\s*longer\s*available/i.test(errorMessage) ||
+          /listing\s*not\s*found/i.test(errorMessage) ||
+          /not\s*found/i.test(errorMessage) ||
+          statusCode === 404 ||
+          statusCode === 410;
+        if (isUnavailable) {
+          showUnavailablePopupAndRedirect();
+          return;
+        }
         setLoading(false);
       }
     };
     load();
     return () => { mounted = false; };
-  }, [id]);
+  }, [history, id]);
+
+  const handleUnavailablePopupClose = () => {
+    setUnavailablePopupOpen(false);
+    if (unavailableRedirectRef.current) {
+      unavailableRedirectRef.current = false;
+      history.replace("/");
+    }
+  };
 
   const heroRef = useRef(null);
   const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -507,8 +823,13 @@ const ExperienceProduct = () => {
 
   const displayTags = listing?.tags || [];
   const navigateToHostProfile = () => {
-    if (!hostLeadUserId) return;
-    history.push(`/host-profile?id=${hostLeadUserId}`);
+    const profileId = leadIdForProfile || hostLeadUserId;
+    if (!profileId) return;
+    const query = new URLSearchParams();
+    query.set("id", String(profileId));
+    if (leadIdForProfile) query.set("leadId", String(leadIdForProfile));
+    if (hostLeadUserId) query.set("leadUserId", String(hostLeadUserId));
+    history.push(`/host-profile?${query.toString()}`);
   };
 
   return (
@@ -518,9 +839,8 @@ const ExperienceProduct = () => {
         <section ref={heroRef} className="hero-section" style={{ position: "relative", minHeight: "110vh", overflow: "hidden", display: "flex", alignItems: "center", zIndex: 50 }}>
           <ExperienceBg progress={heroProgress} src={formatImageUrl(listing?.coverPhotoUrl)} />
           <div className="hero-container" style={{ maxWidth: 1400, margin: "0 auto", padding: "0 60px", position: "relative", zIndex: 10, width: "100%" }}>
-            <ProductNavbar top={100} left={60} />
             <motion.div style={{ opacity: fade, y: textY }}>
-              <p style={{ fontSize: 12, letterSpacing: "1em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 40, fontFamily: 'monospace' }}>The Narrative Experience</p>
+              <p className="hero-subtitle" style={{ fontSize: 12, letterSpacing: "1em", textTransform: "uppercase", color: A, fontWeight: 800, marginBottom: 40, fontFamily: 'monospace' }}>The Narrative Experience</p>
               <Rev>
                 <h1 style={{ fontSize: "clamp(4.5rem, 12vw, 10rem)", fontWeight: 900, lineHeight: 0.85, color: "#FFFFFF", marginBottom: 40, letterSpacing: "-0.04em" }} className="font-display">
                   {listing?.title}
@@ -528,39 +848,31 @@ const ExperienceProduct = () => {
               </Rev>
               <Rev delay={0.2}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60 }} className="hero-stats">
-                  <div style={{ borderLeft: "2px solid #0097B2", paddingLeft: 24 }}>
-                    <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#0097B2", marginBottom: 20, fontWeight: 700 }}>01. Atmospherics</p>
-                    <p style={{ fontSize: 18, color: "#D4D4D4", lineHeight: 1.6, fontWeight: 400 }}>{listing?.experienceType || "A multisensory odyssey that blurs the line between perception and possibility."}</p>
+                  <div style={{ borderLeft: "2px solid #0097B2", paddingLeft: 24 }} className="hero-stat-box">
+                    <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#0097B2", marginBottom: 20, fontWeight: 700 }} className="hero-stat-num">01. Atmospherics</p>
+                    <p style={{ fontSize: 18, color: "#D4D4D4", lineHeight: 1.6, fontWeight: 400 }} className="hero-stat-desc">{listing?.experienceType || "A multisensory odyssey that blurs the line between perception and possibility."}</p>
                   </div>
-                  <div style={{ borderLeft: "2px solid #0097B2", paddingLeft: 24 }}>
-                    <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#0097B2", marginBottom: 20, fontWeight: 700 }}>02. Interaction</p>
-                    <p style={{ fontSize: 18, color: "#D4D4D4", lineHeight: 1.6, fontWeight: 400 }}>{listing?.activityType || "High-fidelity touchpoints that respond to your presence in real-time."}</p>
+                  <div style={{ borderLeft: "2px solid #0097B2", paddingLeft: 24 }} className="hero-stat-box">
+                    <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#0097B2", marginBottom: 20, fontWeight: 700 }} className="hero-stat-num">02. Interaction</p>
+                    <p style={{ fontSize: 18, color: "#D4D4D4", lineHeight: 1.6, fontWeight: 400 }} className="hero-stat-desc">{listing?.activityType || "High-fidelity touchpoints that respond to your presence in real-time."}</p>
                   </div>
                 </div>
               </Rev>
             </motion.div>
           </div>
-          {/* SHARE BUTTON — bottom-left of hero */}
-          <motion.div
-            style={{ position: "absolute", bottom: 60, left: 60, opacity: fade, zIndex: 20 }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
+          <button
+            type="button"
+            className="premium-back-button"
+            onClick={() => history.goBack()}
+            aria-label="Go back"
           >
-            <ShareButton
-              title={listing?.title}
-              text={listing?.description || listing?.aboutListing || ""}
-              url={window.location.href}
-              imageUrl={formatImageUrl(listing?.coverPhotoUrl)}
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                backdropFilter: "blur(16px)",
-                border: `1.5px solid rgba(255,255,255,0.18)`,
-                color: "#FFFFFF",
-              }}
-              size={16}
-            />
-          </motion.div>
+            <ChevronLeft size={20} />
+          </button>
+          <HeroShareFab
+            title={listing?.title}
+            text={listing?.description || listing?.aboutListing || ""}
+            url={window.location.href}
+          />
           {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
             <motion.div
               className="early-bird-wrapper"
@@ -575,7 +887,7 @@ const ExperienceProduct = () => {
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
-                  background: "rgba(255, 255, 255, 0.03)",
+                  background: theme === "light" ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.03)",
                   backdropFilter: "blur(12px)",
                   padding: "12px 24px",
                   borderRadius: 100,
@@ -585,7 +897,7 @@ const ExperienceProduct = () => {
                 }}
               >
                 <Sparkles color={A} size={14} />
-                <EarlyBirdTicker discounts={listing.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} />
+                <EarlyBirdTicker discounts={listing.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={FG} isDark={theme === "dark"} />
               </motion.div>
             </motion.div>
           )}
@@ -594,7 +906,7 @@ const ExperienceProduct = () => {
 
 
         {/* GALLERY SECTION */}
-        <section className="gallery-section" style={{ background: W, padding: "80px 0 60px", overflow: "hidden", display: "flex" }}>
+        <section className="gallery-section" style={{ background: W, padding: "80px 0 60px", overflow: "hidden", display: "flex", position: "relative" }}>
           {(() => {
             const baseItemsLocal = galleryItems.length > 0 ? galleryItems : ["/images/content/placeholder.jpg"];
             let filledItems = [...baseItemsLocal];
@@ -614,7 +926,8 @@ const ExperienceProduct = () => {
                     key={i}
                     whileHover={{ scale: 0.98 }}
                     onClick={() => {
-                      setGridVisible(true);
+                      setPhotoIndex(i % (galleryItems.length || 1));
+                      setPhotoVisible(true);
                     }}
                     style={{ width: "clamp(300px, 25vw, 450px)", height: 400, borderRadius: 24, overflow: "hidden", flexShrink: 0, border: `1px solid ${B}`, cursor: "pointer" }}
                     className="gallery-item"
@@ -626,25 +939,45 @@ const ExperienceProduct = () => {
             );
           })()}
 
-          <AnimatePresence>
-            {gridVisible && !photoVisible && (
-              <GridGallery
-                items={galleryItems.length > 0 ? galleryItems : ["/images/content/placeholder.jpg"]}
-                onClose={() => setGridVisible(false)}
-                onSelect={(index) => {
-                  setPhotoIndex(index);
-                  setPhotoVisible(true);
-                }}
-                title={listing?.title}
-                A={A}
-              />
-            )}
-          </AnimatePresence>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setPhotoIndex(0);
+              setPhotoVisible(true);
+            }}
+            style={{
+              position: "absolute",
+              bottom: "80px",
+              right: "40px",
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: W,
+              color: FG,
+              border: `1px solid ${B}`,
+              padding: "12px 24px",
+              borderRadius: "100px",
+              fontSize: "13px",
+              fontWeight: 700,
+              boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+              cursor: "pointer"
+            }}
+          >
+            <Camera size={16} />
+            See all photos
+          </motion.button>
+
+
 
           <AnimatePresence>
             {photoVisible && (
               <FullScreenImage
                 src={galleryItems[photoIndex] || (galleryItems.length > 0 ? galleryItems[0] : "/images/content/placeholder.jpg")}
+                items={galleryItems.length > 0 ? galleryItems : ["/images/content/placeholder.jpg"]}
+                currentIndex={photoIndex}
+                onNavigate={setPhotoIndex}
                 onClose={() => setPhotoVisible(false)}
               />
             )}
@@ -753,7 +1086,7 @@ const ExperienceProduct = () => {
                             transition: "0.3s"
                           }}
                         >
-                          <div style={{ background: AL, width: 64, height: 64, borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${B}` }}>
+                          <div className="addon-img" style={{ background: AL, width: 64, height: 64, borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${B}` }}>
                             {addonImage ? (
                               <img
                                 src={formatImageUrl(addonImage)}
@@ -768,16 +1101,17 @@ const ExperienceProduct = () => {
                               <Plus size={24} color={A} />
                             )}
                           </div>
-                          <div style={{ flex: 1 }}>
+                          <div className="addon-content" style={{ flex: 1 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} className="addon-header">
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <div className="addon-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{addon.title}</p>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 12 }} className="addon-actions">
-                                <span style={{ fontSize: 10, fontWeight: 700, color: pricingType === "Group" ? "#d14343" : A, background: pricingType === "Group" ? "#d1434322" : AL, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>{pricingType}</span>
+                                <span className="addon-badge" style={{ fontSize: 10, fontWeight: 700, color: pricingType === "Group" ? "#d14343" : A, background: pricingType === "Group" ? "#d1434322" : AL, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>{pricingType}</span>
                                 {isSelected ? (
                                   pricingType === "Group" ? (
                                     <button
+                                      className="addon-btn addon-btn-remove"
                                       onClick={() => handleUpdateAddonQuantity(addon, -1)}
                                       style={{
                                         background: AL,
@@ -798,7 +1132,7 @@ const ExperienceProduct = () => {
                                       Remove
                                     </button>
                                   ) : (
-                                    <div style={{ display: "flex", alignItems: "center", gap: 16, background: S, borderRadius: 100, padding: "0 12px", height: "36px", border: `1px solid ${B}` }}>
+                                    <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 16, background: S, borderRadius: 100, padding: "0 12px", height: "36px", border: `1px solid ${B}` }}>
                                       <button
                                         onClick={() => handleUpdateAddonQuantity(addon, -1)}
                                         style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 4, color: A }}
@@ -818,6 +1152,7 @@ const ExperienceProduct = () => {
                                   )
                                 ) : (
                                   <button
+                                    className="addon-btn addon-btn-add"
                                     onClick={() => handleUpdateAddonQuantity(addon, 1)}
                                     style={{
                                       background: S,
@@ -840,9 +1175,9 @@ const ExperienceProduct = () => {
                                 )}
                               </div>
                             </div>
-                            <p style={{ fontSize: 14, color: M, lineHeight: 1.6 }}>{addon.briefDescription || addon.description}</p>
+                            <p className="addon-desc" style={{ fontSize: 14, color: M, lineHeight: 1.6 }}>{addon.briefDescription || addon.description}</p>
                             {addon.price > 0 && (
-                              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+                              <div className="addon-price" style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
                                 <p style={{ fontSize: 13, fontWeight: 700, color: A }}>+ ₹{addon.price}</p>
                                 {isSelected && (selectedAddOns.find(a => (a.addonId || a.id) === addonId)?.quantity || 1) > 1 && (
                                   <p style={{ fontSize: 12, fontWeight: 500, color: M }}>
@@ -885,20 +1220,32 @@ const ExperienceProduct = () => {
                       const activityImageUrl = getActivityImageUrl(it);
                       return (
                         <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 + 0.4 }}
-                          whileHover={{ x: 10 }}
                           className="activity-item"
                           style={{ display: "flex", gap: 32, alignItems: "flex-start", zIndex: 1, cursor: "default", width: "100%" }}>
-                          <div style={{ width: 15, height: 15, borderRadius: "50%", background: W, border: `3px solid ${A}`, marginTop: 6, flexShrink: 0 }} />
-                          <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flex: 1 }}>
+                          {/* ── STATIC LAYER: circular node stays fixed, never receives hover transform ── */}
+                          <div style={{ width: 15, height: 15, borderRadius: "50%", background: W, border: `3px solid ${A}`, marginTop: 6, flexShrink: 0, position: "relative", zIndex: 2 }} />
+                          {/* ── ANIMATED LAYER: only the content card slides on hover ── */}
+                          <motion.div
+                            whileHover={{ x: 10 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            style={{ display: "flex", gap: 24, alignItems: "flex-start", flex: 1, willChange: "transform" }}
+                          >
                             {activityImageUrl && (
-                              <div style={{ width: 120, height: 90, borderRadius: 16, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S }}>
+                              <div
+                                style={{ width: 120, height: 90, borderRadius: 16, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S, cursor: "pointer" }}
+                                onClick={() => { 
+                                  const idx = activityImages.indexOf(activityImageUrl);
+                                  setActivityPhotoIndex(idx !== -1 ? idx : 0);
+                                  setActivityPhotoVisible(true); 
+                                }}
+                              >
                                 <img
                                   src={activityImageUrl}
                                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                   alt={it.name}
                                   onError={(e) => {
                                     e.target.onerror = null;
-                                    e.target.src = "/images/content/photo-1.1.jpg";
+                                    e.target.src = "";
                                   }}
                                 />
                               </div>
@@ -917,7 +1264,7 @@ const ExperienceProduct = () => {
                                 </div>
                               )}
                             </div>
-                          </div>
+                          </motion.div>
                         </motion.div>
                       );
                     })}
@@ -940,15 +1287,12 @@ const ExperienceProduct = () => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }} className="prep-grid">
               <Rev delay={0.1}>
                 <h3 style={{ fontSize: "clamp(2rem,3vw,2.5rem)", fontWeight: 700, color: FG, marginBottom: 32 }}>Where it All Happens</h3>
-                <div style={{ background: S, border: `1px solid ${B}`, padding: 40, display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <MapPin size={20} color={A} />
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: FG }}>{listing?.meetingLocationName || "The Grand Atrium"}</p>
-                      <p style={{ fontSize: 13, color: M, marginTop: 4 }}>{listing?.meetingAddress || "Arrive via Gate 3 (Private Entrance). Our concierge will meet you at the inner courtyard."}</p>
-                    </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <MapPin size={24} color={A} />
+                    <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{listing?.meetingLocationName || "The Grand Atrium"}</p>
                   </div>
-                  <div style={{ background: W, border: `1px solid ${B}`, height: 200, marginTop: 16, position: "relative", overflow: "hidden" }}>
+                  <div style={{ background: W, border: `1px solid ${B}`, height: 320, position: "relative", overflow: "hidden", borderRadius: 16 }}>
                     {listing?.meetingLatitude && listing?.meetingLongitude ? (
                       <iframe
                         width="100%"
@@ -1022,21 +1366,29 @@ const ExperienceProduct = () => {
                     fontWeight: 700,
                     color: FG,
                     marginBottom: 8,
-                    cursor: hostLeadUserId ? "pointer" : "default",
-                    textDecoration: hostLeadUserId ? "underline" : "none",
+                    cursor: (leadIdForProfile || hostLeadUserId) ? "pointer" : "default",
+                    textDecoration: (leadIdForProfile || hostLeadUserId) ? "underline" : "none",
                     textDecorationThickness: "2px",
                     textUnderlineOffset: "5px"
                   }}
-                  title={hostLeadUserId ? "View all listings by this host" : undefined}
+                  title={(leadIdForProfile || hostLeadUserId) ? "View host profile" : undefined}
                 >
-                  {hostData?.firstName} {hostData?.lastName || ""}
+                  {displayHostName}
                 </h3>
                 <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: A, marginBottom: 24 }}>Host</p>
-                <p style={{ fontSize: 13, color: M, lineHeight: 1.8, flex: 1 }}>{hostData?.about || "An expert guide who will personally lead the Experience group through the unseen veins of the venue, offering context and narrative to every installation."}</p>
-                {leadData && (
+                <p style={{ fontSize: 13, color: M, lineHeight: 1.8, flex: 1 }}>{hostData?.host?.bio || hostData?.bio || hostData?.about || ""}</p>
+                {(hostPhone || hostEmail) && (
                   <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12, borderTop: `1px solid ${B}`, paddingTop: 24 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, color: FG, fontSize: 13 }}><Phone size={14} color={A} /> {leadData.contactNumber}</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, color: FG, fontSize: 13 }}><Info size={14} color={A} /> {leadData.email}</div>
+                    {hostPhone ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, color: FG, fontSize: 13 }}>
+                        <Phone size={14} color={A} /> {hostPhone}
+                      </div>
+                    ) : null}
+                    {hostEmail ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, color: FG, fontSize: 13 }}>
+                        <Mail size={14} color={A} /> {hostEmail}
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -1076,7 +1428,136 @@ const ExperienceProduct = () => {
           title="More Experiences You May Like"
         />
       </main>
+      <AnimatePresence>
+        {unavailablePopupOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 10000,
+              background: "rgba(0,0,0,0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+            }}
+          >
+            <motion.div
+              initial={{ y: 16, scale: 0.98, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 8, scale: 0.98, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              style={{
+                width: "100%",
+                maxWidth: 420,
+                background: S,
+                color: FG,
+                border: `1px solid ${B}`,
+                borderRadius: 16,
+                boxShadow: "0 24px 64px rgba(0,0,0,0.28)",
+                padding: 20,
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: FG }}>
+                Experience Unavailable
+              </div>
+              <div style={{ fontSize: 14, lineHeight: 1.6, color: M }}>
+                Experience no longer available.
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+                <button
+                  type="button"
+                  onClick={handleUnavailablePopupClose}
+                  style={{
+                    border: "none",
+                    background: A,
+                    color: W,
+                    borderRadius: 10,
+                    padding: "10px 16px",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  Go to Home
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {activityPhotoVisible && (
+          <FullScreenImage
+            src={activityImages[activityPhotoIndex] || "/images/content/placeholder.jpg"}
+            items={activityImages.length > 0 ? activityImages : ["/images/content/placeholder.jpg"]}
+            currentIndex={activityPhotoIndex}
+            onNavigate={setActivityPhotoIndex}
+            onClose={() => setActivityPhotoVisible(false)}
+          />
+        )}
+      </AnimatePresence>
       <style>{`
+        /* Premium readability and visibility overrides for the Hero Section */
+        .hero-section {
+          background-color: var(--BG, #080808) !important;
+        }
+
+        /* LIGHT THEME SPECIFIC STYLES */
+        [data-theme='light'] .hero-section h1.font-display {
+          color: #20242C !important;
+          -webkit-text-fill-color: #20242C !important;
+          text-shadow: none !important;
+          -webkit-text-stroke: 1px #FFFFFF !important;
+        }
+        [data-theme='light'] .hero-section .hero-subtitle {
+          color: #008CA5 !important;
+          -webkit-text-fill-color: #008CA5 !important;
+          text-shadow: none !important;
+        }
+        [data-theme='light'] .hero-section .hero-stats .hero-stat-num {
+          color: #008CA5 !important;
+          -webkit-text-fill-color: #008CA5 !important;
+          text-shadow: none !important;
+        }
+        [data-theme='light'] .hero-section .hero-stats .hero-stat-desc {
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF !important;
+          text-shadow: none !important;
+        }
+        [data-theme='light'] .hero-section .hero-stats .hero-stat-box {
+          border-left-color: #0097B2 !important;
+        }
+
+        /* DARK THEME SPECIFIC STYLES */
+        [data-theme='dark'] .hero-section h1.font-display {
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF !important;
+          text-shadow: none !important;
+          -webkit-text-stroke: 1px #FFFFFF !important;
+        }
+        [data-theme='dark'] .hero-section .hero-subtitle {
+          color: var(--A, #0097B2) !important;
+          -webkit-text-fill-color: var(--A, #0097B2) !important;
+          text-shadow: none !important;
+        }
+        [data-theme='dark'] .hero-section .hero-stats .hero-stat-num {
+          color: var(--A, #0097B2) !important;
+          -webkit-text-fill-color: var(--A, #0097B2) !important;
+          text-shadow: none !important;
+        }
+        [data-theme='dark'] .hero-section .hero-stats .hero-stat-desc {
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF !important;
+          text-shadow: none !important;
+        }
+        [data-theme='dark'] .hero-section .hero-stats .hero-stat-box {
+          border-left-color: var(--A, #0097B2) !important;
+        }
+
         @media(max-width: 1024px) {
           .hero-container { padding: 0 40px !important; }
           .details-section, .prep-section, .policies-section { padding: 60px 24px !important; }
@@ -1087,7 +1568,7 @@ const ExperienceProduct = () => {
         }
 
         @media(max-width: 900px) { 
-          main { padding-bottom: 100px !important; }
+          main { padding-bottom: calc(120px + env(safe-area-inset-bottom)) !important; }
           .hero-stats { grid-template-columns: 1fr !important; gap: 40px !important; } 
           .gal-grid { grid-template-columns: 1fr 1fr !important; grid-auto-rows: 240px !important; gap: 8px !important; }
           .details-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
@@ -1113,11 +1594,55 @@ const ExperienceProduct = () => {
           .overview-card { padding: 20px 12px !important; }
           .overview-card p:first-of-type { font-size: 16px !important; }
           .details-inner { padding: 24px 16px !important; margin: 24px -16px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; }
-          .activity-item { gap: 16px !important; margin-bottom: 32px !important; }
-          .activity-item > div:first-child { display: none; }
-          .activity-item > div:last-child { flex-direction: column !important; gap: 12px !important; }
-          .activity-item img { width: 100% !important; height: 180px !important; }
-          .activity-item > div:last-child > div:first-child { width: 100% !important; height: 180px !important; }
+          .activity-item { gap: 12px !important; margin-bottom: 24px !important; }
+          .activity-item > div:first-child { 
+            width: 10px !important; 
+            height: 10px !important; 
+            margin-top: 8px !important; 
+            border-width: 2px !important;
+            display: block !important; 
+          }
+          .activity-item > div:last-child { 
+            flex-direction: row !important; 
+            gap: 16px !important; 
+            padding: 12px !important; 
+            border-radius: 16px !important;
+            background: #fff !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04) !important;
+            border: 1px solid #eaeaea !important;
+            align-items: center !important;
+          }
+          .activity-item img { width: 100% !important; height: 100% !important; }
+          .activity-item > div:last-child > div:first-child { 
+            /* This targets either the image or the text wrapper if image is missing. But usually all have images or none. */
+            width: 64px !important; 
+            height: 64px !important; 
+            border-radius: 10px !important; 
+          }
+          .activity-item > div:last-child > div:last-child { 
+            gap: 2px !important; 
+          }
+          .activity-item > div:last-child > div:last-child > div:first-child { 
+            gap: 4px !important; 
+            flex-direction: column !important; 
+            align-items: flex-start !important; 
+          }
+          .activity-item > div:last-child > div:last-child > div:first-child > span:first-child { 
+            font-size: 10px !important; 
+          }
+          .activity-item > div:last-child > div:last-child > div:first-child > span:last-child { 
+            font-size: 14px !important; 
+            line-height: 1.2 !important; 
+          }
+          .activity-item > div:last-child > div:last-child > p { 
+            font-size: 12px !important; 
+            line-height: 1.4 !important; 
+            margin-top: 4px !important; 
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+          }
           .prep-grid { gap: 32px !important; }
           .prep-grid h3 { font-size: 1.8rem !important; margin-bottom: 20px !important; }
           .host-grid { gap: 32px !important; }
@@ -1127,12 +1652,95 @@ const ExperienceProduct = () => {
           .gallery-item { height: 240px !important; width: 200px !important; }
           .early-bird-wrapper { bottom: 20px !important; right: 20px !important; }
           
+          /* Global bottom safe area for sticky Reserve button removed from here, applied to main */
+
           /* Addons mobile */
-          .addon-item { align-items: flex-start !important; padding: 16px !important; gap: 16px !important; }
-          .addon-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
-          .addon-actions { width: 100%; justify-content: flex-start !important; }
+          .addon-item { 
+            align-items: center !important; 
+            padding: 16px 12px !important; 
+            gap: 16px !important; 
+            border-radius: 20px !important;
+          }
+          .addon-img { 
+            width: 76px !important;
+            height: 76px !important;
+            border-radius: 14px !important;
+            aspect-ratio: 1/1 !important;
+            flex-shrink: 0 !important;
+          }
+          .addon-content {
+            display: grid !important;
+            grid-template-areas: 
+              "title title"
+              "badge badge"
+              "price btn";
+            grid-template-columns: 1fr auto !important;
+            row-gap: 6px !important;
+            column-gap: 8px !important;
+            align-items: center !important;
+            flex: 1 !important;
+          }
+          .addon-header { 
+            display: contents !important; 
+          }
+          .addon-title { 
+            grid-area: title !important;
+            margin-bottom: 2px !important;
+          }
+          .addon-title p { 
+            font-size: 15px !important;
+            line-height: 1.2 !important;
+            letter-spacing: -0.02em !important;
+          }
+          .addon-actions { 
+            display: contents !important;
+          }
+          .addon-badge { 
+            grid-area: badge !important;
+            justify-self: start !important;
+            font-size: 9px !important;
+            padding: 4px 8px !important;
+            border-radius: 100px !important;
+            letter-spacing: 0.05em !important;
+          }
+          .addon-btn, .addon-counter { 
+            grid-area: btn !important;
+            justify-self: end !important;
+            height: 34px !important;
+          }
+          .addon-btn {
+            padding: 0 18px !important;
+            font-size: 12px !important;
+            border-radius: 100px !important;
+          }
+          .addon-counter {
+             height: 34px !important;
+             padding: 0 8px !important;
+             gap: 12px !important;
+          }
+          .addon-counter button {
+             padding: 4px !important;
+          }
+          .addon-counter span {
+             font-size: 13px !important;
+             min-width: 16px !important;
+          }
+          .addon-desc { 
+            display: none !important; 
+          }
+          .addon-price { 
+            grid-area: price !important;
+            margin-top: 0 !important;
+            justify-content: flex-start !important;
+          }
+          .addon-price p:first-child {
+            font-size: 14px !important;
+            letter-spacing: -0.01em !important;
+          }
         }
       `}</style>
+
+
     </Page>
   );
 };
@@ -1197,12 +1805,22 @@ function PolicyItem({ req }) {
             <div style={{ padding: "0 16px 24px" }}>
               <div style={{ padding: "20px", background: AL, borderRadius: 16, border: `1px solid ${B}` }}>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0 }}>
-                  {questions.map((q, j) => (
-                    <li key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
-                      <span style={{ fontSize: 14, color: FG, lineHeight: 1.4, fontWeight: 500 }}>{q.title || q.question?.title}</span>
-                    </li>
-                  ))}
+                  {questions.map((q, j) => {
+                    const questionTitle = q.title || q.question?.title;
+                    const answerText = q.answer?.valueText || q.valueText;
+
+                    return (
+                      <li key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                        <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 14, color: FG, lineHeight: 1.4, fontWeight: 500 }}>{questionTitle}</span>
+                          {answerText && (
+                            <span style={{ fontSize: 14, color: M, lineHeight: 1.4 }}>{answerText}</span>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>
@@ -1288,6 +1906,12 @@ function ReviewsItem({ reviews, summary }) {
                         </div>
                         <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>{rev.customerName || rev.author}</span>
                       </div>
+                      {rev?.vendorResponse && (
+                        <div style={{ marginTop: 16, padding: "12px 16px", background: AL, borderLeft: `3px solid ${A}`, borderRadius: "0 8px 8px 0" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Response from Host</div>
+                          <p style={{ fontSize: 13, color: M, margin: 0, lineHeight: 1.5 }}>{rev.vendorResponse}</p>
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (
@@ -1665,7 +2289,7 @@ function ExperiencePolicies({ listing }) {
 }
 
 function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [], onReviewSubmitted }) {
-  const { tokens: { A, FG, M, B, W, S, BG } } = useTheme();
+  const { tokens: { A, FG, M, B, W, S, BG, AL } } = useTheme();
   const routerHistory = useHistory();
 
   const normalizedReviews = useMemo(() => {
@@ -1808,6 +2432,12 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
                   <p style={{ fontSize: 13, color: FG, lineHeight: 1.6, fontStyle: "italic", opacity: 0.9 }}>
                     &ldquo;{rev.comment || rev.text}&rdquo;
                   </p>
+                  {rev?.vendorResponse && (
+                    <div style={{ marginTop: 12, padding: "12px 16px", background: AL, borderLeft: `3px solid ${A}`, borderRadius: "0 8px 8px 0" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Response from Host</div>
+                      <p style={{ fontSize: 13, color: M, margin: 0, lineHeight: 1.5 }}>{rev.vendorResponse}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </Rev>
@@ -1833,3 +2463,4 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
 }
 
 export default ExperienceProduct;
+

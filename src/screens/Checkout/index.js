@@ -22,6 +22,53 @@ const formatImageUrl = (url) => {
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${encodedPath}${queryPart ? `?${queryPart}` : ""}`;
 };
 
+const formatInr = (amount) => `INR ${Number(amount || 0).toFixed(2)}`;
+
+const normalizeTaxTitle = (title, taxRate = null) => {
+  if (!/^tax/i.test(String(title || ""))) return title;
+  const rateLabel = taxRate && Number(taxRate) > 0 ? ` (${Number(taxRate).toFixed(2)}%)` : "";
+  return `Taxes${rateLabel}`;
+};
+
+const reorderPriceRows = (rows, computedTotal = null) => {
+  const primaryRows = [];
+  const addOnRows = [];
+  const discountRows = [];
+  const taxRows = [];
+  const trailingRows = [];
+
+  rows.forEach((row) => {
+    const title = String(row?.title || "");
+    if (/add[\s-]?ons?/i.test(title)) {
+      addOnRows.push({ ...row, title: "Add-ons Total" });
+      return;
+    }
+    if (/discount/i.test(title)) {
+      discountRows.push(row);
+      return;
+    }
+    if (/^tax/i.test(title)) {
+      taxRows.push(row);
+      return;
+    }
+    if (/^subtotal$/i.test(title) || /^total$/i.test(title) || /amount payable|total paid|grand total/i.test(title)) {
+      return;
+    }
+    if (/base stay|base price|extra adult|extra child|adults|children/i.test(title)) {
+      primaryRows.push(row);
+      return;
+    }
+    trailingRows.push(row);
+  });
+
+  const orderedRows = [...primaryRows, ...addOnRows];
+  if (computedTotal !== null && Number(computedTotal) > 0) {
+    orderedRows.push({ title: "Total", value: formatInr(computedTotal) });
+  }
+  orderedRows.push(...discountRows, ...taxRows, ...trailingRows);
+  return orderedRows;
+};
+
 
   // The correct breadcrumbs logic is placed in the component render method
 
@@ -348,9 +395,6 @@ const Checkout = () => {
     if (isStay && bookingData?.receipt && Array.isArray(bookingData.receipt) && stayDetails) {
       const rows = bookingData.receipt.map((r) => ({ title: r.title, value: r.content }));
 
-      const baseRow = rows.find((r) => /base stay|base price|total base/i.test(String(r.title || "")));
-      const baseAmount = parseAmount(baseRow?.value);
-
       let nights = 1;
       if (bookingData?.checkInDate && bookingData?.checkOutDate) {
         const inDate = new Date(bookingData.checkInDate);
@@ -358,6 +402,15 @@ const Checkout = () => {
         const diff = Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24));
         if (Number.isFinite(diff) && diff > 0) nights = diff;
       }
+
+      const baseRow = rows.find((r) => /base stay|base price|total base/i.test(String(r.title || "")));
+      const isPropertyBasedStay = /property-based|property based/i.test(String(stayDetails?.bookingScope || ""));
+      const propertyBaseFromApi = isPropertyBasedStay
+        ? parseAmount(stayDetails?.fullPropertyB2cPrice) * nights
+        : 0;
+      let baseAmount = propertyBaseFromApi > 0
+        ? propertyBaseFromApi
+        : parseAmount(baseRow?.value);
 
       const discountTiers = Array.isArray(stayDetails?.discountTiers) ? stayDetails.discountTiers : [];
       const activeTier = discountTiers.find((t) => {
@@ -380,6 +433,28 @@ const Checkout = () => {
 
       const extraRows = rows.filter((r) => /extra adult|extra child/i.test(String(r.title || "")));
       const extraAmount = extraRows.reduce((sum, r) => sum + parseAmount(r.value), 0);
+      const addOnRows = rows.filter((r) => /add[\s-]?ons?/i.test(String(r.title || "")));
+      const addOnsAmount = addOnRows.reduce((sum, r) => sum + parseAmount(r.value), 0);
+      const existingDiscountAmount = rows
+        .filter((r) => /discount/i.test(String(r.title || "")))
+        .reduce((sum, r) => sum + Math.abs(parseAmount(r.value)), 0);
+      const existingTaxAmount = rows
+        .filter((r) => /^tax/i.test(String(r.title || "")))
+        .reduce((sum, r) => sum + parseAmount(r.value), 0);
+      const finalGuestPriceRow = rows.find((r) => /final guest price|stay total|grand total/i.test(String(r.title || "")));
+      const finalGuestAmount = parseAmount(finalGuestPriceRow?.value || bookingData?.totalAmount);
+
+      if (baseAmount <= 0) {
+        const reconstructedDiscountableAmount = Math.max(
+          0,
+          finalGuestAmount - existingTaxAmount + existingDiscountAmount
+        );
+        const inferredBaseAmount = Math.max(0, reconstructedDiscountableAmount - extraAmount);
+        if (inferredBaseAmount > 0) {
+          baseAmount = inferredBaseAmount;
+        }
+      }
+
       const discountableAmount = Math.max(0, baseAmount + extraAmount);
 
       const longStayDiscountAmount = discountableAmount > 0 && tierDiscountPercent > 0
@@ -394,14 +469,14 @@ const Checkout = () => {
         : 0;
 
       // Keep base stay as pure room charge (no discount/tax mixed in)
-      if (baseRow && baseAmount > 0) {
+      if (baseRow) {
         baseRow.value = `INR ${baseAmount.toFixed(2)}`;
       }
 
       // Remove generic discount rows; we'll reinsert a single authoritative one
       for (let i = rows.length - 1; i >= 0; i -= 1) {
         const title = String(rows[i]?.title || "");
-        if (/discount/i.test(title) && !/long[\s-]?stay/i.test(title)) {
+        if (/discount/i.test(title) && !/long[\s-]?stay/i.test(title) && !/early[\s-]?bird/i.test(title)) {
           rows.splice(i, 1);
         }
       }
@@ -421,7 +496,7 @@ const Checkout = () => {
       // Total Discount should represent only additional pricing discount (not long-stay)
       if (additionalDiscountAmount > 0) {
         rows.splice(nextInsertIndex, 0, {
-          title: `Total Discount (${pricingDiscountPercent.toFixed(2)}%)`,
+          title: `Discount (${pricingDiscountPercent.toFixed(2)}%)`,
           value: `- INR ${additionalDiscountAmount.toFixed(2)}`,
         });
         nextInsertIndex += 1;
@@ -436,34 +511,54 @@ const Checkout = () => {
       }
 
       const taxRowIndex = rows.findIndex((r) => /^tax/i.test(String(r.title || "")));
-      if (taxRowIndex >= 0 && taxRate > 0) {
-        // Recalculate tax based on discounted subtotal
+      if (taxRate > 0) {
+        // Recalculate tax based on discounted subtotal and ensure the row exists.
         const discountRows = rows.filter((r) => /discount/i.test(String(r.title || "")));
         const currentDiscountAmount = discountRows.reduce(
           (sum, r) => sum + Math.abs(parseAmount(r.value)),
           0
         );
-        
+
         const subtotalForTax = baseAmount + extraAmount - currentDiscountAmount;
         const correctedTax = Math.max(0, subtotalForTax * (taxRate / 100));
-
-        rows[taxRowIndex] = {
-          ...rows[taxRowIndex],
-          title: `Tax (${taxRate.toFixed(2)}%)`,
-          value: `+ INR ${correctedTax.toFixed(2)}`,
+        const taxRow = {
+          title: normalizeTaxTitle("Tax", taxRate),
+          value: formatInr(correctedTax),
         };
+
+        if (taxRowIndex >= 0) {
+          rows[taxRowIndex] = taxRow;
+        } else {
+          rows.push(taxRow);
+        }
       }
 
-      return { table: rows };
+      const normalizedRows = rows.map((row) => {
+        const title = String(row?.title || "");
+        if (/add[\s-]?ons?/i.test(title)) {
+          return { ...row, title: "Add-ons Total", value: formatInr(parseAmount(row.value)) };
+        }
+        if (/^tax/i.test(title)) {
+          return { ...row, title: normalizeTaxTitle(title, taxRate), value: formatInr(parseAmount(row.value)) };
+        }
+        return row;
+      });
+
+      return {
+        table: reorderPriceRows(
+          normalizedRows,
+          Math.max(0, baseAmount + extraAmount + addOnsAmount)
+        ),
+      };
     }
 
     if (bookingData?.receipt && Array.isArray(bookingData.receipt)) {
       const rows = bookingData.receipt.map((r) => ({
-        title: r.title,
+        title: /^tax/i.test(String(r.title || "")) ? normalizeTaxTitle(r.title) : r.title,
         value: r.content,
       }));
       return {
-        table: rows,
+        table: reorderPriceRows(rows),
       };
     }
 
@@ -475,8 +570,8 @@ const Checkout = () => {
     return {
       table: [
         {
-          title: "Add-ons",
-          value: `${addOnsPrice}`,
+          title: "Add-ons Total",
+          value: formatInr(addOnsPrice),
         },
       ],
     };
@@ -484,6 +579,7 @@ const Checkout = () => {
 
   const isStayBooking = !!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate);
   const tripTitle = isStayBooking ? "Your stay" : "Your trip";
+  const isAmountInPaise = paymentData?.paymentMethod === "razorpay";
 
   // Get first image
   const getListingImage = () => {
@@ -533,6 +629,7 @@ const Checkout = () => {
             buttonUrl="/checkout-complete"
             guests={!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate)}
             amountToPay={paymentData?.amount}
+            amountInPaise={isAmountInPaise}
             currency={paymentData?.currency || "INR"}
             paymentData={paymentData}
             dateValue={items[0]?.title}
@@ -569,6 +666,7 @@ const Checkout = () => {
             items={items}
             table={table}
             amountToPay={paymentData?.amount}
+            amountInPaise={isAmountInPaise}
             currency={paymentData?.currency || "INR"}
             hostName={hostName}
             hostAvatar={hostAvatar}

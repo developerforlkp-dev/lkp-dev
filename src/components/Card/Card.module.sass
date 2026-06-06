@@ -112,9 +112,29 @@
 
 .category
     position: absolute
-    top: 16px
-    left: 16px
+    top: 12px
+    left: 12px
     z-index: 2
+    max-width: calc(100% - 24px)
+    padding: 6px 12px
+    border: 1px solid rgba(255, 255, 255, 0.24)
+    border-radius: 999px
+    background: rgba(17, 24, 39, 0.26)
+    color: #fff
+    font-size: 9px
+    font-weight: 600
+    line-height: 1.1
+    letter-spacing: .01em
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    backdrop-filter: blur(10px)
+    -webkit-backdrop-filter: blur(10px)
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18)
+
+.categoryRight
+    left: auto
+    right: 12px
 
 .body
     flex-grow: 1
@@ -209,9 +229,12 @@
 .flex
     display: flex
     justify-content: space-between
+    align-items: flex-start
+    gap: 8px
 
 .cost
     +caption-bold-2
+    flex-shrink: 0
     &.locationText
         display: flex
         align-items: center
@@ -226,6 +249,12 @@
 .rating
     display: flex
     align-items: center
+    margin-left: auto
+    flex-shrink: 0
+
+.ratingTop
+    display: flex
+    align-items: center
 
 .number
     margin-left: 8px
@@ -235,6 +264,18 @@
 .review
     +caption-2
     color: $n4
+    white-space: nowrap
+
+@media (max-width: 1440px)
+    .rating
+        flex-direction: column
+        align-items: flex-end
+        gap: 2px
+    .ratingTop
+        display: flex
+        align-items: center
+    .number
+        margin-right: 0
 
 @keyframes imageShimmer
     100%

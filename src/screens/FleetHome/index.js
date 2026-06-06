@@ -9,6 +9,10 @@ import { HomepageSectionCard } from "./CardStyles";
 import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
 import HeroSection from "./HeroSection";
+import MobileCinematicSearch from "./MobileCinematicSearch";
+import { Compass, Ticket, Home, Utensils, MapPin, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const GOOGLE_MAPS_SCRIPT_ID = "google-maps-places-script";
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -74,6 +78,31 @@ const FleetHome = () => {
   const [destinationSuggestions, setDestinationSuggestions] = useState([]);
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  // Mobile cinematic bottom sheet state
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    setIsMobileOrTablet(mediaQuery.matches);
+
+    const handler = (e) => setIsMobileOrTablet(e.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handler);
+    } else {
+      mediaQuery.addListener(handler);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handler);
+      } else {
+        mediaQuery.removeListener(handler);
+      }
+    };
+  }, []);
+
   const location = useLocation();
   const history = useHistory();
   const dateItemRef = useRef(null);
@@ -105,6 +134,23 @@ const FleetHome = () => {
       setActiveFilter(filterFromPath);
     }
   }, [location.pathname]);
+
+  // Dynamic browser tab title based on active section
+  const sectionTitleMap = {
+    experience: "Experiences",
+    events: "Events",
+    stays: "Stays",
+    food: "Food",
+    places: "Places",
+  };
+  const isHomepage =
+    location.pathname === "/" ||
+    location.pathname === "/experience" ||
+    location.pathname === "/experiences";
+  // Homepage → "Little Known Planet", section pages → "Experiences | Little Known Planet" etc.
+  useDocumentTitle(
+    isHomepage ? "" : sectionTitleMap[activeFilter] || ""
+  );
 
   // Handle filter click by navigating to new URL
   const handleFilterClick = (filterId) => {
@@ -569,8 +615,42 @@ const FleetHome = () => {
   return (
     <div className={cn("section", styles.section)}>
       {/* Hero Section */}
-      <div className={styles.heroSection}>
+      <div className={styles.heroSection} style={{ position: "relative" }}>
         <HeroSection />
+        {/* Mobile-only: floating search pill + bottom sheet */}
+        {isMobileOrTablet && (
+          <MobileCinematicSearch
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedDestination={selectedDestination}
+            setSelectedDestination={setSelectedDestination}
+            selectedDate={selectedDate}
+            guests={guests}
+            showCalendar={showCalendar}
+            formattedDate={formattedDate}
+            guestCountText={guestCountText}
+            showDatePicker={showDatePicker}
+            setShowDatePicker={setShowDatePicker}
+            showGuestPicker={showGuestPicker}
+            setShowGuestPicker={setShowGuestPicker}
+            destinationSuggestions={destinationSuggestions}
+            showDestinationSuggestions={showDestinationSuggestions}
+            setShowDestinationSuggestions={setShowDestinationSuggestions}
+            activeSuggestionIndex={activeSuggestionIndex}
+            setActiveSuggestionIndex={setActiveSuggestionIndex}
+            selectDestinationSuggestion={selectDestinationSuggestion}
+            destinationRef={destinationRef}
+            sheetOpen={sheetOpen}
+            setSheetOpen={setSheetOpen}
+            handleSearch={handleSearch}
+            handleDateSelect={handleDateSelect}
+            handleGuestChange={handleGuestChange}
+            activeFilter={activeFilter}
+            onFilterClick={handleFilterClick}
+            businessInterestAvailability={businessInterestAvailability}
+            businessInterestActiveMap={businessInterestActiveMap}
+          />
+        )}
       </div>
 
 
@@ -712,7 +792,7 @@ const FleetHome = () => {
             <button className={styles.searchButton} onClick={handleSearch}>Search</button>
           </div>
 
-          <div className={styles.filtersContainer}>
+          <div className={cn(styles.filtersContainer, styles.desktopFilters)}>
             <div className={styles.filtersGrid}>
               {visibleFilterOptions.map((filter) => (
                 (() => {
@@ -741,6 +821,7 @@ const FleetHome = () => {
               ))}
             </div>
           </div>
+
         </div>
 
         {/* Dynamic Sections from API */}

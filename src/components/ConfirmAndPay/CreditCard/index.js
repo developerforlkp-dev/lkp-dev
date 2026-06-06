@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import cn from "classnames";
 import { useHistory } from "react-router-dom";
 import styles from "./CreditCard.module.sass";
@@ -8,18 +8,32 @@ import Checkbox from "../../Checkbox";
 
 const cards = [
   {
-    image: "./images/content/visa.svg",
+    image: "",
     alt: "Visa",
   },
   {
-    image: "./images/content/master-card.svg",
+    image: "",
     alt: "Master Card",
   },
 ];
 
 const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentData = null }) => {
   const [save, setSave] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const history = useHistory();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolledToBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+      setIsAtBottom(scrolledToBottom);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const ensureRazorpayScript = () =>
     new Promise((resolve, reject) => {
@@ -33,6 +47,9 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
     });
 
   const handleConfirmClick = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
     // Try to read pending payment info
     let payment = null;
     try {
@@ -53,6 +70,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       console.log("⚠️ No razorpay payment method, navigating directly to:", buttonUrl);
       // No payment session; just navigate to completion
       history.push(buttonUrl);
+      setIsProcessing(false);
       return;
     }
 
@@ -60,6 +78,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
     if (!payment.razorpayKeyId) {
       console.error("❌ Missing razorpayKeyId in payment data");
       alert("Payment configuration error. Please try booking again.");
+      setIsProcessing(false);
       return;
     }
 
@@ -103,6 +122,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
           slotId: bookingData?.bookingSummary?.slotId || "",
         },
         handler: function (response) {
+          setIsProcessing(false);
           try {
             localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(response));
             // Save the actual paid amount before removing pendingPayment
@@ -133,6 +153,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
         modal: {
           ondismiss: function () {
             // Leave user on the page; do not navigate
+            setIsProcessing(false);
           },
         },
       };
@@ -140,8 +161,9 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (e) {
-      // If Razorpay fails to open, fallback navigation
-      history.push(buttonUrl);
+      console.error("❌ Failed to open Razorpay checkout:", e);
+      alert("Unable to start payment. Please check your internet connection and try again.");
+      setIsProcessing(false);
     }
   };
 
@@ -212,11 +234,28 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
           required="required"
         />
       </div>
-      <button className={cn("button", styles.button)} type="button" onClick={handleConfirmClick}>
-        Confirm and pay
-      </button>
+      <div 
+        className={styles.stickyBottom}
+        style={{
+          opacity: isAtBottom ? 0 : 1,
+          visibility: isAtBottom ? "hidden" : "visible",
+          transition: "opacity 0.3s ease, visibility 0.3s ease"
+        }}
+      >
+        <button 
+          className={cn("button", styles.button)} 
+          type="button" 
+          onClick={handleConfirmClick}
+          disabled={isProcessing}
+          style={{ opacity: isProcessing ? 0.7 : 1, cursor: isProcessing ? "not-allowed" : "pointer" }}
+        >
+          {isProcessing ? "Processing..." : "Confirm and pay"}
+        </button>
+      </div>
     </div>
   );
 };
 
 export default CreditCard;
+
+

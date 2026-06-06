@@ -146,9 +146,41 @@ const Listings = () => {
   const [showMap, setShowMap] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState("grid");
   const [businessInterestFilters, setBusinessInterestFilters] = useState(null);
 
-  const sortOptions = ["newest", "rating", "price_low", "price_high"];
+  // Mobile sticky search scroll state
+  const [isScrolled, setIsScrolled] = useState(false);
+  const searchBarRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 60);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Sort chip quick-filter options
+  const sortChips = [
+    { label: "Newest", value: "newest" },
+    { label: "Top Rated", value: "rating" },
+  ];
+
+  // Count active filters for badge
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.pricePresetMax) count++;
+    if (filters.priceRange?.min || filters.priceRange?.max) count++;
+    if (filters.propertyTypes?.length) count++;
+    if (filters.amenities?.length) count++;
+    if (filters.ratings?.length) count++;
+    if (filters.apiCategoryFilter) count++;
+    if (filters.dateRange?.startDate) count++;
+    return count;
+  }, [filters]);
+
+  const sortOptions = ["newest", "rating"];
   const isEventInterest = String(businessInterest || "").toUpperCase().includes("EVENT");
   const emptyMessage = isEventInterest && selectedDate
     ? "No events in this date."
@@ -369,8 +401,6 @@ const Listings = () => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-
-
   const resetFilters = () => {
     setFilters({
       priceRange: { min: "", max: "" },
@@ -388,9 +418,34 @@ const Listings = () => {
 
   return (
     <div className={cn("section", styles.section)}>
+      {/* Mobile sticky search header — shown on scroll, mobile only */}
+      <div className={cn(styles.mobileStickySearch, { [styles.mobileStickySearchVisible]: isScrolled })}>
+        <button
+          className={styles.mobileStickyContent}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <Icon name="search" size="16" />
+          <span className={styles.mobileStickyText}>
+            {searchLocation || "Search destination"}
+          </span>
+          {selectedDate && (
+            <span className={styles.mobileStickyMeta}>{formattedDate}</span>
+          )}
+        </button>
+        <button
+          className={cn(styles.mobileStickyFilter, { [styles.mobileStickyFilterActive]: activeFilterCount > 0 })}
+          onClick={() => setShowMobileFilters(true)}
+        >
+          <Icon name="more" size="16" />
+          {activeFilterCount > 0 && (
+            <span className={styles.mobileStickyFilterBadge}>{activeFilterCount}</span>
+          )}
+        </button>
+      </div>
+
       <div className={cn("container", styles.container)}>
         {/* Search Bar Section */}
-        <div className={styles.searchBar}>
+        <div className={styles.searchBar} ref={searchBarRef}>
           <div className={styles.searchField} ref={destinationRef}>
             <Icon name="arrow-right" size="20" />
             <div className={styles.searchFieldContent}>
@@ -519,11 +574,42 @@ const Listings = () => {
           <button className={styles.searchButton} onClick={handleSearch}>Search</button>
         </div>
       </div>
+
+      {/* Mobile Sort & Filter Chips Row — hidden on desktop */}
+      <div className={styles.mobileSortChipsWrap}>
+        <div className={styles.mobileSortChips}>
+          {/* Filters button with active badge */}
+          <button
+            className={cn(styles.mobileFilterChip, styles.mobileFilterChipFilters, {
+              [styles.mobileFilterChipActive]: activeFilterCount > 0,
+            })}
+            onClick={() => setShowMobileFilters(true)}
+          >
+            <Icon name="more" size="14" />
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className={styles.filterBadge}>{activeFilterCount}</span>
+            )}
+          </button>
+          {/* Quick sort chips */}
+          {sortChips.map((chip) => (
+            <button
+              key={chip.value}
+              className={cn(styles.mobileFilterChip, {
+                [styles.mobileFilterChipActive]: sortBy === chip.value,
+              })}
+              onClick={() => setSortBy(chip.value)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      </div>
       
       <div className={styles.body}>
         <div className={cn("container", styles.container)}>
           <div className={cn(styles.layout, { [styles.withMap]: showMap })}>
-            {/* Filter Sidebar - Desktop */}
+            {/* Filter Sidebar - Desktop only */}
             <aside className={styles.sidebar}>
               <FilterSidebar
                 filters={filters}
@@ -544,24 +630,44 @@ const Listings = () => {
                   Filtered by category: {filters.apiCategoryFilter?.selectedCategoryLabel || selectedCategoryLabel}
                 </div>
               )}
-              {/* Mobile Filter Button */}
-              <button
-                className={cn("button-stroke", styles.mobileFilterButton, "mobile-show")}
-                onClick={() => setShowMobileFilters(true)}
-              >
-                <Icon name="more" size="16" />
-                <span>Filters</span>
-              </button>
-              
-              {/* Desktop Map Toggle */}
-              <button
-                className={cn("button-stroke", styles.mapToggleButton, "desktop-show")}
-                onClick={() => setShowMap(!showMap)}
-              >
-                <Icon name="location" size="16" />
-                <span>{showMap ? "Hide map" : "Show map"}</span>
-              </button>
-              
+
+              {/* Results Toolbar */}
+              <div className={styles.resultsToolbar}>
+                <span className={styles.resultCount}>
+                  {loading && listings.length === 0
+                    ? "Loading..."
+                    : `${listings.length} ${listings.length === 1 ? "property" : "properties"} found`
+                  }
+                </span>
+                <div className={styles.viewToggle}>
+                  <button
+                    className={cn(styles.viewToggleBtn, { [styles.viewToggleBtnActive]: viewMode === "grid" })}
+                    onClick={() => setViewMode("grid")}
+                    title="Grid view"
+                    aria-label="Grid view"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <rect x="1" y="1" width="6" height="6" rx="1.5"/>
+                      <rect x="9" y="1" width="6" height="6" rx="1.5"/>
+                      <rect x="1" y="9" width="6" height="6" rx="1.5"/>
+                      <rect x="9" y="9" width="6" height="6" rx="1.5"/>
+                    </svg>
+                  </button>
+                  <button
+                    className={cn(styles.viewToggleBtn, { [styles.viewToggleBtnActive]: viewMode === "list" })}
+                    onClick={() => setViewMode("list")}
+                    title="List view"
+                    aria-label="List view"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <rect x="1" y="2" width="14" height="2" rx="1"/>
+                      <rect x="1" y="7" width="14" height="2" rx="1"/>
+                      <rect x="1" y="12" width="14" height="2" rx="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
               {/* Listings Grid */}
               <ListingsGrid
                 listings={listings}
@@ -570,6 +676,7 @@ const Listings = () => {
                 hasMore={hasMore}
                 onLoadMore={fetchMore}
                 emptyMessage={emptyMessage}
+                listView={viewMode === "list"}
               />
             </main>
             
@@ -579,7 +686,7 @@ const Listings = () => {
                 <div className={styles.mapContainer}>
                   <iframe
                     title="Map"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.0803287881!2d168.63234961382247!3d-45.04173987887954!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xa9d51df1d7a8de5f%3A0x500ef868479a600!2z0JrRg9C40L3RgdGC0LDRg9C9LCDQndC-0LLQsNGPINCX0LXQu9Cw0L3QtNC40Y8!5e0!3m2!1sru!2sua!4v1624887132616!5m2!1sru!2sua"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.0803287881!2d168.63234961382247!3d-45.04173987887954!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xa9d51df1d7a8de5f%3A0x500ef868479a600!2z0JrRg9C40L3RgdGC0LLQsNGPINCX0LXQu9Cw0L3QtNC40Y8!5e0!3m2!1sru!2sua!4v1624887132616!5m2!1sru!2sua"
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -592,7 +699,7 @@ const Listings = () => {
         </div>
       </div>
       
-      {/* Mobile Filter Modal */}
+      {/* Mobile Filter Bottom Sheet */}
       <MobileFilterModal
         visible={showMobileFilters}
         onClose={() => setShowMobileFilters(false)}
@@ -604,37 +711,12 @@ const Listings = () => {
         sortingOptions={sortOptions}
         businessInterest={businessInterest}
         businessInterestFilters={businessInterestFilters}
+        activeFilterCount={activeFilterCount}
       />
       
-      {/* Mobile Map View */}
-      {showMap && (
-        <div className={cn(styles.mobileMap, "mobile-show")}>
-          <div className={styles.mobileMapHeader}>
-            <button
-              className={styles.mobileMapClose}
-              onClick={() => setShowMap(false)}
-            >
-              <Icon name="close" size="24" />
-            </button>
-            <span>Map View</span>
-          </div>
-          <div className={styles.mobileMapContainer}>
-            <iframe
-              title="Map"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.0803287881!2d168.63234961382247!3d-45.04173987887954!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xa9d51df1d7a8de5f%3A0x500ef868479a600!2z0JrRg9C40L3RgdGC0LDRg9C9LCDQndC-0LLQsNGPINCX0LXQu9Cw0L3QtNC40Y8!5e0!3m2!1sru!2sua!4v1624887132616!5m2!1sru!2sua"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-            />
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
 
 export default Listings;
-
-
-

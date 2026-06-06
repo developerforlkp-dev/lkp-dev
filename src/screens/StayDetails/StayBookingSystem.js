@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle } from "lucide-react";
+import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles } from "lucide-react";
 import moment from "moment";
 import { useTheme } from "../../components/JUI/Theme";
 import { createStayOrder, getStayRoomAvailability } from "../../utils/api";
@@ -138,6 +138,13 @@ const formatPrice = (price) => {
   });
 };
 
+const formatPricePrecise = (price) => {
+  return Number(price).toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  });
+};
+
 const getSeasonIdCandidates = (season) => (
   [
     season?.tempId,
@@ -179,6 +186,114 @@ const isInSeasonRange = (dateValue, season) => {
   return check.isSameOrAfter(start, "day") && check.isSameOrBefore(end, "day");
 };
 
+const distributeGuests = (selectedRooms, stayRoomsCatalog, adults, children) => {
+  const roomInstances = [];
+  selectedRooms.forEach(sel => {
+    const catalogRoom = stayRoomsCatalog.find(
+      r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id) === String(sel.roomId)
+    );
+    if (catalogRoom) {
+      const maxAdults = catalogRoom.maxAdults || 2;
+      const maxExtraAdults = Number(
+        catalogRoom.maxExtraAdults ??
+        catalogRoom.maxExtraAdultsAllowed ??
+        catalogRoom.maxExtraBeds ??
+        0
+      );
+      const maxExtraChildren = Number(
+        catalogRoom.maxExtraChildren ??
+        catalogRoom.maxExtraChildrenAllowed ??
+        0
+      );
+      const maxGuests = maxAdults + (catalogRoom.maxChildren || 0);
+      const maxChildren = catalogRoom.maxChildren !== undefined ? catalogRoom.maxChildren : 0;
+
+      for (let i = 0; i < sel.count; i++) {
+        roomInstances.push({
+          instanceId: `${sel.roomId}-${i}`,
+          roomId: sel.roomId,
+          roomName: catalogRoom.roomName || catalogRoom.name || "Room",
+          maxAdults,
+          maxChildren,
+          maxExtraAdults,
+          maxExtraChildren,
+          maxGuests,
+          allocatedAdults: 0,
+          allocatedChildren: 0
+        });
+      }
+    }
+  });
+
+  if (roomInstances.length === 0) {
+    return { success: false, allocations: [] };
+  }
+
+  let remainingAdults = adults;
+  let remainingChildren = children;
+
+  // Allocate 1 adult per room first if adults are available
+  roomInstances.forEach(inst => {
+    if (remainingAdults > 0) {
+      inst.allocatedAdults += 1;
+      remainingAdults -= 1;
+    }
+  });
+
+  // Fill standard adults up to maxAdults
+  for (let inst of roomInstances) {
+    const standardAdultSpace = Math.max(0, inst.maxAdults - inst.allocatedAdults);
+    const toAllocate = Math.min(remainingAdults, standardAdultSpace);
+    if (toAllocate > 0) {
+      inst.allocatedAdults += toAllocate;
+      remainingAdults -= toAllocate;
+    }
+  }
+
+  // Fill extra adults up to maxExtraAdults
+  for (let inst of roomInstances) {
+    const extraAdultSpace = inst.maxExtraAdults;
+    const toAllocate = Math.min(remainingAdults, extraAdultSpace);
+    if (toAllocate > 0) {
+      inst.allocatedAdults += toAllocate;
+      remainingAdults -= toAllocate;
+    }
+  }
+
+  // Fill standard children up to maxChildren
+  for (let inst of roomInstances) {
+    const standardChildSpace = Math.max(0, inst.maxChildren - inst.allocatedChildren);
+    const toAllocate = Math.min(remainingChildren, standardChildSpace);
+    if (toAllocate > 0) {
+      inst.allocatedChildren += toAllocate;
+      remainingChildren -= toAllocate;
+    }
+  }
+
+  // Fill extra children up to maxExtraChildren
+  for (let inst of roomInstances) {
+    const extraChildSpace = inst.maxExtraChildren;
+    const toAllocate = Math.min(remainingChildren, extraChildSpace);
+    if (toAllocate > 0) {
+      inst.allocatedChildren += toAllocate;
+      remainingChildren -= toAllocate;
+    }
+  }
+
+  const success = (remainingAdults === 0 && remainingChildren === 0);
+  return {
+    success,
+    allocations: roomInstances.map(inst => ({
+      roomId: inst.roomId,
+      roomName: inst.roomName,
+      adults: inst.allocatedAdults,
+      children: inst.allocatedChildren,
+      extraAdults: Math.max(0, inst.allocatedAdults - inst.maxAdults),
+      extraChildren: Math.max(0, inst.allocatedChildren - inst.maxChildren)
+    }))
+  };
+};
+
 const StayBookingSystem = ({
   stay,
   checkInDate,
@@ -188,6 +303,7 @@ const StayBookingSystem = ({
   guests,
   setGuests,
   selectedRooms, // Array of {roomId, mealPlan, count}
+  setSelectedRooms,
   onRoomsCountChange
 }) => {
   const history = useHistory();
@@ -197,6 +313,33 @@ const StayBookingSystem = ({
   const [selectionMode, setSelectionMode] = useState("check-in");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [bookingErrorPopup, setBookingErrorPopup] = useState({ visible: false, title: "", message: "", isSameDay: false });
+
+  const handleRoomCountChangeWithReset = (roomId, count) => {
+    onRoomsCountChange(roomId, count);
+  };
+
+  const handleAddAnotherRoom = () => {
+    if (selectedRooms.length === 0) return;
+
+    for (const selRoom of selectedRooms) {
+      const roomId = selRoom.roomId;
+      const currentCount = selRoom.count || 0;
+      const catalogRoom = stayRoomsCatalog.find(
+        r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id) === String(roomId)
+      );
+      const maxLimit = catalogRoom
+        ? Number(catalogRoom.units || catalogRoom.totalRooms || catalogRoom.availableRooms || 99)
+        : 99;
+
+      if (currentCount < maxLimit) {
+        handleRoomCountChangeWithReset(roomId, currentCount + 1);
+        setValidationError("Another room has been added to accommodate extra guests.");
+        return;
+      }
+    }
+
+    setValidationError("No additional rooms are available for the selected room type.");
+  };
 
   // Automatically reopen the modal if state was hydrated after auth redirect
   useEffect(() => {
@@ -327,6 +470,22 @@ const StayBookingSystem = ({
     };
   }, [stay]);
 
+
+  useEffect(() => {
+    if (!stay || !setSelectedRooms) return;
+    const isPropertyBased = stay?.bookingScope === "Property-Based";
+    if (isPropertyBased) return;
+
+    if (stayRoomsCatalog.length === 0) return;
+
+    // Default to first room type if nothing selected
+    if (selectedRooms.length === 0) {
+      const firstRoom = stayRoomsCatalog[0];
+      const firstRoomId = String(firstRoom.roomId ?? firstRoom.id ?? firstRoom.roomTypeId ?? firstRoom.room_type_id);
+      setSelectedRooms([{ roomId: firstRoomId, mealPlan: "EP", count: 1 }]);
+    }
+  }, [selectedRooms, stay, stayRoomsCatalog, setSelectedRooms]);
+
   // Fetch real-time availability and pricing when modal opens or dates change
   useEffect(() => {
     if (show && (stay?.stayId || stay?.id) && checkInDate && checkOutDate) {
@@ -445,6 +604,8 @@ const StayBookingSystem = ({
     let totalBaseChildrenLimit = 0;
     let totalExtraAdultsLimit = 0;
     let totalExtraChildrenLimit = 0;
+    let totalExtraAdultsAllocated = 0;
+    let totalExtraChildrenAllocated = 0;
 
     const activeSeason = checkInDate ? (stay.seasonalPeriods || []).find(p => 
       moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
@@ -505,22 +666,61 @@ const StayBookingSystem = ({
         totalOriginalPerNight += roomBasePrice * room.count;
         totalBaseAdultsLimit += (room.maxAdults || 1) * room.count;
         totalBaseChildrenLimit += (room.maxChildren || 0) * room.count;
-        totalExtraAdultsLimit += (room.maxExtraAdults || room.maxExtraAdultsAllowed || room.maxExtraBeds || 0) * room.count;
-        totalExtraChildrenLimit += (room.maxExtraChildren || room.maxExtraChildrenAllowed || 0) * room.count;
-
-        // Accumulate extra rates for overflow guests across all rooms
-        // (weighted by room count for multi-room bookings)
-        totalOriginalPerNight += 0; // extra guest overflow added below after limits are summed
+        totalExtraAdultsLimit += Number(
+          room.maxExtraAdults ??
+          room.maxExtraAdultsAllowed ??
+          room.maxExtraBeds ??
+          0
+        ) * room.count;
+        totalExtraChildrenLimit += Number(
+          room.maxExtraChildren ??
+          room.maxExtraChildrenAllowed ??
+          0
+        ) * room.count;
 
         // Store per-room rates for extra guest calc below
         room._resolvedExtraAP = roomExtraAP;
         room._resolvedExtraCP = roomExtraCP;
       });
 
-      const exA = Math.max(0, (guests?.adults || 1) - totalBaseAdultsLimit);
-      const exC = Math.max(0, (guests?.children || 0) - totalBaseChildrenLimit);
-      
-      // ✅ Use resolved extra prices (seasonal-aware) for overflow guests
+      // Use the exact distribution logic to count extra adults and children!
+      const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults || 1, guests.children || 0);
+      totalExtraAdultsAllocated = 0;
+      totalExtraChildrenAllocated = 0;
+      let extraAdultsChargePerNight = 0;
+      let extraChildrenChargePerNight = 0;
+
+      if (distribution.success) {
+        distribution.allocations.forEach(alloc => {
+          const room = resolvedSelectedRooms.find(r => String(r.roomId || r.id) === String(alloc.roomId));
+          const extraAP = room?._resolvedExtraAP || 0;
+          const extraCP = room?._resolvedExtraCP || 0;
+          
+          extraAdultsChargePerNight += alloc.extraAdults * extraAP;
+          extraChildrenChargePerNight += alloc.extraChildren * extraCP;
+          totalExtraAdultsAllocated += alloc.extraAdults;
+          totalExtraChildrenAllocated += alloc.extraChildren;
+        });
+      } else {
+        // Fallback if distribution fails or check capacity bounds
+        const exA = Math.max(0, (guests?.adults || 1) - totalBaseAdultsLimit);
+        const exC = Math.max(0, (guests?.children || 0) - totalBaseChildrenLimit);
+        const avgExtraAP = resolvedSelectedRooms.length > 0
+          ? resolvedSelectedRooms.reduce((acc, r) => acc + (r._resolvedExtraAP || 0), 0) / resolvedSelectedRooms.length
+          : parseFloat(stay.extraAdultPrice || 0);
+        const avgExtraCP = resolvedSelectedRooms.length > 0
+          ? resolvedSelectedRooms.reduce((acc, r) => acc + (r._resolvedExtraCP || 0), 0) / resolvedSelectedRooms.length
+          : parseFloat(stay.extraChildPrice || 0);
+
+        extraAdultsChargePerNight = exA * avgExtraAP;
+        extraChildrenChargePerNight = exC * avgExtraCP;
+        totalExtraAdultsAllocated = exA;
+        totalExtraChildrenAllocated = exC;
+      }
+
+      totalOriginalPerNight += extraAdultsChargePerNight + extraChildrenChargePerNight;
+
+      // Weighted average for receipt display
       const avgExtraAP = resolvedSelectedRooms.length > 0
         ? resolvedSelectedRooms.reduce((acc, r) => acc + (r._resolvedExtraAP || 0), 0) / resolvedSelectedRooms.length
         : parseFloat(stay.extraAdultPrice || 0);
@@ -528,10 +728,8 @@ const StayBookingSystem = ({
         ? resolvedSelectedRooms.reduce((acc, r) => acc + (r._resolvedExtraCP || 0), 0) / resolvedSelectedRooms.length
         : parseFloat(stay.extraChildPrice || 0);
 
-      finalExtraAP = avgExtraAP;
-      finalExtraCP = avgExtraCP;
-
-      totalOriginalPerNight += (exA * avgExtraAP) + (exC * avgExtraCP);
+      finalExtraAP = totalExtraAdultsAllocated > 0 ? extraAdultsChargePerNight / totalExtraAdultsAllocated : avgExtraAP;
+      finalExtraCP = totalExtraChildrenAllocated > 0 ? extraChildrenChargePerNight / totalExtraChildrenAllocated : avgExtraCP;
     }
 
     // Occupancy & Stay Warnings
@@ -550,32 +748,96 @@ const StayBookingSystem = ({
     
     // 2. Check Capacity
     if (!isOver) {
-      const typeLabel = isPropertyBased ? "Property" : "Selected Rooms";
-      if (currentAdults > (totalBaseAdultsLimit + totalExtraAdultsLimit)) {
+      const allowedAdults = totalBaseAdultsLimit + totalExtraAdultsLimit;
+      const allowedChildren = totalBaseChildrenLimit + totalExtraChildrenLimit;
+
+      if (currentAdults > allowedAdults) {
         isOver = true;
-        warning = `${typeLabel} adult capacity reached (${totalBaseAdultsLimit + totalExtraAdultsLimit} max).`;
-      } else if (currentChildren > (totalBaseChildrenLimit + totalExtraChildrenLimit)) {
+        warning = "Adult limit reached even with extra adults. Please add another room.";
+      } else if (currentChildren > allowedChildren) {
         isOver = true;
-        warning = `${typeLabel} children capacity reached (${totalBaseChildrenLimit + totalExtraChildrenLimit} max).`;
-      } else if (currentAdults > totalBaseAdultsLimit || currentChildren > totalBaseChildrenLimit) {
-        warning = `Base occupants reached. Additional guests will incur extra charges.`;
+        warning = "Children limit reached even with extra guests. Please add another room.";
+      } else {
+        if (!isPropertyBased && resolvedSelectedRooms.length > 0) {
+          const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, currentAdults, currentChildren);
+          if (!distribution.success) {
+            isOver = true;
+            warning = "Selected room cannot accommodate all guests";
+          }
+        }
+      }
+
+      if (!isOver && (currentAdults > totalBaseAdultsLimit || currentChildren > totalBaseChildrenLimit)) {
+        warning = "Base occupants reached. Additional guests will incur extra charges.";
       }
     }
 
-    // Discount Tiers
+    // Long-stay discount tiers
     let appliedDiscountPercent = 0;
     if (nightsCount > 0 && Array.isArray(stay.discountTiers)) {
       const tier = stay.discountTiers.find(t => nightsCount >= (t.minimumDays || 0) && nightsCount <= (t.maximumDays || 999));
       if (tier) appliedDiscountPercent = parseFloat(tier.discountPercentage || 0);
     }
 
-    const discountedPerNight = totalOriginalPerNight * (1 - (appliedDiscountPercent / 100));
-    const preTaxSubtotal = discountedPerNight * Math.max(1, nightsCount);
-    const discountAmount = (totalOriginalPerNight * Math.max(1, nightsCount)) - preTaxSubtotal;
+    // Billing-config discounts (if provided by stay configuration)
+    const billingConfigDiscountRate = (() => {
+      const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || [];
+      if (!Array.isArray(discounts) || discounts.length === 0) return 0;
+      const totalRate = discounts.reduce((sum, discount) => {
+        const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+        return sum + (Number.isFinite(rate) ? rate : 0);
+      }, 0);
+      return Math.max(0, Math.min(100, totalRate));
+    })();
 
+    // Early Bird Discount Calculation
+    let earlyBirdDiscountPercent = 0;
+    let appliedEarlyBirdDiscountTier = null;
+    const ebDiscounts = stay?.earlyBirdDiscounts || stay?.early_bird_discounts || [];
+    if (checkInDate && Array.isArray(ebDiscounts)) {
+      const today = moment().startOf('day');
+      const checkInDay = moment(checkInDate).startOf('day');
+      const daysDiff = checkInDay.diff(today, 'days');
+      
+      const eligibleTiers = ebDiscounts.filter(t => t.isActive && daysDiff >= t.daysInAdvance);
+        
+      if (eligibleTiers.length > 0) {
+        eligibleTiers.sort((a, b) => parseFloat(b.percentage || 0) - parseFloat(a.percentage || 0));
+        appliedEarlyBirdDiscountTier = eligibleTiers[0];
+        earlyBirdDiscountPercent = parseFloat(appliedEarlyBirdDiscountTier.percentage || 0);
+      }
+    }
+
+    const nights = Math.max(1, nightsCount);
+    const grossSubtotal = totalOriginalPerNight * nights;
+    const longStayDiscountAmount = grossSubtotal * (appliedDiscountPercent / 100);
+    const billingConfigDiscountAmount = grossSubtotal * (billingConfigDiscountRate / 100);
+    const earlyBirdDiscountAmount = grossSubtotal * (earlyBirdDiscountPercent / 100);
+
+    const preTaxSubtotal = Math.max(0, grossSubtotal - longStayDiscountAmount - billingConfigDiscountAmount - earlyBirdDiscountAmount);
+    const discountAmount = longStayDiscountAmount + billingConfigDiscountAmount + earlyBirdDiscountAmount;
+    const discountedPerNight = preTaxSubtotal / nights;
+
+    // Taxes from stay config; fallback to legacy 18% GST + 2% service charge
+    const configuredTaxRate = Array.isArray(stay?.taxes)
+      ? stay.taxes.reduce((sum, t) => sum + Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? 0), 0)
+      : 0;
+    const effectiveTaxRate = configuredTaxRate > 0 ? configuredTaxRate : 20;
+
+    const totalTax = preTaxSubtotal * (effectiveTaxRate / 100);
     const gst = preTaxSubtotal * 0.18;
     const serviceFee = preTaxSubtotal * 0.02;
-    const finalTotalWithTax = preTaxSubtotal + gst + serviceFee;
+    const finalTotalWithTax = preTaxSubtotal + totalTax;
+
+    const extraAdultsCount = isPropertyBased
+      ? Math.max(0, (guests?.adults || 1) - totalBaseAdultsLimit)
+      : totalExtraAdultsAllocated;
+    const extraChildrenCount = isPropertyBased
+      ? Math.max(0, (guests?.children || 0) - totalBaseChildrenLimit)
+      : totalExtraChildrenAllocated;
+
+    const normalAdultsCount = Math.max(0, (guests?.adults || 1) - extraAdultsCount);
+    const normalChildrenCount = Math.max(0, (guests?.children || 0) - extraChildrenCount);
 
     return {
       perNight: discountedPerNight,
@@ -585,35 +847,111 @@ const StayBookingSystem = ({
       nightsCount,
       discount: discountAmount,
       discountPercent: appliedDiscountPercent,
+      earlyBirdDiscountAmount,
+      earlyBirdDiscountPercent,
       warning,
       isOver,
-      gst,
-      serviceFee,
+      gst: configuredTaxRate > 0 ? totalTax : gst,
+      serviceFee: configuredTaxRate > 0 ? 0 : serviceFee,
+      taxRate: effectiveTaxRate,
       baseAdultsLimit: totalBaseAdultsLimit,
       extraAdultsLimit: totalExtraAdultsLimit,
       baseChildrenLimit: totalBaseChildrenLimit,
       extraChildrenLimit: totalExtraChildrenLimit,
       activeExtraAdultPrice: finalExtraAP,
-      activeExtraChildPrice: finalExtraCP
+      activeExtraChildPrice: finalExtraCP,
+      extraAdultsCount,
+      extraChildrenCount,
+      normalAdultsCount,
+      normalChildrenCount
     };
-  }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount]);
-  const billingConfigDiscountRate = useMemo(() => {
-    const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || [];
-    if (!Array.isArray(discounts) || discounts.length === 0) return 0;
+  }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount, selectedRooms, stayRoomsCatalog]);
 
-    const totalRate = discounts.reduce((sum, discount) => {
-      const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
-      return sum + (Number.isFinite(rate) ? rate : 0);
-    }, 0);
+  const capacityFeedback = useMemo(() => {
+    const isPropertyBased = stay?.bookingScope === "Property-Based";
+    
+    let totalBaseAdultsLimit = 0;
+    let totalBaseChildrenLimit = 0;
+    let totalExtraAdultsLimit = 0;
+    let totalExtraChildrenLimit = 0;
 
-    return Math.max(0, Math.min(100, totalRate));
-  }, [stay?.billingConfig, stay?.billing_config]);
+    if (isPropertyBased) {
+      totalBaseAdultsLimit = stay.maxAdults || stay.maxGuests || 1;
+      totalBaseChildrenLimit = stay.maxChildren || 0;
+      totalExtraAdultsLimit = stay.maxExtraAdults || stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
+      totalExtraChildrenLimit = stay.maxExtraChildren || stay.maxExtraChildrenAllowed || 0;
+    } else {
+      resolvedSelectedRooms.forEach(room => {
+        totalBaseAdultsLimit += (room.maxAdults || 1) * room.count;
+        totalBaseChildrenLimit += (room.maxChildren || 0) * room.count;
+        totalExtraAdultsLimit += Number(
+          room.maxExtraAdults ??
+          room.maxExtraAdultsAllowed ??
+          room.maxExtraBeds ??
+          0
+        ) * room.count;
+        totalExtraChildrenLimit += Number(
+          room.maxExtraChildren ??
+          room.maxExtraChildrenAllowed ??
+          0
+        ) * room.count;
+      });
+    }
 
-  const nightlyBaseMinusDiscount = useMemo(() => {
-    const basePerNight = Number(pricing?.originalPerNight || 0);
-    const discountAmount = basePerNight * (billingConfigDiscountRate / 100);
-    return Math.max(0, basePerNight - discountAmount);
-  }, [pricing?.originalPerNight, billingConfigDiscountRate]);
+    const allowedAdults = totalBaseAdultsLimit + totalExtraAdultsLimit;
+    const allowedChildren = totalBaseChildrenLimit + totalExtraChildrenLimit;
+
+    if (guests.adults > allowedAdults) {
+      return {
+        text: "Adult limit reached even with extra adults. Add another room.",
+        type: "error",
+        exceeded: true
+      };
+    }
+
+    if (guests.children > allowedChildren) {
+      return {
+        text: "Children limit reached even with extra guests. Add another room.",
+        type: "error",
+        exceeded: true
+      };
+    }
+
+    if (!isPropertyBased) {
+      const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults, guests.children);
+      if (!distribution.success) {
+        return {
+          text: "Selected room cannot accommodate all guests",
+          type: "warning",
+          exceeded: true
+        };
+      }
+    }
+
+    const extraAdultsCount = pricing?.extraAdultsCount || 0;
+    const extraChildrenCount = pricing?.extraChildrenCount || 0;
+    const extraAdultsCharge = extraAdultsCount * (pricing?.activeExtraAdultPrice || 0);
+    const extraChildrenCharge = extraChildrenCount * (pricing?.activeExtraChildPrice || 0);
+
+    if (extraAdultsCount > 0 && extraChildrenCount > 0) {
+      return {
+        text: "Extra adult price added & Extra child price added",
+        type: "success"
+      };
+    } else if (extraAdultsCount > 0) {
+      return {
+        text: "Extra adult price added",
+        type: "success"
+      };
+    } else if (extraChildrenCount > 0) {
+      return {
+        text: "Extra child price added",
+        type: "success"
+      };
+    }
+
+    return null;
+  }, [guests, selectedRooms, stay, stayRoomsCatalog, resolvedSelectedRooms, pricing]);
 
   const blockedDateKeys = useMemo(() => {
     const ranges = stay?.bookedDateRanges || stay?.stay?.bookedDateRanges || [];
@@ -657,11 +995,17 @@ const StayBookingSystem = ({
         setCheckOutDate(null);
       }
     }
-  }, [checkInDate, nextBlockedDate, checkOutDate]);
+  }, [checkInDate, nextBlockedDate, checkOutDate, setCheckOutDate]);
 
   const isBlockedDay = (day) => blockedDateKeys.has(moment(day).format("YYYY-MM-DD"));
 
   const handleReserve = async () => {
+    if (loading) return;
+    if (pricing.isOver) {
+      handleAddAnotherRoom();
+      return;
+    }
+
     const token = localStorage.getItem("jwtToken");
     const isLoggedIn = !!token && token !== "undefined" && token !== "null";
     if (!isLoggedIn) {
@@ -734,22 +1078,49 @@ const StayBookingSystem = ({
         paymentMethod: "razorpay",
         rooms: isPropertyBased
           ? [] // Property-based: no individual rooms, extras tracked at top level
-          : resolvedSelectedRooms.map(r => {
-              // Per-room: distribute base adults/children from this room's capacity
-              const roomBaseAdults = (r.maxAdults || 1) * r.count;
-              const roomBaseChildren = (r.maxChildren || 0) * r.count;
-              const roomExtraAdults = Math.max(0, (guests.adults || 1) - roomBaseAdults);
-              const roomExtraChildren = Math.max(0, (guests.children || 0) - roomBaseChildren);
-              return {
-                roomId: r.roomId || r.id,
-                roomsBooked: r.count,
-                adults: guests.adults || 1,
-                children: guests.children || 0,
-                extraAdults: roomExtraAdults,
-                extraChildren: roomExtraChildren,
-                mealPlanCode: r.mealPlan || "EP"
-              };
-            })
+          : (() => {
+              const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults || 1, guests.children || 0);
+              const grouped = {};
+              if (distribution.success) {
+                distribution.allocations.forEach(alloc => {
+                  if (!grouped[alloc.roomId]) {
+                    grouped[alloc.roomId] = {
+                      roomId: alloc.roomId,
+                      roomsBooked: 0,
+                      adults: 0,
+                      children: 0,
+                      extraAdults: 0,
+                      extraChildren: 0
+                    };
+                  }
+                  const g = grouped[alloc.roomId];
+                  g.roomsBooked += 1;
+                  g.adults += alloc.adults;
+                  g.children += alloc.children;
+                  g.extraAdults += alloc.extraAdults;
+                  g.extraChildren += alloc.extraChildren;
+                });
+              }
+              
+              return resolvedSelectedRooms.map(r => {
+                const grp = grouped[r.roomId || r.id] || {
+                  roomsBooked: r.count,
+                  adults: r.count * (r.maxAdults || 1),
+                  children: 0,
+                  extraAdults: 0,
+                  extraChildren: 0
+                };
+                return {
+                  roomId: r.roomId || r.id,
+                  roomsBooked: r.count,
+                  adults: grp.adults,
+                  children: grp.children,
+                  extraAdults: grp.extraAdults,
+                  extraChildren: grp.extraChildren,
+                  mealPlanCode: r.mealPlan || "EP"
+                };
+              });
+            })()
       };
 
       const response = await createStayOrder(payload);
@@ -764,7 +1135,6 @@ const StayBookingSystem = ({
           if (!obj || typeof obj !== "object") return;
           if (orderId && keyId) return;
           for (const key of Object.keys(obj)) {
-            const lowerKey = key.toLowerCase();
             const val = obj[key];
             if (typeof val === "string") {
               if (!orderId && val.startsWith("order_")) orderId = val;
@@ -925,15 +1295,21 @@ const StayBookingSystem = ({
       if (isPresent(finalGuestPrice)) receipt.push({ title: "Final Guest Price", content: formatMoney(finalGuestPrice) });
 
       const nightsFromOrder = firstNumber(orderResponse?.numberOfNights, pricing.nightsCount) || 1;
-      const nightlyFromOrder = firstNumber(orderResponse?.pricePerNight, pricing.originalPerNight) || 0;
+      const nightlyFromOrder = isPropertyBased
+        ? (firstNumber(orderResponse?.pricePerNight, pricing.originalPerNight) || 0)
+        : (firstNumber(pricing.originalPerNight, orderResponse?.pricePerNight) || 0);
       const totalFromOrder = firstNumber(orderResponse?.totalPrice, orderResponse?.finalPrice, backendTotalRupees, pricing.finalTotal) || 0;
       const nightlyExtraAdults = Number(extraAdultsCount || 0) * Number(pricing.activeExtraAdultPrice || 0);
       const nightlyExtraChildren = Number(extraChildrenCount || 0) * Number(pricing.activeExtraChildPrice || 0);
       const nightlyExtras = nightlyExtraAdults + nightlyExtraChildren;
       const nightlyBaseOnly = Math.max(0, Number(nightlyFromOrder || 0) - nightlyExtras);
+      const fallbackBaseStayTotal = Math.max(0, Number(nightlyBaseOnly || 0) * Number(nightsFromOrder || 1));
+      const baseStayDisplayTotal = isPropertyBased
+        ? (firstNumber(basePrice, fallbackBaseStayTotal) || 0)
+        : fallbackBaseStayTotal;
 
       const frontendReceipt = [
-        { title: `Base Stay (${nightsFromOrder} night${nightsFromOrder !== 1 ? "s" : ""})`, content: `${currency} ${Number(nightlyBaseOnly * nightsFromOrder).toFixed(2)}` },
+        { title: `Base Stay (${nightsFromOrder} night${nightsFromOrder !== 1 ? "s" : ""})`, content: `${currency} ${Number(baseStayDisplayTotal).toFixed(2)}` },
         { title: "Adults", content: `${guests.adults || 0}` },
         { title: "Children", content: `${guests.children || 0}` },
       ];
@@ -954,7 +1330,6 @@ const StayBookingSystem = ({
         : 0;
 
       // Display calculation should use gross stay total = base + extra adults + extra children
-      const baseStayDisplayTotal = Number(nightlyBaseOnly || 0) * Number(nightsFromOrder || 1);
       const extraAdultDisplayTotal = Number(extraAdultsCount || 0) * Number(pricing.activeExtraAdultPrice || 0) * Number(nightsFromOrder || 1);
       const extraChildDisplayTotal = Number(extraChildrenCount || 0) * Number(pricing.activeExtraChildPrice || 0) * Number(nightsFromOrder || 1);
       const grossBeforeDiscount = baseStayDisplayTotal + extraAdultDisplayTotal + extraChildDisplayTotal;
@@ -991,7 +1366,15 @@ const StayBookingSystem = ({
       const combinedFrontendTax = Math.max(0, subtotalBeforeTax * (taxRate / 100));
 
       if (discountToShow > 0) {
-        frontendReceipt.push({ title: "Total Discount", content: `- ${currency} ${Number(discountToShow).toFixed(2)}` });
+        if (pricing.earlyBirdDiscountAmount > 0) {
+          frontendReceipt.push({ title: `Early Bird Discount (${pricing.earlyBirdDiscountPercent}%)`, content: `- ${currency} ${Number(pricing.earlyBirdDiscountAmount).toFixed(2)}` });
+          const remainingDiscount = discountToShow - pricing.earlyBirdDiscountAmount;
+          if (remainingDiscount > 0.01) {
+            frontendReceipt.push({ title: "Total Discount", content: `- ${currency} ${Number(remainingDiscount).toFixed(2)}` });
+          }
+        } else {
+          frontendReceipt.push({ title: "Total Discount", content: `- ${currency} ${Number(discountToShow).toFixed(2)}` });
+        }
       }
       if (combinedFrontendTax > 0) {
         frontendReceipt.push({ title: `Tax (${Number(taxRate).toFixed(2)}%)`, content: `+ ${currency} ${Number(combinedFrontendTax).toFixed(2)}` });
@@ -1028,6 +1411,33 @@ const StayBookingSystem = ({
     } catch (err) {
       console.error(err);
       const backendPayload = err?.response?.data || {};
+
+      if (
+        err?.response?.status === 401 ||
+        backendPayload?.message === "Invalid or expired token" ||
+        backendPayload?.error === "Invalid or expired token"
+      ) {
+        const listingIdToSave = stay?.stayId || stay?.id;
+        if (listingIdToSave) {
+          const stateToStore = {
+            listingId: String(listingIdToSave),
+            type: "stay",
+            checkInDate: checkInDate ? checkInDate.format("YYYY-MM-DD") : null,
+            checkOutDate: checkOutDate ? checkOutDate.format("YYYY-MM-DD") : null,
+            guests,
+            selectedRooms,
+          };
+          try {
+            localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
+          } catch (e) {}
+        }
+
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("userInfo");
+        setShowLoginPrompt(true);
+        return;
+      }
+
       const title =
         backendPayload?.error ||
         backendPayload?.message ||
@@ -1062,6 +1472,26 @@ const StayBookingSystem = ({
       setLoading(false);
     }
   };
+
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerWidth <= 768) {
+        const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300;
+        setIsFooterVisible(scrolledToBottom);
+      } else {
+        setIsFooterVisible(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    handleScroll();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
 
   return (
     <>
@@ -1137,7 +1567,7 @@ const StayBookingSystem = ({
       <motion.button
         onClick={() => setShow(true)}
         initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        animate={{ y: isFooterVisible ? 150 : 0, opacity: isFooterVisible ? 0 : 1 }}
         whileHover={{
           scale: 1.04,
           background: AH || A,
@@ -1202,18 +1632,20 @@ const StayBookingSystem = ({
               }}
             >
               {/* Header */}
-              <div className="booking-modal-header" style={{ padding: "16px 32px", borderBottom: `1px solid ${B}88`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div className="booking-modal-header" style={{ padding: "16px 28px", borderBottom: `1px solid ${B}88`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h2 style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 2 }}>
+                  <h2 style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 2, lineHeight: "1.2" }}>
                     Reserve Your Stay
                   </h2>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>
-                      {fetchingAvailability ? "..." : `₹${formatPrice(nightlyBaseMinusDiscount)}`}
-                    </span>
-                    {!fetchingAvailability && billingConfigDiscountRate > 0 && (
-                      <span style={{ fontSize: 13, color: M, textDecoration: "line-through", opacity: 0.6 }}>₹{formatPrice(pricing.originalPerNight)}</span>
+                    {!fetchingAvailability && pricing.discount > 0 && (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: M, textDecoration: "line-through", opacity: 0.7 }}>
+                        {"\u20B9"}{formatPrice(pricing.originalPerNight)}
+                      </span>
                     )}
+                    <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>
+                      {fetchingAvailability ? "..." : `${"\u20B9"}${formatPrice(pricing.perNight)}`}
+                    </span>
                     <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>/ night</span>
                   </div>
                 </div>
@@ -1228,7 +1660,7 @@ const StayBookingSystem = ({
                   <div className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16 }}>
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                        <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
                           01. Select Dates
                           <span style={{ fontSize: 10, fontWeight: 700, background: AL, color: A, padding: "2px 8px", borderRadius: 100, border: `1px solid ${A}22` }}>
                             {selectionMode === "check-in" ? "Select Check-in" : selectionMode === "check-out" ? "Select Check-out" : "Dates Selected"}
@@ -1274,7 +1706,7 @@ const StayBookingSystem = ({
                   <div className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16 }}>
                     {/* Section 02: Booking Details */}
                     <div>
-                      <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 10, letterSpacing: "0.1em" }}>
+                      <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", lineHeight: "1.2" }}>
                         02. Booking Details
                       </div>
                       
@@ -1283,7 +1715,7 @@ const StayBookingSystem = ({
                         <div 
                           onClick={() => setSelectionMode("check-in")}
                           style={{ 
-                            padding: "8px 12px", 
+                            padding: "10px 14px", 
                             background: BG, 
                             borderRadius: 16, 
                             border: `1px solid ${selectionMode === 'check-in' ? A : B}`,
@@ -1292,15 +1724,15 @@ const StayBookingSystem = ({
                             boxShadow: selectionMode === 'check-in' ? `0 0 15px ${A}22` : "none"
                           }}
                         >
-                          <p style={{ fontSize: 8, fontWeight: 800, color: M, textTransform: "uppercase", marginBottom: 2 }}>Check-in</p>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: checkInDate ? FG : M }}>{checkInDate ? checkInDate.format("DD MMM, YYYY") : "Select date"}</p>
+                          <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>Check-in</p>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: checkInDate ? FG : M }}>{checkInDate ? checkInDate.format("DD MMM, YYYY") : "Select date"}</p>
                         </div>
                         <div 
                           onClick={() => {
                             if (checkInDate) setSelectionMode("check-out");
                           }}
                           style={{ 
-                            padding: "8px 12px", 
+                            padding: "10px 14px", 
                             background: BG, 
                             borderRadius: 16, 
                             border: `1px solid ${selectionMode === 'check-out' ? A : B}`,
@@ -1310,8 +1742,8 @@ const StayBookingSystem = ({
                             boxShadow: selectionMode === 'check-out' ? `0 0 15px ${A}22` : "none"
                           }}
                         >
-                          <p style={{ fontSize: 8, fontWeight: 800, color: M, textTransform: "uppercase", marginBottom: 2 }}>Check-out</p>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: checkOutDate ? FG : M }}>{checkOutDate ? checkOutDate.format("DD MMM, YYYY") : "Select date"}</p>
+                          <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>Check-out</p>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: checkOutDate ? FG : M }}>{checkOutDate ? checkOutDate.format("DD MMM, YYYY") : "Select date"}</p>
                         </div>
                       </div>
 
@@ -1331,7 +1763,7 @@ const StayBookingSystem = ({
                               background: AL, 
                               border: `1px solid ${A}33`, 
                               color: A, 
-                              fontSize: 9, 
+                              fontSize: 10, 
                               fontWeight: 800, 
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
@@ -1349,55 +1781,146 @@ const StayBookingSystem = ({
 
                     {/* Section 03: Guests & Accommodations */}
                     <div>
-                      <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 10, letterSpacing: "0.1em" }}>
+                      <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", lineHeight: "1.2" }}>
                         03. Guests & Accommodations
                       </div>
                       
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
-                          <div>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: FG }}>Adults</p>
-                            <p style={{ fontSize: 9, color: M, fontWeight: 500 }}>{guestAgeLabels.adults}</p>
+                      {(() => {
+                        const allowedAdults = (pricing.baseAdultsLimit || 0) + (pricing.extraAdultsLimit || 0);
+                        const allowedChildren = (pricing.baseChildrenLimit || 0) + (pricing.extraChildrenLimit || 0);
+
+                        return (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "column", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                  <p style={{ fontSize: 13, fontWeight: 600, color: FG }}>Adults</p>
+                                  <p style={{ fontSize: 10, color: M, fontWeight: 500, margin: 0 }}>{guestAgeLabels.adults}</p>
+                                </div>
+                                <Counter 
+                                  value={guests.adults} 
+                                  setValue={(v) => setGuests(prev => ({...prev, adults: v}))} 
+                                  min={1} 
+                                  max={allowedAdults}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                  <p style={{ fontSize: 13, fontWeight: 600, color: FG }}>Children</p>
+                                  <p style={{ fontSize: 10, color: M, fontWeight: 500, margin: 0 }}>{guestAgeLabels.children}</p>
+                                </div>
+                                <Counter 
+                                  value={guests.children} 
+                                  setValue={(v) => setGuests(prev => ({...prev, children: v}))} 
+                                  min={0} 
+                                  max={allowedChildren}
+                                />
+                              </div>
+                            </div>
+
+                            {pricing.earlyBirdDiscountPercent > 0 && (
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: AL, border: `1px solid ${A}33`, borderRadius: 100, width: "fit-content", marginTop: 4 }}>
+                                <Sparkles size={14} color={A} />
+                                <span style={{ fontSize: 11, fontWeight: 700, color: A }}>EARLY BIRD DISCOUNT APPLIED</span>
+                              </div>
+                            )}
                           </div>
-                          <Counter 
-                            value={guests.adults} 
-                            setValue={(v) => setGuests(prev => ({...prev, adults: v}))} 
-                            min={1} 
-                            max={pricing.baseAdultsLimit + pricing.extraAdultsLimit}
-                          />
+                        );
+                      })()}
+
+                      {capacityFeedback && (
+                        <div style={{
+                          marginTop: 8,
+                          padding: "8px 12px",
+                          borderRadius: 12,
+                          background: capacityFeedback.type === "success" 
+                            ? `${A}0c` 
+                            : capacityFeedback.type === "warning" || capacityFeedback.type === "error"
+                              ? `${E}0c`
+                              : `${M}0c`,
+                          border: `1px solid ${
+                            capacityFeedback.type === "success" 
+                              ? `${A}22` 
+                              : capacityFeedback.type === "warning" || capacityFeedback.type === "error"
+                                ? `${E}22`
+                                : `${B}`
+                          }`,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}>
+                          {capacityFeedback.type === "success" ? (
+                            <Sparkles size={12} color={A} />
+                          ) : capacityFeedback.type === "warning" || capacityFeedback.type === "error" ? (
+                            <AlertCircle size={12} color={E} />
+                          ) : (
+                            <Info size={12} color={M} />
+                          )}
+                          <span style={{
+                            fontSize: 11,
+                            fontWeight: 650,
+                            color: capacityFeedback.type === "success" 
+                              ? FG 
+                              : capacityFeedback.type === "warning" || capacityFeedback.type === "error"
+                                ? E
+                                : M
+                          }}>
+                            {capacityFeedback.text}
+                          </span>
                         </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16 }}>
-                          <div>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: FG }}>Children</p>
-                            <p style={{ fontSize: 9, color: M, fontWeight: 500 }}>{guestAgeLabels.children}</p>
-                          </div>
-                          <Counter 
-                            value={guests.children} 
-                            setValue={(v) => setGuests(prev => ({...prev, children: v}))} 
-                            min={0} 
-                            max={pricing.baseChildrenLimit + pricing.extraChildrenLimit}
-                          />
-                        </div>
-                      </div>
+                      )}
+
+                      {capacityFeedback && capacityFeedback.exceeded && (
+                        <motion.button
+                          whileHover={{ scale: 1.02, background: AL }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleAddAnotherRoom}
+                          style={{
+                            marginTop: 8,
+                            width: "100%",
+                            padding: "10px 16px",
+                            borderRadius: 14,
+                            border: `1px solid ${A}44`,
+                            background: "transparent",
+                            color: A,
+                            fontSize: 12,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                            transition: "background-color 0.2s ease"
+                          }}
+                        >
+                          <Plus size={14} />
+                          Add Another Room
+                        </motion.button>
+                      )}
+
+
 
                       {/* Selected Rooms */}
                       {resolvedSelectedRooms.length > 0 && (
                         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
                           {resolvedSelectedRooms.map((room) => (
-                            <div key={room.roomId || room.id} style={{ padding: "8px 12px", background: BG, borderRadius: 12, border: `1px solid ${B}` }}>
+                            <div key={room.roomId || room.id} style={{ padding: "10px 14px", background: BG, borderRadius: 16, border: `1px solid ${B}` }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                                   <div style={{ width: 26, height: 26, borderRadius: 8, background: AL, display: "flex", alignItems: "center", justifyContent: "center", color: A }}>
                                     <Bed size={13} />
                                   </div>
                                   <div>
-                                    <p style={{ fontSize: 11, fontWeight: 700, color: FG }}>{room.roomName || room.name}</p>
-                                    <p style={{ fontSize: 9, color: M }}>{room.mealPlan || "EP"}</p>
+                                    <p style={{ fontSize: 13, fontWeight: 600, color: FG }}>{room.roomName || room.name}</p>
+                                    <p style={{ fontSize: 10, fontWeight: 500, color: M }}>{room.mealPlan || "EP"}</p>
                                   </div>
                                 </div>
                                 <Counter 
                                   value={room.count} 
-                                  setValue={(v) => onRoomsCountChange(room.roomId || room.id, v)} 
+                                  setValue={(v) => handleRoomCountChangeWithReset(room.roomId || room.id, v)} 
                                   min={1} 
                                   max={Number(room.units || room.totalRooms || room.availableRooms || 99)} 
                                 />
@@ -1408,46 +1931,170 @@ const StayBookingSystem = ({
                       )}
                     </div>
 
+                    {/* Stay Allocation Summary */}
+                    {(() => {
+                      const isPropertyBased = stay?.bookingScope === "Property-Based";
+                      if (isPropertyBased) return null;
+
+                      const totalGuestsCount = (guests.adults || 0) + (guests.children || 0);
+                      const totalRoomsCount = resolvedSelectedRooms.reduce((sum, r) => sum + (r.count || 0), 0);
+                      if (totalRoomsCount === 0) return null;
+
+                      // Chip style helpers
+                      const chipStyle = {
+                        display: "inline-flex",
+                        alignItems: "center",
+                        padding: "3px 8px",
+                        borderRadius: 100,
+                        background: `${A}12`,
+                        border: `1px solid ${A}28`,
+                        color: A,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      };
+
+                      // Build compact capacity chips: "[EP • 3 Guests]" per room
+                      const capacityChips = resolvedSelectedRooms.map((r) => {
+                        const cap = r.maxGuests || (r.maxAdults ? r.maxAdults + (r.maxChildren || 0) : 2);
+                        const plan = r.mealPlan || "EP";
+                        return `${plan} • ${cap} Guests`;
+                      });
+
+                      // Build compact room-type chips: "[1x RoomName]"
+                      const roomTypeChips = resolvedSelectedRooms.map((r) => {
+                        const label = r.roomName || r.name || "Room";
+                        return `${r.count}x ${label}`;
+                      });
+
+                      // Full room name(s) for tooltip
+                      const fullRoomNamesTitle = resolvedSelectedRooms
+                        .map((r) => `${r.count}x ${r.roomName || r.name || "Room"}`)
+                        .join(", ");
+
+                      return (
+                        <div style={{
+                          padding: "14px",
+                          borderRadius: "18px",
+                          background: `linear-gradient(135deg, ${AL}12, ${AL}22)`,
+                          border: `1px solid ${A}22`,
+                          marginTop: "12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                          minWidth: 0,
+                          overflow: "hidden",
+                        }}>
+                          {/* Title */}
+                          <div style={{ fontSize: 11, fontWeight: 800, color: A, textTransform: "uppercase", letterSpacing: "0.1em", lineHeight: "1.2" }}>
+                            Stay Allocation Summary
+                          </div>
+
+                          {/* 2-column info grid — minWidth:0 prevents overflow */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 12px" }}>
+
+                            {/* Guests */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                              <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Guests</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>
+                                {totalGuestsCount} {totalGuestsCount === 1 ? "Guest" : "Guests"}
+                              </span>
+                            </div>
+
+                            {/* Rooms Required */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                              <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Rooms Required</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>
+                                {totalRoomsCount} {totalRoomsCount === 1 ? "Room" : "Rooms"}
+                              </span>
+                            </div>
+
+                            {/* Room Capacity — compact chips */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                              <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Room Capacity</span>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, minWidth: 0 }}>
+                                {capacityChips.map((chip, i) => (
+                                  <span key={i} style={chipStyle}>{chip}</span>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Room Type — compact chips with truncation */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                              <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Room Type</span>
+                              <div
+                                style={{ display: "flex", flexWrap: "wrap", gap: 4, minWidth: 0 }}
+                                title={fullRoomNamesTitle}
+                              >
+                                {roomTypeChips.map((chip, i) => (
+                                  <span key={i} style={{ ...chipStyle, maxWidth: "100%" }}>{chip}</span>
+                                ))}
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Occupancy & Extra Pricing Breakdown */}
+                          {(pricing.extraAdultsCount > 0 || pricing.extraChildrenCount > 0) && (
+                            <>
+                              <div style={{ height: 1, background: `${A}22`, margin: "12px 0 8px" }} />
+                              
+                              {/* Occupancy Summary */}
+                              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                <span style={{ fontSize: 10, fontWeight: 800, color: A, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                                  Occupancy Summary
+                                </span>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px" }}>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Normal Adults</span>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>{pricing.normalAdultsCount} / {pricing.baseAdultsLimit}</span>
+                                  </div>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Extra Adults</span>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: A }}>{pricing.extraAdultsCount} / {pricing.extraAdultsLimit}</span>
+                                  </div>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Normal Children</span>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>{pricing.normalChildrenCount} / {pricing.baseChildrenLimit}</span>
+                                  </div>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Extra Children</span>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: A }}>{pricing.extraChildrenCount} / {pricing.extraChildrenLimit}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                        </div>
+                      );
+                    })()}
+
                     {/* Warnings */}
                     {pricing.warning && (
                       <div style={{ 
                         padding: "8px 12px", borderRadius: 12, 
-                        background: pricing.isOver ? "#FFF5F5" : AL, 
-                        border: `1px solid ${pricing.isOver ? "#FEB2B2" : A + '33'}`,
+                        background: pricing.isOver ? EL : AL, 
+                        border: `1px solid ${pricing.isOver ? E + '33' : A + '33'}`,
                         display: "flex", gap: 10, alignItems: "center"
                       }}>
-                        <AlertCircle size={14} color={pricing.isOver ? "#F56565" : A} />
-                        <p style={{ fontSize: 10, color: pricing.isOver ? "#C53030" : FG, lineHeight: 1.4, fontWeight: 600 }}>
+                        <AlertCircle size={14} color={pricing.isOver ? E : A} />
+                        <p style={{ fontSize: 10, color: pricing.isOver ? E : FG, lineHeight: 1.4, fontWeight: 600, margin: 0 }}>
                           {pricing.warning}
                         </p>
                       </div>
                     )}
                     
-                    {/* Price Summary */}
-                    {nightsCount > 0 && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "10px", background: BG, borderRadius: 16, border: `1px dashed ${B}` }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", color: M, fontSize: 11, fontWeight: 500 }}>
-                          <span>Base ({nightsCount} night{nightsCount !== 1 ? 's' : ''})</span>
-                          <span>₹{formatPrice(pricing.originalPerNight * nightsCount)}</span>
-                        </div>
-                        {pricing.discount > 0 && (
-                          <div style={{ display: "flex", justifyContent: "space-between", color: "#10B981", fontSize: 11, fontWeight: 700 }}>
-                            <span>Discounts</span>
-                            <span>- ₹{formatPrice(pricing.discount)}</span>
-                          </div>
-                        )}
-                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, paddingTop: 4, borderTop: `1px solid ${B}` }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>Subtotal</span>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: A }}>₹{formatPrice(pricing.subtotal)}</span>
-                        </div>
-                      </div>
-                    )}
+
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="booking-modal-footer" style={{ padding: "12px 32px", background: BG, borderTop: `1px solid ${B}88`, display: "flex", flexDirection: "column", gap: 8, zIndex: 10 }}>
+              <div className="booking-modal-footer" style={{ padding: "16px 28px", background: BG, borderTop: `1px solid ${B}88`, display: "flex", flexDirection: "column", gap: 8, zIndex: 10 }}>
                 <AnimatePresence>
                   {validationError && (
                     <motion.div
@@ -1477,15 +2124,16 @@ const StayBookingSystem = ({
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: 12 }}>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 9, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Total amount</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: FG }}>₹{formatPrice(pricing.finalTotal)}</span>
-                    <span style={{ marginTop: 1, fontSize: 9, color: M, fontWeight: 500 }}>Inc. all taxes</span>
+                    <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Total amount</span>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{formatPricePrecise(pricing.finalTotal)}</span>
+                    <span style={{ marginTop: 1, fontSize: 10, color: M, fontWeight: 600 }}>Inc. all taxes</span>
                   </div>
                   {(() => {
                     const isPropertyBased = stay?.bookingScope === "Property-Based";
                     const hasSelection = isPropertyBased || resolvedSelectedRooms.length > 0;
-                    const isDisabled = loading || pricing.isOver;
-                    const buttonText = loading ? "Processing..." : (pricing.isOver ? "Capacity Exceeded" : (hasSelection ? "Reserve Stay" : "Select Room"));
+                    const isCapacityExceeded = pricing.isOver && !loading;
+                    const isDisabled = loading;
+                    const buttonText = loading ? "Processing..." : (pricing.isOver ? "Add Another Room" : (hasSelection ? "Reserve Stay" : "Select Room"));
 
                     return (
                       <motion.button
@@ -1494,16 +2142,17 @@ const StayBookingSystem = ({
                         onClick={handleReserve}
                         disabled={isDisabled}
                         style={{
-                          padding: "10px 32px",
-                          background: isDisabled ? B : A,
+                          padding: "12px 32px",
+                          background: loading ? B : A,
                           color: "#FFF",
-                          borderRadius: 12,
+                          borderRadius: 16,
                           border: "none",
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: 800,
                           cursor: isDisabled ? "not-allowed" : "pointer",
                           boxShadow: isDisabled ? "none" : `0 10px 20px ${A}33`,
-                          transition: "0.3s"
+                          transition: "0.3s",
+                          opacity: isCapacityExceeded ? 0.6 : (loading ? 0.7 : 1)
                         }}
                       >
                         {buttonText}
@@ -1513,9 +2162,9 @@ const StayBookingSystem = ({
                 </div>
               </div>
               
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, paddingBottom: 10, color: M, fontSize: 9, background: BG }}>
-                <ShieldCheck size={11} />
-                <span>Secure payment by LKP</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
+                <ShieldCheck size={12} />
+                <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
               </div>
             </motion.div>
           </div>
@@ -1630,4 +2279,7 @@ const StayBookingSystem = ({
 };
 
 export default StayBookingSystem;
+
+
+
 

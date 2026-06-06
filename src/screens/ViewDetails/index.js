@@ -4,7 +4,7 @@ import cn from "classnames";
 import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
 import { getBookingDetails } from "../../mocks/bookings";
-import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile } from "../../utils/api";
+import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, getOrderCancelPreview, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile } from "../../utils/api";
 import Rating from "../../components/Rating";
 import Modal from "../../components/Modal";
 import Receipt from "../../components/Receipt";
@@ -12,9 +12,9 @@ import html2pdf from "html2pdf.js";
 
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
-  if (!url) return "/images/content/card-pic-13.jpg";
+  if (!url) return "";
   const raw = String(url).trim();
-  if (!raw) return "/images/content/card-pic-13.jpg";
+  if (!raw) return "";
 
   // If already a full URL, return as is
   if (raw.startsWith("http://") || raw.startsWith("https://")) {
@@ -491,7 +491,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       asNonEmptyString(eventData?.coverImage) ||
       asNonEmptyString(apiBooking?.eventDetails?.eventCoverImageUrl) ||
       asNonEmptyString(apiBooking?.coverPhotoUrl) ||
-      "/images/content/card-pic-13.jpg";
+      "";
   } else {
     let stayCoverPhoto = null;
     if (stayData) {
@@ -512,7 +512,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       stayCoverPhoto ||
       apiBooking?.listingCoverPhoto ||
       apiBooking?.coverPhotoUrl ||
-      "/images/content/card-pic-13.jpg";
+      "";
   }
 
 
@@ -612,6 +612,17 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
   // Extract stay amenities/policies if available
   if (stayData) {
+    const stayCheckInMethod = pickText(stayData.checkInMethod);
+    const stayCheckInInstruction = pickText(stayData.checkInInstructions);
+
+    if (stayCheckInMethod) {
+      result.notes.hostInstructions.push(`Check-in Method: ${stayCheckInMethod}`);
+    }
+
+    if (stayCheckInInstruction) {
+      result.notes.hostInstructions.push(`Check-in Instructions: ${stayCheckInInstruction}`);
+    }
+
     if (stayData.houseRules && !result.notes.hostInstructions.length) {
       result.notes.hostInstructions = Array.isArray(stayData.houseRules)
         ? stayData.houseRules
@@ -654,6 +665,7 @@ const ViewDetails = () => {
   // Receipt state
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
   const [refundDetails, setRefundDetails] = useState(null);
+  const [cancelPreview, setCancelPreview] = useState(null);
   const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [validationModalVisible, setValidationModalVisible] = useState(false);
@@ -663,7 +675,22 @@ const ViewDetails = () => {
     code: "",
     details: "",
   });
-  const isCompletedOrder = String(booking?.originalData?.orderStatus || "").toUpperCase() === "COMPLETED";
+  const [hasAutopaid, setHasAutopaid] = useState(false);
+  const [priceChangedData, setPriceChangedData] = useState(null);
+  const [confirmPayModalVisible, setConfirmPayModalVisible] = useState(false);
+
+  // Review modal state (for Leave Review button in action card)
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [reviewModalRating, setReviewModalRating] = useState(0);
+  const [reviewModalComment, setReviewModalComment] = useState("");
+  const [reviewModalError, setReviewModalError] = useState(null);
+  const [isSubmittingReviewModal, setIsSubmittingReviewModal] = useState(false);
+
+  // isCompletedOrder: true if backend status is COMPLETED, OR if the booking has been date-overridden to "Completed"
+  const isCompletedOrder =
+    String(booking?.originalData?.orderStatus || "").toUpperCase() === "COMPLETED" ||
+    booking?.status === "Completed" ||
+    booking?.statusTone === "completed";
   const canLeaveReview = booking?.orderId != null && orderIdsEligibleForReview.has(Number(booking.orderId));
 
   const handleCancelBookingClick = () => {
@@ -676,6 +703,35 @@ const ViewDetails = () => {
     setCancelModalVisible(false);
     setCancelReason("");
     setCancelError(null);
+  };
+
+  const getFriendlyCancellationError = (error) => {
+    const status = Number(error?.response?.status);
+    const message = String(
+      error?.response?.data?.reason ||
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message ||
+      ""
+    );
+    const normalized = message.toLowerCase();
+    const isNoCancellationPolicy =
+      normalized.includes("cancellation not allowed") ||
+      normalized.includes("no cancellation policy") ||
+      normalized.includes("cancellation policy not defined") ||
+      normalized.includes("cancel is not allowed");
+
+    if (status === 400 && isNoCancellationPolicy) {
+      return "No cancellation available.";
+    }
+
+    return (
+      error?.response?.data?.message ||
+      error?.response?.data?.reason ||
+      error?.response?.data?.error ||
+      error?.message ||
+      "Failed to cancel booking. Please try again."
+    );
   };
 
   const handleCancelBooking = async () => {
@@ -715,11 +771,7 @@ const ViewDetails = () => {
       handleCloseCancelModal();
     } catch (err) {
       console.error("Error cancelling booking:", err);
-      setCancelError(
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to cancel booking. Please try again."
-      );
+      setCancelError(getFriendlyCancellationError(err));
     } finally {
       setIsCancelling(false);
     }
@@ -838,17 +890,9 @@ const ViewDetails = () => {
     }
   };
 
-  const openRazorpayForBooking = async () => {
-    if (!booking?.orderId || isConfirmingBooking) return;
+  const triggerRazorpayOpen = async (orderResponse, order, payment) => {
     setIsConfirmingBooking(true);
-
     try {
-      const orderResponse = booking.isEventOrder
-        ? await getEventOrderDetails(booking.orderId)
-        : await getOrderDetails(booking.orderId);
-      const order = orderResponse?.order || orderResponse || {};
-      const payment = orderResponse?.payment || order?.payment || {};
-
       const amountInPaise =
         Number(payment?.amount) > 0
           ? Number(payment.amount)
@@ -902,6 +946,8 @@ const ViewDetails = () => {
 
       await ensureRazorpayScript();
 
+      setConfirmPayModalVisible(false);
+
       const options = {
         key: razorpayKeyId,
         amount: amountInPaise,
@@ -938,6 +984,42 @@ const ViewDetails = () => {
     }
   };
 
+  const openRazorpayForBooking = async (bypassPriceCheck = false) => {
+    if (!booking?.orderId || isConfirmingBooking) return;
+    setIsConfirmingBooking(true);
+
+    try {
+      const orderResponse = booking.isEventOrder
+        ? await getEventOrderDetails(booking.orderId)
+        : await getOrderDetails(booking.orderId);
+      const order = orderResponse?.order || orderResponse || {};
+      const payment = orderResponse?.payment || order?.payment || {};
+
+      const latestPrice = Number(order?.totalPrice || order?.finalAmount || 0);
+      const originalPrice = Number(booking?.originalData?.totalPrice || 0);
+
+      if (!bypassPriceCheck && latestPrice > 0 && originalPrice > 0 && latestPrice !== originalPrice) {
+        setPriceChangedData({
+          oldPrice: originalPrice,
+          newPrice: latestPrice,
+          currency: order?.currency || booking?.originalData?.currency || "INR",
+          onConfirm: () => {
+            setPriceChangedData(null);
+            triggerRazorpayOpen(orderResponse, order, payment);
+          }
+        });
+        setIsConfirmingBooking(false);
+        return;
+      }
+
+      await triggerRazorpayOpen(orderResponse, order, payment);
+    } catch (err) {
+      console.error("Error fetching order details for Razorpay:", err);
+      alert(err?.message || "Failed to initialize payment.");
+      setIsConfirmingBooking(false);
+    }
+  };
+
   const handleCheckAvailabilityAndProceed = async () => {
     if (!booking?.orderId || isCheckingAvailability || isConfirmingBooking) return;
 
@@ -953,7 +1035,15 @@ const ViewDetails = () => {
         : await validateExperienceOrEventOrder(booking.orderId);
 
       if (response?.canProceed === true) {
-        await openRazorpayForBooking();
+        const isEvent = booking.isEventOrder || businessInterestCode === "EVENTS" || bookingType === "event";
+        const isExperienceOrder = !isStayOrder && !isEvent;
+        const originalStatus = booking?.originalData?.orderStatus ? String(booking.originalData.orderStatus).toUpperCase().trim() : "";
+
+        if (isExperienceOrder && originalStatus === "PENDING") {
+          setConfirmPayModalVisible(true);
+        } else {
+          await openRazorpayForBooking();
+        }
         return;
       }
 
@@ -1265,7 +1355,7 @@ const ViewDetails = () => {
               maxGuests: apiBookingData.listingMaxGuests || apiBookingData.maxGuests || null,
               status: apiBookingData.listingStatus || apiBookingData.status || "",
               // Use cover photo from order as fallback
-              coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || "/images/content/card-pic-13.jpg",
+              coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || "",
             };
           }
         }
@@ -1313,7 +1403,7 @@ const ViewDetails = () => {
             categoryName: apiBookingData.listingCategory || apiBookingData.category || categoryName,
             maxGuests: apiBookingData.listingMaxGuests || apiBookingData.maxGuests || null,
             status: apiBookingData.listingStatus || apiBookingData.status || "",
-            coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || stayData?.coverImageUrl || "/images/content/card-pic-13.jpg",
+            coverPhotoUrl: apiBookingData.listingCoverPhoto || apiBookingData.coverPhotoUrl || stayData?.coverImageUrl || "",
           };
         }
 
@@ -1411,6 +1501,14 @@ const ViewDetails = () => {
   }, [bookingId, bookingType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    const autoPayParam = new URLSearchParams(location.search).get("autopay") === "true";
+    if (autoPayParam && booking && !loading && !error && !hasAutopaid) {
+      setHasAutopaid(true);
+      handleCheckAvailabilityAndProceed();
+    }
+  }, [booking, loading, error, hasAutopaid, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     const loadReviewEligibility = async () => {
       if (!booking?.orderId) return;
       try {
@@ -1450,6 +1548,25 @@ const ViewDetails = () => {
     loadRefundDetails();
   }, [booking?.orderId]);
 
+  useEffect(() => {
+    const loadCancelPreview = async () => {
+      if (!booking?.orderId) {
+        setCancelPreview(null);
+        return;
+      }
+
+      try {
+        const data = await getOrderCancelPreview(booking.orderId);
+        setCancelPreview(data && typeof data === "object" ? data : null);
+      } catch (err) {
+        console.warn("⚠️ Failed to fetch cancel preview:", err?.message || err);
+        setCancelPreview(null);
+      }
+    };
+
+    loadCancelPreview();
+  }, [booking?.orderId]);
+
   const formatMoney = (amount, currency = "INR") => {
     if (amount === null || amount === undefined || amount === "") return "N/A";
     const numericAmount = Number(amount);
@@ -1458,6 +1575,108 @@ const ViewDetails = () => {
       return `₹${numericAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
     return `${currency} ${numericAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatRefundStatus = (status) => {
+    const raw = String(status || "").trim();
+    if (!raw) return "N/A";
+    if (raw.toUpperCase() === "NOT_REQUIRED") return "No Refund";
+    return raw.replaceAll("_", " ");
+  };
+
+  const formatPolicyWindow = (policy) => {
+    if (!policy || typeof policy !== "object") return "";
+
+    const minDays = policy.minDaysBeforeStart ?? policy.minDays;
+    const maxDays = policy.maxDaysBeforeStart ?? policy.maxDays;
+
+    if (minDays != null && maxDays != null) {
+      if (Number(minDays) === 0 && Number(maxDays) === 0) {
+        return "on the start date";
+      }
+      return `${minDays} to ${maxDays} days before start`;
+    }
+    if (minDays != null) {
+      if (Number(minDays) === 0) {
+        return "any time before start";
+      }
+      return `${minDays}+ days before start`;
+    }
+    if (maxDays != null) {
+      if (Number(maxDays) === 0) {
+        return "up to the start date";
+      }
+      return `up to ${maxDays} days before start`;
+    }
+
+    return "";
+  };
+
+  const getAppliedRefundPolicyText = () => {
+    const previewPolicy = cancelPreview?.policyUsed || cancelPreview?.policyApplied;
+    const previewPercentage =
+      cancelPreview?.policyUsed?.percentage ??
+      cancelPreview?.policyApplied?.percentage ??
+      (cancelPreview?.cancellationFeePercentage != null
+        ? 100 - Number(cancelPreview.cancellationFeePercentage || 0)
+        : null);
+
+    if (Number.isFinite(Number(previewPercentage))) {
+      const normalizedPercentage = Number(previewPercentage);
+      const previewWindow = formatPolicyWindow(previewPolicy);
+
+      if (normalizedPercentage <= 0) {
+        return previewWindow
+          ? `If you cancel now (${previewWindow}), you'll receive 0% refund.`
+          : "If you cancel now, you'll receive 0% refund.";
+      }
+
+      return previewWindow
+        ? `If you cancel now (${previewWindow}), you'll receive ${normalizedPercentage}% refund.`
+        : `If you cancel now, you'll receive ${normalizedPercentage}% refund.`;
+    }
+
+    const listingCancellationPolicy = booking?.listingData?.cancellationPolicyText;
+    const listingPolicyText = Array.isArray(listingCancellationPolicy)
+      ? listingCancellationPolicy.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+      : (typeof listingCancellationPolicy === "string" ? listingCancellationPolicy.trim() : "");
+
+    const policyCandidates = [
+      listingPolicyText,
+      booking?.eventData?.cancellationPolicySummary,
+      booking?.eventData?.cancellationPolicyText,
+      booking?.eventData?.cancellationPolicy,
+      booking?.stayData?.cancellationPolicySummary,
+      booking?.stayData?.cancellationPolicyText,
+      booking?.stayData?.cancellationPolicy,
+      booking?.originalData?.eventData?.cancellationPolicySummary,
+      booking?.originalData?.eventData?.cancellationPolicyText,
+      booking?.originalData?.eventData?.cancellationPolicy,
+      booking?.originalData?.stayData?.cancellationPolicySummary,
+      booking?.originalData?.stayData?.cancellationPolicyText,
+      booking?.originalData?.stayData?.cancellationPolicy,
+      refundDetails?.appliedRefundPolicy,
+      refundDetails?.appliedRefundPolicyName,
+      refundDetails?.appliedPolicy,
+      refundDetails?.refundPolicyName,
+      refundDetails?.policyName,
+      refundDetails?.policyLabel,
+      refundDetails?.policy,
+      refundDetails?.refundPolicy,
+      refundDetails?.refundPolicyText,
+      booking?.originalData?.appliedRefundPolicy,
+      booking?.originalData?.appliedRefundPolicyName,
+      booking?.originalData?.appliedPolicy,
+      booking?.originalData?.refundPolicyName,
+      booking?.originalData?.refundPolicy,
+      booking?.originalData?.refundPolicyText,
+      Array.isArray(booking?.notes?.cancellationPolicy)
+        ? booking.notes.cancellationPolicy.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+        : "",
+    ];
+
+    const firstText = policyCandidates.find((val) => typeof val === "string" && val.trim() !== "");
+    return firstText ? firstText.trim() : "";
   };
 
   const getInitialTab = () => {
@@ -1551,7 +1770,7 @@ const ViewDetails = () => {
       <div className={cn("section", styles.section)}>
         <div className={cn("container", styles.container)}>
           <div className={styles.notFound}>
-            <h2>Loading booking details...</h2>
+            <p style={{ fontSize: "1.2rem", fontWeight: "500" }}>Loading booking details...</p>
           </div>
         </div>
       </div>
@@ -1596,10 +1815,16 @@ const ViewDetails = () => {
   const getStatusClass = (status) => {
     if (!status) return styles.statusDefault;
 
-    // Get original orderStatus first for accurate status class
+    // If booking.status has been overridden to "Completed" by date-based logic,
+    // respect that override before checking the raw backend orderStatus.
+    if (booking?.status === "Completed" || booking?.statusTone === "completed") {
+      return styles.statusCompleted;
+    }
+
+    // Get original orderStatus for accurate status class
     const originalStatus = booking?.originalData?.orderStatus ? String(booking.originalData.orderStatus).toUpperCase().trim() : "";
 
-    // Check original orderStatus first
+    // Check original orderStatus
     if (originalStatus === "PENDING") {
       return styles.statusPending; // Orange background for pending
     }
@@ -1642,16 +1867,7 @@ const ViewDetails = () => {
       : "";
 
     if (originalStatus === "PENDING" || status === "pending") {
-      const actions = [
-        {
-          label: isCheckingAvailability
-            ? "Checking..."
-            : (isConfirmingBooking ? "Opening Payment..." : "Check Availability"),
-          variant: "primary",
-          onClick: handleCheckAvailabilityAndProceed,
-          disabled: isCheckingAvailability || isConfirmingBooking,
-        },
-      ];
+      const actions = [];
       if (sourceTab !== "cancelled") {
         actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
       }
@@ -1668,9 +1884,15 @@ const ViewDetails = () => {
           label: "Leave Review",
           variant: "secondary",
           onClick: () => {
+            // Try to scroll to inline review card first, else open modal
             const reviewSection = document.querySelector(`.${styles.reviewCard}`);
             if (reviewSection) {
               reviewSection.scrollIntoView({ behavior: "smooth" });
+            } else {
+              setReviewModalRating(0);
+              setReviewModalComment("");
+              setReviewModalError(null);
+              setReviewModalVisible(true);
             }
           },
         });
@@ -1685,9 +1907,15 @@ const ViewDetails = () => {
           label: "Leave Review",
           variant: "secondary",
           onClick: () => {
+            // Try to scroll to inline review card first, else open modal
             const reviewSection = document.querySelector(`.${styles.reviewCard}`);
             if (reviewSection) {
               reviewSection.scrollIntoView({ behavior: "smooth" });
+            } else {
+              setReviewModalRating(0);
+              setReviewModalComment("");
+              setReviewModalError(null);
+              setReviewModalVisible(true);
             }
           },
         });
@@ -1710,6 +1938,14 @@ const ViewDetails = () => {
     }
     return cn("button-stroke", "button-small");
   };
+
+  const bookingStatusLower = String(
+    booking?.statusTone ||
+    booking?.status ||
+    booking?.originalData?.orderStatus ||
+    ""
+  ).toLowerCase().trim();
+  const isCancelledBooking = bookingStatusLower === "cancelled" || bookingStatusLower === "canceled";
 
   return (
     <div className={cn("section", styles.section)}>
@@ -1741,7 +1977,7 @@ const ViewDetails = () => {
             }}
             onError={(e) => {
               console.warn("⚠️ Banner image failed to load:", booking.bannerImage.src);
-              e.currentTarget.src = "/images/content/card-pic-13.jpg";
+              e.currentTarget.src = "";
               e.currentTarget.removeAttribute("srcset");
             }}
           />
@@ -1796,7 +2032,13 @@ const ViewDetails = () => {
               <div className={styles.summaryValue}>
                 <span className={cn(styles.statusBadge, getStatusClass(booking.status || booking.statusTone || booking.originalData?.orderStatus))}>
                   {(() => {
-                    // Get status from original orderStatus first, then fallback to mapped status
+                    // If booking.status has been overridden to "Completed" by date-based logic,
+                    // show "Completed" regardless of the raw backend orderStatus (which may still be CONFIRMED).
+                    if (booking.status === "Completed" || booking.statusTone === "completed") {
+                      return "Completed";
+                    }
+
+                    // Get status from original orderStatus, then fallback to mapped status
                     const originalStatus = booking.originalData?.orderStatus;
                     if (originalStatus) {
                       const normalized = String(originalStatus).toUpperCase().trim();
@@ -1849,6 +2091,21 @@ const ViewDetails = () => {
               </div>
             </div>
           </div>
+          {booking.addons && booking.addons.length > 0 && (
+            <div className={styles.addonsInlineSection}>
+              <h3 className={styles.addonsSectionTitle}>Selected Add-ons</h3>
+              <div className={styles.addonsInlineList}>
+                {booking.addons.map((addon, index) => (
+                  <div key={index} className={styles.addonChip}>
+                    <span className={styles.addonName}>{addon.name}</span>
+                    <span className={styles.addonQty}>×{addon.quantity}</span>
+                    <span className={styles.addonSeparator}>—</span>
+                    <span className={styles.addonPrice}>{addon.total}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className={styles.locationPaymentGrid}>
@@ -1970,15 +2227,32 @@ const ViewDetails = () => {
                 </div>
               )}
               <div className={cn(styles.paymentRow, styles.paymentTotal)}>
-                <span>Total Paid</span>
+                <span>{booking.status === "Pending" ? "Amount Payable" : "Total Paid"}</span>
                 <span>{booking.pricing.total}</span>
               </div>
+              {(booking.status === "Pending" || String(booking.originalData?.orderStatus || "").toUpperCase() === "PENDING") && (
+                <div className={styles.paymentActions}>
+                  <button
+                    type="button"
+                    className={cn("button", styles.payNowBtn)}
+                    onClick={handleCheckAvailabilityAndProceed}
+                    disabled={isCheckingAvailability || isConfirmingBooking}
+                    style={{ backgroundColor: "#0097B2", borderColor: "#0097B2" }}
+                  >
+                    {isCheckingAvailability
+                      ? "Checking Availability..."
+                      : (isConfirmingBooking ? "Opening Payment..." : "Check Availability & Pay Now")}
+                  </button>
+                </div>
+              )}
               {refundDetails && (
                 <>
-                  <div className={styles.paymentRow}>
-                    <span>Refund Status</span>
-                    <span>{refundDetails.refundStatus || "N/A"}</span>
-                  </div>
+                  {isCancelledBooking && (
+                    <div className={styles.paymentRow}>
+                      <span>Refund Status</span>
+                      <span>{formatRefundStatus(refundDetails.refundStatus)}</span>
+                    </div>
+                  )}
                   <div className={styles.paymentRow}>
                     <span>Refund Amount</span>
                     <span>{formatMoney(refundDetails.refundAmount, refundDetails.currency || booking?.originalData?.currency || "INR")}</span>
@@ -1989,33 +2263,16 @@ const ViewDetails = () => {
                   </div>
                 </>
               )}
-              {booking.originalData?.razorpayOrderId && (
+              {getAppliedRefundPolicyText() && (
                 <div className={styles.paymentMethod} style={{ marginTop: '8px', fontSize: '12px', color: '#777E90' }}>
-                  <span>Order ID: {booking.originalData.razorpayOrderId}</span>
+                  <span>Applied Refund Policy: {getAppliedRefundPolicyText()}</span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Addons Section */}
-        {booking.addons && booking.addons.length > 0 && (
-          <div className={cn(styles.card, styles.addonsCard, "mb-5")} style={{ marginBottom: 32 }}>
-            <h2 className={styles.cardTitle}>Addons</h2>
-            <div className={styles.addonsList}>
-              {booking.addons.map((addon, index) => (
-                <div key={index} className={styles.addonItem}>
-                  <div className={styles.addonName}>{addon.name}</div>
-                  <div className={styles.addonDetails}>
-                    <span>Price: {addon.price}</span>
-                    <span>Quantity: {addon.quantity}</span>
-                    <span className={styles.addonTotal}>Total: {addon.total}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
 
 
@@ -2124,22 +2381,25 @@ const ViewDetails = () => {
           </div>
         )}
 
-        <div className={cn(styles.card, styles.actionCard)}>
-          <h3 className={styles.actionTitle}>Actions</h3>
-          <div className={styles.actionButtons}>
-            {getActionButtons().map((action, index) => (
-              <button
-                key={index}
-                type="button"
-                className={getButtonClassName(action.variant)}
-                onClick={action.onClick}
-                disabled={Boolean(action.disabled)}
-              >
-                {action.label}
-              </button>
-            ))}
+        {getActionButtons().length > 0 && (
+          <div className={cn(styles.card, styles.actionCard)}>
+            <h3 className={styles.actionTitle}>Actions</h3>
+            <div className={styles.actionButtons}>
+              {getActionButtons().map((action, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={getButtonClassName(action.variant)}
+                  onClick={action.onClick}
+                  disabled={Boolean(action.disabled)}
+                  style={{ cursor: "pointer" }}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Cancellation Modal */}
@@ -2167,6 +2427,101 @@ const ViewDetails = () => {
               onClick={() => setValidationModalVisible(false)}
             >
               Okay
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Price Update Consent Modal */}
+      <Modal
+        visible={!!priceChangedData}
+        onClose={() => {
+          setPriceChangedData(null);
+          setIsConfirmingBooking(false);
+        }}
+        outerClassName={styles.cancelModalOuter}
+      >
+        <div className={styles.cancelModalContent}>
+          <div className={styles.cancelModalHeader}>
+            <h2 className={styles.cancelModalTitle}>Price Updated</h2>
+            <p className={styles.cancelModalDescription}>
+              The price for this experience booking has been updated.
+            </p>
+          </div>
+          <div className={styles.cancelModalBody}>
+            <p className={styles.cancelModalDescription} style={{ marginBottom: "16px" }}>
+              Original Price: <strong>{priceChangedData ? formatMoney(priceChangedData.oldPrice, priceChangedData.currency) : ""}</strong>
+              <br />
+              Updated Price: <strong>{priceChangedData ? formatMoney(priceChangedData.newPrice, priceChangedData.currency) : ""}</strong>
+            </p>
+            <p className={styles.cancelModalDescription}>
+              Would you like to proceed with the updated payment amount?
+            </p>
+          </div>
+          <div className={styles.cancelModalFooter}>
+            <button
+              type="button"
+              className={cn("button-stroke", styles.cancelModalBtn)}
+              onClick={() => {
+                setPriceChangedData(null);
+                setIsConfirmingBooking(false);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn("button", styles.cancelModalBtn)}
+              onClick={() => {
+                if (priceChangedData?.onConfirm) {
+                  priceChangedData.onConfirm();
+                }
+              }}
+            >
+              Proceed to Payment
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Slot Available Confirmation Modal */}
+      <Modal
+        visible={confirmPayModalVisible}
+        onClose={() => {
+          if (!isConfirmingBooking) setConfirmPayModalVisible(false);
+        }}
+        outerClassName={styles.cancelModalOuter}
+      >
+        <div className={styles.cancelModalContent}>
+          <div className={styles.cancelModalHeader}>
+            <h2 className={styles.cancelModalTitle} style={{ color: "#0097B2" }}>Slot Available</h2>
+            <p className={styles.cancelModalDescription}>
+              Your selected experience slot is currently available.
+              You can proceed with payment to confirm your booking.
+            </p>
+          </div>
+          
+
+
+          <div className={styles.cancelModalFooter}>
+            <button
+              type="button"
+              className={cn("button-stroke", styles.cancelModalBtn)}
+              onClick={() => setConfirmPayModalVisible(false)}
+              disabled={isConfirmingBooking}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn("button", styles.cancelModalBtn)}
+              onClick={async () => {
+                await openRazorpayForBooking();
+              }}
+              disabled={isConfirmingBooking}
+              style={{ backgroundColor: "#0097B2", borderColor: "#0097B2" }}
+            >
+              {isConfirmingBooking ? "Initializing..." : "Continue to Payment"}
             </button>
           </div>
         </div>
@@ -2229,6 +2584,128 @@ const ViewDetails = () => {
               disabled={isCancelling || !cancelReason.trim()}
             >
               {isCancelling ? "Cancelling..." : "Submit"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Leave Review Modal - opened from the Leave Review action button */}
+      <Modal
+        visible={reviewModalVisible}
+        onClose={() => {
+          if (!isSubmittingReviewModal) {
+            setReviewModalVisible(false);
+            setReviewModalRating(0);
+            setReviewModalComment("");
+            setReviewModalError(null);
+          }
+        }}
+        outerClassName={styles.cancelModalOuter}
+      >
+        <div className={styles.cancelModalContent}>
+          <div className={styles.cancelModalHeader}>
+            <h2 className={styles.cancelModalTitle}>Leave a Review</h2>
+            <p className={styles.cancelModalDescription}>
+              {booking ? `How was your experience with "${booking.title}"?` : "Share your experience."}
+            </p>
+          </div>
+          <div className={styles.cancelModalBody}>
+            <div className={styles.cancelModalFormGroup}>
+              <label className={styles.cancelModalLabel}>
+                Rating <span className={styles.required}>*</span>
+              </label>
+              <Rating
+                className={styles.reviewRating}
+                rating={reviewModalRating}
+                onChange={setReviewModalRating}
+                readonly={false}
+              />
+            </div>
+            <div className={styles.cancelModalFormGroup}>
+              <label htmlFor="viewDetailsReviewComment" className={styles.cancelModalLabel}>
+                Comment (optional)
+              </label>
+              <textarea
+                id="viewDetailsReviewComment"
+                className={cn(styles.cancelModalInput, styles.cancelModalTextarea)}
+                value={reviewModalComment}
+                onChange={(e) => {
+                  setReviewModalComment(e.target.value);
+                  setReviewModalError(null);
+                }}
+                placeholder="Share your thoughts about your experience..."
+                rows={3}
+                disabled={isSubmittingReviewModal}
+              />
+            </div>
+            {reviewModalError && (
+              <div className={styles.cancelModalError}>{reviewModalError}</div>
+            )}
+          </div>
+          <div className={styles.cancelModalFooter}>
+            <button
+              type="button"
+              className={cn("button-stroke", styles.cancelModalBtn)}
+              onClick={() => {
+                setReviewModalVisible(false);
+                setReviewModalRating(0);
+                setReviewModalComment("");
+                setReviewModalError(null);
+              }}
+              disabled={isSubmittingReviewModal}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn("button", styles.cancelModalBtn)}
+              disabled={isSubmittingReviewModal || reviewModalRating < 1 || reviewModalRating > 5}
+              style={{ cursor: reviewModalRating >= 1 ? "pointer" : "not-allowed" }}
+              onClick={async () => {
+                if (!booking || reviewModalRating < 1) {
+                  setReviewModalError("Please select a rating (1–5 stars).");
+                  return;
+                }
+                setReviewModalError(null);
+                setIsSubmittingReviewModal(true);
+                try {
+                  await submitOrderReview(booking.orderId, {
+                    rating: reviewModalRating,
+                    comment: reviewModalComment.trim() || undefined,
+                    listingId: booking.originalData?.listingId,
+                    eventId: booking.originalData?.eventId,
+                    stayId: booking.originalData?.stayId ||
+                      (booking.originalData?.stayOrderRooms && booking.originalData.stayOrderRooms[0]?.stayId),
+                  });
+                  // Remove from eligible set so button disappears
+                  setOrderIdsEligibleForReview((prev) => {
+                    const next = new Set(prev);
+                    next.delete(Number(booking.orderId));
+                    return next;
+                  });
+                  setReviewSubmitted(true);
+                  setReviewModalVisible(false);
+                  setReviewModalRating(0);
+                  setReviewModalComment("");
+                } catch (err) {
+                  const status = err.response?.status;
+                  const message = err.response?.data?.message || err.message;
+                  if (status === 409) {
+                    setReviewModalError("You've already reviewed this order.");
+                    setOrderIdsEligibleForReview((prev) => {
+                      const next = new Set(prev);
+                      next.delete(Number(booking.orderId));
+                      return next;
+                    });
+                  } else {
+                    setReviewModalError(message || "Failed to submit review. Please try again.");
+                  }
+                } finally {
+                  setIsSubmittingReviewModal(false);
+                }
+              }}
+            >
+              {isSubmittingReviewModal ? "Submitting..." : "Post it!"}
             </button>
           </div>
         </div>
@@ -2321,7 +2798,7 @@ const ViewDetails = () => {
                   <div className={styles.dottedDivider}></div>
                   
                   <div className={cn(styles.receiptPriceRow, styles.invoiceTotal)}>
-                    <span className={styles.totalLabel}>Total Paid</span>
+                    <span className={styles.totalLabel}>{booking.status === "Pending" ? "Amount Payable" : "Total Paid"}</span>
                     <span className={styles.totalValue}>{booking.pricing.total}</span>
                   </div>
                 </div>
@@ -2355,4 +2832,5 @@ const ViewDetails = () => {
 };
 
 export default ViewDetails;
+
 

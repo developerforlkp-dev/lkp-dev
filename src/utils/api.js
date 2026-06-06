@@ -596,7 +596,12 @@ export const getBillingConfiguration = async (listingId) => {
       throw new Error(`Invalid listingId: ${listingId} (converted to: ${listingIdStr})`);
     }
 
-    const response = await ListingsAPI.get(`/public/listings/${listingIdStr}/billing-configuration`);
+    const billingConfigUrl = `/public/listings/${listingIdStr}/billing-configuration`;
+    console.log("Fetching public billing configuration:", {
+      listingId: listingIdStr,
+      url: billingConfigUrl
+    });
+    const response = await ListingsAPI.get(billingConfigUrl);
     console.log("✅ Billing configuration fetched:", response.data);
     return response.data;
   } catch (error) {
@@ -715,6 +720,24 @@ export const createEventOrder = async (orderData) => {
       });
     }
 
+    throw error;
+  }
+};
+
+export const precheckEventOrder = async (precheckData) => {
+  try {
+    console.log("Creating event precheck with data:", JSON.stringify(precheckData, null, 2));
+    const response = await ListingsAPI.post("/orders/event/precheck", precheckData);
+    console.log("Event precheck success:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error during event precheck:", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      requestData: precheckData
+    });
     throw error;
   }
 };
@@ -1409,6 +1432,24 @@ export const getHost = async (hostId) => {
     return payload; // Returns { host, businessInterests, statistics, listings, recentReviews }
   } catch (error) {
     console.error(`❌ Error fetching host ${hostId}:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Get host-specific listings/content by lead user id
+export const getHostContent = async (leadUserId) => {
+  try {
+    if (!leadUserId) {
+      throw new Error("leadUserId is required");
+    }
+
+    const leadUserIdNum = Number(leadUserId);
+    const leadUserIdStr = (!isNaN(leadUserIdNum) && leadUserIdNum > 0) ? String(leadUserIdNum) : String(leadUserId);
+
+    const response = await ListingsAPI.get(`/public/hosts/${leadUserIdStr}/content`);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error fetching host content for lead user ${leadUserId}:`, error.response?.data || error.message);
     throw error;
   }
 };

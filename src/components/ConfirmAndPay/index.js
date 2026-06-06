@@ -10,6 +10,7 @@ const ConfirmAndPay = ({
   title,
   buttonUrl,
   amountToPay,
+  amountInPaise = false,
   currency = "INR",
   dateValue,
   guestValue,
@@ -27,7 +28,8 @@ const ConfirmAndPay = ({
 }) => {
   const formatAmount = (amount) => {
     if (!amount) return null;
-    const amountInRupees = amount > 1000 ? (amount / 100).toFixed(2) : amount.toFixed(2);
+    const numericAmount = Number(amount) || 0;
+    const amountInRupees = amountInPaise ? (numericAmount / 100).toFixed(2) : numericAmount.toFixed(2);
     return `${currency} ${amountInRupees}`;
   };
 

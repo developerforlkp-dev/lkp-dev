@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo, createContext, useContext, useRef } from "react";
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
-import ProductNavbar from "../../../components/ProductNavbar";
-import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft } from "lucide-react";
-import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
+import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, Share2, Sparkles } from "lucide-react";
 import { X, Plus as PlusIcon } from "lucide-react";
 import { BookingSystem } from "../../../components/JUI/BookingSystem";
 import { Footer } from "../../../components/JUI/Footer";
-import { getEventDetails, getEventReviews, getHost, getEventAddons, getAvailableEventAddons } from "../../../utils/api";
+import { getEventDetails, getEventReviews, getHost, getHostContent, getEventAddons, getAvailableEventAddons } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { useTheme } from "../../../components/JUI/Theme";
 import Loader from "../../../components/Loader";
 import RelatedListingsStrip from "../../../components/RelatedListingsStrip";
+import { lockBodyScroll } from "../../../utils/scrollLock";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -56,146 +56,24 @@ function ScopedThemeProvider({ children }) {
   );
 }
 
-/* ─── GRID GALLERY MODAL ────────────────────────── */
-const GridGallery = ({ items, onClose, onSelect, title, A }) => {
-  const modalRef = useRef(null);
-  const { tokens: { BG, FG, B, W }, theme } = useTheme();
-
-  useEffect(() => {
-    const target = modalRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
-  }, []);
-
-  return (
-    <motion.div
-      ref={modalRef}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: BG,
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch'
-      }}
-    >
-      <div style={{
-        padding: 'clamp(40px, 8vw, 80px) clamp(20px, 5vw, 60px)',
-        maxWidth: '1600px',
-        margin: '0 auto',
-        width: '100%'
-      }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: 'clamp(40px, 8vw, 80px)'
-          }}
-        >
-          <div>
-            <p style={{ fontSize: 10, letterSpacing: '0.8em', textTransform: 'uppercase', color: A, fontWeight: 800, marginBottom: 20 }}>Visual Anthology</p>
-            <h2 style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, color: FG, lineHeight: 0.9, letterSpacing: '-0.04em' }} className="font-display">
-              {title}
-            </h2>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              background: B,
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background 0.3s',
-              flexShrink: 0,
-              marginLeft: 20
-            }}
-          >
-            <X size={32} color={FG} />
-          </motion.button>
-        </motion.div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))',
-          gap: 'clamp(16px, 3vw, 32px)',
-          gridAutoRows: 'clamp(250px, 40vh, 400px)'
-        }}>
-          {items.map((img, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: (i % 3) * 0.1 }}
-              whileHover={{ y: -10, scale: 1.02 }}
-              onClick={() => onSelect(i)}
-              style={{
-                borderRadius: 24,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                background: B,
-                border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-                position: 'relative',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
-              }}
-            >
-              <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 1 }}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '24px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: A, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <PlusIcon size={16} color="#FFF" />
-                  </div>
-                  <span style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700 }}>Expand View</span>
-                </div>
-              </motion.div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 /* ─── MODAL IMAGE POPUP ────────────────────────── */
-const FullScreenImage = ({ src, onClose }) => {
-  const modalRef = useRef(null);
+const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClose }) => {
+  const { theme, tokens: { BG, A } } = useTheme();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
+
+  const textMain = isDark ? '#FFF' : '#141414';
+  const pillBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)';
+  const pillBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const pillText = A || '#0097B2';
+
+  const btnBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+  const btnBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const btnHoverBg = isDark ? 'rgba(255,255,255,0.2)' : '#FFFFFF';
+
+  const hasNavigation = Array.isArray(items) && items.length > 1 && typeof onNavigate === "function";
 
   useEffect(() => {
-    const target = modalRef.current;
-    if (target) disableBodyScroll(target);
-    return () => {
-      if (target) enableBodyScroll(target);
-      else enableBodyScroll(document.body);
-    };
+    return lockBodyScroll();
   }, []);
 
   return (
@@ -203,55 +81,278 @@ const FullScreenImage = ({ src, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      ref={modalRef}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(10px)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '5vh 5vw'
+        padding: 'clamp(16px, 4vw, 40px)',
       }}
       onClick={onClose}
     >
+      <style>{`
+        .fs-modal-box {
+          width: 100%;
+          max-width: 1400px;
+          height: 85vh;
+          background: ${isDark ? '#0A0A0A' : '#FFFFFF'};
+          border-radius: 32px;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+          display: flex;
+          overflow: hidden;
+          position: relative;
+          transform: translateZ(0);
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+        
+        .fs-left-pane {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          background: ${isDark ? '#141414' : '#FFFFFF'};
+        }
+        
+        .fs-right-pane {
+          width: clamp(200px, 20vw, 300px);
+          display: flex;
+          flex-direction: column;
+          border-left: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          background: ${isDark ? '#0A0A0A' : '#FAFAFA'};
+        }
+        
+        .fs-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        
+        .fs-image-container {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .fs-image {
+          object-fit: contain !important;
+          width: 100% !important;
+          height: 100% !important;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
+          position: absolute;
+          top: 0;
+          left: 0;
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        
+        .fs-thumbnail-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          scrollbar-width: none;
+        }
+        
+        .fs-nav-btn {
+          position: absolute;
+          top: 50%;
+          margin-top: -24px;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: ${btnBg};
+          border: 1px solid ${btnBorder};
+          color: ${textMain};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(20px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          z-index: 10;
+        }
+        .fs-nav-left {
+          left: 24px;
+        }
+        .fs-nav-right {
+          right: 24px;
+        }
+        
+        .fs-thumbnail-list::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .fs-thumb {
+          width: 100%;
+          aspect-ratio: 4/3;
+          border-radius: 12px;
+          overflow: hidden;
+          cursor: pointer;
+          opacity: 0.5;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          box-sizing: border-box;
+          transform: scale(0.98);
+        }
+        
+        .fs-thumb:hover {
+          opacity: 0.8;
+        }
+        
+        .fs-thumb.active {
+          opacity: 1;
+          border: 3px solid ${A || '#0097B2'};
+          box-shadow: 0 10px 24px ${A ? A + '40' : 'rgba(0,151,178,0.25)'};
+          transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+          .fs-modal-box {
+            flex-direction: column;
+            height: 90vh;
+            border-radius: 24px 24px 0 0;
+            margin-top: auto;
+            align-self: flex-end;
+          }
+          
+          .fs-right-pane {
+            width: 100%;
+            height: clamp(100px, 15vh, 140px);
+            border-left: none;
+            border-top: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          }
+          
+          .fs-thumbnail-list {
+            flex-direction: row;
+            overflow-y: hidden;
+            overflow-x: auto;
+            padding: 16px 20px;
+            align-items: center;
+          }
+          
+          .fs-thumb {
+            width: clamp(80px, 25vw, 140px);
+            height: 100%;
+            flex-shrink: 0;
+          }
+          
+          .fs-header {
+            padding: 16px 20px;
+          }
+          
+          .fs-image-container {
+            padding: 0;
+          }
+          .fs-image {
+            padding: 12px;
+          }
+          .fs-nav-btn {
+            width: 40px;
+            height: 40px;
+            margin-top: -20px;
+          }
+          .fs-nav-left { left: 12px; }
+          .fs-nav-right { right: 12px; }
+        }
+      `}</style>
+
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 30 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 30 }}
+        className="fs-modal-box"
+        initial={{ y: 50, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 50, opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          height: '100%',
-          maxWidth: '1200px',
-          maxHeight: '80vh',
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'zoom-out',
-          borderRadius: 32,
-          overflow: 'hidden',
-          boxShadow: '0 50px 100px rgba(0,0,0,0.6)',
-          background: '#000'
-        }}
       >
-        <img
-          src={src}
-          onClick={onClose}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'block',
-            objectFit: 'cover'
-          }}
-          alt="Popup"
-        />
-        <div style={{ position: 'absolute', bottom: 30, right: 30, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: 100, pointerEvents: 'none' }}>
-          <p style={{ color: '#FFF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Click to close</p>
+
+        {/* LEFT PANE - Image Viewer */}
+        <div className="fs-left-pane">
+          <div className="fs-header">
+            {hasNavigation ? (
+              <div style={{ background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+                {currentIndex + 1} <span style={{ opacity: 0.3, margin: '0 6px', color: textMain }}>/</span> <span style={{ color: textMain }}>{items.length}</span>
+              </div>
+            ) : <div />}
+
+            <motion.button
+              onClick={onClose}
+              whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+              whileTap={{ scale: 0.92 }}
+              style={{ width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+            >
+              <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
+            </motion.button>
+          </div>
+
+          <div className="fs-image-container">
+            <AnimatePresence>
+              <motion.img
+                className="fs-image"
+                key={src}
+                src={src}
+                initial={{ opacity: 0, scale: 0.98, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'brightness(1)' }}
+                exit={{ opacity: 0, scale: 1.02, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                alt="Viewer"
+              />
+            </AnimatePresence>
+
+            {hasNavigation && (
+              <>
+                <motion.button
+                  className="fs-nav-btn fs-nav-left"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex - 1 + items.length) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} />
+                </motion.button>
+                <motion.button
+                  className="fs-nav-btn fs-nav-right"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex + 1) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} style={{ transform: 'rotate(180deg)' }} />
+                </motion.button>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* RIGHT PANE - Thumbnails */}
+        {hasNavigation && (
+          <div className="fs-right-pane">
+            <div className="fs-thumbnail-list">
+              {items.map((thumbSrc, idx) => (
+                <div
+                  key={idx}
+                  className={`fs-thumb ${idx === currentIndex ? 'active' : ''}`}
+                  onClick={() => onNavigate(idx)}
+                >
+                  <img src={thumbSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumbnail ${idx + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </motion.div>
     </motion.div>
   );
@@ -265,11 +366,9 @@ const ScopedStyles = () => (
     .event-details-premium {
       font-family: var(--font-inter, system-ui, sans-serif);
       overflow-x: hidden;
-      cursor: none;
       transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
     }
-    .event-details-premium a, .event-details-premium button { cursor: none; }
     @keyframes marquee-l { from{transform:translateX(0)} to{transform:translateX(-50%)} }
     @keyframes marquee-r { from{transform:translateX(-50%)} to{transform:translateX(0)} }
     @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-16px) rotate(1deg)} }
@@ -297,20 +396,22 @@ const ScopedStyles = () => (
       color: var(--W) !important;
       z-index: 2;
     }
+    @media (min-width: 769px) {
+      .event-details-premium .event-hero-share {
+        position: absolute !important;
+        top: 96px !important;
+        right: 60px !important;
+        z-index: 10002 !important;
+        pointer-events: auto !important;
+        isolation: isolate;
+      }
+    }
     .event-details-premium .host-presented-label {
       color: #0097B2 !important;
       -webkit-text-fill-color: #0097B2 !important;
     }
-    .event-details-premium .venue-map-frame {
-      filter: grayscale(1) contrast(1.05);
-      transition: filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .event-details-premium .venue-map-wrap:hover .venue-map-frame {
-      filter: grayscale(0) contrast(1);
-    }
-    
-    #cur-dot { position: fixed; width: 6px; height: 6px; background: var(--A); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); transition: background 0.3s; }
-    #cur-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid var(--AL); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s, border-color 0.3s; }
+
+
     
     .gallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: start; height: 850px; overflow: hidden; border-radius: 40px; }
     .artist-row { display: grid; grid-template-columns: 80px 1fr 150px; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--B); align-items: center; cursor: default; transition: padding 0.3s, background 0.3s; }
@@ -446,23 +547,7 @@ const formatTime12h = (timeStr) => {
 
   return `${hour12}:${minutes} ${ampm}`;
 };
-function Cursor() {
-  const { tokens: { A, AL } } = useTheme();
-  const x = useMotionValue(-200), y = useMotionValue(-200);
-  const sx = useSpring(x, { stiffness: 120, damping: 20 });
-  const sy = useSpring(y, { stiffness: 120, damping: 20 });
-  useEffect(() => {
-    const fn = (e) => { x.set(e.clientX); y.set(e.clientY) };
-    window.addEventListener("mousemove", fn);
-    return () => window.removeEventListener("mousemove", fn);
-  }, [x, y]);
-  return (
-    <>
-      <motion.div id="cur-dot" style={{ left: x, top: y, background: A }} />
-      <motion.div id="cur-ring" style={{ left: sx, top: sy, borderColor: AL }} />
-    </>
-  );
-}
+
 
 function ProgressBar() {
   const { tokens: { A } } = useTheme();
@@ -470,6 +555,116 @@ function ProgressBar() {
   const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30 });
   return (
     <motion.div style={{ scaleX, transformOrigin: "left", position: "fixed", top: 0, left: 0, right: 0, height: 2, background: A, zIndex: 9996 }} />
+  );
+}
+
+function HeroShareFab({ title, text, url }) {
+  const [copied, setCopied] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const { theme, tokens: { A, FG } } = useTheme();
+  const glow = A || "#0097B2";
+  const isDark = theme === "dark";
+  const surface = isDark ? "rgba(8,8,8,0.72)" : "rgba(255,255,255,0.92)";
+  const surfaceHover = isDark ? "rgba(0,151,178,0.22)" : "rgba(0,151,178,0.12)";
+  const textColor = isDark ? FG : A;
+  const borderColor = hovered ? glow : (isDark ? `${glow}66` : `${glow}4D`);
+  const shadow = hovered
+    ? isDark
+      ? `0 0 20px ${glow}55, 0 0 50px ${glow}20, 0 8px 28px rgba(0,0,0,0.5)`
+      : `0 0 18px ${glow}33, 0 8px 28px rgba(15,15,15,0.14)`
+    : isDark
+      ? `0 0 10px ${glow}30, 0 4px 14px rgba(0,0,0,0.34)`
+      : "0 6px 18px rgba(15,15,15,0.12)";
+
+  const handleShare = async () => {
+    const shareUrl = url || window.location.href;
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2400);
+      }
+    } catch (_) { }
+  };
+
+  return (
+    <motion.button
+      type="button"
+      aria-label={`Share: ${title || "this event"}`}
+      className="event-hero-share premium-share-fab"
+      onClick={handleShare}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.85, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.86 }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 44,
+        maxWidth: hovered ? 200 : 44,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 18 : 13,
+        background: hovered ? surfaceHover : surface,
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: `1.5px solid ${borderColor}`,
+        borderRadius: 50,
+        cursor: "pointer",
+        color: textColor,
+        fontFamily: "inherit",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.13em",
+        textTransform: "uppercase",
+        boxShadow: shadow,
+        outline: "none",
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: glow, pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? 360 : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 18, position: "relative" }}
+      >
+        <Share2 size={17} strokeWidth={2.2} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 140 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 9 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {copied ? "Copied!" : "Share Event"}
+      </span>
+    </motion.button>
   );
 }
 
@@ -649,18 +844,73 @@ function SHdr({ idx, label }) {
   );
 }
 
+const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!discounts || discounts.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % discounts.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [discounts]);
+
+  if (!discounts || discounts.length === 0) return null;
+
+  return (
+    <div style={{ display: "grid", height: 15, alignItems: "center", overflow: "hidden" }}>
+      <AnimatePresence>
+        <motion.span
+          key={index}
+          initial={{ y: 15, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -15, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          style={{
+            gridArea: "1 / 1",
+            fontSize: 10,
+            letterSpacing: "0.3em",
+            textTransform: "uppercase",
+            color: FG || "#FFFFFF",
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            display: "block"
+          }}
+        >
+          <span style={{ opacity: 0.8 }}>Book</span>{" "}
+          <span style={{ color: A, fontSize: 11, fontWeight: 900 }}>
+            {discounts[index].daysInAdvance} Days
+          </span>{" "}
+          <span style={{ opacity: 0.8 }}>Advance:</span>{" "}
+          <span style={{ color: isDark === false ? "#059669" : "#4ADE80", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+            {discounts[index].percentage}% OFF
+          </span>
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 /* ─── SECTIONS ───────────────────────────────────── */
 function Hero({ event }) {
-  const { tokens: { A, W, M, FG } } = useTheme();
+  const { tokens: { A, W, M, FG }, theme } = useTheme();
   const history = useHistory();
   const title = event?.title || "SOLSTICE";
   const date = event?.startDate ? event.startDate.split('-').reverse().join('.') : "21.06.26";
   const venueStr = event?.venueFullAddress || "Mumbai";
   const getCategoryDisplayName = (category, fallbackName) => {
+    let name = "";
     if (category && typeof category === "object") {
-      return category.displayName || category.display_name || category.name || "";
+      name = category.displayName || category.display_name || category.name || "";
+    } else {
+      name = category || fallbackName || "";
     }
-    return category || fallbackName || "";
+    if (name === "Others") {
+      return event?.categoryOtherDescription && event.categoryOtherDescription.trim() !== ""
+        ? event.categoryOtherDescription
+        : "Others";
+    }
+    return name;
   };
   const splitTitle = (str) => {
     if (!str) return ["", ""];
@@ -691,7 +941,46 @@ function Hero({ event }) {
         <div className="float-anim"><ImageRing event={event} /></div>
       </motion.div>
 
-      <ProductNavbar top={100} left={60} />
+      <button
+        type="button"
+        className="premium-back-button"
+        onClick={() => history.goBack()}
+        aria-label="Go back"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <HeroShareFab
+        title={title}
+        text={`Check out ${title} on Little Known Planet`}
+      />
+      {event?.earlyBirdDiscounts?.some(d => d.isActive) && (
+        <motion.div
+          className="early-bird-wrapper"
+          style={{ position: "absolute", bottom: 60, right: 60, zIndex: 100 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <motion.div
+            animate={{ y: [0, -12, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              background: theme === "light" ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.03)",
+              backdropFilter: "blur(12px)",
+              padding: "12px 24px",
+              borderRadius: 100,
+              border: `1px solid ${A}33`,
+              boxShadow: `0 10px 30px rgba(0,0,0,0.2), inset 0 0 20px ${A}11`,
+              whiteSpace: "nowrap"
+            }}
+          >
+            <Sparkles color={A} size={14} />
+            <EarlyBirdTicker discounts={event.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={FG} isDark={theme === "dark"} />
+          </motion.div>
+        </motion.div>
+      )}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ position: "relative", zIndex: 2, maxWidth: 1320, margin: "0 auto", padding: "64px 36px 0", width: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>
 
@@ -761,7 +1050,16 @@ function About({ event }) {
       return sum + parseDurationMinutes(durationValue);
     }, 0)
     : 0;
-  const eventType = event?.eventType || event?.category || "Event";
+  const getEventTypeName = () => {
+    const rawType = event?.eventType || event?.category || "Event";
+    if (rawType === "Others") {
+      return event?.categoryOtherDescription && event.categoryOtherDescription.trim() !== ""
+        ? event.categoryOtherDescription
+        : "Others";
+    }
+    return rawType;
+  };
+  const eventType = getEventTypeName();
   const duration = formatDurationMinutes(totalSlotDuration);
   const ageLimit = event?.minimumAge != null ? `${event.minimumAge}+` : (event?.ageLimit || "All ages");
 
@@ -888,7 +1186,9 @@ function Gallery({ event }) {
   }, [GALLERY_COLS]);
 
   const handleImageClick = (src) => {
-    setGridVisible(true);
+    const index = allImageUrls.indexOf(src);
+    setPhotoViewIndex(index !== -1 ? index : 0);
+    setPhotoViewVisible(true);
   };
 
   return (
@@ -919,24 +1219,12 @@ function Gallery({ event }) {
         </div>
 
         <AnimatePresence>
-          {gridVisible && !photoViewVisible && (
-            <GridGallery
-              items={allImageUrls}
-              onClose={() => setGridVisible(false)}
-              onSelect={(index) => {
-                setPhotoViewIndex(index);
-                setPhotoViewVisible(true);
-              }}
-              title={eventTitle}
-              A={A}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {photoViewVisible && (
             <FullScreenImage
               src={allImageUrls[photoViewIndex]}
+              items={allImageUrls}
+              currentIndex={photoViewIndex}
+              onNavigate={setPhotoViewIndex}
               onClose={() => setPhotoViewVisible(false)}
             />
           )}
@@ -1020,37 +1308,34 @@ function Venue({ event, hostName }) {
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <SHdr idx="04" label="Landscape" />
           <Chars text="Where It's Happening" cls="font-display" style={{ fontSize: "clamp(1.8rem,4.5vw,4.2rem)", fontWeight: 700, lineHeight: 1.1, color: FG, marginBottom: 72, overflow: "hidden", letterSpacing: "-0.02em", paddingBottom: "0.15em" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 1, background: B }} className="grid-3-2">
+          <div style={{ background: W, border: `1px solid ${B}`, borderRadius: 16, padding: 40, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
             <Rev delay={0.1}>
-              <div style={{ background: W, padding: 52 }}>
-                <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 24 }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24 }}>
                   <motion.div animate={{ y: [0, -4, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
-                    <MapPin size={18} color={A} style={{ flexShrink: 0, marginTop: 4 }} />
+                    <MapPin size={24} color={A} style={{ flexShrink: 0 }} />
                   </motion.div>
-                  <div>
-                    <h3 className="font-display" style={{ fontSize: "clamp(1.8rem,3vw,2.5rem)", fontWeight: 700, color: FG, marginBottom: 4 }}>
-                      {event?.venueFullAddress?.split(',')[0] || "The Venue"}
-                    </h3>
-                  </div>
+                  <h3 style={{ fontSize: "clamp(1.5rem,2.5vw,2rem)", fontWeight: 700, color: FG, margin: 0 }}>
+                    {event?.venueFullAddress?.split(',')[0] || "The Venue"}
+                  </h3>
                 </div>
-                <p style={{ fontSize: 14, color: M, lineHeight: 1.85, marginBottom: 32, maxWidth: 540 }}>
+                <p style={{ fontSize: 14, color: M, lineHeight: 1.85, marginBottom: 32 }}>
                   {event?.venueDescription || event?.description?.slice(0, 200) || "Join us at this premier location for an unforgettable experience."}
                 </p>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {event?.venueName && (
-                    <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>Venue Name: </span>{event?.venueName}</p>
-                  )}
-                  <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>Address: </span>{event?.venueFullAddress || "Venue details to be updated"}</p>
-                  {event?.district && (
-                    <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>District: </span>{event?.district}</p>
-                  )}
-                  {event?.state && (
-                    <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>State: </span>{event?.state}</p>
-                  )}
-                  {displayHostName && (
-                    <p style={{ fontSize: 12, color: M }}><span style={{ color: FG, fontWeight: 600 }}>Host name: </span>{displayHostName}</p>
-                  )}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {[
+                    event?.venueName ? { label: "Venue Name", value: event.venueName } : null,
+                    { label: "Address", value: event?.venueFullAddress || "Venue details to be updated" },
+                    event?.district ? { label: "District", value: event.district } : null,
+                    event?.state ? { label: "State", value: event.state } : null,
+                    displayHostName ? { label: "Host Name", value: displayHostName } : null,
+                  ].filter(Boolean).map((row, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 24, padding: "20px 0", borderBottom: `1px solid ${B}` }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", color: A, textTransform: "uppercase" }}>{row.label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: FG, lineHeight: 1.5 }}>{row.value}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <div style={{ marginTop: 40 }}>
@@ -1059,38 +1344,33 @@ function Venue({ event, hostName }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ x: 8 }}
-                    style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, color: A, textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}
+                    style={{ fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, color: A, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}
                   >
-                    Get Directions <ArrowRight size={14} />
+                    Get Directions <ArrowRight size={16} />
                   </motion.a>
                 </div>
               </div>
             </Rev>
-            <Rev delay={0.2}>
-              <div style={{ background: S, padding: 52, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 400 }}>
-                <div>
-                  <p style={{ fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: M, marginBottom: 24, fontWeight: 500 }}>Location</p>
-                  <div className="venue-map-wrap" style={{ position: "relative", width: "100%", paddingBottom: "85%", background: W, overflow: "hidden", border: `1px solid ${B}` }}>
-                    {mapSrc ? (
-                      <iframe
-                        className="venue-map-frame"
-                        title="Venue location map"
-                        src={mapSrc}
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-                      />
-                    ) : (
-                      <>
-                        <motion.div animate={{ backgroundPosition: ["0px 0px", "28px 28px"] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "28px 28px" }} />
-                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
-                          <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-8px", borderRadius: "50%", border: `1.5px solid ${A}`, transform: "translate(-50%,-50%)", top: "50%", left: "50%" }} />
-                          <div style={{ width: 10, height: 10, borderRadius: "50%", background: A, position: "relative", zIndex: 1 }} />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+            <Rev delay={0.2} style={{ height: "100%" }}>
+              <div style={{ height: "100%", minHeight: 400, position: "relative", borderRadius: 16, overflow: "hidden", border: `1px solid ${B}` }}>
+                {mapSrc ? (
+                  <iframe
+                    className="venue-map-frame"
+                    title="Venue location map"
+                    src={mapSrc}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+                  />
+                ) : (
+                  <>
+                    <motion.div animate={{ backgroundPosition: ["0px 0px", "28px 28px"] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "28px 28px" }} />
+                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
+                      <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-8px", borderRadius: "50%", border: `1.5px solid ${A}`, transform: "translate(-50%,-50%)", top: "50%", left: "50%" }} />
+                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: A, position: "relative", zIndex: 1 }} />
+                    </div>
+                  </>
+                )}
               </div>
             </Rev>
           </div>
@@ -1105,13 +1385,23 @@ function Rules({ event }) {
 
   const checkInInstructions = event?.checkInInstructions || event?.checkinInstructions || event?.checkInInstruction || "Check-in instructions will be shared before the event.";
   const cancellationPolicy = event?.cancellationPolicySummary || event?.cancellationPolicy || event?.cancellationPolicyText || "Cancellation policy will be shared before booking.";
-  
+
   const guestRequirements = Array.isArray(event?.guestRequirements) ? event.guestRequirements : [];
 
   const displayRules = [
     { id: 1, title: "Check-in Instructions", body: checkInInstructions },
     { id: 2, title: "Cancellation Policy", body: cancellationPolicy },
   ];
+
+  if (event?.minimumAge != null && event.minimumAge !== "") {
+    displayRules.push({ id: "min_age", title: "Minimum Age", body: `${event.minimumAge}+` });
+  }
+  if (event?.dressCode && event.dressCode.trim() !== "") {
+    displayRules.push({ id: "dress_code", title: "Dress Code", body: event.dressCode.trim() });
+  }
+  displayRules.push({ id: "infants_allowed", title: "Infants Allowed", body: event?.infantsAllowed ? "Yes" : "No" });
+  displayRules.push({ id: "id_proof", title: "ID Proof Required", body: event?.idProofRequired ? "Yes" : "No" });
+
   const dropdownRow = (item, index) => {
     return (
       <details key={item.id} style={{ borderBottom: `1px solid ${B}`, padding: "0 16px" }}>
@@ -1231,7 +1521,7 @@ function HostDetails({ event, hostName, reviews = [] }) {
     event?.leadUserId ||
     event?.host?.leadUserId ||
     event?.hostId;
-  const hostDescription = host?.description || host?.bio || host?.about || host?.summary || event?.organizerDescription || "Curators of memorable experiences, thoughtful gatherings, and community-led moments.";
+  const hostDescription = host?.bio || host?.description || host?.about || host?.summary || event?.organizerDescription || "Curators of memorable experiences, thoughtful gatherings, and community-led moments.";
   const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
 
   // Normalise reviews – API may return { ratingSummary, reviews:[...] } or a plain array
@@ -1406,6 +1696,12 @@ function HostDetails({ event, hostName, reviews = [] }) {
                         </div>
                         {comment && (
                           <p style={{ fontSize: 13, color: M, lineHeight: 1.65, margin: 0, paddingLeft: 46 }}>{comment}</p>
+                        )}
+                        {rev?.vendorResponse && (
+                          <div style={{ marginTop: 12, marginLeft: 46, padding: "12px 16px", background: AL, borderLeft: `3px solid ${A}`, borderRadius: "0 8px 8px 0" }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: A, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Response from Host</div>
+                            <p style={{ fontSize: 13, color: M, margin: 0, lineHeight: 1.5 }}>{rev.vendorResponse}</p>
+                          </div>
                         )}
                       </div>
                     );
@@ -1980,8 +2276,8 @@ function EventAddonsDisplay({ eventAddons, availableAddons }) {
   const { tokens: { BG, FG, M, W, B, A } } = useTheme();
 
   // The addons currently assigned to the event
-  const displayedAddons = eventAddons && eventAddons.length > 0 
-    ? eventAddons.map(ea => ea.addon || ea) 
+  const displayedAddons = eventAddons && eventAddons.length > 0
+    ? eventAddons.map(ea => ea.addon || ea)
     : [];
 
   if (displayedAddons.length === 0) return null;
@@ -2019,6 +2315,7 @@ function EventAddonsDisplay({ eventAddons, availableAddons }) {
 /* ─── MAIN ───────────────────────────────────────── */
 export default function EventDetails() {
   const location = useLocation();
+  const history = useHistory();
   const queryParams = new URLSearchParams(location.search);
   const eventId = queryParams.get('id') || '3';
   const { tokens: { BG, FG } } = useTheme();
@@ -2033,6 +2330,9 @@ export default function EventDetails() {
   const primaryCategoryId = event?.primaryCategoryId || event?.primaryCategory?.id || event?.categoryId || event?.category?.id;
   const currentListingId = event?.eventId || event?.id || eventId;
 
+  // Dynamic browser tab title
+  useDocumentTitle(event?.title, "Events");
+
   useEffect(() => {
     let mounted = true;
     const fetchDetails = async () => {
@@ -2045,7 +2345,7 @@ export default function EventDetails() {
 
         if (data?.leadUserId) {
           try {
-            const hostData = await getHost(data.leadUserId);
+            const hostData = await getHostContent(data.leadUserId);
             fetchedHostName = formatHostName(hostData);
             hostProfile = hostData;
           } catch (hostErr) {
@@ -2098,7 +2398,6 @@ export default function EventDetails() {
   return (
     <ScopedThemeProvider>
       <ScopedStyles />
-      <Cursor />
       <ProgressBar />
       <Hero event={event} />
       <About event={event} />

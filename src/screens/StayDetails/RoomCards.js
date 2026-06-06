@@ -1,9 +1,16 @@
 import React, { useRef, useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import cn from "classnames";
 import styles from "./RoomCards.module.sass";
 import Icon from "../../components/Icon";
 import { useTheme } from "../../components/JUI/Theme";
 import { motion, AnimatePresence } from "framer-motion";
+import { lockBodyScroll } from "../../utils/scrollLock";
+import {
+  Wifi, Waves, Sparkles, Dumbbell, Umbrella, Utensils,
+  Tv, Coffee, Car, AirVent, CheckCircle, Building, Home, Plus, ChevronLeft
+} from "lucide-react";
+import moment from "moment";
 
 /* ---------- HOOKS ----------------------------------------------------- */
 function useWindowSize() {
@@ -45,6 +52,32 @@ const formatPrice = (raw) => {
   const n = parseFloat(raw);
   if (!n || isNaN(n)) return null;
   return n.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
+
+const AMENITY_ICONS = {
+  wifi: Wifi,
+  ac: AirVent,
+  air: AirVent,
+  parking: Car,
+  pool: Waves,
+  swimming: Waves,
+  breakfast: Coffee,
+  food: Utensils,
+  tv: Tv,
+  television: Tv,
+  kitchen: Utensils,
+  gym: Dumbbell,
+  fitness: Dumbbell,
+  spa: Sparkles,
+  default: CheckCircle
+};
+
+const getAmenityIcon = (name) => {
+  const lower = String(name).toLowerCase();
+  for (const [key, icon] of Object.entries(AMENITY_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return AMENITY_ICONS.default;
 };
 
 const getBillingConfigDiscountRate = (listing) => {
@@ -185,310 +218,323 @@ const CustomDropdown = ({ options, value, onChange }) => {
   );
 };
 
-/* ---------- Room Modal ---------------------------------------------- */
-const RoomModal = ({ room, listing, onClose }) => {
-  const { isMobile } = useWindowSize();
-  const { tokens: { A, FG, M, B, W, S, BG, AL } } = useTheme();
-  const name = room.roomName || room.roomTypeName || room.name || "Room Details";
-  const desc = room.roomDescription || room.description || room.shortDescription;
-  const capacity = room.maxGuests || (room.maxAdults ? room.maxAdults + (room.maxChildren || 0) : null);
-  const totalRooms = room.totalRooms || room.totalUnits || null;
-  const features = getRoomFeatures(room, listing);
-  const scrollRef = useRef(null);
-  const galleryRef = useRef(null);
-  const [galleryIndex, setGalleryIndex] = useState(0);
+/* ---------- Portal wrapper ------------------------------------------- */
+/* Renders children directly into document.body to escape any parent
+   overflow:hidden / transform / stacking-context that would clip the modal */
+const ModalPortal = ({ children }) => {
+  return ReactDOM.createPortal(children, document.body);
+};
 
-  // Extra Details
-  const bedInfo = room.bedType || room.bedTypeName || room.beddingType || (room.noOfBeds ? `${room.noOfBeds} Bed(s)` : null);
-  const bedSize = room.bedSize;
-  const inclusions = room.inclusions || room.roomInclusions || room.room_inclusions || [];
-  const summaryText = listing?.cancellationPolicySummary || 
-                      listing?.privacyAndPolicy?.cancellationPolicySummary || 
-                      listing?.listing?.cancellationPolicySummary || 
-                      listing?.stay?.cancellationPolicySummary ||
-                      listing?.generatedPolicySummary || 
-                      listing?.policySummary || 
-                      listing?.cancellation_policy_summary;
+/* ---------- Full Screen Image ----------------------------------------- */
+const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClose }) => {
+  const { theme, tokens: { BG, A } } = useTheme();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
 
-  const templateText = listing?.cancellationPolicyTemplate || 
-                       listing?.privacyAndPolicy?.cancellationPolicyTemplate || 
-                       listing?.listing?.cancellationPolicyTemplate || 
-                       listing?.stay?.cancellationPolicyTemplate ||
-                       listing?.cancellationPolicy || 
-                       listing?.cancellationPolicyText;
+  const textMain = isDark ? '#FFF' : '#141414';
+  const pillBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)';
+  const pillBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const pillText = A || '#0097B2';
 
-  const cancellationPolicy = room.cancellationPolicy || 
-                             room.cancellationTerms || 
-                             (summaryText && summaryText.trim().length > 5 && !summaryText.toLowerCase().includes("no cancellation policy summary") ? summaryText : null) ||
-                             (templateText && templateText.trim().length > 0 && !templateText.toLowerCase().includes("no cancellation policy rules") ? templateText : null);
+  const btnBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+  const btnBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+  const btnHoverBg = isDark ? 'rgba(255,255,255,0.2)' : '#FFFFFF';
+
+  const hasNavigation = Array.isArray(items) && items.length > 1 && typeof onNavigate === "function";
 
   useEffect(() => {
-    if (listing?.scrollToAmenities && scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [listing]);
-  
-  // Compile all images safely
-  const media = room.media || [];
-  const allImages = [];
-  const coverImage = resolveCoverImage(room);
-  if (coverImage) allImages.push(coverImage);
-  media.forEach(m => {
-    const u = fixImageUrl(typeof m === "string" ? m : m.url || m.src);
-    if (u && !allImages.includes(u)) allImages.push(u);
-  });
-
-  const scrollGallery = (dir) => {
-    if (!galleryRef.current) return;
-    const nextIdx = dir === 'next' 
-      ? (galleryIndex + 1) % allImages.length 
-      : (galleryIndex - 1 + allImages.length) % allImages.length;
-    
-    setGalleryIndex(nextIdx);
-    const itemWidth = galleryRef.current.offsetWidth;
-    galleryRef.current.scrollTo({
-      left: nextIdx * itemWidth,
-      behavior: 'smooth'
-    });
-  };
-
-  const seasonalPeriods = listing?.seasonalPeriods || [];
-
-  useEffect(() => {
-    // Background scroll lock
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
+    return lockBodyScroll();
   }, []);
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "";
-    try {
-      return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(dateStr));
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9990, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 0 : 24 }}>
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} 
-        onClick={onClose} 
-      />
-      
-      {/* Scrollbar CSS Injection */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'clamp(16px, 4vw, 40px)',
+      }}
+      onClick={onClose}
+    >
       <style>{`
-        .modal-body-content::-webkit-scrollbar { display: none; }
-        .modal-body-content { scrollbar-width: none; -ms-overflow-style: none; }
+        .fs-modal-box {
+          width: 100%;
+          max-width: 1400px;
+          height: 85vh;
+          background: ${isDark ? '#0A0A0A' : '#FFFFFF'};
+          border-radius: 32px;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+          display: flex;
+          overflow: hidden;
+          position: relative;
+          transform: translateZ(0);
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+        
+        .fs-left-pane {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          background: ${isDark ? '#141414' : '#FFFFFF'};
+        }
+        
+        .fs-right-pane {
+          width: clamp(200px, 20vw, 300px);
+          display: flex;
+          flex-direction: column;
+          border-left: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          background: ${isDark ? '#0A0A0A' : '#FAFAFA'};
+        }
+        
+        .fs-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        
+        .fs-image-container {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .fs-image {
+          object-fit: contain !important;
+          width: 100% !important;
+          height: 100% !important;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
+          position: absolute;
+          top: 0;
+          left: 0;
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        
+        .fs-thumbnail-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          scrollbar-width: none;
+        }
+        
+        .fs-nav-btn {
+          position: absolute;
+          top: 50%;
+          margin-top: -24px;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: ${btnBg};
+          border: 1px solid ${btnBorder};
+          color: ${textMain};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(20px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          z-index: 10;
+        }
+        .fs-nav-left {
+          left: 24px;
+        }
+        .fs-nav-right {
+          right: 24px;
+        }
+        
+        .fs-thumbnail-list::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .fs-thumb {
+          width: 100%;
+          aspect-ratio: 4/3;
+          border-radius: 12px;
+          overflow: hidden;
+          cursor: pointer;
+          opacity: 0.5;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          box-sizing: border-box;
+          transform: scale(0.98);
+        }
+        
+        .fs-thumb:hover {
+          opacity: 0.8;
+        }
+        
+        .fs-thumb.active {
+          opacity: 1;
+          border: 3px solid ${A || '#0097B2'};
+          box-shadow: 0 10px 24px ${A ? A + '40' : 'rgba(0,151,178,0.25)'};
+          transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+          .fs-modal-box {
+            flex-direction: column;
+            height: 90vh;
+            border-radius: 24px 24px 0 0;
+            margin-top: auto;
+            align-self: flex-end;
+          }
+          
+          .fs-right-pane {
+            width: 100%;
+            height: clamp(100px, 15vh, 140px);
+            border-left: none;
+            border-top: 1px solid ${isDark ? '#333' : '#F0F0F0'};
+          }
+          
+          .fs-thumbnail-list {
+            flex-direction: row;
+            overflow-y: hidden;
+            overflow-x: auto;
+            padding: 16px 20px;
+            align-items: center;
+          }
+          
+          .fs-thumb {
+            width: clamp(80px, 25vw, 140px);
+            height: 100%;
+            flex-shrink: 0;
+          }
+          
+          .fs-header {
+            padding: 16px 20px;
+          }
+          
+          .fs-image-container {
+            padding: 0;
+          }
+          .fs-image {
+            padding: 12px;
+          }
+          .fs-nav-btn {
+            width: 40px;
+            height: 40px;
+            margin-top: -20px;
+          }
+          .fs-nav-left { left: 12px; }
+          .fs-nav-right { right: 12px; }
+        }
       `}</style>
 
-      <motion.div 
-        initial={{ opacity: 0, y: isMobile ? "100%" : 40, scale: isMobile ? 1 : 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: isMobile ? "100%" : 40, scale: isMobile ? 1 : 0.95 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        style={{ 
-          position: "relative", background: W, width: "100%", maxWidth: 1100, 
-          maxHeight: isMobile ? "calc(100vh - 16px)" : "94vh", 
-          marginTop: isMobile ? "auto" : 0,
-          borderRadius: isMobile ? "24px 24px 0 0" : 32, overflow: "hidden", display: "flex", flexDirection: "column", zIndex: 1, 
-          boxShadow: "0 40px 120px rgba(0,0,0,0.5)", border: `1px solid ${B}` 
-        }}
+      <motion.div
+        className="fs-modal-box"
+        initial={{ y: 50, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 50, opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* iOS style top handle indicator for mobile sheets */}
-        {isMobile && (
-          <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.3)", zIndex: 30 }} />
-        )}
-        
-        {/* Close Button */}
-        <button onClick={onClose} style={{ 
-          position: "absolute", top: isMobile ? 16 : 24, right: isMobile ? 16 : 24, width: 44, height: 44, borderRadius: "50%", 
-          background: S, border: `1px solid ${B}`, display: "flex", alignItems: "center", 
-          justifyContent: "center", cursor: "pointer", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", 
-          transition: "all 0.3s ease", color: FG
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
 
-        {/* Hero Gallery Section */}
-        <div style={{ height: isMobile ? 320 : 520, overflow: "hidden", background: "#0F0F0F", position: "relative", display: "flex", flexShrink: 0 }}>
-          {allImages.length > 0 ? (
-            <>
-              <div ref={galleryRef} style={{ display: "flex", width: "100%", height: "100%", overflowX: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                {allImages.map((img, i) => (
-                  <div key={i} style={{ minWidth: "100%", height: "100%", scrollSnapAlign: "start", position: "relative" }}>
-                    <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: galleryIndex === i ? 1 : 0.8, transition: "opacity 0.6s ease" }} />
-                  </div>
-                ))}
+        {/* LEFT PANE - Image Viewer */}
+        <div className="fs-left-pane">
+          <div className="fs-header">
+            {hasNavigation ? (
+              <div style={{ background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+                {currentIndex + 1} <span style={{ opacity: 0.3, margin: '0 6px', color: textMain }}>/</span> <span style={{ color: textMain }}>{items.length}</span>
               </div>
-              
-              {/* Navigation Arrows */}
-              {allImages.length > 1 && (
-                <>
-                  <button onClick={() => scrollGallery('prev')} style={{ 
-                    position: "absolute", left: isMobile ? 16 : 32, top: "50%", transform: "translateY(-50%)", 
-                    width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", 
-                    backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", 
-                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
-                    color: "#fff", zIndex: 15, transition: "all 0.3s" 
-                  }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                  </button>
-                  <button onClick={() => scrollGallery('next')} style={{ 
-                    position: "absolute", right: isMobile ? 16 : 32, top: "50%", transform: "translateY(-50%)", 
-                    width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", 
-                    backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", 
-                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
-                    color: "#fff", zIndex: 15, transition: "all 0.3s" 
-                  }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                  </button>
-                </>
-              )}
+            ) : <div />}
 
-              <div style={{ 
-                position: "absolute", bottom: 32, right: 32, background: "rgba(0,0,0,0.5)", 
-                backdropFilter: "blur(8px)", color: "#fff", padding: "8px 18px", borderRadius: 100, 
-                fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", zIndex: 15, 
-                border: "1px solid rgba(255,255,255,0.1)" 
-              }}>
-                {galleryIndex + 1} <span style={{ opacity: 0.5, margin: "0 4px" }}>/</span> {allImages.length}
-              </div>
-            </>
-          ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f3f1" }}>
-              <Icon name="home" size="64" />
-            </div>
-          )}
-        </div>
+            <motion.button
+              onClick={onClose}
+              whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+              whileTap={{ scale: 0.92 }}
+              style={{ width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+            >
+              <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
+            </motion.button>
+          </div>
 
-        {/* Details Body */}
-        <div className="modal-body-content" style={{ padding: isMobile ? "32px 16px" : "60px 80px", overflowY: "auto", flex: 1, background: W, boxSizing: "border-box" }}>
-          
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.4fr 1fr", gap: isMobile ? 48 : 100 }}>
-            
-            {/* Left Col: Core Details */}
-            <div>
-              <div style={{ marginBottom: 32 }}>
-                <h2 style={{ 
-                  fontSize: isMobile ? "clamp(1.6rem, 7vw, 2.2rem)" : 52, fontWeight: 800, marginBottom: 24, 
-                  fontFamily: "var(--font-fraunces, Georgia, serif)", color: FG, 
-                  lineHeight: 1.1, letterSpacing: "-0.02em", wordBreak: "break-word" 
-                }}>{name}</h2>
-                
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
-                  {capacity != null && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: S, borderRadius: 8, color: M, textTransform: "uppercase", letterSpacing: "0.1em", border: `1px solid ${B}` }}>Capacity: {capacity} Guests</span>}
-                  {totalRooms != null && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: S, borderRadius: 8, color: M, textTransform: "uppercase", letterSpacing: "0.1em", border: `1px solid ${B}` }}>{totalRooms} Rooms Available</span>}
-                  {room.extraBedAllowed && <span style={{ fontSize: 11, fontWeight: 800, padding: "8px 16px", background: AL, borderRadius: 8, color: A, textTransform: "uppercase", letterSpacing: "0.1em", border: `1px solid ${A}` }}>Extra Bed Policy Applied</span>}
-                </div>
+          <div className="fs-image-container">
+            <AnimatePresence>
+              <motion.img
+                className="fs-image"
+                key={src}
+                src={src}
+                initial={{ opacity: 0, scale: 0.98, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'brightness(1)' }}
+                exit={{ opacity: 0, scale: 1.02, filter: isDark ? 'brightness(0.5)' : 'brightness(1.1)' }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                alt="Viewer"
+              />
+            </AnimatePresence>
 
-                <div style={{ borderTop: `1px solid ${B}`, paddingTop: 24 }}>
-                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: M, marginBottom: 16 }}>Room Narrative</h3>
-                  <p style={{ fontSize: 18, lineHeight: 1.8, color: FG, fontWeight: 450, opacity: 0.9 }}>{desc}</p>
-                </div>
-              </div>
-
-              {/* Bed Details Section */}
-              {(bedInfo || bedSize) && (
-                <div style={{ paddingTop: 32, borderTop: `1px solid ${B}` }}>
-                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: M, marginBottom: 20 }}>Accommodation Specs</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 40 }}>
-                    <div>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: M, textTransform: "uppercase", marginBottom: 6 }}>Configuration</p>
-                      <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{bedInfo || "Standard Configuration"}</p>
-                    </div>
-                    {bedSize && (
-                      <div>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: M, textTransform: "uppercase", marginBottom: 6 }}>Dimension</p>
-                        <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{bedSize}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Col: Amenities, Inclusions, Policy */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
-              
-              {/* Amenities */}
-              {features.length > 0 && (
-                <div>
-                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: M, marginBottom: 24 }}>Amenities & Features</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 20px" }}>
-                    {features.map((f, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: A, flexShrink: 0 }} />
-                        <span style={{ fontSize: 15, color: FG, fontWeight: 600 }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Inclusions */}
-              {Array.isArray(inclusions) && inclusions.length > 0 && (
-                <div style={{ padding: 28, background: S, borderRadius: 24, border: `1px solid ${B}` }}>
-                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: M, marginBottom: 20 }}>Stay Inclusions</h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {inclusions.map((inc, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, color: FG, fontWeight: 600 }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={A} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        {typeof inc === 'string' ? inc : (inc.name || inc.label || inc.title)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Seasonal Periods */}
-              {seasonalPeriods.length > 0 && (
-                <div style={{ padding: 28, background: AL, borderRadius: 24, border: `1px solid ${A}` }}>
-                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 20 }}>Seasonal Availability</h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {seasonalPeriods.map((p, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, fontSize: 14, color: FG, fontWeight: 600 }}>
-                        <span style={{ flex: 1 }}>{p.seasonName || p.name || p.label || `Season ${i + 1}`}</span>
-                        <span style={{ fontSize: 12, opacity: 0.8, whiteSpace: "nowrap" }}>{formatDate(p.startDate)} – {formatDate(p.endDate)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Cancellation Policy */}
-              {typeof cancellationPolicy === 'string' && cancellationPolicy.trim() !== "" && cancellationPolicy !== "No cancellation policy rules defined." && (
-                <div>
-                  <h3 style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: M, marginBottom: 16 }}>Cancellation Guidelines</h3>
-                  <div style={{ padding: 24, background: S, borderRadius: 24, border: `1px solid ${B}` }}>
-                    <p style={{ fontSize: 14, lineHeight: 1.6, color: FG, fontWeight: 500, opacity: 0.85 }}>
-                      {cancellationPolicy}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+            {hasNavigation && (
+              <>
+                <motion.button
+                  className="fs-nav-btn fs-nav-left"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex - 1 + items.length) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} />
+                </motion.button>
+                <motion.button
+                  className="fs-nav-btn fs-nav-right"
+                  onClick={(e) => { e.stopPropagation(); onNavigate((currentIndex + 1) % items.length); }}
+                  whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <ChevronLeft size={24} style={{ transform: 'rotate(180deg)' }} />
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
+
+        {/* RIGHT PANE - Thumbnails */}
+        {hasNavigation && (
+          <div className="fs-right-pane">
+            <div className="fs-thumbnail-list">
+              {items.map((thumbSrc, idx) => (
+                <div
+                  key={idx}
+                  className={`fs-thumb ${idx === currentIndex ? 'active' : ''}`}
+                  onClick={() => onNavigate(idx)}
+                >
+                  <img src={thumbSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumbnail ${idx + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </motion.div>
-    </div>
+    </motion.div>
   );
-};
+};;
 
 
 
 
 /* ---------- RoomCard (Horizontal Layout) ------------------------------ */
 const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRoomsCountChange }) => {
-  const { tokens: { FG, B, A, AL } } = useTheme();
+  const { tokens: { FG, B, A, AL, S } } = useTheme();
   const [showModal, setShowModal] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const allPlans = room.mealPlanPricing ? Object.keys(room.mealPlanPricing) : [];
   if (!allPlans.length) {
@@ -512,9 +558,15 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
   const totalRooms = room.totalRooms || room.totalUnits || null;
   const coverImage = resolveCoverImage(room);
   const features = getRoomFeatures(room, listing);
-  const VISIBLE_TAGS = 3;
-  const visibleFeatures = features.slice(0, VISIBLE_TAGS);
-  const extraCount = features.length - VISIBLE_TAGS;
+
+  const allImages = [];
+  if (coverImage) allImages.push(coverImage);
+  const med = room?.media || room?.listingMedia || room?.images || [];
+  med.forEach(m => {
+    const u = typeof m === "string" ? m : m.url || m.src || m.imageUrl || m.fileUrl || m.blobName;
+    if (u && !allImages.includes(u)) allImages.push(u);
+  });
+  const totalPhotos = Math.max(1, allImages.length);
 
   const handlePlanChange = (code) => {
     setPlan(code);
@@ -528,13 +580,33 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
   return (
     <div className={cn(styles.card, { [styles.cardSelected]: isSelected })}>
       {/* Left: Image */}
-      <div className={styles.imgWrap}>
+      <div 
+        className={styles.imgWrap} 
+        style={{ position: "relative", cursor: "pointer" }}
+        onClick={() => setShowModal(true)}
+      >
         {coverImage
           ? <img src={coverImage} alt={name} className={styles.img} />
           : <div className={styles.imgPlaceholder}><Icon name="home" size="48" /></div>
         }
         {totalRooms != null && <span className={styles.badge}>{totalRooms} ROOMS</span>}
         {isSelected && <span className={styles.selectedBadge}>✓ Selected</span>}
+        
+
+        {/* View Photos button */}
+        <div style={{
+          position: "absolute", bottom: 12, left: 12,
+          background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)",
+          color: "#000", fontSize: 13, fontWeight: 700,
+          padding: "8px 12px", borderRadius: 8,
+          display: "flex", alignItems: "center", gap: 6,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          transition: "all 0.2s ease",
+          zIndex: 2
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          View Photos
+        </div>
       </div>
 
       {/* Right: Content */}
@@ -588,26 +660,12 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
         {/* Feature tags */}
         {features.length > 0 && (
           <div className={styles.tagsRow}>
-            {visibleFeatures.map((f, i) => <span key={i} className={styles.tag}>{f}</span>)}
-            {extraCount > 0 && <span className={styles.tagMore}>+ {extraCount} more</span>}
+            {features.map((f, i) => <span key={i} className={styles.tag}>{f}</span>)}
           </div>
         )}
 
         {/* CTA */}
-        <div className={styles.foot} style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setShowModal({ scrollToAmenities: false }); }}
-              style={{ 
-                background: AL, border: `1px solid ${A}`, color: A,
-                padding: "0 24px", height: 44, borderRadius: 12, fontSize: 13, fontWeight: 700, 
-                cursor: "pointer", whiteSpace: "nowrap",
-                transition: "all 0.3s ease",
-                display: "flex", alignItems: "center", justifyContent: "center"
-              }}>
-              View Details
-            </button>
-          </div>
+        <div className={styles.foot} style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "flex-end" }}>
 
           {isSelected ? (
             <div className={styles.counterRow} style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
@@ -628,9 +686,19 @@ const RoomCard = ({ room, listing, onRoomSelect, isSelected, roomsCount, onRooms
         </div>
       </div>
       
-      <AnimatePresence>
-        {showModal && <RoomModal room={room} listing={{ ...listing, scrollToAmenities: showModal?.scrollToAmenities }} onClose={() => setShowModal(false)} />}
-      </AnimatePresence>
+      <ModalPortal>
+        <AnimatePresence>
+          {showModal && (
+            <FullScreenImage
+              src={allImages[galleryIndex]}
+              items={allImages}
+              currentIndex={galleryIndex}
+              onNavigate={setGalleryIndex}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </AnimatePresence>
+      </ModalPortal>
     </div>
   );
 };
