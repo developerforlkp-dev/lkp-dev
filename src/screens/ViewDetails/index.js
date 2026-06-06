@@ -4,7 +4,7 @@ import cn from "classnames";
 import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
 import { getBookingDetails } from "../../mocks/bookings";
-import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile } from "../../utils/api";
+import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, getOrderCancelPreview, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile } from "../../utils/api";
 import Rating from "../../components/Rating";
 import Modal from "../../components/Modal";
 import Receipt from "../../components/Receipt";
@@ -665,6 +665,7 @@ const ViewDetails = () => {
   // Receipt state
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
   const [refundDetails, setRefundDetails] = useState(null);
+  const [cancelPreview, setCancelPreview] = useState(null);
   const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [validationModalVisible, setValidationModalVisible] = useState(false);
@@ -1547,6 +1548,25 @@ const ViewDetails = () => {
     loadRefundDetails();
   }, [booking?.orderId]);
 
+  useEffect(() => {
+    const loadCancelPreview = async () => {
+      if (!booking?.orderId) {
+        setCancelPreview(null);
+        return;
+      }
+
+      try {
+        const data = await getOrderCancelPreview(booking.orderId);
+        setCancelPreview(data && typeof data === "object" ? data : null);
+      } catch (err) {
+        console.warn("⚠️ Failed to fetch cancel preview:", err?.message || err);
+        setCancelPreview(null);
+      }
+    };
+
+    loadCancelPreview();
+  }, [booking?.orderId]);
+
   const formatMoney = (amount, currency = "INR") => {
     if (amount === null || amount === undefined || amount === "") return "N/A";
     const numericAmount = Number(amount);
@@ -1564,7 +1584,58 @@ const ViewDetails = () => {
     return raw.replaceAll("_", " ");
   };
 
+  const formatPolicyWindow = (policy) => {
+    if (!policy || typeof policy !== "object") return "";
+
+    const minDays = policy.minDaysBeforeStart ?? policy.minDays;
+    const maxDays = policy.maxDaysBeforeStart ?? policy.maxDays;
+
+    if (minDays != null && maxDays != null) {
+      if (Number(minDays) === 0 && Number(maxDays) === 0) {
+        return "on the start date";
+      }
+      return `${minDays} to ${maxDays} days before start`;
+    }
+    if (minDays != null) {
+      if (Number(minDays) === 0) {
+        return "any time before start";
+      }
+      return `${minDays}+ days before start`;
+    }
+    if (maxDays != null) {
+      if (Number(maxDays) === 0) {
+        return "up to the start date";
+      }
+      return `up to ${maxDays} days before start`;
+    }
+
+    return "";
+  };
+
   const getAppliedRefundPolicyText = () => {
+    const previewPolicy = cancelPreview?.policyUsed || cancelPreview?.policyApplied;
+    const previewPercentage =
+      cancelPreview?.policyUsed?.percentage ??
+      cancelPreview?.policyApplied?.percentage ??
+      (cancelPreview?.cancellationFeePercentage != null
+        ? 100 - Number(cancelPreview.cancellationFeePercentage || 0)
+        : null);
+
+    if (Number.isFinite(Number(previewPercentage))) {
+      const normalizedPercentage = Number(previewPercentage);
+      const previewWindow = formatPolicyWindow(previewPolicy);
+
+      if (normalizedPercentage <= 0) {
+        return previewWindow
+          ? `If you cancel now (${previewWindow}), you'll receive 0% refund.`
+          : "If you cancel now, you'll receive 0% refund.";
+      }
+
+      return previewWindow
+        ? `If you cancel now (${previewWindow}), you'll receive ${normalizedPercentage}% refund.`
+        : `If you cancel now, you'll receive ${normalizedPercentage}% refund.`;
+    }
+
     const listingCancellationPolicy = booking?.listingData?.cancellationPolicyText;
     const listingPolicyText = Array.isArray(listingCancellationPolicy)
       ? listingCancellationPolicy.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
@@ -1868,6 +1939,14 @@ const ViewDetails = () => {
     return cn("button-stroke", "button-small");
   };
 
+  const bookingStatusLower = String(
+    booking?.statusTone ||
+    booking?.status ||
+    booking?.originalData?.orderStatus ||
+    ""
+  ).toLowerCase().trim();
+  const isCancelledBooking = bookingStatusLower === "cancelled" || bookingStatusLower === "canceled";
+
   return (
     <div className={cn("section", styles.section)}>
       <div className={cn("container", styles.container)}>
@@ -2168,10 +2247,12 @@ const ViewDetails = () => {
               )}
               {refundDetails && (
                 <>
-                  <div className={styles.paymentRow}>
-                    <span>Refund Status</span>
-                    <span>{formatRefundStatus(refundDetails.refundStatus)}</span>
-                  </div>
+                  {isCancelledBooking && (
+                    <div className={styles.paymentRow}>
+                      <span>Refund Status</span>
+                      <span>{formatRefundStatus(refundDetails.refundStatus)}</span>
+                    </div>
+                  )}
                   <div className={styles.paymentRow}>
                     <span>Refund Amount</span>
                     <span>{formatMoney(refundDetails.refundAmount, refundDetails.currency || booking?.originalData?.currency || "INR")}</span>
