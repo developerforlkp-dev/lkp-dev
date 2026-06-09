@@ -941,7 +941,7 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
     <section style={{ background: BG, padding: isMobile ? "80px 16px" : "140px 36px", boxSizing: "border-box" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
 
-        <SHdr idx="05" label="Guidelines & Contact" />
+        <SHdr idx="06" label="Guidelines & Contact" />
 
         <div className="pol-contact-grid" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1.5fr", gap: isMobile ? 60 : 100, alignItems: "start", marginTop: 40 }}>
 
@@ -1041,7 +1041,7 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
 
 function StayAddons({ stay, selectedAddOns, onToggleAddOn, addOnQuantities, onAddOnQuantityChange }) {
   const { isMobile } = useWindowSize();
-  const { theme, tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const { theme, tokens: { A, AL, BG, FG, M, S, B, W } } = useTheme();
 
   const activeAddons = useMemo(() => {
     return Array.isArray(stay?.addons) 
@@ -1054,113 +1054,144 @@ function StayAddons({ stay, selectedAddOns, onToggleAddOn, addOnQuantities, onAd
   return (
     <div style={{ background: BG, padding: isMobile ? "80px 16px 40px" : "140px 36px 80px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <SHdr idx="02.5" label="Enhance Your Stay" />
-        <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
-          Curate your experience with our selection of premium add-ons and services.
-        </p>
+        <SHdr idx="03" label="Enhance Your Stay" />
         
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-          {activeAddons.map(addon => {
-            const addonId = addon.addonId || addon.assignmentId || addon.id;
-            const isSelected = selectedAddOns.includes(addonId);
-            const isIndividual = addon.pricingType === "Individual";
-            const qty = isIndividual ? (addOnQuantities[addonId] || 1) : 1;
-            const price = parseFloat(addon.price || 0);
-            const imageUrl = Array.isArray(addon.imageUrls) && addon.imageUrls[0] ? fixImageUrl(addon.imageUrls[0]) : null;
+        <Rev delay={0.4} style={{ marginTop: 40 }}>
+          <div style={{ background: W, border: `1px solid ${B}`, padding: isMobile ? "32px 20px" : "64px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 2.5fr", gap: isMobile ? 32 : 80 }} className="details-inner">
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", color: A, marginBottom: 16, fontWeight: 600 }}>Make it Yours</p>
+              <p style={{ fontSize: 14, color: M, marginBottom: 0, lineHeight: 1.7 }}>
+                Elevate your stay with our thoughtfully curated selection of premium amenities and personalized services.
+              </p>
+            </div>
             
-            return (
-              <motion.div 
-                key={addonId}
-                whileHover={{ y: -4 }}
-                style={{ 
-                  borderRadius: 16, 
-                  border: isSelected ? `2px solid ${A}` : `1px solid ${B}`, 
-                  background: W,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.3s ease'
-                }}
-                onClick={() => {
-                  if (!isSelected) {
-                    onToggleAddOn(addonId, addon.pricingType);
-                  }
-                }}
-              >
-                <div style={{ height: 160, width: '100%', background: S, position: 'relative' }}>
-                  {imageUrl ? (
-                    <img src={imageUrl} alt={addon.title || addon.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: M }}>
-                      <Sparkles size={32} />
-                    </div>
-                  )}
-                  {isSelected && (
-                    <div style={{ position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: '50%', background: A, color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <CheckCircle size={16} />
-                    </div>
-                  )}
-                </div>
-                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', height: 'calc(100% - 160px)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <h4 style={{ fontSize: 18, fontWeight: 700, color: FG, margin: 0 }}>{addon.title || addon.name}</h4>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: A, whiteSpace: 'nowrap', marginLeft: 12 }}>
-                      {addon.currency} {price.toFixed(2)}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: 14, color: M, lineHeight: 1.5, marginBottom: 20, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {addon.briefDescription || addon.description}
-                  </p>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: M, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {addon.pricingType}
-                    </span>
-                    
-                    {isSelected ? (
-                      isIndividual ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: S, borderRadius: 20, padding: '4px 8px' }} onClick={e => e.stopPropagation()}>
-                          <button 
-                            style={{ width: 24, height: 24, borderRadius: '50%', background: W, border: `1px solid ${B}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: FG }}
-                            onClick={() => onAddOnQuantityChange(addonId, qty - 1)}
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: FG, minWidth: 20, textAlign: 'center' }}>{qty}</span>
-                          <button 
-                            style={{ width: 24, height: 24, borderRadius: '50%', background: W, border: `1px solid ${B}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: FG }}
-                            onClick={() => onAddOnQuantityChange(addonId, qty + 1)}
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 32 }}>
+              {activeAddons.map(addon => {
+                const addonId = addon.addonId || addon.assignmentId || addon.id;
+                const isSelected = selectedAddOns.includes(addonId);
+                const isIndividual = addon.pricingType === "Individual";
+                const qty = isIndividual ? (addOnQuantities[addonId] || 1) : 1;
+                const price = parseFloat(addon.price || 0);
+                const imageUrl = Array.isArray(addon.imageUrls) && addon.imageUrls[0] ? fixImageUrl(addon.imageUrls[0]) : null;
+                
+                return (
+                  <motion.div
+                    key={addonId}
+                    whileHover={{ x: 10 }}
+                    transition={{ duration: 0.3 }}
+                    className="addon-item"
+                    style={{
+                      display: "flex",
+                      gap: 24,
+                      alignItems: "center",
+                      padding: "20px",
+                      background: isSelected ? AL : "transparent",
+                      borderRadius: 24,
+                      border: `1px solid ${isSelected ? A : B}`,
+                      transition: "0.3s"
+                    }}
+                  >
+                    <div className="addon-img" style={{ background: AL, width: 64, height: 64, borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${B}` }}>
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={addon.title || addon.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
-                        <button 
-                          style={{ background: 'transparent', border: 'none', color: A, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleAddOn(addonId, addon.pricingType);
-                          }}
-                        >
-                          Remove
-                        </button>
-                      )
-                    ) : (
-                      <button 
-                        style={{ background: A, color: '#FFF', border: 'none', borderRadius: 20, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleAddOn(addonId, addon.pricingType);
-                        }}
-                      >
-                        <Plus size={14} /> Add
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                        <Plus size={24} color={A} />
+                      )}
+                    </div>
+                    <div className="addon-content" style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} className="addon-header">
+                        <div className="addon-title" style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
+                          <p style={{ fontSize: 16, fontWeight: 700, color: FG, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{addon.title || addon.name}</p>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }} className="addon-actions">
+                          <span className="addon-badge" style={{ fontSize: 10, fontWeight: 700, color: addon.pricingType === "Group" ? "#d14343" : A, background: addon.pricingType === "Group" ? "#d1434322" : AL, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>{addon.pricingType}</span>
+                          {isSelected ? (
+                            addon.pricingType === "Group" ? (
+                              <button
+                                className="addon-btn addon-btn-remove"
+                                onClick={() => onToggleAddOn(addonId, addon.pricingType)}
+                                style={{
+                                  background: AL,
+                                  color: A,
+                                  border: `1px solid ${A}`,
+                                  borderRadius: 100,
+                                  padding: "0 16px",
+                                  height: "32px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.05em"
+                                }}
+                              >
+                                Remove
+                              </button>
+                            ) : (
+                              <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 12, background: S, borderRadius: 100, padding: "0 10px", height: "32px", border: `1px solid ${B}` }}>
+                                <button
+                                  onClick={() => onAddOnQuantityChange(addonId, qty - 1)}
+                                  style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 4, color: A }}
+                                >
+                                  <Minus size={12} />
+                                </button>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: FG, minWidth: 16, textAlign: "center" }}>
+                                  {qty}
+                                </span>
+                                <button
+                                  onClick={() => onAddOnQuantityChange(addonId, qty + 1)}
+                                  style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 4, color: A }}
+                                >
+                                  <Plus size={12} />
+                                </button>
+                              </div>
+                            )
+                          ) : (
+                            <button
+                              className="addon-btn addon-btn-add"
+                              onClick={() => onToggleAddOn(addonId, addon.pricingType)}
+                              style={{
+                                background: S,
+                                color: FG,
+                                border: `1px solid ${B}`,
+                                borderRadius: 100,
+                                padding: "0 16px",
+                                height: "32px",
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: 10,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em"
+                              }}
+                            >
+                              Add
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {(addon.briefDescription || addon.description) && (
+                        <p className="addon-desc" style={{ fontSize: 13, color: M, lineHeight: 1.5, marginTop: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{addon.briefDescription || addon.description}</p>
+                      )}
+                      {price > 0 && (
+                        <div className="addon-price" style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: FG }}>+ {addon.currency || "₹"} {price.toFixed(2)}</p>
+                          {isSelected && qty > 1 && (
+                            <p style={{ fontSize: 11, fontWeight: 500, color: M }}>
+                              × {qty} = {addon.currency || "₹"} {(price * qty).toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </Rev>
       </div>
     </div>
   );
@@ -1214,6 +1245,7 @@ const StayDetails = () => {
       setSelectedAddOns((prev) => prev.filter((id) => id !== addOnId));
     } else {
       setAddOnQuantities((prev) => ({ ...prev, [addOnId]: value }));
+      setSelectedAddOns((prev) => prev.includes(addOnId) ? prev : [...prev, addOnId]);
     }
   }, []);
 
@@ -1479,7 +1511,7 @@ const StayDetails = () => {
 
       <div style={{ background: W, padding: "80px 36px 140px", borderTop: `1px solid ${B}` }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="03" label="Accommodations" />
+          <SHdr idx="04" label="Accommodations" />
           <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
             Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
           </p>
@@ -1538,6 +1570,7 @@ const StayDetails = () => {
         onRoomsCountChange={handleRoomCountChange}
         selectedAddOns={selectedAddOns}
         addOnQuantities={addOnQuantities}
+        onAddOnQuantityChange={handleAddOnQuantityChange}
       />
 
       <RelatedListingsStrip
@@ -2723,7 +2756,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
     <section style={{ background: W, padding: isMobile ? "80px 24px" : "120px 36px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", gap: 24, marginBottom: 52 }}>
-          <SHdr idx="06" label="GUEST REVIEWS" />
+          <SHdr idx="07" label="GUEST REVIEWS" />
           {eligibleBookings.length > 0 && (
             <button
               onClick={() => {
@@ -2924,7 +2957,7 @@ function StayLocation({ stay }) {
   return (
     <section style={{ background: W, padding: isMobile ? "80px 24px" : "120px 36px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <SHdr idx="02" label="PREPARATION" />
+        <SHdr idx="05" label="PREPARATION" />
 
         <div className="location-grid" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(400px, 1fr))", gap: isMobile ? 60 : 100, marginTop: 40 }}>
           {/* Left Column: Location Card */}
