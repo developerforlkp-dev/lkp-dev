@@ -941,7 +941,7 @@ function StayPoliciesAndContact({ stay, hostData, hostAvatar }) {
     <section style={{ background: BG, padding: isMobile ? "80px 16px" : "140px 36px", boxSizing: "border-box" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
 
-        <SHdr idx="05" label="Guidelines & Contact" />
+        <SHdr idx="06" label="Guidelines & Contact" />
 
         <div className="pol-contact-grid" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1.5fr", gap: isMobile ? 60 : 100, alignItems: "start", marginTop: 40 }}>
 
@@ -1054,7 +1054,7 @@ function StayAddons({ stay, selectedAddOns, onToggleAddOn, addOnQuantities, onAd
   return (
     <div style={{ background: BG, padding: isMobile ? "80px 16px 40px" : "140px 36px 80px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <SHdr idx="02.5" label="Enhance Your Stay" />
+        <SHdr idx="03" label="Enhance Your Stay" />
         <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
           Curate your experience with our selection of premium add-ons and services.
         </p>
@@ -1502,7 +1502,7 @@ const StayDetails = () => {
 
       <div style={{ background: W, padding: "80px 36px 140px", borderTop: `1px solid ${B}` }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="03" label="Accommodations" />
+          <SHdr idx="04" label="Accommodations" />
           <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
             Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
           </p>
@@ -2746,7 +2746,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
     <section style={{ background: W, padding: isMobile ? "80px 24px" : "120px 36px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", gap: 24, marginBottom: 52 }}>
-          <SHdr idx="06" label="GUEST REVIEWS" />
+          <SHdr idx="07" label="GUEST REVIEWS" />
           {eligibleBookings.length > 0 && (
             <button
               onClick={() => {
@@ -2947,7 +2947,7 @@ function StayLocation({ stay }) {
   return (
     <section style={{ background: W, padding: isMobile ? "80px 24px" : "120px 36px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <SHdr idx="02" label="PREPARATION" />
+        <SHdr idx="05" label="PREPARATION" />
 
         <div className="location-grid" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(400px, 1fr))", gap: isMobile ? 60 : 100, marginTop: 40 }}>
           {/* Left Column: Location Card */}
