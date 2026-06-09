@@ -816,9 +816,21 @@ const StayBookingSystem = ({
     const billingConfigDiscountAmount = grossSubtotal * (billingConfigDiscountRate / 100);
     const earlyBirdDiscountAmount = grossSubtotal * (earlyBirdDiscountPercent / 100);
 
-    const preTaxSubtotal = Math.max(0, grossSubtotal - longStayDiscountAmount - billingConfigDiscountAmount - earlyBirdDiscountAmount);
+    let addonsTotal = 0;
+    if (Array.isArray(stay?.addons) && Array.isArray(selectedAddOns) && selectedAddOns.length > 0) {
+      selectedAddOns.forEach(addonId => {
+        const addonObj = stay.addons.find(a => String(a.addonId || a.assignmentId || a.id) === String(addonId));
+        if (addonObj) {
+          const isIndividual = addonObj.pricingType === "Individual";
+          const qty = isIndividual ? (addOnQuantities[addonId] || 1) : 1;
+          addonsTotal += parseFloat(addonObj.price || 0) * qty;
+        }
+      });
+    }
+
+    const preTaxSubtotal = Math.max(0, grossSubtotal - longStayDiscountAmount - billingConfigDiscountAmount - earlyBirdDiscountAmount) + addonsTotal;
     const discountAmount = longStayDiscountAmount + billingConfigDiscountAmount + earlyBirdDiscountAmount;
-    const discountedPerNight = preTaxSubtotal / nights;
+    const discountedPerNight = Math.max(0, preTaxSubtotal - addonsTotal) / nights;
 
     // Taxes from stay config; fallback to legacy 18% GST + 2% service charge
     const configuredTaxRate = Array.isArray(stay?.taxes)
@@ -865,9 +877,10 @@ const StayBookingSystem = ({
       extraAdultsCount,
       extraChildrenCount,
       normalAdultsCount,
-      normalChildrenCount
+      normalChildrenCount,
+      addonsTotal
     };
-  }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount, selectedRooms, stayRoomsCatalog]);
+  }, [stay, resolvedSelectedRooms, checkInDate, guests, nightsCount, selectedRooms, stayRoomsCatalog, selectedAddOns, addOnQuantities]);
 
   const capacityFeedback = useMemo(() => {
     const isPropertyBased = stay?.bookingScope === "Property-Based";
@@ -2094,9 +2107,23 @@ const StayBookingSystem = ({
                                   </div>
                                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                     <span style={{ fontSize: 9, color: M, textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.05em" }}>Extra Children</span>
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: A }}>{pricing.extraChildrenCount} / {pricing.extraChildrenLimit}</span>
                                   </div>
                                 </div>
+                              </div>
+                            </>
+                          )}
+
+                          {/* Add-ons Pricing Breakdown */}
+                          {pricing.addonsTotal > 0 && (
+                            <>
+                              <div style={{ height: 1, background: `${A}22`, margin: "12px 0 8px" }} />
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: 10, fontWeight: 800, color: A, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                                  Add-ons Total
+                                </span>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>
+                                  + ₹{pricing.addonsTotal.toLocaleString('en-IN')}
+                                </span>
                               </div>
                             </>
                           )}
