@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 import Icon from "../Icon";
 import Breadcrumbs from "../Breadcrumbs";
 
-const Control = ({ className, urlHome, breadcrumbs, backUrl }) => {
+const Control = ({ className, urlHome, breadcrumbs, backUrl, hideBackBtn }) => {
   const history = useHistory();
 
   const handleBack = (e) => {
@@ -25,13 +25,15 @@ const Control = ({ className, urlHome, breadcrumbs, backUrl }) => {
 
   return (
     <div className={cn(className, styles.control)}>
-      <button
-        className={cn("button-stroke button-small", styles.button)}
-        onClick={handleBack}
-      >
-        <Icon name="arrow-left" size="10" />
-        <span>Back</span>
-      </button>
+      {!hideBackBtn && (
+        <button
+          className={cn("button-stroke button-small", styles.button)}
+          onClick={handleBack}
+        >
+          <Icon name="arrow-left" size="10" />
+          <span>Back</span>
+        </button>
+      )}
       <Breadcrumbs className={styles.breadcrumbs} items={breadcrumbs} />
     </div>
   );

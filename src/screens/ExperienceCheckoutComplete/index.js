@@ -494,6 +494,7 @@ const ExperienceCheckoutComplete = () => {
           className={styles.control}
           urlHome="/"
           breadcrumbs={breadcrumbs}
+          hideBackBtn
         />
         <div className={styles.row}>
           <div className={styles.col}>
