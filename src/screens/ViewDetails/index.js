@@ -4,7 +4,7 @@ import cn from "classnames";
 import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
 import { getBookingDetails } from "../../mocks/bookings";
-import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, getOrderCancelPreview, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile } from "../../utils/api";
+import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, getOrderCancelPreview, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile, getCancellationReasons } from "../../utils/api";
 import Rating from "../../components/Rating";
 import Modal from "../../components/Modal";
 import Receipt from "../../components/Receipt";
@@ -697,6 +697,8 @@ const ViewDetails = () => {
   const [refundDetails, setRefundDetails] = useState(null);
   const [cancelPreview, setCancelPreview] = useState(null);
   const [cancelPreviewLoading, setCancelPreviewLoading] = useState(false);
+  const [cancellationReasons, setCancellationReasons] = useState([]);
+  const [selectedReason, setSelectedReason] = useState("");
   const [confirmCancelModalVisible, setConfirmCancelModalVisible] = useState(false);
   const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
@@ -729,6 +731,7 @@ const ViewDetails = () => {
     setPendingCancellation(null);
     setCancelModalVisible(true);
     setCancelReason("");
+    setSelectedReason("");
     setCancelError(null);
     setCancelPreviewLoading(Boolean(booking?.orderId));
 
@@ -751,6 +754,7 @@ const ViewDetails = () => {
   const handleCloseCancelModal = () => {
     setCancelModalVisible(false);
     setCancelReason("");
+    setSelectedReason("");
     setPendingCancellation(null);
     setCancelError(null);
     setCancelPreviewLoading(false);
@@ -789,7 +793,18 @@ const ViewDetails = () => {
   const executeCancelBooking = async () => {
     const reason = pendingCancellation?.reason || cancelReason;
 
-    if (!String(reason || "").trim()) {
+    let finalReason = reason;
+    if (!pendingCancellation?.reason) {
+      if (!selectedReason && !cancelReason.trim()) {
+        setCancelError("Please select or enter a reason for cancellation");
+        return;
+      }
+      finalReason = selectedReason 
+        ? (cancelReason.trim() ? `${selectedReason} - ${cancelReason.trim()}` : selectedReason)
+        : cancelReason.trim();
+    }
+
+    if (!String(finalReason || "").trim()) {
       setCancelError("Please provide a reason for cancellation.");
       return;
     }
@@ -799,7 +814,7 @@ const ViewDetails = () => {
 
     try {
       const cancelRequestBody = {
-        reason: String(reason).trim(),
+        reason: String(finalReason).trim(),
         adminOverride: false,
       };
 
@@ -835,14 +850,18 @@ const ViewDetails = () => {
   };
 
   const handleConfirmCancel = () => {
-    if (!cancelReason.trim()) {
-      setCancelError("Please provide a reason for cancellation.");
+    if (!selectedReason && !cancelReason.trim()) {
+      setCancelError("Please select or enter a reason for cancellation.");
       return;
     }
 
+    const finalReason = selectedReason 
+      ? (cancelReason.trim() ? `${selectedReason} - ${cancelReason.trim()}` : selectedReason)
+      : cancelReason.trim();
+
     setPendingCancellation({
       booking,
-      reason: cancelReason.trim(),
+      reason: finalReason,
     });
     setCancelError(null);
     setCancelModalVisible(false);
@@ -1644,6 +1663,18 @@ const ViewDetails = () => {
 
     loadCancelPreview();
   }, [booking?.orderId]);
+
+  useEffect(() => {
+    const fetchReasons = async () => {
+      try {
+        const reasons = await getCancellationReasons();
+        setCancellationReasons(reasons);
+      } catch (err) {
+        console.warn("Failed to fetch cancellation reasons", err);
+      }
+    };
+    fetchReasons();
+  }, []);
 
   const formatMoney = (amount, currency = "INR") => {
     if (amount === null || amount === undefined || amount === "") return "N/A";
@@ -2638,64 +2669,108 @@ const ViewDetails = () => {
         onClose={handleCloseCancelModal}
         outerClassName={styles.cancelModalOuter}
       >
-        <div className={styles.cancelModalContent}>
+        <div className={cn(styles.cancelModalContent, styles.cancelModalContentScrollable)}>
           <div className={styles.cancelModalHeader}>
-            <h2 className={styles.cancelModalTitle}>
+            <h2 className={styles.cancelModalTitle} style={{ fontFamily: "Playfair Display, Lora, Georgia, serif", fontSize: "28px", fontWeight: "600", color: "#141416", marginBottom: "12px" }}>
               Cancel Booking
             </h2>
-            <p className={styles.cancelModalDescription}>
-              Please provide a reason for cancelling this booking.
+            <p className={styles.cancelModalDescription} style={{ fontSize: "14px", color: "#777E90", lineHeight: "1.5" }}>
+              We're sorry to see you go. Please let us know<br/>why you're cancelling this booking.
             </p>
           </div>
-          <div className={styles.cancelModalBody}>
-            <div className={styles.cancelPolicyBox}>
-              <div className={styles.cancelPolicyLabel}>Cancellation policy applied</div>
-              {cancelPreviewLoading ? (
-                <div className={styles.cancelPolicyText}>Loading cancellation policy...</div>
-              ) : cancelPreviewRows.length > 0 ? (
-                <div className={styles.cancelPolicyGrid}>
-                  {cancelPreviewRows.map((row) => (
-                    <div key={row.label} className={styles.cancelPolicyRow}>
-                      <span className={styles.cancelPolicyRowLabel}>{row.label}</span>
-                      <span className={styles.cancelPolicyRowValue}>{row.value}</span>
-                    </div>
-                  ))}
+          <div className={cn(styles.cancelModalBody, styles.cancelModalBodyScrollable)} style={{ padding: "0 32px" }}>
+            <div className={styles.cancelPolicyBox} style={{ background: "transparent", padding: 0, border: "none", marginBottom: "24px" }}>
+              <div className={styles.cancelPolicyLabel} style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", color: "#B1B5C3", marginBottom: "16px" }}>
+                Select a reason
+              </div>
+              {cancellationReasons.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {[...cancellationReasons]
+                    .sort((a, b) => (a?.sortOrder || 0) - (b?.sortOrder || 0))
+                    .map((reason, idx) => {
+                    const reasonText = typeof reason === 'object' ? (reason.displayName || reason.reason || reason.name || JSON.stringify(reason)) : reason;
+                    const isSelected = selectedReason === reasonText;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => setSelectedReason(reasonText)}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "18px 20px",
+                          border: `1px solid ${isSelected ? "#0097B2" : "#E6E8EC"}`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          backgroundColor: isSelected ? "#F2FBFC" : "#FFFFFF",
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        <span style={{ fontSize: "15px", color: "#141416", fontFamily: "Playfair Display, Lora, Georgia, serif", fontWeight: isSelected ? "500" : "400" }}>
+                          {reasonText}
+                        </span>
+                        <div style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          border: `2px solid ${isSelected ? "#0097B2" : "#B1B5C3"}`,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: "#FFFFFF",
+                          flexShrink: 0
+                        }}>
+                          {isSelected && (
+                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#0097B2" }} />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className={styles.cancelPolicyText}>
-                  Cancellation preview is unavailable for this booking.
+                  Loading reasons...
                 </div>
               )}
             </div>
-            <div className={styles.cancelModalFormGroup}>
-              <label htmlFor="cancelReason" className={styles.cancelModalLabel}>
-                Reason for Cancellation <span className={styles.required}>*</span>
-              </label>
-              <textarea
-                id="cancelReason"
-                className={cn(styles.cancelModalInput, styles.cancelModalTextarea, {
-                  [styles.inputError]: cancelError && !cancelReason.trim(),
-                })}
-                value={cancelReason}
-                onChange={(e) => {
-                  setCancelReason(e.target.value);
-                  setCancelError(null);
-                }}
-                placeholder="Enter the reason for cancellation..."
-                rows={4}
-                disabled={isCancelling}
-              />
-            </div>
+            
+            {selectedReason && selectedReason.toLowerCase().includes("other") && (
+              <div className={styles.cancelModalFormGroup} style={{ marginTop: "24px" }}>
+                <label htmlFor="cancelReason" className={styles.cancelModalLabel} style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", color: "#B1B5C3", marginBottom: "12px" }}>
+                  Additional details (optional)
+                </label>
+                <textarea
+                  id="cancelReason"
+                  className={cn(styles.cancelModalInput, styles.cancelModalTextarea, {
+                    [styles.inputError]: cancelError && !cancelReason.trim(),
+                  })}
+                  style={{ borderRadius: "8px", border: "1px solid #E6E8EC", padding: "16px", minHeight: "100px", resize: "none" }}
+                  value={cancelReason}
+                  onChange={(e) => {
+                    setCancelReason(e.target.value);
+                    setCancelError(null);
+                  }}
+                  placeholder="Tell us more about your reason (optional)..."
+                  maxLength={250}
+                  disabled={isCancelling}
+                />
+                <div style={{ textAlign: "right", fontSize: "12px", color: "#B1B5C3", marginTop: "4px" }}>
+                  {cancelReason.length}/250
+                </div>
+              </div>
+            )}
             {cancelError && (
               <div className={styles.cancelModalError}>
                 {cancelError}
               </div>
             )}
           </div>
-          <div className={styles.cancelModalFooter}>
+          <div className={styles.cancelModalFooter} style={{ padding: "24px 32px", borderTop: "1px solid #E6E8EC", display: "flex", gap: "16px", justifyContent: "flex-end" }}>
             <button
               type="button"
-              className={cn("button-stroke", styles.cancelModalBtn)}
+              className={cn("button-stroke")}
+              style={{ flex: 1, borderRadius: "24px", padding: "12px 24px", height: "48px" }}
               onClick={handleCloseCancelModal}
               disabled={isCancelling}
             >
@@ -2703,11 +2778,12 @@ const ViewDetails = () => {
             </button>
             <button
               type="button"
-              className={cn("button", styles.cancelModalBtn)}
+              className={cn("button")}
+              style={{ flex: 1, borderRadius: "24px", padding: "12px 24px", height: "48px", backgroundColor: "#0097B2", color: "white", border: "none" }}
               onClick={handleConfirmCancel}
-              disabled={isCancelling || !cancelReason.trim()}
+              disabled={isCancelling || !selectedReason}
             >
-              {isCancelling ? "Cancelling..." : "Submit"}
+              {isCancelling ? "Submitting..." : "Submit Cancellation"}
             </button>
           </div>
         </div>
@@ -2725,15 +2801,10 @@ const ViewDetails = () => {
               {booking ? `Cancel "${booking.title}" and apply the previewed cancellation policy?` : "Confirm this cancellation?"}
             </p>
           </div>
-          <div className={styles.confirmCancelSummary}>
-            {cancelPreviewRows
-              .filter((row) => ["Refund amount", "Cancellation fee", "Refund policy used", "Policy window used", "Refund window used"].includes(row.label))
-              .map((row) => (
-                <div key={row.label} className={styles.confirmCancelSummaryRow}>
-                  <span className={styles.confirmCancelSummaryLabel}>{row.label}</span>
-                  <span className={styles.confirmCancelSummaryValue}>{row.value}</span>
-                </div>
-              ))}
+          <div className={styles.confirmCancelSummary} style={{ padding: "16px", background: "rgba(244, 245, 246, 0.03)", borderRadius: "8px", marginTop: "16px" }}>
+            <p style={{ margin: 0, fontSize: "14px", fontWeight: "500", color: "#E65100" }}>
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </p>
           </div>
           <div className={styles.cancelModalFooter}>
             <button
