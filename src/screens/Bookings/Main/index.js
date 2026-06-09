@@ -1782,72 +1782,106 @@ const Main = ({
       >
         <div className={cn(styles.cancelModalContent, styles.cancelModalContentScrollable)}>
           <div className={styles.cancelModalHeader}>
-            <h2 className={styles.cancelModalTitle}>
+            <h2 className={styles.cancelModalTitle} style={{ fontFamily: "Playfair Display, Lora, Georgia, serif", fontSize: "28px", fontWeight: "600", color: "#141416", marginBottom: "12px" }}>
               Cancel Booking
             </h2>
-            <p className={styles.cancelModalDescription}>
-              Please provide a reason for cancelling this booking.
+            <p className={styles.cancelModalDescription} style={{ fontSize: "14px", color: "#777E90", lineHeight: "1.5" }}>
+              We're sorry to see you go. Please let us know<br/>why you're cancelling this booking.
             </p>
           </div>
-          <div className={cn(styles.cancelModalBody, styles.cancelModalBodyScrollable)}>
-            <div className={styles.cancelPolicyBox}>
-              <div className={styles.cancelPolicyLabel} style={{ marginBottom: "16px" }}>Select a reason</div>
+          <div className={cn(styles.cancelModalBody, styles.cancelModalBodyScrollable)} style={{ padding: "0 32px" }}>
+            <div className={styles.cancelPolicyBox} style={{ background: "transparent", padding: 0, border: "none", marginBottom: "24px" }}>
+              <div className={styles.cancelPolicyLabel} style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", color: "#B1B5C3", marginBottom: "16px" }}>
+                Select a reason
+              </div>
               {cancellationReasons.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {[...cancellationReasons]
                     .sort((a, b) => (a?.sortOrder || 0) - (b?.sortOrder || 0))
                     .map((reason, idx) => {
                     const reasonText = typeof reason === 'object' ? (reason.displayName || reason.reason || reason.name || JSON.stringify(reason)) : reason;
+                    const isSelected = selectedReason === reasonText;
                     return (
-                      <label key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                        <input
-                          type="radio"
-                          name="cancellationReason"
-                          value={reasonText}
-                          checked={selectedReason === reasonText}
-                          onChange={(e) => setSelectedReason(e.target.value)}
-                          style={{ cursor: "pointer" }}
-                        />
-                        <span style={{ fontSize: "14px" }}>{reasonText}</span>
-                      </label>
+                      <div
+                        key={idx}
+                        onClick={() => setSelectedReason(reasonText)}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "18px 20px",
+                          border: `1px solid ${isSelected ? "#0097B2" : "#E6E8EC"}`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          backgroundColor: isSelected ? "#F2FBFC" : "#FFFFFF",
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        <span style={{ fontSize: "15px", color: "#141416", fontFamily: "Playfair Display, Lora, Georgia, serif", fontWeight: isSelected ? "500" : "400" }}>
+                          {reasonText}
+                        </span>
+                        <div style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          border: `2px solid ${isSelected ? "#0097B2" : "#B1B5C3"}`,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: "#FFFFFF",
+                          flexShrink: 0
+                        }}>
+                          {isSelected && (
+                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#0097B2" }} />
+                          )}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
               ) : (
-                <div className={styles.cancelPolicyText} style={{ marginBottom: "20px" }}>
+                <div className={styles.cancelPolicyText}>
                   Loading reasons...
                 </div>
               )}
             </div>
-            <div className={styles.cancelModalFormGroup}>
-              <label htmlFor="cancelReason" className={styles.cancelModalLabel}>
-                Additional details (optional)
-              </label>
-              <textarea
-                id="cancelReason"
-                className={cn(styles.cancelModalInput, styles.cancelModalTextarea, {
-                  [styles.inputError]: cancelError && !cancelReason.trim(),
-                })}
-                value={cancelReason}
-                onChange={(e) => {
-                  setCancelReason(e.target.value);
-                  setCancelError(null);
-                }}
-                placeholder="Enter the reason for cancellation..."
-                rows={4}
-                disabled={isCancelling}
-              />
-            </div>
+            
+            {selectedReason && selectedReason.toLowerCase().includes("other") && (
+              <div className={styles.cancelModalFormGroup} style={{ marginTop: "24px" }}>
+                <label htmlFor="cancelReason" className={styles.cancelModalLabel} style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", color: "#B1B5C3", marginBottom: "12px" }}>
+                  Additional details (optional)
+                </label>
+                <textarea
+                  id="cancelReason"
+                  className={cn(styles.cancelModalInput, styles.cancelModalTextarea, {
+                    [styles.inputError]: cancelError && !cancelReason.trim(),
+                  })}
+                  style={{ borderRadius: "8px", border: "1px solid #E6E8EC", padding: "16px", minHeight: "100px", resize: "none" }}
+                  value={cancelReason}
+                  onChange={(e) => {
+                    setCancelReason(e.target.value);
+                    setCancelError(null);
+                  }}
+                  placeholder="Tell us more about your reason (optional)..."
+                  maxLength={250}
+                  disabled={isCancelling}
+                />
+                <div style={{ textAlign: "right", fontSize: "12px", color: "#B1B5C3", marginTop: "4px" }}>
+                  {cancelReason.length}/250
+                </div>
+              </div>
+            )}
             {cancelError && (
               <div className={styles.cancelModalError}>
                 {cancelError}
               </div>
             )}
           </div>
-          <div className={styles.cancelModalFooter}>
+          <div className={styles.cancelModalFooter} style={{ padding: "24px 32px", borderTop: "1px solid #E6E8EC", display: "flex", gap: "16px", justifyContent: "flex-end" }}>
             <button
               type="button"
-              className={cn("button-stroke", styles.cancelModalBtn)}
+              className={cn("button-stroke")}
+              style={{ flex: 1, borderRadius: "24px", padding: "12px 24px", height: "48px" }}
               onClick={handleCloseCancelModal}
               disabled={isCancelling}
             >
@@ -1855,11 +1889,12 @@ const Main = ({
             </button>
             <button
               type="button"
-              className={cn("button", styles.cancelModalBtn)}
+              className={cn("button")}
+              style={{ flex: 1, borderRadius: "24px", padding: "12px 24px", height: "48px", backgroundColor: "#0097B2", color: "white", border: "none" }}
               onClick={handleConfirmCancel}
-              disabled={isCancelling || (!selectedReason && !cancelReason.trim())}
+              disabled={isCancelling || !selectedReason}
             >
-              {isCancelling ? "Cancelling..." : "Submit"}
+              {isCancelling ? "Submitting..." : "Submit Cancellation"}
             </button>
           </div>
         </div>
