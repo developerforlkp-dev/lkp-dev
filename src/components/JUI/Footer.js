@@ -164,9 +164,9 @@ export function Footer() {
         
         {/* Very Bottom */}
         <div className={styles.copyright}>
-          <div className={styles.copyrightLogo}>
-            LKP
-          </div>
+          <Link to="/">
+            <img src="/images/littleplanet-logo.svg" alt="Little Known Planet" className={styles.copyrightLogo} />
+          </Link>
           <div className={styles.copyrightText}>
             © 2026 Little Known Planet. All Rights Reserved.
           </div>
