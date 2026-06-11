@@ -1503,12 +1503,49 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   }, [baseTimeSlots, dateFilteredSlots, isEventBooking, listing]);
 
   const hasTodayValidSlots = useMemo(() => {
-    if (isEventBooking) return false;
     const today = new Date();
     const todayKey = getDateKey(today);
-    const weekday = today.getDay();
     const currentMinutes = today.getHours() * 60 + today.getMinutes();
     const todayFullyBookedSlotIds = collectFullyBookedSlotIdsForDate(listing, todayKey);
+
+    if (isEventBooking) {
+      const validEventSlots = eventSlots.filter((slot, index) => {
+        if (!slot || typeof slot !== "object") return false;
+
+        const slotKeys = new Set();
+        addDateRangeKeys(
+          slotKeys,
+          slot.slotStartDate || slot.slotDate || slot.date || slot.eventDate || slot.startDate,
+          slot.slotEndDate || slot.endDate || slot.end_date
+        );
+
+        if (slotKeys.size > 0 && !slotKeys.has(todayKey)) return false;
+
+        const slotId = getSlotId(slot);
+        if (slotId != null && todayFullyBookedSlotIds.has(String(slotId))) return false;
+
+        const isUnavailable = asOptionalBoolean(slot?.isAvailable ?? slot?.is_available) === false;
+        if (isUnavailable) return false;
+
+        const availableSeats = asNumber(slot?.availableSeats ?? slot?.available_seats);
+        if (availableSeats != null && availableSeats <= 0) return false;
+
+        const startTime = slot.startTime || slot.start_time || slot.slotStartTime || slot.time;
+        if (startTime) {
+          const [h, m] = String(startTime).split(":").map(Number);
+          if (Number.isFinite(h) && Number.isFinite(m)) {
+            const slotMinutes = h * 60 + m;
+            if (slotMinutes <= currentMinutes) return false;
+          }
+        }
+
+        return true;
+      });
+
+      return validEventSlots.length > 0;
+    }
+
+    const weekday = today.getDay();
 
     const schedules = [
       ...(Array.isArray(baseTimeSlots) ? baseTimeSlots : []),
@@ -1578,7 +1615,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     });
 
     return validSlots.length > 0;
-  }, [baseTimeSlots, dateFilteredSlots, listing, isEventBooking, privateBookedSlotIds]);
+  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking, privateBookedSlotIds]);
 
 
 
@@ -3281,6 +3318,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               availableDateKeys={eventAvailableDateKeys}
                               tokens={{ A, AL, BG, FG, M, B, S, W }}
                               emptyMessage="No available dates for this event."
+                              hasTodayValidSlots={hasTodayValidSlots}
                             />
                           ) : (
                             <EventInlineCalendar
