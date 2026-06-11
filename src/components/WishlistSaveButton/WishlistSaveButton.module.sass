@@ -1,0 +1,47 @@
+@import ../../styles/helpers
+
+.fabButton
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    gap: 8px
+    color: #ffffff
+    min-width: 56px
+    &.saved
+        color: #ffe2e8
+
+.inlineButton
+    display: inline-flex
+    align-items: center
+    gap: 8px
+    padding: 8px 16px
+    border: 1px solid $n6
+    border-radius: 8px
+    background: transparent
+    color: $n2
+    transition: border-color .2s, background-color .2s, color .2s
+    &:hover:not(:disabled)
+        border-color: $n4
+    &:disabled
+        opacity: .7
+        cursor: default
+    +dark
+        color: $n8
+        border-color: rgba(255,255,255,.14)
+
+.iconWrap
+    display: inline-flex
+    align-items: center
+    justify-content: center
+
+.label
+    white-space: nowrap
+    overflow: hidden
+    max-width: 0
+    opacity: 0
+    transition: max-width .45s cubic-bezier(.22,1,.36,1), opacity .2s ease .12s, margin-left .45s cubic-bezier(.22,1,.36,1)
+
+.labelVisible
+    max-width: 220px
+    opacity: 1
+    margin-left: 2px

@@ -638,6 +638,39 @@ export const uploadCustomerAvatar = async (file) => {
   }
 };
 
+export const saveWishlistItem = async ({ itemType, itemId }) => {
+  try {
+    const response = await ListingsAPI.post("/customers/wishlist/items", {
+      itemType,
+      itemId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error saving wishlist item:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getWishlistItems = async () => {
+  try {
+    const response = await ListingsAPI.get("/customers/wishlist/items");
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error fetching wishlist items:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const deleteWishlistItem = async (itemType, itemId) => {
+  try {
+    const response = await ListingsAPI.delete(`/customers/wishlist/items/${itemType}/${itemId}`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error deleting wishlist item:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // Get billing configuration for a listing
 export const getBillingConfiguration = async (listingId) => {
   try {

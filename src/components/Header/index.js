@@ -21,6 +21,11 @@ const items = [
         icon: "home",
         url: "/bookings",
       },
+      {
+        title: "Wishlist",
+        icon: "home",
+        url: "/wishlists",
+      },
     ],
   },
 ];

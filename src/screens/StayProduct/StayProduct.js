@@ -10,6 +10,7 @@ import Loader from "../../components/Loader";
 import { getStayDetails, getStayRoomAvailability, createStayOrder, getStayReviews } from "../../utils/api";
 import { useTheme } from "../../components/JUI/Theme";
 import { motion, AnimatePresence } from "framer-motion";
+import WishlistSaveButton from "../../components/WishlistSaveButton";
 
 // Helper to format image URLs
 const formatImageUrl = (url) => {
@@ -231,7 +232,7 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
   );
 };
 
-const Header = ({ stay, onShare }) => {
+const Header = ({ stay, onShare, stayId }) => {
   const history = useHistory();
   const { theme, tokens: { A, FG } } = useTheme();
   const locationText = buildStayHeaderLocation(stay);
@@ -269,6 +270,16 @@ const Header = ({ stay, onShare }) => {
           {locationText}
         </span>
         <div className={styles.actions}>
+          <WishlistSaveButton
+            variant="inline"
+            itemType="stay"
+            itemId={stay?.stayId || stay?.id || stayId}
+            title={stay?.propertyName || stay?.title}
+            className={styles.actionBtn}
+            iconSize={16}
+            idleLabel="Save"
+            savedLabel="Saved"
+          />
           <button className={styles.actionBtn} onClick={onShare}>
             <Icon name="share" size="16" />
             Share
@@ -2395,7 +2406,7 @@ const StayProduct = () => {
   return (
     <div className={styles.outer}>
       <div className={styles.container}>
-        <Header stay={stay} onShare={handleShare} />
+        <Header stay={stay} onShare={handleShare} stayId={stayId} />
         <Gallery images={galleryImages} />
 
         <div className={styles.contentWrapper}>

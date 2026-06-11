@@ -21,6 +21,7 @@ import { useTheme, THEMES } from "../../components/JUI/Theme";
 import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import ShareButton from "../../components/ShareButton";
+import WishlistSaveButton from "../../components/WishlistSaveButton";
 import { lockBodyScroll } from "../../utils/scrollLock";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
@@ -574,7 +575,7 @@ function SHdr({ idx, label }) {
 }
 
 /* ─── HERO SHARE FAB ─────────────────────────── */
-function HeroShareFab({ title, text, url }) {
+function HeroShareFab({ title, text, url, style = {} }) {
   const [copied, setCopied] = useState(false);
   const [ripple, setRipple] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -636,6 +637,7 @@ function HeroShareFab({ title, text, url }) {
         outline: "none",
         userSelect: "none",
         transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+        ...style,
       }}
     >
       <motion.span
@@ -999,11 +1001,25 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
         <ChevronLeft size={20} />
       </button>
 
-      <HeroShareFab
-        title={title}
-        text={stay?.shortDescription || stay?.description || ""}
-        url={window.location.href}
-      />
+      <div style={{ position: "absolute", top: 26, right: 26, zIndex: 100, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <WishlistSaveButton
+          itemType="stay"
+          itemId={stay?.stayId || stay?.id}
+          title={title}
+        />
+        <HeroShareFab
+          title={title}
+          text={stay?.shortDescription || stay?.description || ""}
+          url={window.location.href}
+          style={{
+            position: "relative",
+            top: "auto",
+            right: "auto",
+            margin: 0,
+            zIndex: 200,
+          }}
+        />
+      </div>
 
       {ReactDOM.createPortal(
         <AnimatePresence>

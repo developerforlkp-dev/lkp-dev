@@ -10,6 +10,7 @@ import ShareButton from "../../components/ShareButton";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import Loader from "../../components/Loader";
 import Icon from "../../components/Icon";
+import WishlistSaveButton from "../../components/WishlistSaveButton";
 import {
   getListing,
   getHost,
@@ -941,18 +942,32 @@ const ExperienceProduct = () => {
               </motion.div>
 
               <Rev delay={0.2} style={{ flexShrink: 0 }}>
-                <HeroShareFab
-                  title={listing?.title}
-                  text={listing?.description || listing?.aboutListing || ""}
-                  url={window.location.href}
-                  style={{
-                    position: "relative",
-                    top: "auto",
-                    right: "auto",
-                    margin: 0,
-                    zIndex: 200
-                  }}
-                />
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  <WishlistSaveButton
+                    itemType="listing"
+                    itemId={currentListingId}
+                    title={listing?.title}
+                    style={{
+                      position: "relative",
+                      top: "auto",
+                      right: "auto",
+                      margin: 0,
+                      zIndex: 200,
+                    }}
+                  />
+                  <HeroShareFab
+                    title={listing?.title}
+                    text={listing?.description || listing?.aboutListing || ""}
+                    url={window.location.href}
+                    style={{
+                      position: "relative",
+                      top: "auto",
+                      right: "auto",
+                      margin: 0,
+                      zIndex: 200
+                    }}
+                  />
+                </div>
               </Rev>
             </div>
           </div>

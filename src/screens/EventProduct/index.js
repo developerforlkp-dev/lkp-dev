@@ -19,11 +19,12 @@ import { createEventOrder, getEventDetails, getEventReviews, getEligibleBookings
 import Modal from "../../components/Modal";
 import LoginPromptModal from "../../components/LoginPromptModal";
 import ShareButton from "../../components/ShareButton";
+import WishlistSaveButton from "../../components/WishlistSaveButton";
 import { lockBodyScroll } from "../../utils/scrollLock";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 /* ─── HERO SHARE FAB ─────────────────────────── */
-function HeroShareFab({ title, text, url }) {
+function HeroShareFab({ title, text, url, style = {} }) {
   const [copied, setCopied] = useState(false);
   const [ripple, setRipple] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -85,6 +86,7 @@ function HeroShareFab({ title, text, url }) {
         outline: "none",
         userSelect: "none",
         transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.35s ease",
+        ...style,
       }}
     >
       <motion.span
@@ -1588,12 +1590,25 @@ const EventProduct = () => {
         >
           <ChevronLeft size={20} />
         </button>
-        <HeroShareFab
-          title={event?.title}
-          text={event?.description || ""}
-          url={window.location.href}
-          A={A}
-        />
+        <div style={{ position: "absolute", top: 26, right: 26, zIndex: 100, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <WishlistSaveButton
+            itemType="event"
+            itemId={event?.eventId || event?.id || eventId}
+            title={event?.title}
+          />
+          <HeroShareFab
+            title={event?.title}
+            text={event?.description || ""}
+            url={window.location.href}
+            style={{
+              position: "relative",
+              top: "auto",
+              right: "auto",
+              margin: 0,
+              zIndex: 200,
+            }}
+          />
+        </div>
         {event?.earlyBirdDiscounts?.some(d => d.isActive) && (
           <motion.div
             className="early-bird-wrapper"
