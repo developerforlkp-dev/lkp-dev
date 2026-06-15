@@ -1590,11 +1590,18 @@ const EventProduct = () => {
         >
           <ChevronLeft size={20} />
         </button>
-        <div style={{ position: "absolute", top: 26, right: 26, zIndex: 100, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{ position: "absolute", bottom: 32, right: 40, zIndex: 220, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center" }}>
           <WishlistSaveButton
             itemType="event"
             itemId={event?.eventId || event?.id || eventId}
             title={event?.title}
+            style={{
+              position: "relative",
+              top: "auto",
+              right: "auto",
+              margin: 0,
+              zIndex: 220,
+            }}
           />
           <HeroShareFab
             title={event?.title}
@@ -1605,7 +1612,7 @@ const EventProduct = () => {
               top: "auto",
               right: "auto",
               margin: 0,
-              zIndex: 200,
+              zIndex: 220,
             }}
           />
         </div>
