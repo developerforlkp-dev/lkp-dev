@@ -24,31 +24,31 @@ const filterOptions = [
     id: "experience", 
     label: "Experiences", 
     description: "Live unforgettable moments",
-    image: "https://images.unsplash.com/photo-1533130061792-64b345e4a833?auto=format&fit=crop&w=400&q=80" 
+    image: "/images/categories/experience.webp" 
   },
   { 
     id: "events", 
     label: "Events", 
     description: "Join unique happenings",
-    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=400&q=80" 
+    image: "/images/categories/events.webp" 
   },
   { 
     id: "stays", 
     label: "Stays", 
     description: "Spaces that feel like you",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" 
+    image: "/images/categories/stays.webp" 
   },
   { 
     id: "food", 
     label: "Food", 
     description: "Flavors worth remembering",
-    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80" 
+    image: "/images/categories/food.webp" 
   },
   { 
     id: "places", 
     label: "Places", 
     description: "Discover hidden gems",
-    image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=400&q=80" 
+    image: "/images/categories/places.webp" 
   },
 ];
 
