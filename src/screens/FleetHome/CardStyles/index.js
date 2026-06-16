@@ -501,18 +501,14 @@ export const CardGrid = ({ section, listings, className }) => {
   const cardItems = listings.map((listing) => transformListingToCard(listing, section));
   const sectionListingsUrl = getSectionListingsUrl(section);
 
-  let preTitle = "DISCOVER MORE";
   let viewAllText = "View all";
   const titleLower = section.sectionTitle?.toLowerCase() || "";
   
   if (titleLower.includes("curated") || titleLower.includes("experience")) {
-    preTitle = "HANDPICKED EXPERIENCES";
     viewAllText = "View all experiences";
   } else if (titleLower.includes("events")) {
-    preTitle = "UPCOMING EVENTS";
     viewAllText = "View all events";
   } else if (titleLower.includes("stays")) {
-    preTitle = "TOP STAYS FOR YOU";
     viewAllText = "View all stays";
   }
 
@@ -520,12 +516,13 @@ export const CardGrid = ({ section, listings, className }) => {
     <section className={cn(styles.categorySection, className)}>
       <div className={styles.sectionHeader}>
         <div className={styles.titleBlock}>
-          <div className={styles.sectionPreTitle}>{preTitle}</div>
-          <h2 className={cn("h2", styles.sectionTitle)}>
-            {section.sectionTitle}
-          </h2>
+          {section.sectionTitle && (
+            <div className={styles.sectionPreTitle}>{section.sectionTitle}</div>
+          )}
           {section.description && (
-            <p className={styles.sectionSubtitle}>{section.description}</p>
+            <h2 className={cn("h2", styles.sectionTitle)}>
+              {section.description}
+            </h2>
           )}
         </div>
         
