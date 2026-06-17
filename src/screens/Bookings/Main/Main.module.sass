@@ -546,6 +546,7 @@ button.actionButton.button.button-small
 .cancelModalContent
     display: flex
     flex-direction: column
+    position: relative
     min-height: 200px
     background: $n8
     border-radius: 20px
@@ -670,6 +671,13 @@ button.actionButton.button.button-small
     margin-bottom: 20px
     &:last-of-type
         margin-bottom: 0
+
+.reviewRating
+    display: inline-flex
+    align-items: center
+    --rating-star-size: 30px
+    --rating-star-gap: 6px
+    color: #E0A106
 
 .cancelModalLabel
     display: block

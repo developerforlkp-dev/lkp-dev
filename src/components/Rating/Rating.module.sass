@@ -1,1 +1,86 @@
 @import ../../styles/helpers
+
+.rating
+    display: inline-flex
+    align-items: center
+
+.readonly
+    pointer-events: none
+
+.starButton
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    padding: 0
+    border: 0
+    background: transparent
+    cursor: pointer
+    appearance: none
+    &:not(:last-child)
+        margin-right: var(--rating-star-gap, 0px)
+    &:disabled
+        cursor: default
+    &:focus-visible
+        outline: 2px solid rgba(224, 161, 6, 0.32)
+        outline-offset: 4px
+        border-radius: 999px
+
+.star
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    position: relative
+    width: var(--rating-star-size, 20px)
+    height: var(--rating-star-size, 20px)
+    svg
+        width: 100%
+        height: 100%
+        display: block
+        fill: currentColor
+    transform-origin: center bottom
+
+.starAnimated
+    animation: starPop .34s ease-out var(--star-pop-delay, 0ms)
+
+.starBase
+    color: #D1D5DB
+
+.starFill
+    position: absolute
+    inset: 0
+    color: #FFC107
+    pointer-events: none
+    clip-path: inset(0 calc(100% - var(--star-fill-percent, 0%)) 0 0)
+
+.starBurst
+    position: fixed
+    z-index: 100001
+    color: #FFD54F
+    pointer-events: none
+    transform: translate(-50%, -50%)
+    opacity: 0
+    animation: starBurst .65s ease-out var(--star-burst-delay, 0ms) forwards
+    svg
+        width: 100%
+        height: 100%
+        display: block
+        fill: currentColor
+
+@keyframes starBurst
+    0%
+        opacity: .95
+        transform: translate(-50%, -50%) scale(1)
+    20%
+        opacity: 1
+        transform: translate(-50%, calc(-50% - 18px)) scale(1.18)
+    100%
+        opacity: 0
+        transform: translate(-50%, calc(-50% + var(--star-burst-travel, -180px))) scale(.72)
+
+@keyframes starPop
+    0%
+        transform: translateY(0) scale(1)
+    35%
+        transform: translateY(-9px) scale(1.14)
+    100%
+        transform: translateY(0) scale(1)
