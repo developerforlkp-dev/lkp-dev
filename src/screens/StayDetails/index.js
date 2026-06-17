@@ -727,6 +727,7 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
   const history = useHistory();
   const { width, isMobile } = useWindowSize();
   const { theme, tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const stayWishlistId = stay?.stayId ?? stay?.stay_id ?? stay?.id;
   const title = stay?.propertyName || stay?.title || stay?.name || "STAY EXPERIENCE";
   const { heroText } = getStayLocationParts(stay);
   const locationText = heroText || stay?.locationName || stay?.location || stay?.fullAddress || stay?.address || "Location not available";
@@ -1008,7 +1009,7 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
 
       <Favorite
         itemType="stay"
-        itemId={id}
+        itemId={stayWishlistId}
         variant="hero"
         showText={false}
         style={{
