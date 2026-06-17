@@ -135,16 +135,15 @@
     transition: all 0.3s ease
 
 .glassmorphic
-    background: rgba(255, 255, 255, 0.1)
-    backdrop-filter: blur(12px)
-    -webkit-backdrop-filter: blur(12px)
-    border: 1px solid rgba(255, 255, 255, 0.2)
+    background: #FFFFFF
+    border: 1px solid rgba(0, 0, 0, 0.04)
     border-radius: 999px
     padding: 4px 16px
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)
     +dark
-        background: rgba(0, 0, 0, 0.2)
-        border: 1px solid rgba(255, 255, 255, 0.1)
+        background: $n1
+        border: 1px solid rgba(255, 255, 255, 0.04)
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3)
     
     // Force cyan text color for links and buttons inside the glass pill
     a, button
