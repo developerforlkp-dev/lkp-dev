@@ -113,6 +113,26 @@ const getCancelPreviewRows = (preview) => {
   ];
 };
 
+const getConfirmCancelSummaryRows = (preview) => {
+  if (!preview || typeof preview !== "object") return [];
+
+  const policyUsed = preview.policyUsed || preview.policyApplied;
+  const appliedPercentage =
+    preview.policyUsed?.percentage ??
+    preview.policyApplied?.percentage ??
+    (preview.cancellationFeePercentage != null
+      ? 100 - Number(preview.cancellationFeePercentage || 0)
+      : null);
+
+  return [
+    { label: "Total amount", value: formatCancelPreviewMoney(preview.totalPaid) },
+    { label: "Refund amount", value: formatCancelPreviewMoney(preview.refundAmount) },
+    { label: "Refund policy used", value: formatRefundPolicyUsed(appliedPercentage) },
+    { label: "Policy window used", value: formatPolicyWindow(policyUsed) },
+    { label: "Booking date", value: formatCancelPreviewDate(preview.bookingDate) },
+  ];
+};
+
 // Helper function to transform multiple bookings with listing data
 // Optimized to cache listing data and avoid duplicate API calls
 const transformMultipleBookings = async (bookingsArray) => {
@@ -1147,6 +1167,7 @@ const Main = ({
 
   const emptyState = emptyStateCopy[displayedTab] || emptyStateCopy.upcoming;
   const cancelPreviewRows = getCancelPreviewRows(cancelPreview);
+  const confirmCancelSummaryRows = getConfirmCancelSummaryRows(cancelPreview);
 
   useEffect(() => {
     if (transitionPhase === "fadingOut") {
@@ -1915,10 +1936,31 @@ const Main = ({
                 : "Confirm this cancellation?"}
             </p>
           </div>
-          <div className={styles.confirmCancelSummary} style={{ padding: "16px", background: "rgba(244, 245, 246, 0.03)", borderRadius: "8px", marginTop: "16px" }}>
-            <p style={{ margin: 0, fontSize: "14px", fontWeight: "500", color: "#E65100" }}>
-              Are you sure you want to cancel this booking? This action cannot be undone.
-            </p>
+          <div className={styles.confirmCancelSummary}>
+            {cancelPreviewLoading ? (
+              <p style={{ margin: 0, fontSize: "14px", color: "#777E90" }}>
+                Loading cancellation preview...
+              </p>
+            ) : confirmCancelSummaryRows.length > 0 ? (
+              <>
+                {confirmCancelSummaryRows.map((row) => (
+                  <div className={styles.confirmCancelSummaryRow} key={row.label}>
+                    <span className={styles.confirmCancelSummaryLabel}>{row.label}</span>
+                    <span className={styles.confirmCancelSummaryValue}>{row.value}</span>
+                  </div>
+                ))}
+                <div className={styles.confirmCancelSummaryRow}>
+                  <span className={styles.confirmCancelSummaryLabel}>Important</span>
+                  <span className={styles.confirmCancelSummaryValue}>
+                    This cancellation cannot be undone.
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p style={{ margin: 0, fontSize: "14px", color: "#E65100", fontWeight: 500 }}>
+                Cancellation preview is unavailable right now. You can go back and try again.
+              </p>
+            )}
           </div>
           <div className={styles.cancelModalFooter}>
             <button
@@ -1933,7 +1975,7 @@ const Main = ({
               type="button"
               className={cn("button", styles.cancelModalBtn)}
               onClick={executeCancelBooking}
-              disabled={isCancelling}
+              disabled={isCancelling || cancelPreviewLoading || confirmCancelSummaryRows.length === 0}
             >
               {isCancelling ? "Cancelling..." : "Yes, Cancel Booking"}
             </button>
@@ -1946,7 +1988,7 @@ const Main = ({
         onClose={handleCloseReviewModal}
         outerClassName={styles.cancelModalOuter}
       >
-        <div className={styles.cancelModalContent}>
+        <div className={styles.cancelModalContent} data-review-modal-content>
           <div className={styles.cancelModalHeader}>
             <h2 className={styles.cancelModalTitle}>
               Add a review
@@ -1965,6 +2007,7 @@ const Main = ({
                 rating={reviewRating}
                 onChange={setReviewRating}
                 readonly={false}
+                burstContainerSelector='[data-review-modal-content]'
               />
             </div>
             <div className={styles.cancelModalFormGroup}>
