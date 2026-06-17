@@ -1,14 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import cn from "classnames";
 import styles from "./Main.module.sass";
 import Control from "../../../components/Control";
-import Dropdown from "../../../components/Dropdown";
-import Flight from "../../../components/Flight";
-import Card from "../../../components/Card";
-import Loader from "../../../components/Loader";
-
-import { wishlists } from "../../../mocks/wishlists";
-
+import { Link } from "react-router-dom";
 const breadcrumbs = [
   {
     title: "Home",
@@ -20,11 +14,6 @@ const breadcrumbs = [
 ];
 
 const Main = () => {
-  const options = [];
-  wishlists.map((x) => options.push(x.title));
-
-  const [activeTab, setActiveTab] = useState(options[0]);
-
   return (
     <div className={cn("section", styles.section)}>
       <div className={cn("container", styles.container)}>
@@ -33,76 +22,15 @@ const Main = () => {
           urlHome="/"
           breadcrumbs={breadcrumbs}
         />
-        <div className={styles.head}>
-          <div className={styles.wrap}>
-            <h1 className={cn("h2", styles.title)}>Wishlists</h1>
-            <div className={styles.counter}>You added 8 items to wishlists</div>
-          </div>
-          <div className={styles.nav}>
-            {wishlists.map((x, index) => (
-              <button
-                className={cn(styles.link, {
-                  [styles.active]: x.title === activeTab,
-                })}
-                onClick={() => setActiveTab(x.title)}
-                key={index}
-              >
-                {x.title}
-              </button>
-            ))}
-          </div>
-          <Dropdown
-            className={cn("mobile-show", styles.dropdown)}
-            value={activeTab}
-            setValue={setActiveTab}
-            options={options}
-          />
-        </div>
-        <div className={styles.wrapper}>
-          {activeTab === options[0] && (
-            <>
-              <div className={styles.list}>
-                {wishlists
-                  .find((x) => x.title === activeTab)
-                  .items.map((x, index) => (
-                    <Card className={styles.card} item={x} key={index} />
-                  ))}
-              </div>
-              <div className={styles.btns}>
-                <button className={cn("button-stroke", styles.button)}>
-                  <Loader className={styles.loader} />
-                  <span>Show more</span>
-                </button>
-              </div>
-            </>
-          )}
-          {activeTab === options[1] && (
-            <div className={styles.group}>
-              {wishlists
-                .find((x) => x.title === activeTab)
-                .items.map((x, index) => (
-                  <Flight className={styles.flight} item={x} key={index} />
-                ))}
-            </div>
-          )}
-          {activeTab === options[2] && (
-            <div className={styles.list}>
-              {wishlists
-                .find((x) => x.title === activeTab)
-                .items.map((x, index) => (
-                  <Card className={styles.card} item={x} key={index} car />
-                ))}
-            </div>
-          )}
-          {activeTab === options[3] && (
-            <div className={styles.list}>
-              {wishlists
-                .find((x) => x.title === activeTab)
-                .items.map((x, index) => (
-                  <Card className={styles.card} item={x} key={index} />
-                ))}
-            </div>
-          )}
+        <div className={styles.emptyWrapper} style={{ textAlign: "center", padding: "80px 0", maxWidth: "400px", margin: "0 auto" }}>
+          <div style={{ fontSize: "64px", marginBottom: "24px" }}>❤️</div>
+          <h1 className={cn("h2", styles.title)} style={{ marginBottom: "16px" }}>Your Wishlist is Empty</h1>
+          <p style={{ marginBottom: "32px", fontSize: "16px", color: "var(--n4)", lineHeight: "1.5" }}>
+            Looks like you haven't added anything to your wishlist yet. Discover our amazing experiences and start adding!
+          </p>
+          <Link to="/experiences" className={cn("button", styles.button)} style={{ width: "100%" }}>
+            Explore Experiences
+          </Link>
         </div>
       </div>
     </div>

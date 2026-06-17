@@ -8,17 +8,21 @@ const Favorite = ({ className }) => {
   return (
     <button
       className={cn(
-        "button-circle-stroke button-small",
         styles.button,
         {
           [styles.active]: visible,
         },
         className
       )}
-      onClick={() => setVisible(!visible)}
+      onClick={(e) => {
+        e.preventDefault();
+        setVisible(!visible);
+      }}
     >
-      <Icon name="heart" size="24" />
-      <Icon name="heart-fill" size="24" />
+      <div className={styles.inner}>
+        <Icon name={visible ? "check" : "star"} size="12" />
+        <span className={styles.text}>{visible ? "Saved" : "Save"}</span>
+      </div>
     </button>
   );
 };

@@ -40,6 +40,8 @@ const Page = ({
   };
 
   const autoHideEnabled = shouldAutoHideHeader(pathname);
+  const homeRoutes = ["/", "/experience", "/experiences", "/events", "/stays", "/food", "/places"];
+  const isHomeRoute = homeRoutes.includes(pathname);
 
   useEffect(() => {
     clearAllBodyScrollLocks();
@@ -95,9 +97,8 @@ const Page = ({
         style={{ 
           position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
           height: (scrolled || separatorHeader) ? "72px" : "0px",
-          zIndex: (scrolled || separatorHeader) ? 99 : 5, 
-          transition: "all 0.4s", 
-          background: (scrolled && pathname !== "/" || separatorHeader) ? BG : "transparent", 
+          zIndex: 90, 
+          background: (scrolled && !isHomeRoute || separatorHeader) ? BG : "transparent", 
           backdropFilter: "none", 
           borderBottom: "none" 
         }}
@@ -105,15 +106,15 @@ const Page = ({
 
       {/* Header Content Layer (Above the Hero) */}
       <motion.div
-        className={cn("slim-header-wrapper", { "force-dark": !scrolled && !separatorHeader && theme === "light" && pathname !== "/", "auto-hide": autoHideEnabled && !headerVisible && pathname !== "/" })}
+        className={cn("slim-header-wrapper", { "force-dark": !scrolled && !separatorHeader && theme === "light" && !isHomeRoute, "auto-hide": autoHideEnabled && !headerVisible && !isHomeRoute })}
         initial={{ y: -72, opacity: 0 }} 
         animate={{ y: 0, opacity: 1 }} 
         transition={{ duration: 0.85, ease: E }}
         style={{ 
           position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
           zIndex: 100, 
-          background: (scrolled && pathname !== "/") ? BG : "transparent",
-          boxShadow: (scrolled && pathname !== "/") ? "0px 2px 10px rgba(0,0,0,0.05)" : "none",
+          background: (scrolled && !isHomeRoute) ? BG : "transparent",
+          boxShadow: (scrolled && !isHomeRoute) ? "0px 2px 10px rgba(0,0,0,0.05)" : "none",
           transition: "all 0.4s", 
           marginTop: separatorHeader ? "-72px" : "0", // Account for the background div in sticky mode
         }}
@@ -123,7 +124,7 @@ const Page = ({
           wide={wide}
           notAuthorized={notAuthorized}
           hideOnMobile={hideHeaderOnMobile}
-          isHomepage={pathname === "/"}
+          isHomepage={isHomeRoute}
           hasScrolled={scrolled}
         />
       </motion.div>

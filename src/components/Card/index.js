@@ -3,7 +3,7 @@ import cn from "classnames";
 import { Link } from "react-router-dom";
 import styles from "./Card.module.sass";
 import Icon from "../Icon";
-
+import Favorite from "../Favorite";
 const Item = ({ className, item, row, car, hidePrice }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -42,6 +42,9 @@ const Item = ({ className, item, row, car, hidePrice }) => {
             setImageLoaded(true);
           }}
         />
+        <Favorite className={styles.favorite} />
+      </div>
+      <div className={styles.body}>
         {item.categoryText && (
           <div
             className={cn(
@@ -59,8 +62,6 @@ const Item = ({ className, item, row, car, hidePrice }) => {
             <span className={styles.month}>{item.dateBadge.month}</span>
           </div>
         )}
-      </div>
-      <div className={styles.body}>
         <div className={styles.line}>
           <div className={styles.title}>{item.title}</div>
           {item.location && (

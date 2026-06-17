@@ -86,7 +86,7 @@ const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile, isHomepage
             )}
             <NavLink
               className={cn(styles.link, styles.wishlistLink)}
-              to="/wishlist"
+              to="/wishlists"
               activeClassName={styles.active}
             >
               Wishlist
