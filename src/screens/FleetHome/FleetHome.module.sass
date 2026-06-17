@@ -663,18 +663,30 @@
 // Grid Card - Horizontal scroll version
 .gridCardHorizontal
     flex: 0 0 auto
-    width: 280px
-    min-width: 280px
+    width: 340px
+    min-width: 340px
     margin: 0
     transition: transform .2s ease, box-shadow .2s ease
     scroll-snap-align: start
     scroll-snap-stop: always
+    :global
+        div[class*="preview"]
+            &:before
+                padding-bottom: 55% !important
     +t
-        width: 260px
-        min-width: 260px
+        width: 300px
+        min-width: 300px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 60% !important
     +m
-        width: 240px
-        min-width: 240px
+        width: 280px
+        min-width: 280px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 62% !important
     &:hover
         transform: translateY(-4px)
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08)
@@ -684,17 +696,29 @@
 // Destination Card Horizontal - Horizontal scroll version
 .destinationCardHorizontal
     flex: 0 0 auto
-    width: 300px
-    min-width: 300px
+    width: 360px
+    min-width: 360px
     margin: 0
     scroll-snap-align: start
     scroll-snap-stop: always
+    :global
+        div[class*="preview"]
+            &:before
+                padding-bottom: 52% !important
     +t
-        width: 280px
-        min-width: 280px
+        width: 320px
+        min-width: 320px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 58% !important
     +m
-        width: 260px
-        min-width: 260px
+        width: 300px
+        min-width: 300px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 60% !important
     // Override title font size and style to match other card styles
     // Target title and content elements using universal selector for CSS modules
     :global

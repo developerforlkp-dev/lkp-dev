@@ -3,7 +3,7 @@ import cn from "classnames";
 import { Link } from "react-router-dom";
 import styles from "./Card.module.sass";
 import Icon from "../Icon";
-
+import Favorite from "../Favorite";
 const Item = ({ className, item, row, car, hidePrice }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -42,6 +42,7 @@ const Item = ({ className, item, row, car, hidePrice }) => {
             setImageLoaded(true);
           }}
         />
+        <Favorite className={styles.favorite} />
         {item.categoryText && (
           <div
             className={cn(
