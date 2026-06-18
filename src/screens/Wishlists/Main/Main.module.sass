@@ -70,15 +70,19 @@
         margin: 0
 
 .card
-    flex: 0 0 calc(33.333% - 30px)
-    width: calc(33.333% - 30px)
+    flex: 0 0 calc(25% - 30px)
+    width: calc(25% - 30px)
     margin: 30px 15px 0
+    +d
+        flex: 0 0 calc(33.333% - 30px)
+        width: calc(33.333% - 30px)
     +t
         flex: 0 0 calc(50% - 30px)
         width: calc(50% - 30px)
     +m
-        width: 100%
-        margin: 32px 0 0
+        flex: 0 0 calc(100% - 30px)
+        width: calc(100% - 30px)
+        margin: 32px 15px 0
 
 .flight
     &:not(:last-child)

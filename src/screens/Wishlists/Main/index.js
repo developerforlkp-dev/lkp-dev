@@ -7,6 +7,7 @@ import Card from "../../../components/Card";
 import { getCustomerWishlistItems, normalizePublicImageUrl } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { primeWishlistCache } from "../../../hooks/useWishlist";
+import LoadingSkeleton from "../../../components/LoadingSkeleton";
 
 const breadcrumbs = [
   {
@@ -38,10 +39,22 @@ const getWishlistLocation = (location) => {
   return [location.city, location.state, location.country].filter(Boolean).join(", ") || null;
 };
 
+const formatImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    if (url.includes("lkpleadstoragedev.blob.core.windows.net") && (!url.includes("sig=") || !url.includes("sv="))) {
+      return null;
+    }
+    return url;
+  }
+  if (url.startsWith("/")) return url;
+  return null;
+};
+
 const transformWishlistItemToCard = (item) => {
   const imageUrl =
-    normalizePublicImageUrl(item?.display?.imageUrl) ||
-    normalizePublicImageUrl(item?.display?.imageBlobName) ||
+    formatImageUrl(item?.display?.imageUrl) ||
+    formatImageUrl(item?.display?.imageBlobName) ||
     "/images/content/card-pic-13.jpg";
   const title = item?.display?.title || "Saved item";
   const pricingLabel = item?.display?.pricing?.label || null;
@@ -149,12 +162,12 @@ const Main = () => {
         <Control
           className={styles.control}
           urlHome="/"
-          breadcrumbs={breadcrumbs}
+          breadcrumbs={[]}
         />
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <p style={{ fontSize: "16px", color: "var(--n4)" }}>Loading your wishlist...</p>
+          <div style={{ paddingTop: "20px", paddingBottom: "60px" }}>
+            <LoadingSkeleton variant="cards" count={4} />
           </div>
         ) : error ? (
           <div style={{ textAlign: "center", padding: "80px 0", maxWidth: "420px", margin: "0 auto" }}>
@@ -174,7 +187,14 @@ const Main = () => {
           <>
             <div className={styles.head}>
               <div className={styles.wrap}>
-                <h1 className={cn("h2", styles.title)}>Your Wishlist</h1>
+                <h1 className={cn("h2", styles.title)} style={{ 
+                  fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
+                  fontSize: "48px",
+                  lineHeight: "1.1",
+                  letterSpacing: "-0.02em"
+                }}>
+                  Your <span style={{ fontStyle: "italic", color: "#0097B2" }}>Wishlist</span>
+                </h1>
                 <div className={styles.counter}>
                   {cardItems.length} saved {cardItems.length === 1 ? "item" : "items"}
                 </div>
@@ -187,20 +207,29 @@ const Main = () => {
             </div>
           </>
         ) : (
-          <div className={styles.emptyWrapper} style={{ textAlign: "center", padding: "80px 0", maxWidth: "400px", margin: "0 auto" }}>
-            <div style={{ fontSize: "24px", marginBottom: "24px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              Wishlist
+          <div className={styles.emptyWrapper} style={{ textAlign: "center", padding: "120px 0", maxWidth: "540px", margin: "0 auto" }}>
+            <div style={{ fontSize: "12px", marginBottom: "16px", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0097B2" }}>
+              YOUR COLLECTION
             </div>
-            <h1 className={cn("h2", styles.title)} style={{ marginBottom: "16px" }}>
-              {isAuthenticated() ? "Your Wishlist is Empty" : "Sign In to Save Items"}
+            <h1 className={cn("h2", styles.title)} style={{ 
+              marginBottom: "24px", 
+              fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
+              fontSize: "52px",
+              lineHeight: "1.1"
+            }}>
+              {isAuthenticated() ? (
+                <>Curate your perfect <span style={{ fontStyle: "italic", color: "#0097B2" }}>escape</span></>
+              ) : (
+                <>Sign in to save <span style={{ fontStyle: "italic", color: "#0097B2" }}>memories</span></>
+              )}
             </h1>
-            <p style={{ marginBottom: "32px", fontSize: "16px", color: "var(--n4)", lineHeight: "1.5" }}>
+            <p style={{ marginBottom: "40px", fontSize: "18px", color: "var(--n4)", lineHeight: "1.6" }}>
               {isAuthenticated()
-                ? "Looks like you haven't added anything yet. Save experiences, events, and stays to revisit them later."
-                : "Save experiences, events, and stays to your wishlist once you're signed in."}
+                ? "Your wishlist is currently empty. Discover the most extraordinary moments waiting to be lived and start building your dream itinerary."
+                : "Save experiences, events, and stays to your wishlist to build your dream itinerary."}
             </p>
-            <Link to="/experiences" className={cn("button", styles.button)} style={{ width: "100%" }}>
-              Explore Experiences
+            <Link to="/" className={cn("button", styles.button)} style={{ minWidth: "220px", borderRadius: "32px" }}>
+              Explore All
             </Link>
           </div>
         )}
