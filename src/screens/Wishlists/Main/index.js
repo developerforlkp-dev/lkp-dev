@@ -7,6 +7,7 @@ import Card from "../../../components/Card";
 import { getCustomerWishlistItems, normalizePublicImageUrl } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { primeWishlistCache } from "../../../hooks/useWishlist";
+import LoadingSkeleton from "../../../components/LoadingSkeleton";
 
 const breadcrumbs = [
   {
@@ -38,10 +39,22 @@ const getWishlistLocation = (location) => {
   return [location.city, location.state, location.country].filter(Boolean).join(", ") || null;
 };
 
+const formatImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    if (url.includes("lkpleadstoragedev.blob.core.windows.net") && (!url.includes("sig=") || !url.includes("sv="))) {
+      return null;
+    }
+    return url;
+  }
+  if (url.startsWith("/")) return url;
+  return null;
+};
+
 const transformWishlistItemToCard = (item) => {
   const imageUrl =
-    normalizePublicImageUrl(item?.display?.imageUrl) ||
-    normalizePublicImageUrl(item?.display?.imageBlobName) ||
+    formatImageUrl(item?.display?.imageUrl) ||
+    formatImageUrl(item?.display?.imageBlobName) ||
     "/images/content/card-pic-13.jpg";
   const title = item?.display?.title || "Saved item";
   const pricingLabel = item?.display?.pricing?.label || null;
@@ -149,12 +162,12 @@ const Main = () => {
         <Control
           className={styles.control}
           urlHome="/"
-          breadcrumbs={breadcrumbs}
+          breadcrumbs={[]}
         />
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <p style={{ fontSize: "16px", color: "var(--n4)" }}>Loading your wishlist...</p>
+          <div style={{ paddingTop: "20px", paddingBottom: "60px" }}>
+            <LoadingSkeleton variant="cards" count={4} />
           </div>
         ) : error ? (
           <div style={{ textAlign: "center", padding: "80px 0", maxWidth: "420px", margin: "0 auto" }}>
@@ -174,7 +187,14 @@ const Main = () => {
           <>
             <div className={styles.head}>
               <div className={styles.wrap}>
-                <h1 className={cn("h2", styles.title)}>Your Wishlist</h1>
+                <h1 className={cn("h2", styles.title)} style={{ 
+                  fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
+                  fontSize: "48px",
+                  lineHeight: "1.1",
+                  letterSpacing: "-0.02em"
+                }}>
+                  Your <span style={{ fontStyle: "italic", color: "#0097B2" }}>Wishlist</span>
+                </h1>
                 <div className={styles.counter}>
                   {cardItems.length} saved {cardItems.length === 1 ? "item" : "items"}
                 </div>
