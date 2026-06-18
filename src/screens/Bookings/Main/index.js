@@ -1395,10 +1395,9 @@ const Main = ({
       <div className={cn("container", styles.container)}>
         <div className={styles.headerWrapper}>
           <div className={styles.heading}>
-            <button className={styles.backButton} onClick={() => history.length > 2 ? history.goBack() : history.push('/')}>
-              <Icon name="arrow-prev" size="24" />
-            </button>
-            <h1 className={cn("h2", styles.title)}>My bookings</h1>
+            <h1 className={cn("h2", styles.title)} style={{ fontFamily: "Cormorant Garamond, serif" }}>
+              My <span style={{ color: "#0097B2", fontStyle: "italic" }}>bookings</span>
+            </h1>
           </div>
         </div>
         <div className={styles.tabsWrapper}>
@@ -1638,7 +1637,7 @@ const Main = ({
                   {emptyState.description}
                 </p>
                 <Link to="/" className="button">
-                  Explore experiences
+                  Explore all
                 </Link>
               </div>
             </div>

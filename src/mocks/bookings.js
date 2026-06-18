@@ -129,17 +129,25 @@ export const emptyStateCopy = {
     illustrationAlt: "",
   },
   completed: {
-    title: "Nothing completed yet",
+    title: "You have no completed adventures",
     description:
-      "Once you wrap an experience, you'll find receipts, highlights, and rebooking options in this tab.",
+      "Ready for your next journey? Save an experience and it will show up here the moment you confirm.",
+    illustration: "",
+    illustrationSet: "",
+    illustrationAlt: "",
+  },
+  pending: {
+    title: "You have no pending adventures",
+    description:
+      "Ready for your next journey? Save an experience and it will show up here the moment you confirm.",
     illustration: "",
     illustrationSet: "",
     illustrationAlt: "",
   },
   cancelled: {
-    title: "No cancelled bookings",
+    title: "You have no cancelled adventures",
     description:
-      "Great news—everything is on track. If plans change, you can review cancellation details right here.",
+      "Ready for your next journey? Save an experience and it will show up here the moment you confirm.",
     illustration: "",
     illustrationSet: "",
     illustrationAlt: "",
