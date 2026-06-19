@@ -1896,3 +1896,27 @@ export const getCancellationReasons = async () => {
     return [];
   }
 };
+
+export const getBlogs = async () => {
+  try {
+    const response = await ListingsAPI.get('/blogs');
+    const data = response.data;
+    if (data && Array.isArray(data.items)) return data.items;
+    if (Array.isArray(data)) return data;
+    return [];
+  } catch (error) {
+    console.error('? Error fetching blogs:', error);
+    return [];
+  }
+};
+
+export const getBlogBySlug = async (slug) => {
+  try {
+    const response = await ListingsAPI.get(`/blogs/${slug}`);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error fetching blog ${slug}:`, error);
+    throw error;
+  }
+};
+
