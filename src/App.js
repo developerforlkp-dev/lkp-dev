@@ -24,6 +24,8 @@ import Bookings from "./screens/Bookings";
 import ViewDetails from "./screens/ViewDetails";
 import FleetHome from "./screens/FleetHome";
 import Listings from "./pages/listings";
+import Blog from "./pages/Blog";
+import BlogDetails from "./pages/BlogDetails";
 
 import StayProduct from "./screens/StayProduct";
 import StayDetails from "./screens/StayDetails";
@@ -320,6 +322,24 @@ function App() {
             render={() => (
               <Page separatorHeader>
                 <ReviewsListing />
+              </Page>
+            )}
+          />
+          <Route
+            exact
+            path="/blog"
+            render={() => (
+              <Page separatorHeader>
+                <Blog />
+              </Page>
+            )}
+          />
+          <Route
+            exact
+            path="/blog/:slug"
+            render={() => (
+              <Page separatorHeader>
+                <BlogDetails />
               </Page>
             )}
           />

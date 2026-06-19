@@ -81,6 +81,7 @@ export function Footer() {
                 <li><Link to="/food">Local Food Trails</Link></li>
                 <li><Link to="/places">Travel Stories</Link></li>
                 <li><Link to="/experiences">Collections</Link></li>
+                <li><Link to="/blog">Blog</Link></li>
               </ul>
             </div>
 
