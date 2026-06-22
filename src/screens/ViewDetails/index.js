@@ -1786,6 +1786,67 @@ const ViewDetails = () => {
   };
 
   const getAppliedRefundPolicyText = () => {
+    const bookingStatus = String(
+      booking?.statusTone ||
+      booking?.status ||
+      booking?.originalData?.orderStatus ||
+      ""
+    ).toLowerCase().trim();
+    const isCancelled = bookingStatus === "cancelled" || bookingStatus === "canceled";
+
+    if (isCancelled) {
+      const appliedPolicy = (
+        refundDetails?.policyUsed ||
+        refundDetails?.policyApplied ||
+        (refundDetails?.appliedPolicy && typeof refundDetails.appliedPolicy === "object" ? refundDetails.appliedPolicy : null) ||
+        (refundDetails?.appliedRefundPolicy && typeof refundDetails.appliedRefundPolicy === "object" ? refundDetails.appliedRefundPolicy : null) ||
+        (refundDetails?.refundPolicy && typeof refundDetails.refundPolicy === "object" ? refundDetails.refundPolicy : null) ||
+        null
+      );
+
+      const appliedPolicyTextCandidates = [
+        refundDetails?.appliedRefundPolicy,
+        refundDetails?.appliedRefundPolicyName,
+        refundDetails?.appliedPolicyName,
+        refundDetails?.refundPolicyName,
+        refundDetails?.policyName,
+        refundDetails?.policyLabel,
+        refundDetails?.refundPolicyText,
+      ];
+      const appliedPolicyText = appliedPolicyTextCandidates.find(
+        (value) => typeof value === "string" && value.trim() !== ""
+      );
+
+      if (appliedPolicyText) {
+        return appliedPolicyText.trim();
+      }
+
+      const appliedPercentage =
+        refundDetails?.policyUsed?.percentage ??
+        refundDetails?.policyApplied?.percentage ??
+        refundDetails?.appliedPolicy?.percentage ??
+        refundDetails?.appliedRefundPolicy?.percentage ??
+        refundDetails?.refundPolicy?.percentage ??
+        refundDetails?.appliedRefundPercentage ??
+        refundDetails?.refundPercentage ??
+        refundDetails?.policyPercentage ??
+        refundDetails?.percentage ??
+        (refundDetails?.cancellationFeePercentage != null
+          ? 100 - Number(refundDetails.cancellationFeePercentage || 0)
+          : null);
+
+      const appliedWindow = formatPolicyWindow(appliedPolicy);
+      const appliedRefundText = Number.isFinite(Number(appliedPercentage))
+        ? formatRefundPolicyUsed(appliedPercentage)
+        : "";
+
+      if (appliedRefundText && appliedWindow) {
+        return `${appliedRefundText} (${appliedWindow})`;
+      }
+      if (appliedRefundText) return appliedRefundText;
+      if (appliedWindow) return appliedWindow;
+    }
+
     const previewPolicy = cancelPreview?.policyUsed || cancelPreview?.policyApplied;
     const previewPercentage =
       cancelPreview?.policyUsed?.percentage ??
