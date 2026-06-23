@@ -134,14 +134,159 @@ const getConfirmCancelSummaryRows = (preview) => {
 };
 
 // Helper function to transform multiple bookings with listing data
-// Optimized to avoid N+1 API calls. It relies on the data already present in the booking object.
+// Optimized to cache listing data and avoid duplicate API calls
 const transformMultipleBookings = async (bookingsArray) => {
   if (!Array.isArray(bookingsArray) || bookingsArray.length === 0) {
     return [];
   }
+
+  // Step 1: Collect unique listingIds
+  const uniqueListingIds = [...new Set(
+    bookingsArray
+      .map(booking => booking.listingId)
+      .filter(id => id != null && id !== undefined)
+  )];
+
+  // Step 1b: Collect unique eventIds for event orders
+  const uniqueEventIds = [...new Set(
+    bookingsArray
+      .map((booking) => booking?.eventId)
+      .filter((id) => id != null && id !== undefined)
+  )];
+
+  // Step 1c: Collect unique stayIds for stay orders
+  // Stay orders may have stayId at top level, inside rooms array, or derivable from businessInterestCode
+  const uniqueStayIds = [...new Set(
+    bookingsArray
+      .map((booking) => {
+        // Try top-level stayId first
+        if (booking?.stayId != null) return booking.stayId;
+        // Try rooms array (each room might have stayId) - note it's `stayOrderRooms` in API
+        const rooms = booking?.stayOrderRooms || booking?.rooms || booking?.room || [];
+        if (Array.isArray(rooms) && rooms.length > 0) {
+          const roomStayId = rooms[0]?.stayId ?? rooms[0]?.stay_id ?? rooms[0]?.propertyId;
+          if (roomStayId != null) return roomStayId;
+        }
+        // Try other common field names
+        return booking?.propertyId ?? booking?.stay_id ?? booking?.stayOrderId ?? null;
+      })
+      .filter((id) => id != null && id !== undefined)
+  )];
+
+  // Step 2: Fetch all unique listings in parallel (cached)
+  const listingCache = new Map();
+  const eventCache = new Map();
+  const stayCache = new Map();
+
+  if (uniqueListingIds.length > 0) {
+    const listingPromises = uniqueListingIds.map(async (listingId) => {
+      try {
+        const listingData = await getListing(listingId);
+        listingCache.set(listingId, listingData);
+      } catch (error) {
+        listingCache.set(listingId, null); // Cache null to avoid retrying
+      }
+    });
+
+    await Promise.all(listingPromises);
+  }
+
+  if (uniqueEventIds.length > 0) {
+    const eventPromises = uniqueEventIds.map(async (eventId) => {
+      try {
+        const eventData = await getEventDetails(eventId);
+        eventCache.set(eventId, eventData);
+      } catch (error) {
+        eventCache.set(eventId, null);
+      }
+    });
+
+    await Promise.all(eventPromises);
+  }
+
+  if (uniqueStayIds.length > 0) {
+    const stayPromises = uniqueStayIds.map(async (stayId) => {
+      try {
+        const stayData = await getStayDetails(stayId);
+        stayCache.set(stayId, stayData);
+      } catch (error) {
+        stayCache.set(stayId, null);
+      }
+    });
+
+    await Promise.all(stayPromises);
+  }
+
+  // Step 2b: Fetch review summaries for all unique listings/events/stays
+  // We call the specific category-based API for each ID to ensure consistency
+  const reviewCache = new Map();
+
+  const reviewPromises = [];
+
+  // Fetch Experience reviews
+  if (uniqueListingIds.length > 0) {
+    uniqueListingIds.forEach(id => {
+      reviewPromises.push(
+        getListingReviews(id).then(data => reviewCache.set(`experience_${id}`, data))
+          .catch(() => reviewCache.set(`experience_${id}`, null))
+      );
+    });
+  }
+
+  // Fetch Event reviews
+  if (uniqueEventIds.length > 0) {
+    uniqueEventIds.forEach(id => {
+      reviewPromises.push(
+        getEventReviews(id).then(data => reviewCache.set(`event_${id}`, data))
+          .catch(() => reviewCache.set(`event_${id}`, null))
+      );
+    });
+  }
+
+  // Fetch Stay reviews
+  if (uniqueStayIds.length > 0) {
+    uniqueStayIds.forEach(id => {
+      reviewPromises.push(
+        getStayReviews(id).then(data => reviewCache.set(`stay_${id}`, data))
+          .catch(() => reviewCache.set(`stay_${id}`, null))
+      );
+    });
+  }
+
+  if (reviewPromises.length > 0) {
+    await Promise.all(reviewPromises);
+  }
+
+  // Step 3: Transform bookings using cached listing and review data
   const transformed = bookingsArray.map((apiBooking) => {
     try {
-      return transformBookingData(apiBooking, null, null, null, null);
+      const listingId = apiBooking.listingId || apiBooking.experienceId || (apiBooking.listing && (apiBooking.listing.listingId || apiBooking.listing.id));
+      const listingData = listingId ? listingCache.get(listingId) : null;
+
+      const eventId = apiBooking?.eventId || apiBooking?.eventDetails?.eventId || (apiBooking.listing && apiBooking.listing.eventId);
+      const eventData = eventId ? eventCache.get(eventId) : null;
+
+      // Resolve stayId using same multi-path logic as uniqueStayIds extraction above
+      const resolvedStayId = (() => {
+        if (apiBooking?.stayId != null) return apiBooking.stayId;
+        const rooms = apiBooking?.stayOrderRooms || apiBooking?.rooms || apiBooking?.room || [];
+        if (Array.isArray(rooms) && rooms.length > 0) {
+          const id = rooms[0]?.stayId ?? rooms[0]?.stay_id ?? rooms[0]?.propertyId;
+          if (id != null) return id;
+        }
+        return apiBooking?.propertyId ?? apiBooking?.stay_id ?? null;
+      })();
+      const stayData = resolvedStayId != null ? stayCache.get(resolvedStayId) : null;
+
+      // Resolve review data using category-specific keys
+      const reviewData = (() => {
+        if (listingId) return reviewCache.get(`experience_${listingId}`);
+        if (eventId) return reviewCache.get(`event_${eventId}`);
+        if (resolvedStayId) return reviewCache.get(`stay_${resolvedStayId}`);
+        return null;
+      })();
+
+      return transformBookingData(apiBooking, listingData, eventData, stayData, reviewData);
     } catch (err) {
       console.warn("⚠️ Failed to transform single booking:", apiBooking.orderId, err);
       return null;
