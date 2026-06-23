@@ -971,23 +971,24 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
       )}
 
       {/* Early Bird Overlay */}
-      {!isMobile && stay?.earlyBirdDiscounts?.some(d => d.isActive) && (
+      {stay?.earlyBirdDiscounts?.some(d => d.isActive) && (
         <div style={{
           position: "absolute",
-          bottom: 40,
-          right: 40,
+          bottom: isMobile ? 86 : 108,
+          right: isMobile ? 16 : 24,
           zIndex: 40,
-          background: theme === 'dark' ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.85)",
+          background: theme === 'dark' ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.9)",
           backdropFilter: "blur(20px)",
-          padding: "16px 24px",
+          padding: isMobile ? "12px 16px" : "16px 24px",
           borderRadius: 24,
-          border: theme === 'dark' ? "1px solid rgba(255,255,255,0.1)" : `1px solid ${B}`,
-          boxShadow: theme === 'dark' ? "0 20px 50px rgba(0,0,0,0.3)" : `0 20px 50px ${M}22`,
+          border: theme === 'dark' ? "1px solid rgba(255,255,255,0.15)" : `1px solid ${B}`,
+          boxShadow: theme === 'dark' ? "0 20px 50px rgba(0,0,0,0.4)" : `0 20px 50px ${M}33`,
           display: "flex",
           alignItems: "center",
-          gap: 12
+          gap: isMobile ? 8 : 12,
+          maxWidth: isMobile ? "calc(100vw - 32px)" : "auto"
         }}>
-          <Sparkles size={20} color={A} />
+          <Sparkles size={isMobile ? 16 : 20} color={A} />
           <EarlyBirdTicker discounts={stay.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={theme === 'dark' ? "#FFF" : FG} isDark={theme === "dark"} />
         </div>
       )}
