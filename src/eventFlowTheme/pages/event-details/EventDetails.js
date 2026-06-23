@@ -773,7 +773,12 @@ function formatDurationMinutes(totalMinutes) {
 
 function SpinBadge({ event }) {
   const { tokens: { A, FG, M }, theme } = useTheme();
-  const participantCount = event?.participantCount || 180;
+  const ticketTypes = Array.isArray(event?.ticketTypes) ? event.ticketTypes : [];
+  const guestCount = ticketTypes.reduce((sum, ticket) => {
+    const totalTickets = Number(ticket?.totalTickets ?? ticket?.totalTicket ?? 0);
+    return sum + (Number.isFinite(totalTickets) ? totalTickets : 0);
+  }, 0);
+  const participantCount = event?.participantCount ?? (guestCount > 0 ? guestCount : 0);
   
   return (
     <div style={{ 
