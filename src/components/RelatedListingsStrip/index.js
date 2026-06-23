@@ -99,21 +99,8 @@ export default function RelatedListingsStrip({
 
     // If we hit either edge, jump by one logical set to preserve infinite scrolling.
     if (el.scrollLeft <= 1) {
-      if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][normalize] hit-start shift +setWidth", {
-          leftBefore: el.scrollLeft,
-          setWidth,
-        });
-      }
       el.scrollLeft += setWidth;
     } else if (el.scrollLeft >= maxScrollLeft - 1) {
-      if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][normalize] hit-end shift -setWidth", {
-          leftBefore: el.scrollLeft,
-          maxScrollLeft,
-          setWidth,
-        });
-      }
       el.scrollLeft -= setWidth;
     }
   };
@@ -163,10 +150,7 @@ export default function RelatedListingsStrip({
         let usedMode = "none";
         for (const attempt of requestAttempts) {
           const { _fallbackMode, ...apiPayload } = attempt;
-          console.log("[RelatedListingsStrip] Calling /api/public/listings/filter", {
-            ...apiPayload,
-            mode: _fallbackMode,
-          });
+          // calling filter API
           const response = await getFilteredListings(apiPayload);
           const listings = Array.isArray(response?.listings) ? response.listings : [];
           if (listings.length > 0) {
@@ -185,20 +169,10 @@ export default function RelatedListingsStrip({
           }
         }
         if (!mounted) return;
-        console.log("[RelatedListingsStrip] Filter API success", {
-          businessInterestId,
-          primaryCategoryId: resolvedCategoryId ?? null,
-          mode: usedMode,
-          received: resultListings.length,
-        });
+        // filter API success
         setItems(resultListings);
       } catch (e) {
-        console.error("[RelatedListingsStrip] Filter API error", {
-          businessInterestId,
-          primaryCategoryId: resolvedCategoryId ?? null,
-          message: e?.message,
-          response: e?.response?.data,
-        });
+        // filter API error
         if (mounted) setItems([]);
       } finally {
         if (mounted) setLoading(false);
@@ -236,18 +210,11 @@ export default function RelatedListingsStrip({
   useEffect(() => {
     const el = railRef.current;
     if (debugAutoScroll) {
-      console.log("[RelatedListingsStrip][effect-enter]", {
-        hasElement: !!el,
-        filteredItemsLength: filteredItems.length,
-      });
+      // debug: effect entered
     }
     if (!el || filteredItems.length <= 1) {
       if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][effect-exit-early]", {
-          reason: !el ? "no-rail-element" : "not-enough-items",
-          hasElement: !!el,
-          filteredItemsLength: filteredItems.length,
-        });
+        // debug: early exit
       }
       return undefined;
     }
@@ -259,17 +226,10 @@ export default function RelatedListingsStrip({
     const oneSetWidth = el.scrollWidth / repeatCount;
     const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
     const initialLeft = Math.min(oneSetWidth, maxScrollLeft);
-    if (oneSetWidth > 0) {
+      if (oneSetWidth > 0) {
       el.scrollLeft = initialLeft;
       if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][init]", {
-          oneSetWidth,
-          repeatCount,
-          scrollWidth: el.scrollWidth,
-          clientWidth: el.clientWidth,
-          left: el.scrollLeft,
-          canScrollX: el.scrollWidth > el.clientWidth,
-        });
+        // debug: init
       }
     }
 
@@ -277,14 +237,7 @@ export default function RelatedListingsStrip({
       if (autoTimerRef.current) window.clearInterval(autoTimerRef.current);
       let debugTickCount = 0;
       if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][startAuto]", {
-          intervalMs,
-          step,
-          left: el.scrollLeft,
-          clientWidth: el.clientWidth,
-          scrollWidth: el.scrollWidth,
-          canScrollX: el.scrollWidth > el.clientWidth,
-        });
+        // debug: startAuto
       }
       autoTimerRef.current = window.setInterval(() => {
         if (pauseAutoScrollRef.current) return;
@@ -296,24 +249,12 @@ export default function RelatedListingsStrip({
         normalizeLoopPosition();
         if (el.scrollTop !== 0) el.scrollTop = 0;
 
-        if (debugAutoScroll && debugTickCount % 20 === 0) {
-          console.log("[RelatedListingsStrip][tick]", {
-            leftBefore: before,
-            leftAfter: el.scrollLeft,
-            step,
-            paused: pauseAutoScrollRef.current,
-            clientWidth: el.clientWidth,
-            scrollWidth: el.scrollWidth,
-            canScrollX: el.scrollWidth > el.clientWidth,
-            overflowX: window.getComputedStyle(el).overflowX,
-          });
-        }
         debugTickCount += 1;
       }, intervalMs);
     };
 
     startAuto();
-    if (debugAutoScroll) {
+      if (debugAutoScroll) {
       window.__lkpRelatedAutoScroll = {
         start: () => startAuto(),
         stop: () => {
@@ -330,18 +271,12 @@ export default function RelatedListingsStrip({
           canScrollX: el.scrollWidth > el.clientWidth,
         }),
       };
-      console.log("[RelatedListingsStrip][debug-helper] window.__lkpRelatedAutoScroll ready");
-    }
+      }
 
     const resizeObserver = new ResizeObserver(() => {
       // Restart when dimensions/content width change to keep autoplay alive.
       if (debugAutoScroll) {
-        console.log("[RelatedListingsStrip][resize]", {
-          clientWidth: el.clientWidth,
-          scrollWidth: el.scrollWidth,
-          left: el.scrollLeft,
-          canScrollX: el.scrollWidth > el.clientWidth,
-        });
+        // debug: resize
       }
       startAuto();
     });
