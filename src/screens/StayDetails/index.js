@@ -7,7 +7,7 @@ import {
   Phone, Clock, FileText, MapPin, ChevronDown, CheckCircle, Info, Building,
   ArrowRight, ShieldCheck, Mail, Globe, Map, Navigation, ArrowDown, Car, AirVent,
   Users, DoorOpen, Bed, Bath, Maximize, Calendar, Star, Share2, Heart, ArrowLeft,
-  Tv, Coffee, ChevronLeft, ChevronRight, Plus, Minus
+  Tv, Coffee, ChevronLeft, ChevronRight, Plus, Minus, Check
 } from "lucide-react";
 import moment from "moment";
 import cn from "classnames";
@@ -112,6 +112,9 @@ const ScopedStyles = () => (
     .stay-details-premium .font-display { font-family: var(--font-fraunces, Georgia, serif); }
     .stay-details-premium .mq-l { display: flex; white-space: nowrap; animation: marquee-l 30s linear infinite; }
     .stay-details-premium .mq-r { display: flex; white-space: nowrap; animation: marquee-r 34s linear infinite; }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
     .shimmer-cta {
       position: relative;
@@ -2177,7 +2180,7 @@ function StayAddons({ stay, selectedAddOns, onToggleAddOn, addOnQuantities, onAd
 /* ─── MAIN COMPONENT ─────────── */
 const StayDetails = () => {
   const { width, isMobile } = useWindowSize();
-  const { theme, tokens: { BG, FG, W, B, S, M, A } } = useTheme();
+  const { theme, tokens: { BG, FG, W, B, S, M, A, AL, AH } } = useTheme();
   const history = useHistory();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -2444,6 +2447,14 @@ const StayDetails = () => {
     return Array.isArray(rooms) && rooms.length > 0;
   }, [stay]);
 
+  const addonsSliderRef = useRef(null);
+  const scrollAddonsSlider = (direction) => {
+    if (!addonsSliderRef.current) return;
+    const container = addonsSliderRef.current;
+    const scrollAmount = window.innerWidth < 768 ? 300 : 400;
+    container.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
+  };
+
   const isPropertyBasedStay = useMemo(() => {
     const scope = String(
       stay?.bookingScope ||
@@ -2485,6 +2496,193 @@ const StayDetails = () => {
       <StayHeroCarousel stay={stay} galleryItems={galleryItems} />
 
       <StayAmenities stay={stay} />
+
+      {/* ADDONS SECTION */}
+      {stay?.addons && stay.addons.length > 0 && (
+        <section className="addons-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px" }}>
+          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <SHdr idx="03" label="Make it Yours" />
+              {stay.addons.length > 2 && (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => scrollAddonsSlider("left")}
+                    style={{
+                      width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
+                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                      color: FG, transition: "0.3s", outline: "none"
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollAddonsSlider("right")}
+                    style={{
+                      width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
+                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                      color: FG, transition: "0.3s", outline: "none"
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {(() => {
+              const addonsList = stay.addons;
+              const showScroll = addonsList.length > 2;
+
+              return (
+                <div
+                  ref={addonsSliderRef}
+                  className={showScroll ? "no-scrollbar" : ""}
+                  style={showScroll ? {
+                    display: "flex",
+                    gap: "20px",
+                    overflowX: "auto",
+                    overflowY: "hidden",
+                    paddingBottom: "12px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    scrollBehavior: "smooth"
+                  } : {
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                    gap: "20px"
+                  }}
+                >
+                  {addonsList.map((item, i) => {
+                    const addon = item.addon || item;
+                    const addonId = addon.addonId || addon.assignmentId || addon.id;
+                    const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
+                    const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+
+                    return (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        key={addonId}
+                        style={{
+                          background: "transparent",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "12px"
+                        }}
+                      >
+                        {addonImage && (
+                          <div style={{ width: "100%", height: "180px", background: S, borderRadius: "12px", overflow: "hidden", position: "relative" }}>
+                            <img src={addonImage} alt={addon.title || addon.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            {selectedAddOns.includes(addonId) && (
+                              <div style={{ position: "absolute", top: 12, right: 12, width: 28, height: 28, background: A, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF", boxShadow: `0 4px 12px ${A}44` }}>
+                                <Check size={16} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "0 4px" }}>
+                          <h4 style={{ fontSize: "16px", fontWeight: 700, color: FG, margin: "0 0 6px 0", lineHeight: 1.3 }}>{addon.title || addon.name}</h4>
+                          {addon.description && (
+                            <p style={{ fontSize: "14px", color: M, margin: "0 0 16px 0", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                              {addon.description}
+                            </p>
+                          )}
+                          
+                          <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span style={{ fontSize: "10px", fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                {pricingType}
+                              </span>
+                              {addon.price > 0 && (
+                                <span style={{ fontSize: "15px", fontWeight: 700, color: FG }}>₹{addon.price}</span>
+                              )}
+                            </div>
+
+                            <div className="addon-actions">
+                              {selectedAddOns.includes(addonId) ? (
+                                pricingType === "Group" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAddOn(addonId, pricingType)}
+                                    style={{
+                                      background: `${A}15`,
+                                      color: A,
+                                      border: "none",
+                                      borderRadius: 100,
+                                      padding: "6px 14px",
+                                      fontSize: 11,
+                                      fontWeight: 800,
+                                      cursor: "pointer",
+                                      transition: "all 0.2s"
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = A; e.currentTarget.style.color = W; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = `${A}15`; e.currentTarget.style.color = A; }}
+                                  >
+                                    Remove
+                                  </button>
+                                ) : (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 12, background: `${A}08`, borderRadius: 100, padding: "4px 8px" }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddOnQuantityChange(addonId, (addOnQuantities[addonId] || 1) - 1)}
+                                      style={{ background: W, borderRadius: "50%", width: 28, height: 28, border: `1px solid ${A}22`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: A, boxShadow: `0 2px 6px ${A}11` }}
+                                    >
+                                      <Minus size={14} />
+                                    </button>
+                                    <span style={{ fontSize: 14, fontWeight: 700, color: FG, minWidth: 16, textAlign: "center" }}>
+                                      {addOnQuantities[addonId] || 1}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddOnQuantityChange(addonId, (addOnQuantities[addonId] || 1) + 1)}
+                                      style={{ background: W, borderRadius: "50%", width: 28, height: 28, border: `1px solid ${A}22`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: A, boxShadow: `0 2px 6px ${A}11` }}
+                                    >
+                                      <Plus size={14} />
+                                    </button>
+                                  </div>
+                                )
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleAddOn(addonId, pricingType)}
+                                  style={{
+                                    background: A,
+                                    color: W,
+                                    border: "none",
+                                    borderRadius: 100,
+                                    padding: "8px 18px",
+                                    fontSize: 12,
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                    boxShadow: `0 4px 12px ${A}33`
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-1px)"}
+                                  onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+                                >
+                                  Add
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </section>
+      )}
+
 
       <div style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -2607,6 +2805,7 @@ const StayDetails = () => {
         selectedAddOns={selectedAddOns}
         addOnQuantities={addOnQuantities}
         onAddOnQuantityChange={handleAddOnQuantityChange}
+        onToggleAddOn={handleToggleAddOn}
       />
 
       <RelatedListingsStrip
