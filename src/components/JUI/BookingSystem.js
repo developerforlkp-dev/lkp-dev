@@ -2316,10 +2316,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         const isFreeBooking = finalTotal === 0;
 
         if (!razorpayOrderId && !isFreeBooking) {
-          console.error("❌ Razorpay Order ID missing from response:", res);
-          alert("Payment initialization failed. Please contact support.");
-          if (isMountedRef.current) setBookingLoading(false);
-          return;
+          console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
         }
 
         if (razorpayKeyId) {
@@ -2704,8 +2701,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const isFreeBooking = finalTotal === 0;
 
       if (!razorpayOrderId && !isFreeBooking) {
-        alert("Payment order was not created. Please try booking again.");
-        return;
+        console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
       }
 
       const paymentData = {

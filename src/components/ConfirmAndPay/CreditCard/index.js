@@ -5,7 +5,7 @@ import styles from "./CreditCard.module.sass";
 import TextInput from "../../TextInput";
 import TextArea from "../../TextArea";
 import Checkbox from "../../Checkbox";
-import { sendOrderMessage } from "../../../utils/api";
+import { sendOrderMessage, initializePayment } from "../../../utils/api";
 
 const cards = [
   {
@@ -86,8 +86,39 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       return;
     }
 
+    let razorpayOrderId = payment.razorpayOrderId;
+    let razorpayKeyId = payment.razorpayKeyId;
+    const orderId = payment.orderId || localStorage.getItem("pendingOrderId");
+
+    if (!razorpayOrderId && orderId) {
+      try {
+        console.log(`🔄 Razorpay order ID is missing. Initializing payment for order ${orderId}...`);
+        const initData = await initializePayment(orderId);
+        console.log("✅ Initialization response:", initData);
+        if (initData?.payment?.razorpayOrderId) {
+          razorpayOrderId = initData.payment.razorpayOrderId;
+          if (initData.payment.razorpayKeyId) {
+            razorpayKeyId = initData.payment.razorpayKeyId;
+          }
+          payment.razorpayOrderId = razorpayOrderId;
+          payment.razorpayKeyId = razorpayKeyId;
+          localStorage.setItem("pendingPayment", JSON.stringify(payment));
+        } else {
+          console.error("❌ Initialize payment response did not return razorpayOrderId:", initData);
+          alert("Could not initialize payment. Please try booking again.");
+          setIsProcessing(false);
+          return;
+        }
+      } catch (err) {
+        console.error("❌ Failed to initialize payment:", err);
+        alert(err?.response?.data?.error || err?.response?.data?.message || "Failed to initialize payment. Please try booking again.");
+        setIsProcessing(false);
+        return;
+      }
+    }
+
     // Check if razorpayKeyId exists
-    if (!payment.razorpayKeyId) {
+    if (!razorpayKeyId) {
       console.error("❌ Missing razorpayKeyId in payment data");
       alert("Payment configuration error. Please try booking again.");
       setIsProcessing(false);
@@ -116,10 +147,10 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       })();
 
       const options = {
-        key: payment.razorpayKeyId,
+        key: razorpayKeyId,
         amount: payment.amount,
         currency: payment.currency || "INR",
-        order_id: payment.razorpayOrderId,
+        order_id: razorpayOrderId,
         name: bookingData?.listingTitle || "Booking Payment",
         description: "Complete your booking",
         prefill: {

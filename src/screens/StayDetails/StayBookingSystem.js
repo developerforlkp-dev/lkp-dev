@@ -1302,14 +1302,10 @@ const StayBookingSystem = ({
 
       if (!razorpayOrderId) {
         const appOrderId = orderResponse?.orderId || response?.orderId || response?.data?.orderId || null;
-        console.error("❌ Razorpay Order ID missing from response:", {
+        console.log("ℹ️ Razorpay Order ID missing from response for stay order:", {
           appOrderId,
-          razorpayOrderId,
           razorpayKeyId,
-          response
         });
-        alert(`Payment initialization failed: Razorpay order was not generated${appOrderId ? ` (Order #${appOrderId})` : ""}.`);
-        return;
       }
 
       const asNumber = (value) => {
@@ -1382,6 +1378,7 @@ const StayBookingSystem = ({
       }
 
       localStorage.setItem("pendingPayment", JSON.stringify({
+        orderId: appOrderId,
         paymentMethod: "razorpay",
         razorpayOrderId,
         razorpayKeyId,

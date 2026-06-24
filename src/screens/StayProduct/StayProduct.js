@@ -2066,7 +2066,10 @@ const StayProduct = () => {
       const response = await createStayOrder(bookingPayload);
       console.log("✅ Stay order created:", response);
 
-      // Save Razorpay payment data (even if order ID is missing, so Razorpay can still trigger)
+      const orderId = response?.orderId || response?.id || response?.order?.orderId || response?.order?.id || response?.data?.orderId || response?.data?.id || null;
+      if (orderId) {
+        localStorage.setItem("pendingOrderId", String(orderId));
+      }
       const paymentResponse = response?.payment || response?.data?.payment || response?.order?.payment || response;
       const rzpOrderId = paymentResponse?.razorpayOrderId || response?.razorpayOrderId || response?.order?.razorpayOrderId;
       const rzpKeyId = paymentResponse?.razorpayKeyId || response?.razorpayKeyId || response?.order?.razorpayKeyId || "rzp_test_RaBjdu0Ed3p1gN";
@@ -2106,6 +2109,7 @@ const StayProduct = () => {
       const currency = paymentResponse?.currency || response?.currency || response?.order?.currency || "INR";
 
       localStorage.setItem("pendingPayment", JSON.stringify({
+        orderId: orderId,
         paymentMethod: "razorpay",
         razorpayOrderId: rzpOrderId,
         razorpayKeyId: rzpKeyId,

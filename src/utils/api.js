@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const normalizeBaseUrl = (url) => (url ? url.replace(/\/+$/, "") : url);
+const LOCAL_API_BASE_URL = "https://dev.api.littleknownplanet.com/api";
 
 export const normalizePublicImageUrl = (url) => {
   if (!url) return null;
@@ -39,7 +40,7 @@ const resolveRuntimeApiBaseUrl = () => {
     .toLowerCase();
 
   if (runtimeEnv === "development") {
-    return normalizeBaseUrl(process.env.REACT_APP_API_URL_DEV);
+    return normalizeBaseUrl(process.env.REACT_APP_API_URL_DEV) || LOCAL_API_BASE_URL;
   }
 
   if (runtimeEnv === "qa") {
@@ -56,7 +57,7 @@ const resolveRuntimeApiBaseUrl = () => {
 const API_BASE_URL =
   normalizeBaseUrl(process.env.REACT_APP_API_URL) ||
   resolveRuntimeApiBaseUrl() ||
-  "/api";
+  LOCAL_API_BASE_URL;
 
 export const DEFAULT_API_BASE_URL = (() => {
   return API_BASE_URL;
@@ -829,6 +830,23 @@ export const createOrder = async (orderData) => {
       });
     }
 
+    throw error;
+  }
+};
+
+// Initialize Razorpay payment for an order
+export const initializePayment = async (orderId) => {
+  try {
+    console.log(`📤 Initializing payment for order: ${orderId}`);
+    const response = await ListingsAPI.post(`/orders/${orderId}/initialize-payment`);
+    console.log("✅ Payment initialized successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error initializing payment:", {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
     throw error;
   }
 };
