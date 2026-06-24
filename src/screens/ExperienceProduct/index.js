@@ -3,7 +3,7 @@ import { useLocation, useParams, useHistory } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, ChevronRight, Sparkles, Star, Compass, Share2 } from "lucide-react";
+import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, ChevronRight, Sparkles, Star, Compass, Share2, Heart, Sun, Moon, ArrowRight } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
 import ShareButton from "../../components/ShareButton";
@@ -70,7 +70,7 @@ function ExperienceBg({ progress, src }) {
         <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 40%, ${A}44 0%, transparent 60%)` }} />
         <motion.div animate={{ opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 7, repeat: Infinity, delay: 2 }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 70% 60%, ${A}33 0%, transparent 50%)` }} />
       </motion.div>
-      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 40%, #000000CC 70%, #000000 100%)` }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.6) 100%)` }} />
     </div>
   );
 }
@@ -539,7 +539,7 @@ const ExperienceProduct = () => {
   const idParam = params.get("id");
   const id = idFromPath || idParam || "1";
 
-  const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
+  const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme, toggleTheme } = useTheme();
   const [listing, setListing] = useState(null);
   const [hostData, setHostData] = useState(null);
   const [leadData, setLeadData] = useState(null);
@@ -855,131 +855,158 @@ const ExperienceProduct = () => {
   };
 
   return (
-    <Page>
+    <Page 
+      separatorHeader={false} 
+      hideBookings={true}
+      wide={true}
+      headerLeftContent={
+        <div style={{
+          background: "#0097B2",
+          color: "#FFFFFF",
+          fontSize: "11px",
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          fontFamily: "Poppins, sans-serif",
+          padding: "8px 20px",
+          borderRadius: "100px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          display: "inline-block",
+          marginTop: "32px"
+        }}>
+          EXPERIENCE
+        </div>
+      }
+    >
       <main style={{ background: BG }}>
+        <style>{`
+          div[class*="Header_floatingPill"] {
+            margin-top: 32px !important;
+          }
+        `}</style>
         {/* HERO SECTION */}
         <section ref={heroRef} className="hero-section" style={{
           position: "relative",
-          height: "47vh",
-          minHeight: "360px",
-          width: "calc(100% - 80px)",
-          maxWidth: "1600px",
-          margin: "12px auto 0",
-          borderRadius: "32px",
+          height: "75vh",
+          minHeight: "600px",
+          width: "100%",
+          maxWidth: "100%",
+          margin: "0",
+          borderRadius: "0",
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
           zIndex: 50
         }}>
-          <ExperienceBg progress={heroProgress} src={formatImageUrl(listing?.coverPhotoUrl)} />
+          <ExperienceBg progress={heroProgress} src={formatImageUrl(listing?.coverPhotoUrl) || "/gallery/concert.png"} />
+          
           <div className="hero-container" style={{
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
             height: "100%",
-            padding: "32px 40px",
+            padding: "48px 64px",
             position: "relative",
             zIndex: 10,
-            width: "100%"
+            width: "100%",
+            boxSizing: "border-box"
           }}>
-            {/* Top Row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-              <div style={{
-                color: "#FFFFFF",
-                fontSize: "14px",
-                fontWeight: 600,
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                fontFamily: "Poppins, sans-serif"
-              }}>
-                {listing?.primaryCategory?.name || listing?.primaryCategory?.title || (typeof listing?.primaryCategory === "string" ? listing?.primaryCategory : null) || listing?.category?.name || listing?.category?.title || (typeof listing?.category === "string" ? listing?.category : null) || "Experience"}
-              </div>
+            {/* Top Row: Experience badge moved to header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
 
-              {/* Early Bird Ticker */}
-              {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: "rgba(15, 23, 42, 0.9)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  padding: "10px 20px",
-                  borderRadius: "100px",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
-                  color: "#FFFFFF",
-                  zIndex: 200
-                }}>
-                  <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ flexShrink: 0 }} />
-                  <EarlyBirdTicker discounts={listing.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={FG} isDark={theme === "dark"} />
-                </div>
-              )}
+              {/* Actions removed from here, global header handles it */}
             </div>
 
-            {/* Bottom Row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto", gap: 24 }}>
-              <motion.div style={{ opacity: fade, y: textY, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Rev>
-                  <h1 className="hero-title" style={{
-                    fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    color: "#FFFFFF",
-                    margin: 0,
-                    letterSpacing: "-0.01em",
-                    fontFamily: "Poppins, sans-serif"
-                  }}>
-                    {listing?.title}
-                  </h1>
-                </Rev>
-                <Rev delay={0.15}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500 }}>
-                    <MapPin size={15} color={A || "#0097B2"} />
-                    <span>{listing?.locationName || fallbackLocationValues[0] || "Valparai, Western Ghats"}</span>
-                  </div>
-                </Rev>
-              </motion.div>
-
-              <Rev delay={0.2} style={{ flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <Favorite
-                    itemType="listing"
-                    itemId={id}
-                    variant="hero"
-                    showText={false}
-                    style={{
-                      position: "relative",
-                      top: "auto",
-                      right: "auto",
-                      margin: 0,
-                      zIndex: 200,
-                    }}
-                  />
-                  <HeroShareFab
-                    title={listing?.title}
-                    text={listing?.description || listing?.aboutListing || ""}
-                    url={window.location.href}
-                    style={{
-                      position: "relative",
-                      top: "auto",
-                      right: "auto",
-                      margin: 0,
-                      zIndex: 200
-                    }}
-                  />
+            {/* Bottom Content */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px", flex: 1 }}>
+                
+                {/* Breadcrumbs */}
+                <div style={{ color: "rgba(255,255,255,0.8)", fontSize: "14px", fontWeight: 400, fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span>Home</span>
+                  <ChevronRight size={14} color="rgba(255,255,255,0.6)" />
+                  <span>Experiences</span>
+                  <ChevronRight size={14} color="rgba(255,255,255,0.6)" />
+                  <span style={{ color: "#FFFFFF" }}>{listing?.title || "Alleppey Houseboats"}</span>
                 </div>
-              </Rev>
+
+                {/* Title */}
+                <h1 className="hero-title" style={{
+                  fontSize: "clamp(3rem, 5vw, 5rem)",
+                  fontWeight: 700,
+                  lineHeight: 1.1,
+                  color: "#FFFFFF",
+                  margin: 0,
+                  letterSpacing: "-0.02em",
+                  fontFamily: "'Playfair Display', serif"
+                }}>
+                  {listing?.title || "Alleppey Houseboats"}
+                </h1>
+
+                {/* Location & Rating */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "16px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }}>
+                    <MapPin size={20} color="#FFFFFF" strokeWidth={1.5} />
+                    <span>{listing?.locationName || fallbackLocationValues[0] || "Kerala, India"}</span>
+                  </div>
+                  {((reviewSummary?.totalReviews > 0) || (listing?.reviewCount > 0)) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "20px", fontWeight: 700, fontFamily: "Poppins, sans-serif" }}>
+                      <Star size={22} color="#F5A623" fill="#F5A623" strokeWidth={0} />
+                      <span>{reviewSummary?.averageRating || listing?.rating || "5.0"} <span style={{ fontSize: "16px", fontWeight: 400, opacity: 0.8, marginLeft: "4px" }}>({reviewSummary?.totalReviews || listing?.reviewCount} reviews)</span></span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: "flex", alignItems: "center", gap: "32px", marginTop: "24px" }}>
+                  <button style={{
+                    background: "#0097B2",
+                    color: "#FFFFFF",
+                    padding: "16px 36px",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    boxShadow: "0 8px 24px rgba(0, 151, 178, 0.4)",
+                    fontFamily: "Poppins, sans-serif",
+                    transition: "transform 0.2s ease"
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+                  onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                  >
+                    Reserve Now <ArrowRight size={20} strokeWidth={2} />
+                  </button>
+                  <div 
+                    style={{ display: "flex", alignItems: "center", gap: "16px", cursor: "pointer", color: "#FFFFFF", fontSize: "16px", fontWeight: 600, fontFamily: "Poppins, sans-serif", transition: "opacity 0.2s ease" }}
+                    onMouseOver={(e) => e.currentTarget.style.opacity = "0.8"}
+                    onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
+                  >
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(10px)" }}>
+                      <Share2 size={20} color="#FFFFFF" strokeWidth={1.5} />
+                    </div>
+                    Share Experience
+                  </div>
+
+                  {/* Save Button */}
+                  <div 
+                    style={{ display: "flex", alignItems: "center", gap: "16px", cursor: "pointer", color: "#FFFFFF", fontSize: "16px", fontWeight: 600, fontFamily: "Poppins, sans-serif", transition: "opacity 0.2s ease" }}
+                    onMouseOver={(e) => e.currentTarget.style.opacity = "0.8"}
+                    onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
+                  >
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(10px)" }}>
+                      <Heart size={20} color="#FFFFFF" strokeWidth={1.5} />
+                    </div>
+                    Save
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
-          <button
-            type="button"
-            className="premium-back-button"
-            onClick={() => history.goBack()}
-            aria-label="Go back"
-          >
-            <ChevronLeft size={20} />
-          </button>
         </section>
 
 
