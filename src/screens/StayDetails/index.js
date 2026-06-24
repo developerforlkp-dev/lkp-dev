@@ -2965,13 +2965,8 @@ function PropertyModal({ stay, onClose }) {
                   onClick={() => {
                     onClose();
                     const btn = document.querySelector(".stay-booking-trigger");
-                    if (btn) {
-                      setTimeout(() => {
-                        const target = btn;
-                        if (target && typeof target.click === 'function') {
-                          target.click();
-                        }
-                      }, 120);
+                    if (btn && typeof btn.click === 'function') {
+                      btn.click();
                     }
                   }}
                   style={{
