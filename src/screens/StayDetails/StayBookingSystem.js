@@ -310,7 +310,8 @@ const StayBookingSystem = ({
   onRoomsCountChange,
   selectedAddOns = [],
   addOnQuantities = {},
-  onAddOnQuantityChange
+  onAddOnQuantityChange,
+  onToggleAddOn
 }) => {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
@@ -2285,6 +2286,100 @@ const StayBookingSystem = ({
                         </div>
                       )}
                     </div>
+
+                    {/* Active Add-ons */}
+                    {(() => {
+                      const activeAddons = Array.isArray(stay?.addons) ? stay.addons.filter(a => a.isActive || a.status === 'Active') : [];
+                      if (activeAddons.length === 0) return null;
+
+                      return (
+                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: A, textTransform: "uppercase", letterSpacing: "0.1em", lineHeight: "1.2" }}>
+                            Add-ons
+                          </span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {activeAddons.map(addon => {
+                              const addonId = addon.addonId || addon.assignmentId || addon.id;
+                              const isSelected = selectedAddOns.includes(addonId);
+                              const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
+                              const isIndividual = pricingType === "Individual";
+                              const qty = isIndividual ? (addOnQuantities[addonId] || 1) : 1;
+                              const price = parseFloat(addon.price || 0);
+
+                              return (
+                                <div key={addonId} style={{ 
+                                  padding: "10px 14px", background: isSelected ? `${A}0A` : BG, 
+                                  borderRadius: 16, border: `1px solid ${isSelected ? A : B}`,
+                                  display: "flex", justifyContent: "space-between", alignItems: "center", transition: "0.2s"
+                                }}>
+                                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                    <div style={{ width: 26, height: 26, borderRadius: 8, background: AL, display: "flex", alignItems: "center", justifyContent: "center", color: A, flexShrink: 0 }}>
+                                      <Sparkles size={13} />
+                                    </div>
+                                    <div>
+                                      <p style={{ fontSize: 13, fontWeight: 600, color: FG, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
+                                        {addon.title || addon.name}
+                                      </p>
+                                      <p style={{ fontSize: 10, fontWeight: 500, color: M, margin: "2px 0 0" }}>
+                                        {price > 0 ? `+ ₹${price.toFixed(2)}` : "Free"}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="addon-actions" style={{ flexShrink: 0 }}>
+                                    {isSelected ? (
+                                      pricingType === "Group" ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => onToggleAddOn(addonId, pricingType)}
+                                          style={{
+                                            background: `${A}15`, color: A, border: `1px solid ${A}50`, borderRadius: 100,
+                                            padding: "0 12px", height: "26px", fontSize: 9, fontWeight: 800, cursor: "pointer",
+                                            textTransform: "uppercase", letterSpacing: "0.05em", outline: "none"
+                                          }}
+                                        >
+                                          Remove
+                                        </button>
+                                      ) : (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, background: W, borderRadius: 100, padding: "0 6px", height: "26px", border: `1px solid ${A}` }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => onAddOnQuantityChange(addonId, qty - 1)}
+                                            style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: A }}
+                                          >
+                                            <Minus size={10} />
+                                          </button>
+                                          <span style={{ fontSize: 11, fontWeight: 700, color: FG, minWidth: 12, textAlign: "center" }}>{qty}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => onAddOnQuantityChange(addonId, qty + 1)}
+                                            style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: A }}
+                                          >
+                                            <Plus size={10} />
+                                          </button>
+                                        </div>
+                                      )
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => onToggleAddOn(addonId, pricingType)}
+                                        style={{
+                                          background: A, color: W, border: `1px solid ${A}`, borderRadius: 100,
+                                          padding: "0 14px", height: "26px", fontSize: 9, fontWeight: 800, cursor: "pointer",
+                                          textTransform: "uppercase", letterSpacing: "0.05em", outline: "none"
+                                        }}
+                                      >
+                                        Add
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Stay Allocation Summary */}
                     {(() => {
