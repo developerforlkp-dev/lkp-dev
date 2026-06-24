@@ -639,33 +639,76 @@ const actionsByStatus = {
   ],
 };
 
+const isPastStayCheckInTime = (booking) => {
+  if (!booking) return false;
+  const { bookingData, stayData } = booking;
+  
+  // Only apply to Stays
+  const businessInterestCode = String(bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
+  const isStayOrder = businessInterestCode === "STAYS" ||
+    bookingData?.stayId != null ||
+    (bookingData?.stayOrderRooms && bookingData?.stayOrderRooms.length > 0) ||
+    stayData != null;
+
+  if (!isStayOrder) return false;
+
+  const status = booking.statusTone || booking.status?.toLowerCase();
+  if (status === "cancelled" || status === "canceled" || status === "completed") {
+    return false;
+  }
+
+  const checkInDateStr =
+    bookingData?.checkInDate ||
+    bookingData?.bookingDate ||
+    stayData?.checkInDate;
+    
+  if (!checkInDateStr) return false;
+
+  const checkInDatetime = new Date(checkInDateStr);
+  
+  const checkInTimeStr = 
+    bookingData?.checkInTime || 
+    bookingData?.bookingTime || 
+    stayData?.checkInTime || 
+    "14:00:00";
+
+  if (checkInTimeStr && typeof checkInTimeStr === 'string' && checkInTimeStr.includes(':')) {
+    const parts = checkInTimeStr.split(':').map(Number);
+    checkInDatetime.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+  } else {
+    checkInDatetime.setHours(14, 0, 0, 0);
+  }
+
+  return new Date() >= checkInDatetime;
+};
+
 const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
   const baseActions = actionsByStatus[booking?.status] || [];
 
-  if (tabId === "cancelled") {
-    return baseActions.filter((a) => a.label === "View Details");
-  }
+  let actions = [...baseActions];
 
-  if (tabId === "pending") {
-    const validActions = baseActions.filter((a) => a.label === "View Details");
+  if (tabId === "cancelled") {
+    actions = actions.filter((a) => a.label === "View Details");
+  } else if (tabId === "pending") {
+    const validActions = actions.filter((a) => a.label === "View Details");
     if (booking?.category === "EXPERIENCE" && String(booking?.bookingData?.orderStatus || "").toUpperCase() === "PENDING") {
       validActions.unshift({ label: "Check Availability", variant: "secondary" });
     }
-    return validActions;
-  }
-
-  if (tabId === "upcoming") {
-    return baseActions.filter((a) => a.label !== "Leave review");
-  }
-
-  if (tabId === "completed") {
-    return baseActions.filter((a) => {
+    actions = validActions;
+  } else if (tabId === "upcoming") {
+    actions = actions.filter((a) => a.label !== "Leave review");
+  } else if (tabId === "completed") {
+    actions = actions.filter((a) => {
       if (a.label !== "Leave review") return true;
       return orderIdsEligibleForReview.has(booking.orderId);
     });
   }
 
-  return baseActions;
+  if (isPastStayCheckInTime(booking)) {
+    actions = actions.filter((a) => a.label !== "Cancel Booking");
+  }
+
+  return actions;
 };
 
 const Main = ({

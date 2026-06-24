@@ -766,7 +766,56 @@ const ViewDetails = () => {
     booking?.statusTone === "completed";
   const canLeaveReview = booking?.orderId != null && orderIdsEligibleForReview.has(Number(booking.orderId));
 
+  const isPastStayCheckInTime = () => {
+    if (!booking) return false;
+    
+    // Only apply to Stays
+    const businessInterestCode = String(booking?.originalData?.businessInterestCode || "").toUpperCase();
+    const isStayOrder = businessInterestCode === "STAYS" ||
+      booking?.originalData?.stayId != null ||
+      (booking?.originalData?.stayOrderRooms && booking?.originalData?.stayOrderRooms.length > 0) ||
+      booking?.stayData != null;
+
+    if (!isStayOrder) return false;
+
+    // Check if already cancelled or completed
+    const status = booking.status?.toLowerCase() ||
+      booking.statusTone ||
+      (booking.originalData?.orderStatus ? String(booking.originalData.orderStatus).toLowerCase() : "");
+      
+    if (status === "cancelled" || status === "canceled" || status === "completed") {
+      return false;
+    }
+
+    const checkInDateStr =
+      booking?.originalData?.checkInDate ||
+      booking?.originalData?.bookingDate ||
+      booking?.stayData?.checkInDate;
+      
+    if (!checkInDateStr) return false;
+
+    const checkInDatetime = new Date(checkInDateStr);
+    
+    const checkInTimeStr = 
+      booking?.originalData?.checkInTime || 
+      booking?.originalData?.bookingTime || 
+      booking?.stayData?.checkInTime || 
+      "14:00:00";
+
+    if (checkInTimeStr && typeof checkInTimeStr === 'string' && checkInTimeStr.includes(':')) {
+      const parts = checkInTimeStr.split(':').map(Number);
+      checkInDatetime.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+    } else {
+      checkInDatetime.setHours(14, 0, 0, 0);
+    }
+
+    return new Date() >= checkInDatetime;
+  };
+
   const handleCancelBookingClick = async () => {
+    if (isPastStayCheckInTime()) {
+      return;
+    }
     setPendingCancellation(null);
     setCancelModalVisible(true);
     setCancelReason("");
@@ -2091,7 +2140,6 @@ const ViewDetails = () => {
     }
     return styles.statusDefault;
   };
-
   const getActionButtons = () => {
     const status = booking.status?.toLowerCase() ||
       booking.statusTone ||
@@ -2103,7 +2151,9 @@ const ViewDetails = () => {
     if (originalStatus === "PENDING" || status === "pending") {
       const actions = [];
       if (sourceTab !== "cancelled") {
-        actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
+        if (!isPastStayCheckInTime()) {
+          actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
+        }
       }
       return actions;
     }
@@ -2111,8 +2161,10 @@ const ViewDetails = () => {
     if (status === "upcoming" || status === "confirmed") {
       const actions = [
         { label: "Download Receipt", variant: "primary", onClick: handleDownloadReceiptClick },
-        { label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick },
       ];
+      if (!isPastStayCheckInTime()) {
+        actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
+      }
       if (canLeaveReview && sourceTab !== "upcoming") {
         actions.push({
           label: "Leave Review",
@@ -2616,23 +2668,30 @@ const ViewDetails = () => {
           </div>
         )}
 
-        {getActionButtons().length > 0 && (
+        {(getActionButtons().length > 0 || isPastStayCheckInTime()) && (
           <div className={cn(styles.card, styles.actionCard)}>
             <h3 className={styles.actionTitle}>Actions</h3>
-            <div className={styles.actionButtons}>
-              {getActionButtons().map((action, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  className={getButtonClassName(action.variant)}
-                  onClick={action.onClick}
-                  disabled={Boolean(action.disabled)}
-                  style={{ cursor: "pointer" }}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
+            {isPastStayCheckInTime() && (
+              <div style={{ color: '#856404', backgroundColor: '#fff3cd', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px', border: '1px solid #ffeeba' }}>
+                This stay has already started and can no longer be cancelled.
+              </div>
+            )}
+            {getActionButtons().length > 0 && (
+              <div className={styles.actionButtons}>
+                {getActionButtons().map((action, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={getButtonClassName(action.variant)}
+                    onClick={action.onClick}
+                    disabled={Boolean(action.disabled)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
