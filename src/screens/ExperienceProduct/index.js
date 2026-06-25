@@ -1382,16 +1382,24 @@ const ExperienceProduct = () => {
                         className="activity-item"
                         style={{
                           display: "flex",
-                          gap: "10%",
+                          gap: "32px",
                           alignItems: "flex-start",
                           justifyContent: "flex-start",
-                          paddingBottom: 24,
+                          paddingBottom: 32,
                           borderBottom: i === (listing.keyActivities.length - 1) ? "none" : `1px solid ${B}`
                         }}
                       >
                         {activityImageUrl && (
                           <div
-                            style={{ width: "30%", height: "120px", borderRadius: 12, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S, cursor: "pointer" }}
+                            style={{ 
+                              width: "240px", 
+                              height: "135px", 
+                              borderRadius: 16, 
+                              overflow: "hidden", 
+                              flexShrink: 0, 
+                              cursor: "pointer",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                            }}
                             onClick={() => { 
                               const idx = activityImages.indexOf(activityImageUrl);
                               setActivityPhotoIndex(idx !== -1 ? idx : 0);
@@ -1400,20 +1408,33 @@ const ExperienceProduct = () => {
                           >
                             <img
                               src={activityImageUrl}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
                               alt={it.name}
+                              onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                              onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                             />
                           </div>
                         )}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, fontFamily: "Poppins, sans-serif" }}>
-                            <span style={{ color: A }}>{numStr}. </span>{it.name}
-                          </span>
-                          <p style={{ color: FG, fontSize: "14px", lineHeight: "1.8", margin: 0, fontWeight: 400, fontFamily: "Poppins, sans-serif" }}>
-                            {it.description}
-                          </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, paddingTop: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                            <span style={{ fontSize: "24px", fontWeight: 700, color: A }}>
+                              {numStr}.
+                            </span>
+                            <h4 style={{ fontSize: "20px", fontWeight: 600, color: FG, margin: 0 }}>
+                              {it.name}
+                            </h4>
+                          </div>
+                          
+                          {it.description && (
+                            <p style={{ color: FG, fontSize: "15px", lineHeight: "1.6", margin: 0, fontWeight: 400 }}>
+                              {it.description}
+                            </p>
+                          )}
+                          
                           {it.pilot && (
-                            <span style={{ fontSize: "12px", color: A, fontWeight: 700, marginTop: 4 }}>{it.pilot}</span>
+                            <span style={{ fontSize: "14px", color: M, fontWeight: 500 }}>
+                              {it.pilot}
+                            </span>
                           )}
                         </div>
                       </div>
