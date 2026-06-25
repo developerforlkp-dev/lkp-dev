@@ -862,8 +862,8 @@ const ExperienceProduct = () => {
         {/* HERO SECTION */}
         <section ref={heroRef} className="hero-section" style={{
           position: "relative",
-          height: "65vh",
-          minHeight: "520px",
+          height: "50vh",
+          minHeight: "400px",
           width: "calc(100% - 80px)",
           maxWidth: "1600px",
           margin: "0 auto",
@@ -926,20 +926,51 @@ const ExperienceProduct = () => {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto", gap: 24 }}>
               <motion.div style={{ opacity: fade, y: textY, display: "flex", flexDirection: "column", gap: 10 }}>
                 <Rev>
-                  <h1 className="hero-title" style={{
-                    fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    color: "#FFFFFF",
-                    margin: 0,
-                    letterSpacing: "-0.01em",
-                    fontFamily: "Poppins, sans-serif"
-                  }}>
-                    {listing?.title}
-                  </h1>
+                  {(() => {
+                    const titleText = listing?.title || "";
+                    const words = titleText.trim().split(/\s+/);
+                    let displayTitle;
+                    
+                    // Match the homepage accent word logic (last word is italic and cyan)
+                    if (words.length >= 2) {
+                      const lastWord = words.pop();
+                      displayTitle = (
+                        <>
+                          {words.join(' ')}{' '}
+                          <span style={{
+                            fontStyle: "italic",
+                            fontWeight: 500,
+                            background: "linear-gradient(135deg, #08B5D6, #45D8F2)",
+                            backgroundSize: "200% 200%",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}>
+                            {lastWord}
+                          </span>
+                        </>
+                      );
+                    } else {
+                      displayTitle = titleText;
+                    }
+
+                    return (
+                      <h1 className="hero-title" style={{
+                        fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        color: "#FFFFFF",
+                        margin: 0,
+                        letterSpacing: "-0.01em",
+                        fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
+                      }}>
+                        {displayTitle}
+                      </h1>
+                    );
+                  })()}
                 </Rev>
                 <Rev delay={0.15}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="transparent" stroke={A || "#0097B2"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: "transparent" }}>
                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="transparent" />
                       <circle cx="12" cy="10" r="3" fill="transparent" />
@@ -1061,21 +1092,25 @@ const ExperienceProduct = () => {
               }}
               style={{
                 position: "absolute",
-                bottom: "40px",
-                right: "40px",
-                zIndex: 10,
+                bottom: 24,
+                right: 24,
+                background: "rgba(0, 0, 0, 0.3)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
+                borderRadius: 24,
+                padding: "8px 16px",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                background: W,
-                color: FG,
-                border: `1px solid ${B}`,
-                padding: "12px 24px",
-                borderRadius: "100px",
+                gap: 8,
                 fontSize: "13px",
-                fontWeight: 700,
-                boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-                cursor: "pointer"
+                fontWeight: 500,
+                fontFamily: '"Inter", sans-serif',
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                cursor: "pointer",
+                zIndex: 10,
+                transition: "all 0.3s ease"
               }}
             >
               <Camera size={16} />
@@ -1382,16 +1417,24 @@ const ExperienceProduct = () => {
                         className="activity-item"
                         style={{
                           display: "flex",
-                          gap: "10%",
+                          gap: "32px",
                           alignItems: "flex-start",
                           justifyContent: "flex-start",
-                          paddingBottom: 24,
+                          paddingBottom: 32,
                           borderBottom: i === (listing.keyActivities.length - 1) ? "none" : `1px solid ${B}`
                         }}
                       >
                         {activityImageUrl && (
                           <div
-                            style={{ width: "30%", height: "120px", borderRadius: 12, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S, cursor: "pointer" }}
+                            style={{ 
+                              width: "240px", 
+                              height: "135px", 
+                              borderRadius: 16, 
+                              overflow: "hidden", 
+                              flexShrink: 0, 
+                              cursor: "pointer",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                            }}
                             onClick={() => { 
                               const idx = activityImages.indexOf(activityImageUrl);
                               setActivityPhotoIndex(idx !== -1 ? idx : 0);
@@ -1400,20 +1443,33 @@ const ExperienceProduct = () => {
                           >
                             <img
                               src={activityImageUrl}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
                               alt={it.name}
+                              onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                              onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                             />
                           </div>
                         )}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, fontFamily: "Poppins, sans-serif" }}>
-                            <span style={{ color: A }}>{numStr}. </span>{it.name}
-                          </span>
-                          <p style={{ color: FG, fontSize: "14px", lineHeight: "1.8", margin: 0, fontWeight: 400, fontFamily: "Poppins, sans-serif" }}>
-                            {it.description}
-                          </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, paddingTop: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                            <span style={{ fontSize: "24px", fontWeight: 700, color: A }}>
+                              {numStr}.
+                            </span>
+                            <h4 style={{ fontSize: "20px", fontWeight: 600, color: FG, margin: 0 }}>
+                              {it.name}
+                            </h4>
+                          </div>
+                          
+                          {it.description && (
+                            <p style={{ color: FG, fontSize: "15px", lineHeight: "1.6", margin: 0, fontWeight: 400 }}>
+                              {it.description}
+                            </p>
+                          )}
+                          
                           {it.pilot && (
-                            <span style={{ fontSize: "12px", color: A, fontWeight: 700, marginTop: 4 }}>{it.pilot}</span>
+                            <span style={{ fontSize: "14px", color: M, fontWeight: 500 }}>
+                              {it.pilot}
+                            </span>
                           )}
                         </div>
                       </div>
