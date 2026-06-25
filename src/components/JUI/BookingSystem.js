@@ -1113,7 +1113,7 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
   );
 }
 
-export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity }) {
+export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger }) {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
   const isMountedRef = useRef(true);
@@ -1121,6 +1121,19 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [show, setShow] = useState(false);
   const [renderContent, setRenderContent] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
+
+  // Sync external open state
+  useEffect(() => {
+    if (externalOpen === true && !show) {
+      setShow(true);
+    }
+  }, [externalOpen]);
+
+  useEffect(() => {
+    if (onExternalOpenChange) {
+      onExternalOpenChange(show);
+    }
+  }, [show]);
 
   // Real State management
   const [startDate, setStartDate] = useState(null);
@@ -2843,6 +2856,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         }
       `}</style>
       {/* Floating Trigger */}
+      {!hideTrigger && (
       <motion.button
         onClick={handleOpenBooking}
         initial={{ y: 100, opacity: 0 }}
@@ -2883,7 +2897,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         <IconComp size={22} />
         {triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : triggerLabel}
       </motion.button>
-      {triggerDisabled && (
+      )}
+      {!hideTrigger && triggerDisabled && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: isFooterVisible ? 150 : 0, opacity: isFooterVisible ? 0 : 1 }}

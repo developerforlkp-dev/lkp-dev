@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useLocation, useParams, useHistory } from "react-router-dom";
+import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
@@ -27,6 +27,7 @@ import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import { lockBodyScroll } from "../../utils/scrollLock";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import Favorite from "../../components/Favorite";
+import useWishlist from "../../hooks/useWishlist";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -70,7 +71,8 @@ function ExperienceBg({ progress, src }) {
         <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 40%, ${A}44 0%, transparent 60%)` }} />
         <motion.div animate={{ opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 7, repeat: Infinity, delay: 2 }} style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 70% 60%, ${A}33 0%, transparent 50%)` }} />
       </motion.div>
-      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.6) 100%)` }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 40%, transparent 80%)` }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.5) 100%)` }} />
     </div>
   );
 }
@@ -530,6 +532,83 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
   );
 };
 
+function ExpandableAction({ icon: IconComponent, label, onClick, active, activeColor }) {
+  const [hovered, setHovered] = useState(false);
+  const [ripple, setRipple] = useState(false);
+
+  const handleClick = (e) => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 700);
+    if (onClick) onClick(e);
+  };
+
+  return (
+    <motion.div
+      onClick={handleClick}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        height: 48,
+        maxWidth: hovered ? 220 : 48,
+        overflow: "hidden",
+        paddingLeft: 13,
+        paddingRight: hovered ? 20 : 13,
+        background: active ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        border: "1px solid rgba(255,255,255,0.4)",
+        borderRadius: 50,
+        cursor: "pointer",
+        color: "#FFFFFF",
+        fontFamily: "Poppins, sans-serif",
+        fontSize: 15,
+        fontWeight: 600,
+        boxShadow: hovered
+          ? `0 4px 14px rgba(0,0,0,0.4)`
+          : `0 2px 8px rgba(0,0,0,0.2)`,
+        userSelect: "none",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), padding-right 0.45s cubic-bezier(0.22,1,0.36,1), background 0.3s ease",
+        position: "relative",
+      }}
+    >
+      <motion.span
+        animate={ripple ? { scale: [1, 3.4], opacity: [0.45, 0] } : { scale: 1, opacity: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+        style={{ position: "absolute", inset: -2, borderRadius: 60, background: "rgba(255,255,255,0.5)", pointerEvents: "none" }}
+      />
+      <motion.span
+        animate={{
+          y: hovered ? 0 : [0, -2, 0, 2, 0],
+          rotate: hovered ? (active ? [0, -10, 10, 0] : 360) : 0,
+          scale: hovered ? 1.15 : 1
+        }}
+        transition={{
+          y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+          rotate: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 22, position: "relative" }}
+      >
+        <IconComponent size={20} color={active && activeColor ? activeColor : "#FFFFFF"} fill={active && activeColor ? activeColor : "none"} strokeWidth={1.5} />
+      </motion.span>
+      <span style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        maxWidth: hovered ? 160 : 0,
+        opacity: hovered ? 1 : 0,
+        marginLeft: hovered ? 10 : 0,
+        position: "relative",
+        transition: "max-width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease 0.12s, margin-left 0.45s cubic-bezier(0.22,1,0.36,1)",
+      }}>
+        {label}
+      </span>
+    </motion.div>
+  );
+}
+
 const ExperienceProduct = () => {
   const location = useLocation();
   const history = useHistory();
@@ -549,6 +628,22 @@ const ExperienceProduct = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  const { saved, toggleSaved } = useWishlist({
+    itemType: "listing",
+    itemId: id,
+    initialSaved: Boolean(listing?.wishlistSaved),
+  });
+
+  const handleShareClick = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: listing?.title || "LittlePlanet Experience", url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+      }
+    } catch (_) {}
+  };
 
   // Normalize reviews data for consistent usage
   const normalizedReviews = useMemo(() => {
@@ -592,6 +687,8 @@ const ExperienceProduct = () => {
   const [narrativeExpanded, setNarrativeExpanded] = useState(false);
   const [overviewExpanded, setOverviewExpanded] = useState(false);
   const [langPopoverOpen, setLangPopoverOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [heroScrolledPast, setHeroScrolledPast] = useState(false);
 
   const activityImages = useMemo(() => {
     return (listing?.keyActivities || [])
@@ -816,6 +913,19 @@ const ExperienceProduct = () => {
   const textY = useTransform(heroProgress, [0, 1], [0, -200]);
   const fade = useTransform(heroProgress, [0, 0.6], [1, 0]);
 
+  // Detect when hero section scrolls out of view
+  useEffect(() => {
+    if (!heroRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeroScrolledPast(!entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, [heroRef.current]);
+
   if (loading && !listing) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: BG }}><Loader /></div>;
   }
@@ -858,25 +968,6 @@ const ExperienceProduct = () => {
     <Page 
       separatorHeader={false} 
       hideBookings={true}
-      wide={true}
-      headerLeftContent={
-        <div style={{
-          background: "#0097B2",
-          color: "#FFFFFF",
-          fontSize: "11px",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          fontFamily: "Poppins, sans-serif",
-          padding: "8px 20px",
-          borderRadius: "100px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          display: "inline-block",
-          marginTop: "32px"
-        }}>
-          EXPERIENCE
-        </div>
-      }
     >
       <main style={{ background: BG }}>
         <style>{`
@@ -923,9 +1014,9 @@ const ExperienceProduct = () => {
                 
                 {/* Breadcrumbs */}
                 <div style={{ color: "rgba(255,255,255,0.8)", fontSize: "14px", fontWeight: 400, fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span>Home</span>
+                  <Link to="/" style={{ color: "inherit", textDecoration: "none", cursor: "pointer", transition: "opacity 0.2s ease" }} onMouseOver={(e) => e.currentTarget.style.opacity = "0.7"} onMouseOut={(e) => e.currentTarget.style.opacity = "1"}>Home</Link>
                   <ChevronRight size={14} color="rgba(255,255,255,0.6)" />
-                  <span>Experiences</span>
+                  <Link to="/experiences" style={{ color: "inherit", textDecoration: "none", cursor: "pointer", transition: "opacity 0.2s ease" }} onMouseOver={(e) => e.currentTarget.style.opacity = "0.7"} onMouseOut={(e) => e.currentTarget.style.opacity = "1"}>Experiences</Link>
                   <ChevronRight size={14} color="rgba(255,255,255,0.6)" />
                   <span style={{ color: "#FFFFFF" }}>{listing?.title || "Alleppey Houseboats"}</span>
                 </div>
@@ -943,28 +1034,36 @@ const ExperienceProduct = () => {
                   {listing?.title || "Alleppey Houseboats"}
                 </h1>
 
-                {/* Location & Rating */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "16px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }}>
-                    <MapPin size={20} color="#FFFFFF" strokeWidth={1.5} />
-                    <span>{listing?.locationName || fallbackLocationValues[0] || "Kerala, India"}</span>
+                {/* Location */}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "16px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span>{[listing?.district || listing?.city, listing?.state].filter(Boolean).join(", ") || listing?.locationName || fallbackLocationValues[0] || "Alleppey, Kerala"}</span>
                   </div>
-                  {((reviewSummary?.totalReviews > 0) || (listing?.reviewCount > 0)) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "20px", fontWeight: 700, fontFamily: "Poppins, sans-serif" }}>
-                      <Star size={22} color="#F5A623" fill="#F5A623" strokeWidth={0} />
-                      <span>{reviewSummary?.averageRating || listing?.rating || "5.0"} <span style={{ fontSize: "16px", fontWeight: 400, opacity: 0.8, marginLeft: "4px" }}>({reviewSummary?.totalReviews || listing?.reviewCount} reviews)</span></span>
-                    </div>
-                  )}
-                </div>
+
+                  {/* Rating Row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "16px", fontWeight: 600, fontFamily: "Poppins, sans-serif", marginTop: "8px" }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#F5A623" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FFB400"/>
+                    </svg>
+                    {(reviewSummary?.totalReviews > 0 || listing?.reviewCount > 0) && (
+                      <span style={{ fontWeight: 800, fontSize: "24px" }}>{reviewSummary?.averageRating || listing?.rating}</span>
+                    )}
+                    <span style={{ fontWeight: 400, opacity: 0.8, fontSize: "16px" }}>
+                      ({reviewSummary?.totalReviews || listing?.reviewCount || 0} reviews)
+                    </span>
+                  </div>
 
                 {/* Actions */}
-                <div style={{ display: "flex", alignItems: "center", gap: "32px", marginTop: "24px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "32px", marginTop: "32px" }}>
                   <button style={{
                     background: "#0097B2",
                     color: "#FFFFFF",
                     padding: "16px 36px",
                     borderRadius: "12px",
-                    fontSize: "16px",
+                    fontSize: "18px",
                     fontWeight: 600,
                     border: "none",
                     cursor: "pointer",
@@ -975,33 +1074,30 @@ const ExperienceProduct = () => {
                     fontFamily: "Poppins, sans-serif",
                     transition: "transform 0.2s ease"
                   }}
+                  onClick={() => setBookingOpen(true)}
                   onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.02)"}
                   onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                   >
                     Reserve Now <ArrowRight size={20} strokeWidth={2} />
                   </button>
-                  <div 
-                    style={{ display: "flex", alignItems: "center", gap: "16px", cursor: "pointer", color: "#FFFFFF", fontSize: "16px", fontWeight: 600, fontFamily: "Poppins, sans-serif", transition: "opacity 0.2s ease" }}
-                    onMouseOver={(e) => e.currentTarget.style.opacity = "0.8"}
-                    onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
-                  >
-                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(10px)" }}>
-                      <Share2 size={20} color="#FFFFFF" strokeWidth={1.5} />
-                    </div>
-                    Share Experience
-                  </div>
+
+                  <ExpandableAction 
+                    icon={Share2}
+                    label="Share Experience"
+                    onClick={handleShareClick}
+                  />
 
                   {/* Save Button */}
-                  <div 
-                    style={{ display: "flex", alignItems: "center", gap: "16px", cursor: "pointer", color: "#FFFFFF", fontSize: "16px", fontWeight: 600, fontFamily: "Poppins, sans-serif", transition: "opacity 0.2s ease" }}
-                    onMouseOver={(e) => e.currentTarget.style.opacity = "0.8"}
-                    onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
-                  >
-                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(10px)" }}>
-                      <Heart size={20} color="#FFFFFF" strokeWidth={1.5} />
-                    </div>
-                    Save
-                  </div>
+                  <ExpandableAction 
+                    icon={Heart}
+                    label={saved ? "Saved" : "Save"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleSaved();
+                    }}
+                    active={saved}
+                    activeColor="#FF5A5F"
+                  />
                 </div>
 
               </div>
@@ -2424,6 +2520,11 @@ const ExperienceProduct = () => {
           listing={listing}
           selectedAddOns={selectedAddOns}
           onUpdateAddonQuantity={handleUpdateAddonQuantity}
+          externalOpen={bookingOpen}
+          onExternalOpenChange={(isOpen) => {
+            if (!isOpen) setBookingOpen(false);
+          }}
+          hideTrigger={!heroScrolledPast}
         />
 
         <div className="related-listings-wrapper" style={{ padding: "32px 80px", background: W }}>
