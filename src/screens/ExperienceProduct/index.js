@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useLocation, useParams, useHistory } from "react-router-dom";
+import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
@@ -860,11 +860,11 @@ const ExperienceProduct = () => {
         {/* HERO SECTION */}
         <section ref={heroRef} className="hero-section" style={{
           position: "relative",
-          height: "47vh",
-          minHeight: "360px",
+          height: "65vh",
+          minHeight: "520px",
           width: "calc(100% - 80px)",
           maxWidth: "1600px",
-          margin: "12px auto 0",
+          margin: "0 auto",
           borderRadius: "32px",
           overflow: "hidden",
           display: "flex",
@@ -894,9 +894,9 @@ const ExperienceProduct = () => {
                 alignItems: "center",
                 gap: "6px"
               }}>
-                <span>Home</span>
+                <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
                 <ChevronRight size={12} opacity={0.6} />
-                <span>Experiences</span>
+                <Link to="/experience" style={{ color: "inherit", textDecoration: "none" }}>Experiences</Link>
                 <ChevronRight size={12} opacity={0.6} />
                 <span style={{ fontWeight: 700 }}>{listing?.title || "Experience"}</span>
               </div>
