@@ -1092,21 +1092,25 @@ const ExperienceProduct = () => {
               }}
               style={{
                 position: "absolute",
-                bottom: "40px",
-                right: "40px",
-                zIndex: 10,
+                bottom: 24,
+                right: 24,
+                background: "rgba(0, 0, 0, 0.3)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
+                borderRadius: 24,
+                padding: "8px 16px",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                background: W,
-                color: FG,
-                border: `1px solid ${B}`,
-                padding: "12px 24px",
-                borderRadius: "100px",
+                gap: 8,
                 fontSize: "13px",
-                fontWeight: 700,
-                boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-                cursor: "pointer"
+                fontWeight: 500,
+                fontFamily: '"Inter", sans-serif',
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                cursor: "pointer",
+                zIndex: 10,
+                transition: "all 0.3s ease"
               }}
             >
               <Camera size={16} />
