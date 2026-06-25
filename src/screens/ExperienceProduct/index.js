@@ -926,20 +926,51 @@ const ExperienceProduct = () => {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto", gap: 24 }}>
               <motion.div style={{ opacity: fade, y: textY, display: "flex", flexDirection: "column", gap: 10 }}>
                 <Rev>
-                  <h1 className="hero-title" style={{
-                    fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    color: "#FFFFFF",
-                    margin: 0,
-                    letterSpacing: "-0.01em",
-                    fontFamily: "Poppins, sans-serif"
-                  }}>
-                    {listing?.title}
-                  </h1>
+                  {(() => {
+                    const titleText = listing?.title || "";
+                    const words = titleText.trim().split(/\s+/);
+                    let displayTitle;
+                    
+                    // Match the homepage accent word logic (last word is italic and cyan)
+                    if (words.length >= 2) {
+                      const lastWord = words.pop();
+                      displayTitle = (
+                        <>
+                          {words.join(' ')}{' '}
+                          <span style={{
+                            fontStyle: "italic",
+                            fontWeight: 500,
+                            background: "linear-gradient(135deg, #08B5D6, #45D8F2)",
+                            backgroundSize: "200% 200%",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}>
+                            {lastWord}
+                          </span>
+                        </>
+                      );
+                    } else {
+                      displayTitle = titleText;
+                    }
+
+                    return (
+                      <h1 className="hero-title" style={{
+                        fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        color: "#FFFFFF",
+                        margin: 0,
+                        letterSpacing: "-0.01em",
+                        fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
+                      }}>
+                        {displayTitle}
+                      </h1>
+                    );
+                  })()}
                 </Rev>
                 <Rev delay={0.15}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="transparent" stroke={A || "#0097B2"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: "transparent" }}>
                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="transparent" />
                       <circle cx="12" cy="10" r="3" fill="transparent" />
