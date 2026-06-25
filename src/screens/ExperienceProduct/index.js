@@ -1010,7 +1010,7 @@ const ExperienceProduct = () => {
 
             {/* Bottom Content */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px", flex: 1 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
                 
                 {/* Breadcrumbs */}
                 <div style={{ color: "rgba(255,255,255,0.8)", fontSize: "14px", fontWeight: 400, fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1023,7 +1023,7 @@ const ExperienceProduct = () => {
 
                 {/* Title */}
                 <h1 className="hero-title" style={{
-                  fontSize: "clamp(3rem, 5vw, 5rem)",
+                  fontSize: "clamp(2rem, 3.5vw, 3.5rem)",
                   fontWeight: 700,
                   lineHeight: 1.1,
                   color: "#FFFFFF",
@@ -1035,29 +1035,29 @@ const ExperienceProduct = () => {
                 </h1>
 
                 {/* Location */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "16px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                      <circle cx="12" cy="10" r="3" />
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#FFFFFF", fontSize: "15px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="transparent" stroke="#0097B2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: "transparent" }}>
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="transparent" />
+                      <circle cx="12" cy="10" r="3" fill="transparent" />
                     </svg>
                     <span>{[listing?.district || listing?.city, listing?.state].filter(Boolean).join(", ") || listing?.locationName || fallbackLocationValues[0] || "Alleppey, Kerala"}</span>
                   </div>
 
                   {/* Rating Row */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FFFFFF", fontSize: "16px", fontWeight: 600, fontFamily: "Poppins, sans-serif", marginTop: "8px" }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#F5A623" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FFB400"/>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#FFFFFF", fontSize: "14px", fontWeight: 500, fontFamily: "Poppins, sans-serif", marginTop: "4px" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800" xmlns="http://www.w3.org/2000/svg" style={{ fill: "#FFB800" }}>
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FFB800"/>
                     </svg>
                     {(reviewSummary?.totalReviews > 0 || listing?.reviewCount > 0) && (
-                      <span style={{ fontWeight: 800, fontSize: "24px" }}>{reviewSummary?.averageRating || listing?.rating}</span>
+                      <span style={{ fontWeight: 600 }}>{typeof (reviewSummary?.averageRating || listing?.rating) === 'number' && !Number.isInteger(reviewSummary?.averageRating || listing?.rating) ? (reviewSummary?.averageRating || listing?.rating).toFixed(1) : (reviewSummary?.averageRating || listing?.rating || 0)}</span>
                     )}
-                    <span style={{ fontWeight: 400, opacity: 0.8, fontSize: "16px" }}>
+                    <span style={{ fontWeight: 400, opacity: 0.8, marginLeft: "4px" }}>
                       ({reviewSummary?.totalReviews || listing?.reviewCount || 0} reviews)
                     </span>
                   </div>
 
                 {/* Actions */}
-                <div style={{ display: "flex", alignItems: "center", gap: "32px", marginTop: "32px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "32px", marginTop: "16px" }}>
                   <button style={{
                     background: "#0097B2",
                     color: "#FFFFFF",
