@@ -15,6 +15,9 @@ const Page = ({
   wide,
   notAuthorized,
   hideHeaderOnMobile,
+  hideHeader,
+  headerLeftContent,
+  hideBookings
 }) => {
   const { pathname } = useLocation();
   const { tokens: { B, BG }, theme } = useTheme();
@@ -41,7 +44,7 @@ const Page = ({
 
   const autoHideEnabled = shouldAutoHideHeader(pathname);
   const homeRoutes = ["/", "/experience", "/experiences", "/events", "/stays", "/food", "/places"];
-  const isHomeRoute = homeRoutes.includes(pathname);
+  const isHomeRoute = homeRoutes.includes(pathname) || pathname.startsWith("/experience/");
 
   useEffect(() => {
     clearAllBodyScrollLocks();
@@ -92,42 +95,48 @@ const Page = ({
   return (
     <div className={styles.page}>
       {/* Header Background Layer (Under the Hero) */}
-      <div 
-        className={cn("slim-header-bg", { "auto-hide": autoHideEnabled && !headerVisible })}
-        style={{ 
-          position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
-          height: (scrolled || separatorHeader) ? "72px" : "0px",
-          zIndex: 90, 
-          background: (scrolled && !isHomeRoute || separatorHeader) ? BG : "transparent", 
-          backdropFilter: "none", 
-          borderBottom: "none" 
-        }}
-      />
+      {!hideHeader && (
+        <div 
+          className={cn("slim-header-bg", { "auto-hide": autoHideEnabled && !headerVisible })}
+          style={{ 
+            position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
+            height: (scrolled || separatorHeader) ? "72px" : "0px",
+            zIndex: 90, 
+            background: (scrolled && !isHomeRoute || separatorHeader) ? BG : "transparent", 
+            backdropFilter: "none", 
+            borderBottom: "none" 
+          }}
+        />
+      )}
 
       {/* Header Content Layer (Above the Hero) */}
-      <motion.div
-        className={cn("slim-header-wrapper", { "force-dark": !scrolled && !separatorHeader && theme === "light" && !isHomeRoute, "auto-hide": autoHideEnabled && !headerVisible && !isHomeRoute })}
-        initial={{ y: -72, opacity: 0 }} 
-        animate={{ y: 0, opacity: 1 }} 
-        transition={{ duration: 0.85, ease: E }}
-        style={{ 
-          position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
-          zIndex: 100, 
-          background: (scrolled && !isHomeRoute) ? BG : "transparent",
-          boxShadow: (scrolled && !isHomeRoute) ? "0px 2px 10px rgba(0,0,0,0.05)" : "none",
-          transition: "all 0.4s", 
-          marginTop: separatorHeader ? "-72px" : "0", // Account for the background div in sticky mode
-        }}
-      >
-        <Header
-          separatorHeader={separatorHeader}
-          wide={wide}
-          notAuthorized={notAuthorized}
-          hideOnMobile={hideHeaderOnMobile}
-          isHomepage={isHomeRoute}
-          hasScrolled={scrolled}
-        />
-      </motion.div>
+      {!hideHeader && (
+        <motion.div
+          className={cn("slim-header-wrapper", { "force-dark": !scrolled && !separatorHeader && theme === "light" && !isHomeRoute, "auto-hide": autoHideEnabled && !headerVisible && !isHomeRoute })}
+          initial={{ y: -72, opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          transition={{ duration: 0.85, ease: E }}
+          style={{ 
+            position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
+            zIndex: 100, 
+            background: (scrolled && !isHomeRoute) ? BG : "transparent",
+            boxShadow: (scrolled && !isHomeRoute) ? "0px 2px 10px rgba(0,0,0,0.05)" : "none",
+            transition: "all 0.4s", 
+            marginTop: separatorHeader ? "-72px" : "0", // Account for the background div in sticky mode
+          }}
+        >
+          <Header
+            separatorHeader={separatorHeader}
+            wide={wide}
+            notAuthorized={notAuthorized}
+            hideOnMobile={hideHeaderOnMobile}
+            isHomepage={isHomeRoute}
+            hasScrolled={scrolled}
+            leftContent={headerLeftContent}
+            hideBookings={hideBookings}
+          />
+        </motion.div>
+      )}
       
       <div className={styles.inner}>
         {children}

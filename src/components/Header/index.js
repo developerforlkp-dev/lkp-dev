@@ -26,7 +26,7 @@ const items = [
   },
 ];
 
-const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile, isHomepage, hasScrolled }) => {
+const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile, isHomepage, hasScrolled, leftContent, hideBookings }) => {
   const [visibleNav, setVisibleNav] = useState(false);
   const [visible, setVisible] = useState(false);
   const darkMode = useDarkMode(false);
@@ -80,14 +80,18 @@ const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile, isHomepage
         )}
       >
         <div className={cn("container", styles.container, { [styles.floatingPill]: isHomepage && hasScrolled })}>
-          <Link className={styles.logo} to="/">
-            <Image
-              className={styles.pic}
-              src="/images/littleplanet-logo.svg"
-              srcDark="/images/littleplanet-logo.svg"
-              alt="FleetHome"
-            />
-          </Link>
+          {leftContent ? (
+            leftContent
+          ) : (
+            <Link className={styles.logo} to="/">
+              <Image
+                className={styles.pic}
+                src="/images/littleplanet-logo.svg"
+                srcDark="/images/littleplanet-logo.svg"
+                alt="FleetHome"
+              />
+            </Link>
+          )}
 
           {/* Desktop nav wrapper — hidden on mobile */}
           <div className={styles.wrapper} id="header-center-portal">
@@ -104,7 +108,7 @@ const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile, isHomepage
             >
               <Icon name={darkMode.value ? "sun" : "moon"} size="24" />
             </button>
-            {!shouldShowLogin && (
+            {!shouldShowLogin && !hideBookings && (
               <NavLink
                 className={cn(styles.link, styles.bookingsLink)}
                 to="/bookings"
