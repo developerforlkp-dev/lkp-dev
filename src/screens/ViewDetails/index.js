@@ -145,60 +145,60 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     null;
 
   // Use profile data if it belongs to the same customer to ensure sync
-  const useProfileInfo = profileData && 
-    (profileData.customerId === apiBooking.customerId || 
-     profileData.customerId === apiBooking.customer?.customerId ||
-     !apiBooking.customerId); // Fallback if customerId is missing in booking but it's the user's booking
+  const useProfileInfo = profileData &&
+    (profileData.customerId === apiBooking.customerId ||
+      profileData.customerId === apiBooking.customer?.customerId ||
+      !apiBooking.customerId); // Fallback if customerId is missing in booking but it's the user's booking
 
-  const customerName = useProfileInfo 
+  const customerName = useProfileInfo
     ? [profileData.firstName, profileData.lastName].filter(Boolean).join(" ")
     : pickText(
-        apiBooking?.customerName,
-        apiBooking?.customerFullName,
-        apiBooking?.guestName,
-        apiBooking?.userName,
-        apiBooking?.fullName,
-        apiBooking?.name,
-        [apiBooking?.firstName, apiBooking?.lastName].filter(Boolean).join(" "),
-        [apiBooking?.customerFirstName, apiBooking?.customerLastName].filter(Boolean).join(" "),
-        customerObj?.name,
-        customerObj?.fullName,
-        [customerObj?.firstName, customerObj?.lastName].filter(Boolean).join(" "),
-        customerObj?.customerName,
-        customerObj?.guestName
-      );
+      apiBooking?.customerName,
+      apiBooking?.customerFullName,
+      apiBooking?.guestName,
+      apiBooking?.userName,
+      apiBooking?.fullName,
+      apiBooking?.name,
+      [apiBooking?.firstName, apiBooking?.lastName].filter(Boolean).join(" "),
+      [apiBooking?.customerFirstName, apiBooking?.customerLastName].filter(Boolean).join(" "),
+      customerObj?.name,
+      customerObj?.fullName,
+      [customerObj?.firstName, customerObj?.lastName].filter(Boolean).join(" "),
+      customerObj?.customerName,
+      customerObj?.guestName
+    );
   const formattedCustomerName = formatPersonName(customerName);
 
   const customerPhone = useProfileInfo
     ? (profileData.phone || profileData.mobile || "")
     : pickText(
-        apiBooking?.customerPhone,
-        apiBooking?.phoneNumber,
-        apiBooking?.phone,
-        apiBooking?.mobile,
-        apiBooking?.mobileNumber,
-        apiBooking?.contactNumber,
-        apiBooking?.customerMobile,
-        customerObj?.phone,
-        customerObj?.phoneNumber,
-        customerObj?.mobile,
-        customerObj?.mobileNumber,
-        customerObj?.contactNumber
-      );
+      apiBooking?.customerPhone,
+      apiBooking?.phoneNumber,
+      apiBooking?.phone,
+      apiBooking?.mobile,
+      apiBooking?.mobileNumber,
+      apiBooking?.contactNumber,
+      apiBooking?.customerMobile,
+      customerObj?.phone,
+      customerObj?.phoneNumber,
+      customerObj?.mobile,
+      customerObj?.mobileNumber,
+      customerObj?.contactNumber
+    );
 
   const customerEmail = useProfileInfo
     ? (profileData.email || "")
     : pickText(
-        apiBooking?.customerEmail,
-        apiBooking?.email,
-        apiBooking?.emailId,
-        apiBooking?.emailAddress,
-        apiBooking?.mailId,
-        customerObj?.email,
-        customerObj?.emailId,
-        customerObj?.emailAddress,
-        customerObj?.mailId
-      );
+      apiBooking?.customerEmail,
+      apiBooking?.email,
+      apiBooking?.emailId,
+      apiBooking?.emailAddress,
+      apiBooking?.mailId,
+      customerObj?.email,
+      customerObj?.emailId,
+      customerObj?.emailAddress,
+      customerObj?.mailId
+    );
   // Format date from "2025-11-19" to "Fri, 21 Nov 2025" format
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -444,7 +444,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       location.latitude = parseFloat(stayData.latitude);
       location.longitude = parseFloat(stayData.longitude);
     }
-    
+
     // Map address
     location.address = pickText(
       stayData.address,
@@ -488,7 +488,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
       location.city = lp[0] || "TBD";
       if (lp.length > 1) location.country = lp.slice(1).join(", ");
     }
-    
+
     if (listingData?.meetingInstructions && location.address === "TBD") {
       const instructions = listingData.meetingInstructions;
       if (instructions.length < 100) { // Only use if it looks like a short address
@@ -1128,7 +1128,7 @@ const ViewDetails = () => {
 
   const isPastStayCheckInTime = () => {
     if (!booking) return false;
-    
+
     // Only apply to Stays
     const businessInterestCode = String(booking?.originalData?.businessInterestCode || "").toUpperCase();
     const isStayOrder = businessInterestCode === "STAYS" ||
@@ -1142,7 +1142,7 @@ const ViewDetails = () => {
     const status = booking.status?.toLowerCase() ||
       booking.statusTone ||
       (booking.originalData?.orderStatus ? String(booking.originalData.orderStatus).toLowerCase() : "");
-      
+
     if (status === "cancelled" || status === "canceled" || status === "completed") {
       return false;
     }
@@ -1151,15 +1151,15 @@ const ViewDetails = () => {
       booking?.originalData?.checkInDate ||
       booking?.originalData?.bookingDate ||
       booking?.stayData?.checkInDate;
-      
+
     if (!checkInDateStr) return false;
 
     const checkInDatetime = new Date(checkInDateStr);
-    
-    const checkInTimeStr = 
-      booking?.originalData?.checkInTime || 
-      booking?.originalData?.bookingTime || 
-      booking?.stayData?.checkInTime || 
+
+    const checkInTimeStr =
+      booking?.originalData?.checkInTime ||
+      booking?.originalData?.bookingTime ||
+      booking?.stayData?.checkInTime ||
       "14:00:00";
 
     if (checkInTimeStr && typeof checkInTimeStr === 'string' && checkInTimeStr.includes(':')) {
@@ -1247,7 +1247,7 @@ const ViewDetails = () => {
         setCancelError("Please select or enter a reason for cancellation");
         return;
       }
-      finalReason = selectedReason 
+      finalReason = selectedReason
         ? (cancelReason.trim() ? `${selectedReason} - ${cancelReason.trim()}` : selectedReason)
         : cancelReason.trim();
     }
@@ -1303,7 +1303,7 @@ const ViewDetails = () => {
       return;
     }
 
-    const finalReason = selectedReason 
+    const finalReason = selectedReason
       ? (cancelReason.trim() ? `${selectedReason} - ${cancelReason.trim()}` : selectedReason)
       : cancelReason.trim();
 
@@ -1329,16 +1329,25 @@ const ViewDetails = () => {
   const handlePrintReceipt = () => {
     const element = document.getElementById("receipt-ticket-pdf");
     if (!element) return;
-    
+
+    element.classList.add(styles.receiptPdfMode);
+
     const opt = {
-      margin:       [8, 8, 8, 8],
-      filename:     `LKP_Receipt_${booking.orderId}.pdf`,
-      image:        { type: 'jpeg', quality: 1 },
-      html2canvas:  { scale: 2.2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      margin: [8, 8, 8, 8],
+      filename: `LKP_Receipt_${booking.orderId}.pdf`,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 1.7, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+      pagebreak: { mode: ['avoid-all', 'css'] },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().from(element).set(opt).save();
+    html2pdf()
+      .from(element)
+      .set(opt)
+      .save()
+      .finally(() => {
+        element.classList.remove(styles.receiptPdfMode);
+      });
   };
 
   const ensureRazorpayScript = () =>
@@ -3151,7 +3160,7 @@ const ViewDetails = () => {
               You can proceed with payment to confirm your booking.
             </p>
           </div>
-          
+
 
 
           <div className={styles.cancelModalFooter}>
@@ -3190,7 +3199,7 @@ const ViewDetails = () => {
               Cancel Booking
             </h2>
             <p className={styles.cancelModalDescription} style={{ fontSize: "14px", color: "#777E90", lineHeight: "1.5" }}>
-              We're sorry to see you go. Please let us know<br/>why you're cancelling this booking.
+              We're sorry to see you go. Please let us know<br />why you're cancelling this booking.
             </p>
           </div>
           <div className={cn(styles.cancelModalBody, styles.cancelModalBodyScrollable)} style={{ padding: "0 32px" }}>
@@ -3203,45 +3212,45 @@ const ViewDetails = () => {
                   {[...cancellationReasons]
                     .sort((a, b) => (a?.sortOrder || 0) - (b?.sortOrder || 0))
                     .map((reason, idx) => {
-                    const reasonText = typeof reason === 'object' ? (reason.displayName || reason.reason || reason.name || JSON.stringify(reason)) : reason;
-                    const isSelected = selectedReason === reasonText;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => setSelectedReason(reasonText)}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          padding: "18px 20px",
-                          border: `1px solid ${isSelected ? "#0097B2" : "#E6E8EC"}`,
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          backgroundColor: isSelected ? "#F2FBFC" : "#FFFFFF",
-                          transition: "all 0.2s ease"
-                        }}
-                      >
-                        <span style={{ fontSize: "15px", color: "#141416", fontFamily: "Playfair Display, Lora, Georgia, serif", fontWeight: isSelected ? "500" : "400" }}>
-                          {reasonText}
-                        </span>
-                        <div style={{
-                          width: "20px",
-                          height: "20px",
-                          borderRadius: "50%",
-                          border: `2px solid ${isSelected ? "#0097B2" : "#B1B5C3"}`,
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          backgroundColor: "#FFFFFF",
-                          flexShrink: 0
-                        }}>
-                          {isSelected && (
-                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#0097B2" }} />
-                          )}
+                      const reasonText = typeof reason === 'object' ? (reason.displayName || reason.reason || reason.name || JSON.stringify(reason)) : reason;
+                      const isSelected = selectedReason === reasonText;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => setSelectedReason(reasonText)}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "18px 20px",
+                            border: `1px solid ${isSelected ? "#0097B2" : "#E6E8EC"}`,
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            backgroundColor: isSelected ? "#F2FBFC" : "#FFFFFF",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          <span style={{ fontSize: "15px", color: "#141416", fontFamily: "Playfair Display, Lora, Georgia, serif", fontWeight: isSelected ? "500" : "400" }}>
+                            {reasonText}
+                          </span>
+                          <div style={{
+                            width: "20px",
+                            height: "20px",
+                            borderRadius: "50%",
+                            border: `2px solid ${isSelected ? "#0097B2" : "#B1B5C3"}`,
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            backgroundColor: "#FFFFFF",
+                            flexShrink: 0
+                          }}>
+                            {isSelected && (
+                              <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#0097B2" }} />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               ) : (
                 <div className={styles.cancelPolicyText}>
@@ -3249,7 +3258,7 @@ const ViewDetails = () => {
                 </div>
               )}
             </div>
-            
+
             {selectedReason && selectedReason.toLowerCase().includes("other") && (
               <div className={styles.cancelModalFormGroup} style={{ marginTop: "24px" }}>
                 <label htmlFor="cancelReason" className={styles.cancelModalLabel} style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", color: "#B1B5C3", marginBottom: "12px" }}>
@@ -3495,14 +3504,14 @@ const ViewDetails = () => {
                       />
                     </div>
                     <div className={styles.receiptHeroInfo}>
-                      <div className={styles.receiptBrandName}>Little Known Planet</div>
+                      <div className={styles.receiptBrandName}><span>Little Known Planet</span></div>
                       <div className={styles.receiptBrandMeta}>
                         <span><Icon name="globe" size="14" />{receiptViewModel.companyWebsite.replace(/^https?:\/\//, "")}</span>
                         <span><Icon name="phone" size="14" />{receiptViewModel.companyPhone}</span>
                         <span><Icon name="email" size="14" />{receiptViewModel.companyEmail}</span>
                       </div>
                     </div>
-                    <div className={styles.receiptInvoicePill}>{receiptViewModel.invoiceId}</div>
+                    <div className={styles.receiptInvoicePill}><span>{receiptViewModel.invoiceId}</span></div>
                   </div>
 
                   <div className={styles.receiptMetaGrid}>
@@ -3528,7 +3537,7 @@ const ViewDetails = () => {
                       <div className={styles.receiptSecondaryText}>{receiptViewModel.property.line1}</div>
                       <div className={styles.receiptSecondaryText}>{receiptViewModel.property.line2}</div>
                       {receiptViewModel.property.line3 && <div className={styles.receiptSecondaryText}>{receiptViewModel.property.line3}</div>}
-                      <div className={styles.receiptBadge}>{receiptViewModel.property.badge}</div>
+                      <div className={styles.receiptBadge}><span>{receiptViewModel.property.badge}</span></div>
                     </div>
 
                     <div className={styles.receiptMetaCard}>
@@ -3597,11 +3606,21 @@ const ViewDetails = () => {
                       <Icon name="shield" size="16" />
                       <span>Cancellation Policy:</span>
                     </div>
-                    <ul className={styles.receiptPolicyList}>
-                      {receiptViewModel.cancellationPolicies.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
+                    <div className={styles.receiptPolicyList}>
+                      {receiptViewModel.cancellationPolicies
+                        .flatMap((item) =>
+                          String(item)
+                            .split(", ")
+                            .map((part) => part.trim())
+                            .filter(Boolean)
+                        )
+                        .map((item) => (
+                          <div key={item} className={styles.receiptPolicyItem}>
+                            <span className={styles.receiptPolicyBullet} />
+                            <span className={styles.receiptPolicyText}>{item}</span>
+                          </div>
+                        ))}
+                    </div>
                   </div>
 
                   <div className={styles.receiptFooter}>
