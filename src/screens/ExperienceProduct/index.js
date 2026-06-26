@@ -612,6 +612,7 @@ const ExperienceProduct = () => {
   const [overviewExpanded, setOverviewExpanded] = useState(false);
   const [langPopoverOpen, setLangPopoverOpen] = useState(false);
   const [eligibleBookings, setEligibleBookings] = useState([]);
+  const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
   const unavailableRedirectRef = useRef(false);
   const hostLeadUserId = hostData?.host?.leadUserId || hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
   const leadIdForProfile = leadData?.leadId || leadData?.id || listing?.leadId || listing?.lead_id || listing?.host?.leadId || null;
@@ -1451,7 +1452,7 @@ const ExperienceProduct = () => {
               <div style={{ display: "flex", flexDirection: "column" }}>
                 
                 {/* Header Area */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
                   <div>
                     <span style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: '"Inter", sans-serif' }}>
                       The Experience Journey
@@ -1629,12 +1630,20 @@ const ExperienceProduct = () => {
 
         {/* ADDONS SECTION */}
         <section className="addons-section" style={{ background: BG, padding: "32px 0" }}>
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1600px", margin: "0 auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>
-                Make it Yours
-              </h3>
-              {(listing?.addons || []).length > 2 && (
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "4px" }}>
+                  Enhance Your Experience
+                </span>
+                <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#0A1F3B", margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                  Make it Yours
+                </h3>
+                <p style={{ color: "#4F5B73", fontSize: "14px", margin: "2px 0 0 0", fontFamily: '"Inter", sans-serif' }}>
+                  Curated add-ons to make your experience even more special.
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
                 <div style={{ display: "flex", gap: 12 }}>
                   <button
                     type="button"
@@ -1642,10 +1651,10 @@ const ExperienceProduct = () => {
                     style={{
                       width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
                       display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: FG, transition: "0.3s", outline: "none"
+                      color: "#4F5B73", transition: "0.3s", outline: "none"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = "#4F5B73"; }}
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -1655,15 +1664,18 @@ const ExperienceProduct = () => {
                     style={{
                       width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
                       display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: FG, transition: "0.3s", outline: "none"
+                      color: "#4F5B73", transition: "0.3s", outline: "none"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = "#4F5B73"; }}
                   >
                     <ChevronRight size={18} />
                   </button>
                 </div>
-              )}
+                <div style={{ fontSize: "12px", fontFamily: '"Inter", sans-serif', fontWeight: 600, paddingRight: 4 }}>
+                  <span style={{ color: "#007B8F" }}>{Math.min(currentAddonIndex, Math.max(1, (listing?.addons || []).length))}</span> <span style={{ color: "#64748B" }}>/ {Math.max(1, (listing?.addons || []).length)}</span>
+                </div>
+              </div>
             </div>
             
             {(() => {
@@ -1674,6 +1686,23 @@ const ExperienceProduct = () => {
                 <div
                   ref={addonsSliderRef}
                   className={showScroll ? "no-scrollbar" : ""}
+                  onScroll={(e) => {
+                    if (!showScroll) return;
+                    const container = e.target;
+                    const stepSize = (container.clientWidth + 20) / 2;
+                    let newIndex = Math.round(container.scrollLeft / stepSize) + 2;
+                    
+                    // If we have hit the far right boundary, show the maximum number
+                    if (Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) <= 5) {
+                      newIndex = addonsList.length;
+                    } else {
+                      newIndex = Math.min(addonsList.length, newIndex);
+                    }
+
+                    if (newIndex !== currentAddonIndex) {
+                      setCurrentAddonIndex(newIndex);
+                    }
+                  }}
                   style={showScroll ? {
                     display: "flex",
                     gap: "20px",
@@ -1682,7 +1711,8 @@ const ExperienceProduct = () => {
                     paddingBottom: "12px",
                     width: "100%",
                     boxSizing: "border-box",
-                    scrollBehavior: "smooth"
+                    scrollBehavior: "smooth",
+                    scrollSnapType: "x mandatory"
                   } : {
                     display: "grid",
                     gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -1705,23 +1735,25 @@ const ExperienceProduct = () => {
                         style={{
                           display: "flex",
                           flexDirection: "row",
-                          height: "130px",
+                          height: "115px",
                           width: showScroll ? "calc((100% - 20px) / 2)" : "100%",
                           flexShrink: 0,
-                          background: isSelected ? AL : S,
+                          background: "#FFFFFF",
                           borderRadius: "16px",
-                          border: `1px solid ${isSelected ? A : B}`,
-                          transition: "background 0.3s, border-color 0.3s",
+                          border: `1px solid ${isSelected ? A : "transparent"}`,
+                          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+                          transition: "box-shadow 0.3s, border-color 0.3s",
                           overflow: "hidden",
-                          boxSizing: "border-box"
+                          boxSizing: "border-box",
+                          scrollSnapAlign: "start"
                         }}
                       >
                         {/* Left side: ONLY image */}
-                        <div style={{ width: "130px", height: "100%", flexShrink: 0, overflow: "hidden", background: W, borderRight: `1px solid ${B}` }}>
+                        <div style={{ width: "160px", height: "100%", flexShrink: 0, overflow: "hidden", background: W, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {addonImage ? (
                             <img
                               src={formatImageUrl(addonImage)}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
                               alt={addon.title}
                               onError={(e) => {
                                 e.target.onerror = null;
@@ -1729,31 +1761,30 @@ const ExperienceProduct = () => {
                               }}
                             />
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: AL }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", background: AL }}>
                               <Plus size={24} color={A} />
                             </div>
                           )}
                         </div>
 
                         {/* Right side: Content info columns */}
-                        <div style={{ flex: 1, minWidth: 0, padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box" }}>
-                          <div>
-                            <span style={{ fontSize: "14px", fontWeight: 700, color: FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
+                        <div style={{ flex: 1, minWidth: 0, padding: "16px", display: "flex", flexDirection: "row", justifyContent: "space-between", boxSizing: "border-box" }}>
+                          
+                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: "6px", flex: 1, minWidth: 0, paddingRight: "16px" }}>
+                            <div style={{ border: `1px solid ${pricingType === "Group" ? "#EF4444" : "#00B4D8"}`, borderRadius: "4px", padding: "2px 6px", color: pricingType === "Group" ? "#EF4444" : "#00B4D8", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", width: "fit-content", letterSpacing: "0.05em" }}>
+                              {pricingType}
+                            </div>
+                            <h4 style={{ fontSize: "18px", fontWeight: 700, color: "#0A1F3B", margin: "4px 0 0 0", fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {addon.title}
-                            </span>
-                            <p style={{ fontSize: "11px", color: M, lineHeight: "1.4", margin: "4px 0 0 0", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                            </h4>
+                            <p style={{ fontSize: "12px", color: "#64748B", margin: 0, fontFamily: '"Inter", sans-serif', display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.5" }}>
                               {addon.briefDescription || addon.description}
                             </p>
                           </div>
 
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, borderTop: `1px solid ${B}`, paddingTop: "8px", marginTop: "4px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontSize: "9px", fontWeight: 800, color: "#FFFFFF", background: pricingType === "Group" ? "#EF4444" : A, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0 }}>
-                                {pricingType}
-                              </span>
-                              {addon.price > 0 && (
-                                <span style={{ fontSize: "13px", fontWeight: 700, color: FG, whiteSpace: "nowrap" }}>₹{addon.price}</span>
-                              )}
+                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-end", minWidth: "90px" }}>
+                            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0A1F3B", fontFamily: '"Inter", sans-serif', marginBottom: "12px" }}>
+                              ₹{Number(addon.price || 0).toFixed(2)}
                             </div>
 
                             <div className="addon-actions" style={{ flexShrink: 0 }}>
@@ -1767,13 +1798,11 @@ const ExperienceProduct = () => {
                                       color: A,
                                       border: `1px solid ${A}50`,
                                       borderRadius: 100,
-                                      padding: "0 12px",
-                                      height: "28px",
-                                      fontSize: 9,
-                                      fontWeight: 800,
+                                      padding: "6px 16px",
+                                      fontSize: 12,
+                                      fontWeight: 700,
                                       cursor: "pointer",
                                       textTransform: "uppercase",
-                                      letterSpacing: "0.05em",
                                       transition: "all 0.2s",
                                       outline: "none"
                                     }}
@@ -1783,15 +1812,15 @@ const ExperienceProduct = () => {
                                     Remove
                                   </button>
                                 ) : (
-                                  <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 10, background: W, borderRadius: 100, padding: "0 8px", height: "28px", border: `1px solid ${A}` }}>
+                                  <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 10, background: W, borderRadius: 100, padding: "4px 8px", border: `1px solid ${A}` }}>
                                     <button
                                       type="button"
                                       onClick={() => handleUpdateAddonQuantity(addon, -1)}
                                       style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, color: A, outline: "none" }}
                                     >
-                                      <Minus size={10} />
+                                      <Minus size={14} />
                                     </button>
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: FG, minWidth: 12, textAlign: "center" }}>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>
                                       {selectedAddOns.find(a => (a.addonId || a.id) === addonId)?.quantity || 1}
                                     </span>
                                     <button
@@ -1799,7 +1828,7 @@ const ExperienceProduct = () => {
                                       onClick={() => handleUpdateAddonQuantity(addon, 1)}
                                       style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, color: A, outline: "none" }}
                                     >
-                                      <Plus size={10} />
+                                      <Plus size={14} />
                                     </button>
                                   </div>
                                 )
@@ -1808,22 +1837,17 @@ const ExperienceProduct = () => {
                                   type="button"
                                   onClick={() => handleUpdateAddonQuantity(addon, 1)}
                                   style={{
-                                    background: A,
-                                    color: W,
-                                    border: `1px solid ${A}`,
-                                    borderRadius: 100,
-                                    padding: "0 14px",
-                                    height: "28px",
-                                    fontSize: 9,
-                                    fontWeight: 800,
+                                    background: "#007B8F",
+                                    color: "#FFFFFF",
+                                    border: "none",
+                                    borderRadius: "100px",
+                                    padding: "6px 20px",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    fontFamily: '"Inter", sans-serif',
                                     cursor: "pointer",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
-                                    transition: "all 0.2s",
                                     outline: "none"
                                   }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = AH; e.currentTarget.style.borderColor = AH; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.background = A; e.currentTarget.style.borderColor = A; }}
                                 >
                                   Add
                                 </button>
