@@ -1173,14 +1173,14 @@ const ExperienceProduct = () => {
               }}>
                 <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
                   <div>
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>
                       The Experience
                     </span>
-                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#0A1F3B", lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                       Your Journey Begins
                     </h3>
                     <div style={{ position: "relative", maxHeight: narrativeExpanded ? "none" : "80px", overflow: "hidden" }}>
-                      <p style={{ color: "#4F5B73", fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>
+                      <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>
                         {description}
                       </p>
                       {!narrativeExpanded && (
@@ -1200,7 +1200,7 @@ const ExperienceProduct = () => {
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#007B8F",
+                      color: A,
                       fontSize: "15px",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1220,51 +1220,41 @@ const ExperienceProduct = () => {
               </div>
 
               {/* Overview Cards (6-block flat facts grid) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gridTemplateRows: "1fr 1fr" }} className="facts-grid">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }} className="facts-grid">
                 
                 {/* Fact 1: Duration */}
-                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderBottom: `1px solid ${B}`, borderRight: `1px solid ${B}` }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#F0F9FA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <Clock size={20} color="#007B8F" />
-                  </div>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
+                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Clock size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
                     {listing?.duration ? `${listing.duration} ${listing.durationUnit || ""}` : "2.5 Hrs"}
                   </p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Duration</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Duration</p>
                 </div>
 
                 {/* Fact 2: Min Age */}
-                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderBottom: `1px solid ${B}`, borderRight: `1px solid ${B}` }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#F0F9FA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <User size={20} color="#007B8F" />
-                  </div>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "12"}</p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
+                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <User size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "12"}</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
                 </div>
 
                 {/* Fact 3: Difficulty */}
-                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderBottom: `1px solid ${B}` }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#F0F9FA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <Zap size={20} color="#007B8F" />
-                  </div>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.difficultyLevel || "Moderate"}</p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Difficulty</p>
+                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Zap size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.difficultyLevel || "Moderate"}</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Difficulty</p>
                 </div>
 
                 {/* Fact 4: Infant Allowance */}
-                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRight: `1px solid ${B}` }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#F0F9FA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <Baby size={20} color="#007B8F" />
-                  </div>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.allowsInfants || listing?.infantsAllowed ? "Allowed" : "No"}</p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Infants</p>
+                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Baby size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.allowsInfants || listing?.infantsAllowed ? "Allowed" : "No"}</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Infants</p>
                 </div>
 
                 {/* Fact 5: Languages */}
-                <div className="fact-card" style={{ position: "relative", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRight: `1px solid ${B}` }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#F0F9FA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <Languages size={20} color="#007B8F" />
-                  </div>
+                <div className="fact-card" style={{ position: "relative", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Languages size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
                   {(() => {
                     const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
                       ? listing.languagesOffered
@@ -1276,7 +1266,7 @@ const ExperienceProduct = () => {
                     return (
                       <>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center", width: "100%", marginBottom: 6 }}>
-                          <span style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {displayStr}
                           </span>
                           {hasMore && (
@@ -1284,9 +1274,9 @@ const ExperienceProduct = () => {
                               <button
                                 onClick={(e) => { e.stopPropagation(); setLangPopoverOpen(!langPopoverOpen); }}
                                 style={{
-                                  background: "#FFFFFF",
-                                  color: "#007B8F",
-                                  border: `1px solid #007B8F`,
+                                  background: W,
+                                  color: A,
+                                  border: `1px solid ${A}`,
                                   borderRadius: "50%",
                                   width: "18px",
                                   height: "18px",
@@ -1309,8 +1299,8 @@ const ExperienceProduct = () => {
                                   bottom: "calc(100% + 14px)",
                                   left: "50%",
                                   transform: "translateX(-50%)",
-                                  background: "#FFFFFF",
-                                  border: `1px solid #E2E8F0`,
+                                  background: W,
+                                  border: `1px solid ${B}`,
                                   borderRadius: "16px",
                                   padding: "16px",
                                   boxShadow: "0 12px 32px rgba(0, 0, 0, 0.08)",
@@ -1318,15 +1308,14 @@ const ExperienceProduct = () => {
                                   minWidth: "220px",
                                   textAlign: "left"
                                 }}>
-                                  <p style={{ fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: "#64748B", margin: "0 0 12px 0", fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>All Languages</p>
+                                  <p style={{ fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: M, margin: "0 0 12px 0", fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>All Languages</p>
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                                     {list.map((lang, idx) => (
-                                      <span key={idx} style={{ background: "#F0F9FA", color: "#007B8F", padding: "6px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600, fontFamily: '"Inter", sans-serif', textTransform: "capitalize" }}>
+                                      <span key={idx} style={{ background: "transparent", color: A, padding: "6px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600, fontFamily: '"Inter", sans-serif', textTransform: "capitalize" }}>
                                         {lang.trim().toLowerCase()}
                                       </span>
                                     ))}
                                   </div>
-                                  {/* Tooltip Arrow */}
                                   <div style={{
                                     position: "absolute",
                                     top: "100%",
@@ -1336,7 +1325,7 @@ const ExperienceProduct = () => {
                                     height: 0,
                                     borderLeft: "8px solid transparent",
                                     borderRight: "8px solid transparent",
-                                    borderTop: `8px solid #E2E8F0`
+                                    borderTop: `8px solid ${B}`
                                   }} />
                                   <div style={{
                                     position: "absolute",
@@ -1347,7 +1336,7 @@ const ExperienceProduct = () => {
                                     height: 0,
                                     borderLeft: "8px solid transparent",
                                     borderRight: "8px solid transparent",
-                                    borderTop: `8px solid #FFFFFF`
+                                    borderTop: `8px solid ${W}`
                                   }} />
                                 </div>
                               )}
@@ -1357,18 +1346,16 @@ const ExperienceProduct = () => {
                       </>
                     );
                   })()}
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Languages</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Languages</p>
                 </div>
 
                 {/* Fact 6: Private Tour */}
-                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#F0F9FA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <ShieldCheck size={20} color="#007B8F" />
-                  </div>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
+                <div className="fact-card" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <ShieldCheck size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
                     {listing?.privateOptionAvailable ? "Yes" : "No"}
                   </p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Private Tour</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Private Tour</p>
                 </div>
 
               </div>
@@ -1454,23 +1441,23 @@ const ExperienceProduct = () => {
                 {/* Header Area */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
                   <div>
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: '"Inter", sans-serif' }}>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: '"Inter", sans-serif' }}>
                       The Experience Journey
                     </span>
-                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#0A1F3B", lineHeight: 1.1, marginBottom: "16px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "16px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                       How It Unfolds
                     </h3>
-                    <p style={{ color: "#4F5B73", fontSize: "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
+                    <p style={{ color: M, fontSize: "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
                       A thoughtfully curated journey that brings you closer to the natural beauty and rich experiences of this destination.
                     </p>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <Clock size={28} color="#007B8F" />
+                    <Clock size={28} color={A} fill="transparent" />
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                       <span style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", fontFamily: '"Inter", sans-serif' }}>
+                       <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>
                          {listing?.keyActivities?.length || 0} Unique Experiences
                        </span>
-                       <span style={{ fontSize: "14px", color: "#64748B", fontFamily: '"Inter", sans-serif' }}>
+                       <span style={{ fontSize: "14px", color: M, fontFamily: '"Inter", sans-serif' }}>
                          Carefully planned for you
                        </span>
                     </div>
@@ -1493,7 +1480,7 @@ const ExperienceProduct = () => {
                         transition={{ duration: 0.5, delay: i * 0.1 }}
                         style={{
                           display: "flex",
-                          background: "#FFFFFF",
+                          background: W,
                           borderRadius: "24px",
                           overflow: "hidden",
                           boxShadow: "0 10px 40px rgba(0, 0, 0, 0.04)",
@@ -1540,35 +1527,35 @@ const ExperienceProduct = () => {
                                 display: "flex", justifyContent: "center", alignItems: "center", pointerEvents: "none"
                               }}
                             >
-                              <div style={{ background: "rgba(255,255,255,0.9)", padding: "8px 16px", borderRadius: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-                                <Camera size={16} color="#007B8F" />
-                                <span style={{ color: "#007B8F", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>View Gallery</span>
+                              <div style={{ background: theme === "dark" ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.9)", padding: "8px 16px", borderRadius: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                <Camera size={16} color={A} />
+                                <span style={{ color: A, fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>View Gallery</span>
                               </div>
                             </div>
                           </div>
                         )}
                         
-                        <div style={{ flex: 1, padding: "24px 32px", display: "flex", alignItems: "center", position: "relative" }}>
-                          {/* Vertical Line with Dot */}
-                          <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", height: "60%", width: "1px", background: "#E2E8F0" }}>
-                            <div style={{ position: "absolute", left: "-4px", top: "50%", transform: "translateY(-50%)", width: "9px", height: "9px", borderRadius: "50%", background: "#007B8F" }} />
-                          </div>
-                          
-                          <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
-                            {/* Big Faint Number */}
-                            <div style={{ fontSize: "80px", fontWeight: 700, color: "#F0F4F8", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1, marginRight: "32px", letterSpacing: "-0.05em", userSelect: "none" }}>
-                              {numStr}
+                          <div style={{ flex: 1, padding: "24px 32px", display: "flex", alignItems: "center", position: "relative" }}>
+                            {/* Vertical Line with Dot */}
+                            <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", height: "60%", width: "1px", background: B }}>
+                              <div style={{ position: "absolute", left: "-4px", top: "50%", transform: "translateY(-50%)", width: "9px", height: "9px", borderRadius: "50%", background: A }} />
                             </div>
+                            
+                            <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
+                              {/* Big Faint Number */}
+                              <div style={{ fontSize: "80px", fontWeight: 700, color: theme === "dark" ? "#1E293B" : "#F0F4F8", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1, marginRight: "32px", letterSpacing: "-0.05em", userSelect: "none" }}>
+                                {numStr}
+                              </div>
                             
                             {/* Text Content */}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", marginBottom: "8px", fontFamily: '"Inter", sans-serif', letterSpacing: "0.15em", textTransform: "uppercase", whiteSpace: "normal", wordWrap: "break-word" }}>
+                              <div style={{ fontSize: "12px", fontWeight: 700, color: A, marginBottom: "8px", fontFamily: '"Inter", sans-serif', letterSpacing: "0.15em", textTransform: "uppercase", whiteSpace: "normal", wordWrap: "break-word" }}>
                                 {it.title || it.name || "Activity"}
                               </div>
                               {(it.description || it.pilot || it.briefDescription) && (
                                 <div>
                                   <p style={{ 
-                                    color: "#4F5B73", 
+                                    color: M, 
                                     fontSize: "14px", 
                                     lineHeight: "1.6", 
                                     margin: 0, 
@@ -1590,10 +1577,10 @@ const ExperienceProduct = () => {
                                       onClick={() => setExpandedActivities(prev => ({ ...prev, [i]: !prev[i] }))}
                                       style={{
                                         background: "none",
-                                        border: "none",
-                                        padding: "8px 0 0 0",
-                                        color: "#007B8F",
-                                        fontSize: "12px",
+                                      border: "none",
+                                      padding: "8px 0 0 0",
+                                      color: A,
+                                      fontSize: "12px",
                                         fontWeight: 700,
                                         fontFamily: '"Inter", sans-serif',
                                         cursor: "pointer",
@@ -1633,13 +1620,13 @@ const ExperienceProduct = () => {
           <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                <span style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "4px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "4px" }}>
                   Enhance Your Experience
                 </span>
-                <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#0A1F3B", margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                   Make it Yours
                 </h3>
-                <p style={{ color: "#4F5B73", fontSize: "14px", margin: "2px 0 0 0", fontFamily: '"Inter", sans-serif' }}>
+                <p style={{ color: M, fontSize: "14px", margin: "2px 0 0 0", fontFamily: '"Inter", sans-serif' }}>
                   Curated add-ons to make your experience even more special.
                 </p>
               </div>
@@ -1651,10 +1638,10 @@ const ExperienceProduct = () => {
                     style={{
                       width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
                       display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: "#4F5B73", transition: "0.3s", outline: "none"
+                      color: M, transition: "0.3s", outline: "none"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = "#4F5B73"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = M; }}
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -1664,16 +1651,16 @@ const ExperienceProduct = () => {
                     style={{
                       width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
                       display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: "#4F5B73", transition: "0.3s", outline: "none"
+                      color: M, transition: "0.3s", outline: "none"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = "#4F5B73"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = M; }}
                   >
                     <ChevronRight size={18} />
                   </button>
                 </div>
                 <div style={{ fontSize: "12px", fontFamily: '"Inter", sans-serif', fontWeight: 600, paddingRight: 4 }}>
-                  <span style={{ color: "#007B8F" }}>{Math.min(currentAddonIndex, Math.max(1, (listing?.addons || []).length))}</span> <span style={{ color: "#64748B" }}>/ {Math.max(1, (listing?.addons || []).length)}</span>
+                  <span style={{ color: A }}>{Math.min(currentAddonIndex, Math.max(1, (listing?.addons || []).length))}</span> <span style={{ color: M }}>/ {Math.max(1, (listing?.addons || []).length)}</span>
                 </div>
               </div>
             </div>
@@ -1738,7 +1725,7 @@ const ExperienceProduct = () => {
                           height: "115px",
                           width: showScroll ? "calc((100% - 20px) / 2)" : "100%",
                           flexShrink: 0,
-                          background: "#FFFFFF",
+                          background: W,
                           borderRadius: "16px",
                           border: `1px solid ${isSelected ? A : "transparent"}`,
                           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
@@ -1774,16 +1761,16 @@ const ExperienceProduct = () => {
                             <div style={{ border: `1px solid ${pricingType === "Group" ? "#EF4444" : "#00B4D8"}`, borderRadius: "4px", padding: "2px 6px", color: pricingType === "Group" ? "#EF4444" : "#00B4D8", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", width: "fit-content", letterSpacing: "0.05em" }}>
                               {pricingType}
                             </div>
-                            <h4 style={{ fontSize: "18px", fontWeight: 700, color: "#0A1F3B", margin: "4px 0 0 0", fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <h4 style={{ fontSize: "18px", fontWeight: 700, color: FG, margin: "4px 0 0 0", fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {addon.title}
                             </h4>
-                            <p style={{ fontSize: "12px", color: "#64748B", margin: 0, fontFamily: '"Inter", sans-serif', display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.5" }}>
+                            <p style={{ fontSize: "12px", color: M, margin: 0, fontFamily: '"Inter", sans-serif', display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.5" }}>
                               {addon.briefDescription || addon.description}
                             </p>
                           </div>
 
                           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-end", minWidth: "90px" }}>
-                            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0A1F3B", fontFamily: '"Inter", sans-serif', marginBottom: "12px" }}>
+                            <div style={{ fontSize: "16px", fontWeight: 800, color: FG, fontFamily: '"Inter", sans-serif', marginBottom: "12px" }}>
                               ₹{Number(addon.price || 0).toFixed(2)}
                             </div>
 
@@ -1884,7 +1871,7 @@ const ExperienceProduct = () => {
         </section>
         {/* PREPARATION SECTION */}
         <section className="prep-section" style={{ background: W, padding: "32px 0" }}>
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1600px", margin: "0 auto" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: "45fr 55fr", gap: 64 }} className="prep-grid">
               <Rev delay={0.1} style={{ height: "100%" }}>
                 <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
