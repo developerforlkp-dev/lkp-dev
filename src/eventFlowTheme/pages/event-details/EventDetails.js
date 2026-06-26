@@ -12,6 +12,7 @@ import Loader from "../../../components/Loader";
 import RelatedListingsStrip from "../../../components/RelatedListingsStrip";
 import { lockBodyScroll } from "../../../utils/scrollLock";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import DetailPageNavPortal from "../../../components/DetailPageNavPortal";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -1052,7 +1053,7 @@ const SpecCard = ({ label, value, sub, index, A, B, FG, M, W, theme, isCount }) 
 };
 
 /* ─── SECTIONS ───────────────────────────────────── */
-function Hero({ event }) {
+function Hero({ event, heroRef }) {
   const { theme, tokens: { A, W, M, FG, B, S, AL } } = useTheme();
   const history = useHistory();
   const title = event?.title || "SOLSTICE";
@@ -1128,7 +1129,7 @@ function Hero({ event }) {
   const { day: dateDay, month: dateMonth } = getParsedDateParts();
 
   return (
-    <section className="hero-section" style={{
+    <section ref={heroRef} className="hero-section" style={{
       position: "relative",
       minHeight: "520px",
       width: "calc(100% - 80px)",
@@ -1216,15 +1217,51 @@ function Hero({ event }) {
 
             {/* Event Name Heading */}
             <div style={{ overflow: "hidden", marginBottom: 12 }}>
-              <motion.h1 
-                initial={{ y: "100%" }} 
-                animate={{ y: 0 }} 
-                transition={{ duration: 1, ease: E }} 
-                className="font-display" 
-                style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)", fontWeight: 800, lineHeight: 1.1, color: FG, margin: 0, letterSpacing: "-0.02em" }}
-              >
-                {title}
-              </motion.h1>
+              {(() => {
+                const words = title.split(' ');
+                let displayTitle;
+                if (words.length >= 2) {
+                  const lastWord = words.pop();
+                  displayTitle = (
+                    <>
+                      {words.join(' ')}{' '}
+                      <span style={{
+                        fontStyle: "italic",
+                        fontWeight: 500,
+                        background: "linear-gradient(135deg, #08B5D6, #45D8F2)",
+                        backgroundSize: "200% 200%",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}>
+                        {lastWord}
+                      </span>
+                    </>
+                  );
+                } else {
+                  displayTitle = title;
+                }
+                
+                return (
+                  <motion.h1 
+                    initial={{ y: "100%" }} 
+                    animate={{ y: 0 }} 
+                    transition={{ duration: 1, ease: E }} 
+                    className="hero-title" 
+                    style={{ 
+                      fontSize: "clamp(3.5rem, 6vw, 5.5rem)", 
+                      fontWeight: 900, 
+                      lineHeight: 1.1, 
+                      color: "#FFFFFF", 
+                      margin: 0, 
+                      letterSpacing: "-0.01em",
+                      fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
+                    }}
+                  >
+                    {displayTitle}
+                  </motion.h1>
+                );
+              })()}
             </div>
 
 
@@ -3159,6 +3196,7 @@ function Tickets({ event }) {
 /* ─── MAIN ───────────────────────────────────────── */
 export default function EventDetails() {
   const location = useLocation();
+  const heroRef = useRef(null);
   const history = useHistory();
   const queryParams = new URLSearchParams(location.search);
   const eventId = queryParams.get('id') || '3';
@@ -3238,8 +3276,9 @@ export default function EventDetails() {
   return (
     <ScopedThemeProvider>
       <ScopedStyles />
+      <DetailPageNavPortal heroRef={heroRef} activeCategory="event" />
       <ProgressBar />
-      <Hero event={event} />
+      <Hero event={event} heroRef={heroRef} />
       <About event={event} />
       <Gallery event={event} />
       <Artists event={event} />
