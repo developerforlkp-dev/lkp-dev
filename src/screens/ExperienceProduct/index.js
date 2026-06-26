@@ -52,6 +52,22 @@ const getActivityImageUrl = (activity) => {
   return formatImageUrl(rawUrl);
 };
 
+const getActivityImages = (activity) => {
+  const imgs = Array.isArray(activity?.images) ? activity.images : [];
+  const urls = Array.isArray(activity?.imageUrls) ? activity.imageUrls : [];
+  let rawUrls = [];
+  if (imgs.length > 0) {
+    rawUrls = imgs.map(img => typeof img === "string" ? img : (img.url || img.fileUrl || img.imageUrl));
+  } else if (urls.length > 0) {
+    rawUrls = urls.map(url => typeof url === "string" ? url : (url.url || url.fileUrl || url.imageUrl));
+  }
+  if (rawUrls.length === 0) {
+    const single = getActivityImageUrl(activity);
+    return single ? [single] : [];
+  }
+  return rawUrls.map(u => formatImageUrl(u)).filter(Boolean);
+};
+
 /* ─── KINETIC BACKGROUND ────────────────────────── */
 function ExperienceBg({ progress, src }) {
   const { tokens: { A, BG }, theme } = useTheme();
@@ -550,6 +566,7 @@ const ExperienceProduct = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [expandedActivities, setExpandedActivities] = useState({});
 
   // Normalize reviews data for consistent usage
   const normalizedReviews = useMemo(() => {
@@ -589,16 +606,11 @@ const ExperienceProduct = () => {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [activityPhotoVisible, setActivityPhotoVisible] = useState(false);
   const [activityPhotoIndex, setActivityPhotoIndex] = useState(0);
+  const [selectedActivityImages, setSelectedActivityImages] = useState([]);
   const [flowTab, setFlowTab] = useState("itinerary");
   const [narrativeExpanded, setNarrativeExpanded] = useState(false);
   const [overviewExpanded, setOverviewExpanded] = useState(false);
   const [langPopoverOpen, setLangPopoverOpen] = useState(false);
-
-  const activityImages = useMemo(() => {
-    return (listing?.keyActivities || [])
-      .map(it => getActivityImageUrl(it))
-      .filter(Boolean);
-  }, [listing?.keyActivities]);
   const [eligibleBookings, setEligibleBookings] = useState([]);
   const unavailableRedirectRef = useRef(false);
   const hostLeadUserId = hostData?.host?.leadUserId || hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
@@ -1433,86 +1445,182 @@ const ExperienceProduct = () => {
 
 
         {/* TIMELINE SECTION */}
-        <section className="timeline-section" style={{ background: W, padding: "32px 0" }}>
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1600px", margin: "0 auto" }}>
+        <section className="timeline-section" style={{ background: BG, padding: "64px 0" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
             <Rev delay={0.4}>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 40, fontFamily: "Poppins, sans-serif" }}>
-                  How It Unfolds
-                </h3>
                 
-                <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                {/* Header Area */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48 }}>
+                  <div>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: '"Inter", sans-serif' }}>
+                      The Experience Journey
+                    </span>
+                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: "#0A1F3B", lineHeight: 1.1, marginBottom: "16px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                      How It Unfolds
+                    </h3>
+                    <p style={{ color: "#4F5B73", fontSize: "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
+                      A thoughtfully curated journey that brings you closer to the natural beauty and rich experiences of this destination.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <Clock size={28} color="#007B8F" />
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                       <span style={{ fontSize: "16px", fontWeight: 700, color: "#0A1F3B", fontFamily: '"Inter", sans-serif' }}>
+                         {listing?.keyActivities?.length || 0} Unique Experiences
+                       </span>
+                       <span style={{ fontSize: "14px", color: "#64748B", fontFamily: '"Inter", sans-serif' }}>
+                         Carefully planned for you
+                       </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Activities List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {(listing?.keyActivities || []).map((it, i) => {
                     const activityImageUrl = getActivityImageUrl(it);
                     const numStr = String(i + 1).padStart(2, "0");
                     return (
-                      <div
+                      <motion.div
                         key={i}
                         className="activity-item"
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-50px" }}
+                        whileHover={{ y: -4, boxShadow: "0 15px 40px rgba(0, 0, 0, 0.08)" }}
+                        transition={{ duration: 0.5, delay: i * 0.1 }}
                         style={{
                           display: "flex",
-                          gap: "32px",
-                          alignItems: "flex-start",
-                          justifyContent: "flex-start",
-                          paddingBottom: 32,
-                          borderBottom: i === (listing.keyActivities.length - 1) ? "none" : `1px solid ${B}`
+                          background: "#FFFFFF",
+                          borderRadius: "24px",
+                          overflow: "hidden",
+                          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.04)",
+                          border: `1px solid ${B}`,
+                          height: expandedActivities[i] ? "auto" : "180px",
+                          transition: "height 0.3s ease"
                         }}
                       >
                         {activityImageUrl && (
                           <div
                             style={{ 
-                              width: "240px", 
-                              height: "135px", 
-                              borderRadius: 16, 
-                              overflow: "hidden", 
+                              width: "220px", 
+                              alignSelf: "stretch", 
                               flexShrink: 0, 
                               cursor: "pointer",
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                              position: "relative",
+                              overflow: "hidden"
+                            }}
+                            onMouseOver={(e) => {
+                               const overlay = e.currentTarget.querySelector('.gallery-overlay');
+                               if (overlay) overlay.style.opacity = "1";
+                            }}
+                            onMouseOut={(e) => {
+                               const overlay = e.currentTarget.querySelector('.gallery-overlay');
+                               if (overlay) overlay.style.opacity = "0";
                             }}
                             onClick={() => { 
-                              const idx = activityImages.indexOf(activityImageUrl);
-                              setActivityPhotoIndex(idx !== -1 ? idx : 0);
+                              const imgs = getActivityImages(it);
+                              setSelectedActivityImages(imgs);
+                              setActivityPhotoIndex(0);
                               setActivityPhotoVisible(true); 
                             }}
                           >
                             <img
                               src={activityImageUrl}
-                              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
+                              style={{ width: "100%", height: "100%", minHeight: "180px", objectFit: "cover", transition: "transform 0.3s ease" }}
                               alt={it.name}
-                              onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-                              onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                             />
+                            <div
+                              className="gallery-overlay"
+                              style={{
+                                position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                                background: "rgba(0,0,0,0.3)", opacity: 0, transition: "opacity 0.3s ease",
+                                display: "flex", justifyContent: "center", alignItems: "center", pointerEvents: "none"
+                              }}
+                            >
+                              <div style={{ background: "rgba(255,255,255,0.9)", padding: "8px 16px", borderRadius: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                <Camera size={16} color="#007B8F" />
+                                <span style={{ color: "#007B8F", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>View Gallery</span>
+                              </div>
+                            </div>
                           </div>
                         )}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, paddingTop: 4 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                            <span style={{ fontSize: "24px", fontWeight: 700, color: A }}>
-                              {numStr}.
-                            </span>
-                            <h4 style={{ fontSize: "20px", fontWeight: 600, color: FG, margin: 0 }}>
-                              {it.name}
-                            </h4>
+                        
+                        <div style={{ flex: 1, padding: "24px 32px", display: "flex", alignItems: "center", position: "relative" }}>
+                          {/* Vertical Line with Dot */}
+                          <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", height: "60%", width: "1px", background: "#E2E8F0" }}>
+                            <div style={{ position: "absolute", left: "-4px", top: "50%", transform: "translateY(-50%)", width: "9px", height: "9px", borderRadius: "50%", background: "#007B8F" }} />
                           </div>
                           
-                          {it.description && (
-                            <p style={{ color: FG, fontSize: "15px", lineHeight: "1.6", margin: 0, fontWeight: 400 }}>
-                              {it.description}
-                            </p>
-                          )}
-                          
-                          {it.pilot && (
-                            <span style={{ fontSize: "14px", color: M, fontWeight: 500 }}>
-                              {it.pilot}
-                            </span>
-                          )}
+                          <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
+                            {/* Big Faint Number */}
+                            <div style={{ fontSize: "80px", fontWeight: 700, color: "#F0F4F8", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1, marginRight: "32px", letterSpacing: "-0.05em", userSelect: "none" }}>
+                              {numStr}
+                            </div>
+                            
+                            {/* Text Content */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: "12px", fontWeight: 700, color: "#007B8F", marginBottom: "8px", fontFamily: '"Inter", sans-serif', letterSpacing: "0.15em", textTransform: "uppercase", whiteSpace: "normal", wordWrap: "break-word" }}>
+                                {it.title || it.name || "Activity"}
+                              </div>
+                              {(it.description || it.pilot || it.briefDescription) && (
+                                <div>
+                                  <p style={{ 
+                                    color: "#4F5B73", 
+                                    fontSize: "14px", 
+                                    lineHeight: "1.6", 
+                                    margin: 0, 
+                                    fontWeight: 400, 
+                                    fontFamily: '"Inter", sans-serif', 
+                                    maxWidth: "600px", 
+                                    whiteSpace: "normal", 
+                                    wordWrap: "break-word",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: expandedActivities[i] ? "none" : 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    transition: "all 0.3s ease"
+                                  }}>
+                                    {it.description || it.pilot || it.briefDescription}
+                                  </p>
+                                  {String(it.description || it.pilot || it.briefDescription).length > 180 && (
+                                    <button
+                                      onClick={() => setExpandedActivities(prev => ({ ...prev, [i]: !prev[i] }))}
+                                      style={{
+                                        background: "none",
+                                        border: "none",
+                                        padding: "8px 0 0 0",
+                                        color: "#007B8F",
+                                        fontSize: "12px",
+                                        fontWeight: 700,
+                                        fontFamily: '"Inter", sans-serif',
+                                        cursor: "pointer",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.05em",
+                                        outline: "none"
+                                      }}
+                                    >
+                                      {expandedActivities[i] ? "Read Less" : "Read More"} <span style={{ fontSize: "14px", marginLeft: "4px" }}>&rarr;</span>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                   {(!listing?.keyActivities || listing.keyActivities.length === 0) && (
                     <p style={{ color: M, fontSize: 14 }}>Itinerary details are being finalized for this experience.</p>
                   )}
                 </div>
+
+
+
               </div>
             </Rev>
           </div>
@@ -2575,8 +2683,8 @@ const ExperienceProduct = () => {
       <AnimatePresence>
         {activityPhotoVisible && (
           <FullScreenImage
-            src={activityImages[activityPhotoIndex] || "/images/content/placeholder.jpg"}
-            items={activityImages.length > 0 ? activityImages : ["/images/content/placeholder.jpg"]}
+            src={selectedActivityImages[activityPhotoIndex] || "/images/content/placeholder.jpg"}
+            items={selectedActivityImages.length > 0 ? selectedActivityImages : ["/images/content/placeholder.jpg"]}
             currentIndex={activityPhotoIndex}
             onNavigate={setActivityPhotoIndex}
             onClose={() => setActivityPhotoVisible(false)}
