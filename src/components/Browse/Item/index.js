@@ -34,7 +34,7 @@ const Item = ({ className, item }) => {
           onLoad={() => setImageLoaded(true)}
           onError={handleImageError}
         />
-        {item.categoryText && (
+        {item.categoryText && !item.isClosed && (
           <div
             className={cn(
               { "status-black": item.category === "black" },
@@ -42,6 +42,14 @@ const Item = ({ className, item }) => {
             )}
           >
             {item.categoryText}
+          </div>
+        )}
+        {item.isClosed && (
+          <div
+            className={cn(styles.category)}
+            style={{ backgroundColor: '#23262f', color: '#fcfcfd' }}
+          >
+            Closed
           </div>
         )}
         <div className={styles.overlay}>

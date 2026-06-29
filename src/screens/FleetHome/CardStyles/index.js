@@ -268,6 +268,7 @@ const transformListingToCard = (listing, section) => {
     dateBadge: dateBadge,
     comment: null,
     avatar: null,
+    isClosed: Boolean(listing.isClosed),
   };
 };
 
@@ -287,6 +288,7 @@ const transformListingToBrowse = (listing, section) => {
     category: null,
     counter: listing.totalReviews || listing.reviewCount || 0,
     rating: listing.averageRating ?? listing.rating ?? 0,
+    isClosed: Boolean(listing.isClosed),
   };
 };
 
@@ -303,6 +305,7 @@ const transformListingToDestination = (listing, section) => {
     src: coverPhotoUrl,
     srcSet: coverPhotoUrl,
     url: getEntityUrl(listing, id, section),
+    isClosed: Boolean(listing.isClosed),
   };
 };
 
@@ -338,6 +341,7 @@ const transformListingToDestinationHorizontal = (listing, section) => {
     hasPrice: false,
     cost: null,
     location: locationText || null,
+    isClosed: Boolean(listing.isClosed),
   };
 };
 

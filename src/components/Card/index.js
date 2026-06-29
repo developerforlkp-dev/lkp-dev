@@ -46,6 +46,9 @@ const Item = ({ className, item, row, car, hidePrice }) => {
   const shouldHidePrice = hidePrice;
 
   const isClosedEvent = (() => {
+    // Check if the API explicitly sent isClosed
+    if (item.isClosed === true) return true;
+
     // Only apply to events
     const isEvent = wishlistConfig?.itemType === "event" || (item.url && item.url.includes("/event"));
     if (!isEvent) return false;
