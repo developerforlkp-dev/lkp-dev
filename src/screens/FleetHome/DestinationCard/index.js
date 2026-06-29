@@ -28,6 +28,25 @@ const DestinationCard = ({ className, item }) => {
             setImageLoaded(true);
           }}
         />
+        {item.isClosed && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              backgroundColor: '#23262f',
+              color: '#fcfcfd',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              zIndex: 2,
+            }}
+          >
+            Closed
+          </div>
+        )}
       </div>
       <div className={styles.content}>
         <div className={styles.title}>{item.title}</div>
