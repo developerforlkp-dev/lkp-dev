@@ -403,7 +403,7 @@ const ScopedStyles = () => (
       .stay-details-premium .desk-only { display: none !important; }
       .pol-contact-grid, .amenities-grid, .location-grid, .reviews-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
       .property-stay-card { grid-template-columns: 1fr !important; }
-      .premium-hero-grid { padding: 12px; }
+      .premium-hero-grid { padding: 0 12px 12px 12px; }
       .hero-thumbnail-strip { bottom: 16px; right: 16px; padding: 6px 8px; gap: 6px; border-radius: 12px; }
       .hero-mini-thumb { width: 44px; height: 33px; border-radius: 6px; }
       .premium-view-all-btn { padding: 6px 10px; font-size: 10px; border-radius: 8px; }
