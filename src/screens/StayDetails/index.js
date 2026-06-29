@@ -238,27 +238,47 @@ const ScopedStyles = () => (
       text-align: center;
     }
     .premium-editorial-tag {
-      font-size: 10px;
+      font-size: 12px;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       font-weight: 700;
       color: var(--A);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       display: inline-block;
+      font-family: "Inter", sans-serif;
     }
     .editorial-headline {
-      font-family: var(--font-fraunces, Georgia, serif);
-      font-size: clamp(2rem, 4.5vw, 2.8rem);
+      font-family: "Cormorant Garamond", "Playfair Display", serif;
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
       font-weight: 700;
-      line-height: 1.25;
-      margin: 0 0 20px 0;
+      line-height: 1.1;
+      margin: 0 0 24px 0;
       color: var(--FG);
+      letter-spacing: -0.02em;
     }
     .editorial-divider {
       width: 40px;
-      height: 1.5px;
-      background: var(--B);
+      height: 2px;
       margin: 16px auto 24px auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .editorial-divider::before,
+    .editorial-divider::after {
+      content: '';
+      flex: 1;
+      height: 1.5px;
+      background: var(--A);
+    }
+    .editorial-divider-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--A);
+      transform: rotate(45deg);
+      flex-shrink: 0;
     }
     
     /* Highlights Banner Strip */
@@ -303,17 +323,18 @@ const ScopedStyles = () => (
       align-items: flex-start;
     }
     .highlight-label {
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
       color: var(--M);
       font-weight: 600;
+      font-family: "Inter", sans-serif;
     }
     .highlight-value {
-      font-size: 13.5px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--FG);
-      font-family: "Poppins", sans-serif;
+      font-family: "Inter", sans-serif;
     }
 
     /* Amenities Grid and Tabs Section */
@@ -1174,13 +1195,15 @@ function StayAmenities({ stay }) {
             <Rev className="editorial-narrative-block">
               <span className="premium-editorial-tag">Overview</span>
               <h2 className="editorial-headline">{short}</h2>
-              <div className="editorial-divider" />
-              <div style={{ display: "flex", flexDirection: "column", gap: 16, maxW: 800, margin: "0 auto" }}>
-                <p style={{ fontSize: "16px", color: FG, lineHeight: 1.75, fontWeight: 500, opacity: 0.95, margin: 0, fontFamily: "Poppins, sans-serif" }}>
+              <div className="editorial-divider">
+                <div className="editorial-divider-dot" />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 800, margin: "0 auto" }}>
+                <p style={{ fontSize: "16px", color: M, lineHeight: 1.7, fontWeight: 400, margin: 0, fontFamily: '"Inter", sans-serif' }}>
                   {leadParagraph}
                 </p>
                 {bodyParagraph && (
-                  <p style={{ fontSize: "14px", color: M, lineHeight: 1.7, margin: 0, fontWeight: 400, opacity: 0.85 }}>
+                  <p style={{ fontSize: "15px", color: M, lineHeight: 1.7, margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', opacity: 0.85 }}>
                     {bodyParagraph}
                   </p>
                 )}
