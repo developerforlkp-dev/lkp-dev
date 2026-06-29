@@ -2916,11 +2916,20 @@ const ViewDetails = () => {
                   </div>
                 </>
               )}
-              {getAppliedRefundPolicyText() && (
-                <div className={styles.paymentMethod} style={{ marginTop: '8px', fontSize: '12px', color: '#777E90' }}>
-                  <span>Applied Refund Policy: {getAppliedRefundPolicyText()}</span>
-                </div>
-              )}
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #E6E8EC' }}>
+                {!isCancelledBooking ? (
+                  <p style={{ fontSize: '12px', color: '#777E90', marginBottom: '0', lineHeight: '1.5' }}>
+                    Cancellation and refund eligibility will be determined based on the date of cancellation and the applicable refund policy.
+                  </p>
+                ) : (
+                  getAppliedRefundPolicyText() && (
+                    <p style={{ fontSize: '12px', color: '#777E90', lineHeight: '1.5', marginBottom: '0' }}>
+                      <span style={{ fontWeight: 500 }}>Applied Cancellation Policy: </span>
+                      {getAppliedRefundPolicyText()}
+                    </p>
+                  )
+                )}
+              </div>
             </div>
           </div>
         </div>
