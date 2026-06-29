@@ -25,6 +25,7 @@ import ShareButton from "../../components/ShareButton";
 import { lockBodyScroll } from "../../utils/scrollLock";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import Favorite from "../../components/Favorite";
+import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 
 const fixImageUrl = (url) => {
   if (!url) return "";
@@ -727,7 +728,7 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
 };
 
 /* ─── STAY SECTIONS ─────────── */
-function StayHeroCarousel({ stay, galleryItems = [] }) {
+function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
   const history = useHistory();
   const { width, isMobile } = useWindowSize();
   const { theme, tokens: { A, BG, FG, M, S, B, W } } = useTheme();
@@ -805,7 +806,7 @@ function StayHeroCarousel({ stay, galleryItems = [] }) {
   };
 
   return (
-    <section style={{ position: "relative", height: isMobile ? "60vh" : "75vh", background: BG, overflow: "hidden", padding: "0", zIndex: 50 }}>
+    <section ref={heroRef} style={{ position: "relative", height: isMobile ? "60vh" : "75vh", background: BG, overflow: "hidden", padding: "0", zIndex: 50 }}>
       <div className="premium-hero-grid">
         
         {/* Main Cover Image View */}
@@ -2179,6 +2180,7 @@ function StayAddons({ stay, selectedAddOns, onToggleAddOn, addOnQuantities, onAd
 
 /* ─── MAIN COMPONENT ─────────── */
 const StayDetails = () => {
+  const heroRef = useRef(null);
   const { width, isMobile } = useWindowSize();
   const { theme, tokens: { BG, FG, W, B, S, M, A, AL, AH } } = useTheme();
   const history = useHistory();
@@ -2492,8 +2494,10 @@ const StayDetails = () => {
       <ScopedStyles />
       {unavailablePopup}
 
+      <DetailPageNavPortal heroRef={heroRef} activeCategory="stays" />
+      <ProgressBar />
 
-      <StayHeroCarousel stay={stay} galleryItems={galleryItems} />
+      <StayHeroCarousel stay={stay} galleryItems={galleryItems} heroRef={heroRef} />
 
       <StayAmenities stay={stay} />
 
