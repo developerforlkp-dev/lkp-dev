@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, createContext, useContext, useRef } from "react";
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
-import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, ChevronRight, Share2, Sparkles, ShieldCheck, Mail, Star, Heart } from "lucide-react";
+import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, ChevronRight, Share2, Sparkles, ShieldCheck, Mail, Star, Heart, Compass, Info } from "lucide-react";
 import { X, Plus as PlusIcon } from "lucide-react";
 import { BookingSystem } from "../../../components/JUI/BookingSystem";
 import { Footer } from "../../../components/JUI/Footer";
@@ -12,6 +12,7 @@ import Loader from "../../../components/Loader";
 import RelatedListingsStrip from "../../../components/RelatedListingsStrip";
 import { lockBodyScroll } from "../../../utils/scrollLock";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import "../../../screens/ExperienceProduct/MobileExperienceView.css";
 import DetailPageNavPortal from "../../../components/DetailPageNavPortal";
 import Favorite from "../../../components/Favorite";
 import Icon from "../../../components/Icon";
@@ -1399,6 +1400,8 @@ function Hero({ event, heroRef }) {
 
 function About({ event }) {
   const { theme, tokens: { A, BG, FG, M, W, B, S } } = useTheme();
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
 
   const desc = event?.description || "SOLSTICE is not merely an event — it is a threshold. A gathering of the most luminous minds in music, art, and culture, converging for a single evening at the intersection of the timeless and the radically new.";
 
@@ -1443,6 +1446,28 @@ function About({ event }) {
     { value: guestCount, l: "Guest Count", sub: "Total ticket capacity", isCount: true },
     { value: categoryName, l: "Category", sub: "Genre & theme" },
   ];
+
+  if (isMobile) {
+    return (
+      <div className="mob-section" style={{ background: isDark ? BG : W, paddingTop: 64 }}>
+        <span className="mob-section-eyebrow" style={{ color: A }}>The Event</span>
+        <h2 className="mob-section-title" style={{ color: FG }}>
+          Where the ancient <span style={{ color: A, fontStyle: "italic" }}>meets the avant-garde.</span>
+        </h2>
+        <p className="mob-section-desc" style={{ color: M }}>{desc}</p>
+
+        {/* Stats Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 24 }}>
+          {statsList.map((s, i) => (
+            <div key={s.l} style={{ padding: 12, borderRadius: 16, border: `1px solid ${B}`, background: isDark ? "#111" : "#FAFAFA" }}>
+              <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: A, display: "block", marginBottom: 4, fontWeight: 700 }}>{s.l}</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: FG }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1590,6 +1615,8 @@ function GalleryColumn({ images, direction, speed = 28, onImageClick }) {
 
 function Gallery({ event }) {
   const { tokens: { BG, FG, AH, W, B, A, M }, theme } = useTheme();
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
   const [photoViewVisible, setPhotoViewVisible] = useState(false);
   const [photoViewIndex, setPhotoViewIndex] = useState(0);
   const [gridVisible, setGridVisible] = useState(false);
@@ -1639,7 +1666,7 @@ function Gallery({ event }) {
   };
 
   return (
-    <section id="gallery" style={{ backgroundColor: BG, padding: "24px 80px 32px", overflow: "hidden" }}>
+    <section id="gallery" style={{ backgroundColor: BG, padding: isMobile ? "24px 20px 32px" : "24px 80px 32px", overflow: "hidden" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0" }}>
 
         <div style={{ marginBottom: 64 }}>
@@ -1684,7 +1711,9 @@ function Gallery({ event }) {
 }
 
 function Artists({ event }) {
-  const { tokens: { A, AL, FG, M, B, W } } = useTheme();
+  const { theme, tokens: { A, AL, FG, M, B, W, BG } } = useTheme();
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
   const [hov, setHov] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -1707,6 +1736,32 @@ function Artists({ event }) {
   const handleMouseMove = (e) => {
     setMousePos({ x: e.clientX, y: e.clientY });
   };
+
+  if (isMobile) {
+    return (
+      <div className="mob-section" style={{ background: isDark ? BG : W }}>
+        <span className="mob-section-eyebrow" style={{ color: A }}>Artists</span>
+        <h2 className="mob-section-title" style={{ color: FG }}>The Artists</h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {ARTISTS.map((a, i) => (
+            <div key={a.id} className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
+              <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
+                {a.image ? (
+                  <img src={a.image} alt={a.name} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ fontSize: 24, fontWeight: 700 }}>{a.name?.charAt(0) || "A"}</span>
+                )}
+              </div>
+              <h3 className="mob-host-name" style={{ color: FG }}>{a.name}</h3>
+              <p className="mob-host-label" style={{ color: A }}>{a.origin || "Artist"}</p>
+              <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center" }}>{a.bio}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1796,7 +1851,9 @@ function Artists({ event }) {
 }
 
 function Venue({ event, hostName }) {
-  const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const { theme, tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
   const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
   const tags = Array.isArray(event?.tags) ? event.tags :
     typeof event?.tags === 'string' ? event.tags.split(',').map(t => t.trim()) :
@@ -1813,6 +1870,101 @@ function Venue({ event, hostName }) {
   const venueState = event?.state || event?.venueState;
   const venueCountry = event?.country || event?.venueCountry;
   const venueInstructions = event?.checkInInstructions || event?.cancellationPolicySummary || event?.venueInstructions;
+
+  if (isMobile) {
+    return (
+      <>
+        <Mq items={tags} dir="r" size="sm" bg={S} accent />
+        <div className="mob-section" id="venue" style={{ background: isDark ? BG : W }}>
+          <span className="mob-section-eyebrow" style={{ color: A }}>Location & Details</span>
+          <h2 className="mob-section-title" style={{ color: FG }}>Where it All Happens</h2>
+
+          {/* Map embed */}
+          {mapSrc && (
+            <div className="mob-map-container" style={{ border: `1px solid ${B}` }}>
+              <iframe
+                title="Location"
+                src={mapSrc}
+                loading="lazy"
+                allowFullScreen
+                style={{ border: 0, width: "100%", height: "100%" }}
+              />
+            </div>
+          )}
+
+          {/* Detail rows */}
+          <div className="mob-detail-rows">
+            {venueAddress && (
+              <div className="mob-detail-row" style={{ borderColor: B }}>
+                <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                  <MapPin size={18} color={A} />
+                </div>
+                <div>
+                  <p className="mob-detail-label" style={{ color: A }}>Address</p>
+                  <p className="mob-detail-value" style={{ color: FG }}>{venueAddress}</p>
+                </div>
+              </div>
+            )}
+            {venueLandmark && (
+              <div className="mob-detail-row" style={{ borderColor: B }}>
+                <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                  <MapPin size={18} color={A} />
+                </div>
+                <div>
+                  <p className="mob-detail-label" style={{ color: A }}>Landmark</p>
+                  <p className="mob-detail-value" style={{ color: FG }}>{venueLandmark}</p>
+                </div>
+              </div>
+            )}
+            {venueDistrict && (
+              <div className="mob-detail-row" style={{ borderColor: B }}>
+                <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                  <MapPin size={18} color={A} />
+                </div>
+                <div>
+                  <p className="mob-detail-label" style={{ color: A }}>District</p>
+                  <p className="mob-detail-value" style={{ color: FG }}>{venueDistrict}</p>
+                </div>
+              </div>
+            )}
+            {venueState && (
+              <div className="mob-detail-row" style={{ borderColor: B }}>
+                <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                  <MapPin size={18} color={A} />
+                </div>
+                <div>
+                  <p className="mob-detail-label" style={{ color: A }}>State</p>
+                  <p className="mob-detail-value" style={{ color: FG }}>{venueState}</p>
+                </div>
+              </div>
+            )}
+            {venueCountry && (
+              <div className="mob-detail-row" style={{ borderColor: B }}>
+                <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                  <MapPin size={18} color={A} />
+                </div>
+                <div>
+                  <p className="mob-detail-label" style={{ color: A }}>Country</p>
+                  <p className="mob-detail-value" style={{ color: FG }}>{venueCountry}</p>
+                </div>
+              </div>
+            )}
+            {venueInstructions && (
+              <div className="mob-detail-row" style={{ borderColor: B }}>
+                <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                  <Info size={18} color={A} />
+                </div>
+                <div>
+                  <p className="mob-detail-label" style={{ color: A }}>Instructions</p>
+                  <p className="mob-detail-value" style={{ color: FG }}>{venueInstructions}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -2092,7 +2244,9 @@ function PolicyItem({ req }) {
 }
 
 function Rules({ event }) {
-  const { tokens: { A, AL, BG, FG, M, S, B, W } } = useTheme();
+  const { theme, tokens: { A, AL, BG, FG, M, S, B, W } } = useTheme();
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
 
   const checkInInstructions = event?.checkInInstructions || event?.checkinInstructions;
   const cancellationPolicy = event?.cancellationPolicySummary || event?.cancellationPolicy || event?.cancellationPolicyText;
@@ -2152,6 +2306,25 @@ function Rules({ event }) {
     });
   }
 
+  if (isMobile) {
+    return (
+      <div className="mob-section" style={{ background: isDark ? BG : W }}>
+        <span className="mob-section-eyebrow" style={{ color: A }}>Essential Guidelines</span>
+        <h2 className="mob-section-title" style={{ color: FG }}>Things to Keep in Mind</h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {displayRequirements.length > 0 ? (
+            displayRequirements.map((req, i) => (
+              <PolicyItem key={`req-${i}`} req={req} />
+            ))
+          ) : (
+            <p style={{ color: M, fontSize: 14 }}>No specific guidelines listed for this event.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section id="rules" style={{ background: BG, padding: "32px 80px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
@@ -2189,6 +2362,8 @@ function Rules({ event }) {
 function HostDetails({ event, hostName }) {
   const { tokens: { A, AL, BG, FG, M, S, B, W }, theme } = useTheme();
   const history = useHistory();
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
   const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
   const hostProfile = event?.hostProfile;
   const host = hostProfile?.host || hostProfile || event?.host || {};
@@ -2207,6 +2382,51 @@ function HostDetails({ event, hostName }) {
     if (!hostLeadUserId) return;
     history.push(`/host-profile?id=${hostLeadUserId}`);
   };
+
+  if (isMobile) {
+    return (
+      <div className="mob-section" style={{ background: isDark ? BG : W }}>
+        <span className="mob-section-eyebrow" style={{ color: A }}>Your Host</span>
+        <h2 className="mob-section-title" style={{ color: FG }}>Meet the Expert</h2>
+
+        <div className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
+          <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
+            <img
+              src={host?.profileImageUrl || event?.host?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+              alt={displayHostName}
+              style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`; }}
+            />
+          </div>
+          <h3 className="mob-host-name" style={{ color: FG }}>{displayHostName}</h3>
+          <p className="mob-host-label" style={{ color: A }}>{hostSubtitle}</p>
+          <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center", maxWidth: "100%" }}>
+            {hostDescription && hostDescription.length > 150 ? hostDescription.substring(0, 150) + "..." : hostDescription}
+          </p>
+
+          {(hostPhone || hostEmail) && (
+            <div className="mob-host-contact" style={{ marginTop: 16 }}>
+              {hostPhone && (
+                <a href={`tel:${hostPhone}`} className="mob-host-contact-btn" style={{ borderColor: B, color: FG, background: "transparent", textDecoration: "none" }}>
+                  <Phone size={14} /> Call
+                </a>
+              )}
+              {hostEmail && (
+                <a href={`mailto:${hostEmail}`} className="mob-host-contact-btn" style={{ borderColor: B, color: FG, background: "transparent", textDecoration: "none" }}>
+                  <Mail size={14} /> Email
+                </a>
+              )}
+            </div>
+          )}
+
+          <button onClick={navigateToHostProfile}
+            style={{ marginTop: 16, width: "100%", padding: "12px", borderRadius: 100, border: `1.5px solid ${A}`, background: "transparent", color: A, fontSize: 13, fontWeight: 700, cursor: "pointer", outline: "none" }}>
+            View Full Profile
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="host-quality-section" style={{ background: W, padding: "32px 80px" }}>
@@ -2606,6 +2826,8 @@ function HostDetails({ event, hostName }) {
 function EventReviews({ reviews = [] }) {
   const { tokens: { A, FG, M, B, W, S, BG, AL }, theme } = useTheme();
   const sliderRef = useRef(null);
+  const isMobile = useMobileView();
+  const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
 
   const scrollSlider = (direction) => {
     if (!sliderRef.current) return;
@@ -2628,6 +2850,41 @@ function EventReviews({ reviews = [] }) {
     { customerName: "Priya Patel", comment: "Highly curated trails, breathtaking views, and wonderful local insights. Can't wait to book this again!", rating: 5 },
     { customerName: "Vikram Malhotra", comment: "Top tier service! The scheduling was seamless and the guides were exceptionally knowledgeable.", rating: 5 }
   ];
+
+  if (isMobile && displayReviews.length > 0) {
+    return (
+      <div className="mob-section" style={{ background: isDark ? BG : W }}>
+        <span className="mob-section-eyebrow" style={{ color: A }}>Guest Feedback</span>
+        <h2 className="mob-section-title" style={{ color: FG }}>What people say</h2>
+
+        <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 16, msOverflowStyle: "none", scrollbarWidth: "none" }} className="hide-scroll">
+          {displayReviews.map((rev, idx) => {
+            const name = rev.customerName || rev.reviewerName || rev.author || "Guest";
+            const rating = rev.rating || 5;
+            const text = rev.comment || rev.text || rev.reviewText || "";
+            return (
+              <div key={idx} style={{ width: 260, flexShrink: 0, padding: 16, borderRadius: 16, border: `1px solid ${B}`, background: isDark ? "#111" : "#FAFAFA", display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: A, color: W, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
+                      {name.charAt(0)}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{name}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={10} color={i < rating ? "#F59E0B" : "#CBD5E1"} style={{ fill: i < rating ? "#F59E0B" : "transparent" }} />
+                    ))}
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: M, margin: 0, lineHeight: 1.5, flex: 1 }}>"{text}"</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="testimonials-section" style={{ background: BG, padding: "32px 80px" }}>
@@ -3282,6 +3539,7 @@ export default function EventDetails() {
   const location = useLocation();
   const heroRef = useRef(null);
   const history = useHistory();
+  const isMobile = useMobileView();
   const queryParams = new URLSearchParams(location.search);
   const eventId = queryParams.get('id') || '3';
   const { tokens: { BG, FG } } = useTheme();
@@ -3360,24 +3618,26 @@ export default function EventDetails() {
   return (
     <ScopedThemeProvider>
       <ScopedStyles />
-      <DetailPageNavPortal heroRef={heroRef} activeCategory="event" />
-      <ProgressBar />
-      <Hero event={event} heroRef={heroRef} />
-      <About event={event} />
-      <Gallery event={event} />
-      <Artists event={event} />
-      <Venue event={event} hostName={hostName} />
-      <Rules event={event} />
-      <HostDetails event={event} hostName={hostName} />
-      <EventReviews reviews={reviews} />
-      <EventBookingPopup event={event} />
-      <RelatedListingsStrip
-        businessInterestId={2}
-        primaryCategoryId={primaryCategoryId}
-        currentListingId={currentListingId}
-        title="More Events You Might Like"
-      />
-      <Footer />
+      <div className={isMobile ? "mob-exp" : ""} style={isMobile ? { background: BG, minHeight: "100vh" } : {}}>
+        <DetailPageNavPortal heroRef={heroRef} activeCategory="event" />
+        <ProgressBar />
+        <Hero event={event} heroRef={heroRef} />
+        <About event={event} />
+        <Gallery event={event} />
+        <Artists event={event} />
+        <Venue event={event} hostName={hostName} />
+        <Rules event={event} />
+        <HostDetails event={event} hostName={hostName} />
+        <EventReviews reviews={reviews} />
+        <EventBookingPopup event={event} />
+        <RelatedListingsStrip
+          businessInterestId={2}
+          primaryCategoryId={primaryCategoryId}
+          currentListingId={currentListingId}
+          title="More Events You Might Like"
+        />
+        <Footer />
+      </div>
     </ScopedThemeProvider>
   );
 }

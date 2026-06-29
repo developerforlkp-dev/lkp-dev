@@ -478,16 +478,36 @@ export default function MobileExperienceView({
               </div>
             </div>
           )}
-          {(listing?.meetingDistrict || listing?.meetingState || listing?.meetingCountry) && (
+          {listing?.meetingDistrict && (
             <div className="mob-detail-row" style={{ borderColor: B }}>
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <Compass size={18} color={A} />
+                <MapPin size={18} color={A} />
               </div>
               <div>
-                <p className="mob-detail-label" style={{ color: A }}>Region</p>
-                <p className="mob-detail-value" style={{ color: FG }}>
-                  {[listing.meetingDistrict, listing.meetingState, listing.meetingCountry].filter(Boolean).join(", ")}
-                </p>
+                <p className="mob-detail-label" style={{ color: A }}>District</p>
+                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingDistrict}</p>
+              </div>
+            </div>
+          )}
+          {listing?.meetingState && (
+            <div className="mob-detail-row" style={{ borderColor: B }}>
+              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                <MapPin size={18} color={A} />
+              </div>
+              <div>
+                <p className="mob-detail-label" style={{ color: A }}>State</p>
+                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingState}</p>
+              </div>
+            </div>
+          )}
+          {listing?.meetingCountry && (
+            <div className="mob-detail-row" style={{ borderColor: B }}>
+              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                <MapPin size={18} color={A} />
+              </div>
+              <div>
+                <p className="mob-detail-label" style={{ color: A }}>Country</p>
+                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingCountry}</p>
               </div>
             </div>
           )}
@@ -624,8 +644,10 @@ export default function MobileExperienceView({
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, padding: "14px 16px", borderRadius: 12, border: `1px solid ${B}`, background: isDark ? "#111" : W }}>
               <span style={{ fontSize: 28, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
               <div>
-                <div style={{ display: "flex", gap: 2, color: "#FFC107", fontSize: 14 }}>
-                  {[...Array(5)].map((_, i) => <span key={i}>{i < Math.round(reviewSummary.averageRating) ? "★" : "☆"}</span>)}
+                <div style={{ display: "flex", gap: 2 }}>
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} style={{ fill: i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent" }} />
+                  ))}
                 </div>
                 <p style={{ fontSize: 11, color: M, fontWeight: 600, margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   {reviewSummary.totalReviews || revs.length} reviews
@@ -643,8 +665,10 @@ export default function MobileExperienceView({
                   </div>
                   <div>
                     <p className="mob-review-name" style={{ color: FG }}>{rev.customerName || rev.author || "Verified Guest"}</p>
-                    <div className="mob-review-stars" style={{ color: "#FFC107" }}>
-                      {[...Array(5)].map((_, si) => <span key={si}>{si < (rev.rating || 5) ? "★" : "☆"}</span>)}
+                    <div className="mob-review-stars" style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                      {[...Array(5)].map((_, si) => (
+                        <Star key={si} size={10} color={si < (rev.rating || 5) ? "#F59E0B" : "#CBD5E1"} style={{ fill: si < (rev.rating || 5) ? "#F59E0B" : "transparent" }} />
+                      ))}
                     </div>
                   </div>
                   <span className="mob-review-date" style={{ color: M }}>
@@ -671,9 +695,8 @@ export default function MobileExperienceView({
           ║      RELATED EXPERIENCES          ║
           ╚═══════════════════════════════════╝ */}
       <div className="mob-related" style={{ background: isDark ? BG : W }}>
-        <div className="mob-related-header">
+        <div className="mob-related-header" style={{ paddingBottom: 8 }}>
           <span className="mob-section-eyebrow" style={{ color: A }}>Discover More</span>
-          <h2 className="mob-section-title" style={{ color: FG }}>You May Also Like</h2>
         </div>
         <RelatedListingsStrip
           businessInterestId={1}
@@ -682,9 +705,9 @@ export default function MobileExperienceView({
           fallbackLocationValues={fallbackLocationValues}
           fallbackTagValues={fallbackTagValues}
           fallbackSpecialLabelValues={fallbackSpecialLabelValues}
-          title=""
+          title="You May Also Like"
           sectionStyle={{ padding: "0 0 0 20px", background: "transparent" }}
-          titleStyle={{ display: "none" }}
+          titleStyle={{ fontSize: "clamp(1.6rem, 7vw, 2.2rem)", fontWeight: 700, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', color: FG, margin: 0, letterSpacing: "-0.02em" }}
         />
       </div>
 
