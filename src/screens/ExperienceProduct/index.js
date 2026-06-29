@@ -3,7 +3,7 @@ import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, ChevronRight, Sparkles, Star, Compass, Share2 } from "lucide-react";
+import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, ChevronRight, Sparkles, Star, Compass, Share2, Building, Map, Globe, Info } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
 import ShareButton from "../../components/ShareButton";
@@ -28,6 +28,8 @@ import { lockBodyScroll } from "../../utils/scrollLock";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import Favorite from "../../components/Favorite";
 import DetailPageNavPortal from "../../components/DetailPageNavPortal";
+import useIsMobile from "../../hooks/useIsMobile";
+import MobileExperienceView from "./MobileExperienceView";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -50,6 +52,22 @@ const getActivityImageUrl = (activity) => {
     : firstImage.url || firstImage.fileUrl || firstImage.imageUrl;
 
   return formatImageUrl(rawUrl);
+};
+
+const getActivityImages = (activity) => {
+  const imgs = Array.isArray(activity?.images) ? activity.images : [];
+  const urls = Array.isArray(activity?.imageUrls) ? activity.imageUrls : [];
+  let rawUrls = [];
+  if (imgs.length > 0) {
+    rawUrls = imgs.map(img => typeof img === "string" ? img : (img.url || img.fileUrl || img.imageUrl));
+  } else if (urls.length > 0) {
+    rawUrls = urls.map(url => typeof url === "string" ? url : (url.url || url.fileUrl || url.imageUrl));
+  }
+  if (rawUrls.length === 0) {
+    const single = getActivityImageUrl(activity);
+    return single ? [single] : [];
+  }
+  return rawUrls.map(u => formatImageUrl(u)).filter(Boolean);
 };
 
 /* ─── KINETIC BACKGROUND ────────────────────────── */
@@ -550,6 +568,7 @@ const ExperienceProduct = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [expandedActivities, setExpandedActivities] = useState({});
 
   // Normalize reviews data for consistent usage
   const normalizedReviews = useMemo(() => {
@@ -589,17 +608,13 @@ const ExperienceProduct = () => {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [activityPhotoVisible, setActivityPhotoVisible] = useState(false);
   const [activityPhotoIndex, setActivityPhotoIndex] = useState(0);
+  const [selectedActivityImages, setSelectedActivityImages] = useState([]);
   const [flowTab, setFlowTab] = useState("itinerary");
   const [narrativeExpanded, setNarrativeExpanded] = useState(false);
   const [overviewExpanded, setOverviewExpanded] = useState(false);
   const [langPopoverOpen, setLangPopoverOpen] = useState(false);
-
-  const activityImages = useMemo(() => {
-    return (listing?.keyActivities || [])
-      .map(it => getActivityImageUrl(it))
-      .filter(Boolean);
-  }, [listing?.keyActivities]);
   const [eligibleBookings, setEligibleBookings] = useState([]);
+  const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
   const unavailableRedirectRef = useRef(false);
   const hostLeadUserId = hostData?.host?.leadUserId || hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
   const leadIdForProfile = leadData?.leadId || leadData?.id || listing?.leadId || listing?.lead_id || listing?.host?.leadId || null;
@@ -656,12 +671,16 @@ const ExperienceProduct = () => {
   // Dynamic browser tab title
   useDocumentTitle(listing?.title, "Experiences");
 
-  const handleUpdateAddonQuantity = (addon, delta) => {
-    const addonId = addon.addonId || addon.id;
-    const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
+  const handleUpdateAddonQuantity = (rawAddon, delta) => {
+    const addonData = rawAddon.addon || rawAddon;
+    const addonId = addonData.addonId || addonData.id;
+    const pricingType = addonData.pricingType || (addonData.priceType === "per_booking" ? "Group" : "Individual");
 
     setSelectedAddOns((prev) => {
-      const existing = prev.find((a) => (a.addonId || a.id) === addonId);
+      const existing = prev.find((a) => {
+        const aData = a.addon || a;
+        return (aData.addonId || aData.id) === addonId;
+      });
 
       if (delta > 0) {
         // Enforcement: If it's a Group item, quantity is ALWAYS 1
@@ -670,35 +689,46 @@ const ExperienceProduct = () => {
           if (existing) return prev;
 
           // Only one Group item type allowed per booking
-          const otherGroupItem = prev.find(a =>
-            (a.pricingType === "Group" || (a.priceType === "per_booking"))
-          );
+          const otherGroupItem = prev.find(a => {
+            const aData = a.addon || a;
+            return aData.pricingType === "Group" || aData.priceType === "per_booking";
+          });
+          
           if (otherGroupItem) {
-            return [...prev.filter(a => (a.addonId || a.id) !== (otherGroupItem.addonId || otherGroupItem.id)), { ...addon, quantity: 1, pricingType }];
+            const otherData = otherGroupItem.addon || otherGroupItem;
+            return [...prev.filter(a => {
+              const aData = a.addon || a;
+              return (aData.addonId || aData.id) !== (otherData.addonId || otherData.id);
+            }), { ...rawAddon, quantity: 1, pricingType }];
           }
-          return [...prev, { ...addon, quantity: 1, pricingType }];
+          return [...prev, { ...rawAddon, quantity: 1, pricingType }];
         }
 
         // For Individual items, allow increasing quantity
         if (existing) {
-          return prev.map((a) =>
-            (a.addonId || a.id) === addonId
+          return prev.map((a) => {
+            const aData = a.addon || a;
+            return (aData.addonId || aData.id) === addonId
               ? { ...a, quantity: (a.quantity || 1) + delta }
-              : a
-          );
+              : a;
+          });
         }
-        return [...prev, { ...addon, quantity: 1, pricingType }];
+        return [...prev, { ...rawAddon, quantity: 1, pricingType }];
       } else {
         // Removal/Decrease logic
         if (existing) {
           if (existing.quantity > 1) {
-            return prev.map((a) =>
-              (a.addonId || a.id) === addonId
+            return prev.map((a) => {
+              const aData = a.addon || a;
+              return (aData.addonId || aData.id) === addonId
                 ? { ...a, quantity: a.quantity - 1 }
-                : a
-            );
+                : a;
+            });
           }
-          return prev.filter((a) => (a.addonId || a.id) !== addonId);
+          return prev.filter((a) => {
+            const aData = a.addon || a;
+            return (aData.addonId || aData.id) !== addonId;
+          });
         }
         return prev;
       }
@@ -816,6 +846,7 @@ const ExperienceProduct = () => {
   const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const textY = useTransform(heroProgress, [0, 1], [0, -200]);
   const fade = useTransform(heroProgress, [0, 0.6], [1, 0]);
+  const isMobile = useIsMobile();
 
   if (loading && !listing) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: BG }}><Loader /></div>;
@@ -855,6 +886,40 @@ const ExperienceProduct = () => {
     history.push(`/host-profile?${query.toString()}`);
   };
 
+  /* ── Mobile View ── */
+  if (isMobile) {
+    return (
+      <Page hideBookings>
+        <MobileExperienceView
+          listing={listing}
+          hostData={hostData}
+          leadData={leadData}
+          galleryItems={galleryItems}
+          selectedAddOns={selectedAddOns}
+          handleUpdateAddonQuantity={handleUpdateAddonQuantity}
+          reviews={reviews}
+          reviewSummary={reviewSummary}
+          eligibleBookings={eligibleBookings}
+          history={history}
+          id={id}
+          formatImageUrl={formatImageUrl}
+          description={description}
+          primaryCategoryId={primaryCategoryId}
+          currentListingId={currentListingId}
+          fallbackLocationValues={fallbackLocationValues}
+          fallbackTagValues={fallbackTagValues}
+          fallbackSpecialLabelValues={fallbackSpecialLabelValues}
+          displayHostName={displayHostName}
+          hostPhone={hostPhone}
+          hostEmail={hostEmail}
+          displayTags={displayTags}
+          navigateToHostProfile={navigateToHostProfile}
+          normalizedReviews={normalizedReviews}
+        />
+      </Page>
+    );
+  }
+
   return (
     <Page hideBookings>
       <DetailPageNavPortal heroRef={heroRef} activeCategory="experience" />
@@ -862,8 +927,8 @@ const ExperienceProduct = () => {
         {/* HERO SECTION */}
         <section ref={heroRef} className="hero-section" style={{
           position: "relative",
-          height: "65vh",
-          minHeight: "520px",
+          height: "50vh",
+          minHeight: "400px",
           width: "calc(100% - 80px)",
           maxWidth: "1600px",
           margin: "0 auto",
@@ -926,20 +991,51 @@ const ExperienceProduct = () => {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto", gap: 24 }}>
               <motion.div style={{ opacity: fade, y: textY, display: "flex", flexDirection: "column", gap: 10 }}>
                 <Rev>
-                  <h1 className="hero-title" style={{
-                    fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    color: "#FFFFFF",
-                    margin: 0,
-                    letterSpacing: "-0.01em",
-                    fontFamily: "Poppins, sans-serif"
-                  }}>
-                    {listing?.title}
-                  </h1>
+                  {(() => {
+                    const titleText = listing?.title || "";
+                    const words = titleText.trim().split(/\s+/);
+                    let displayTitle;
+                    
+                    // Match the homepage accent word logic (last word is italic and cyan)
+                    if (words.length >= 2) {
+                      const lastWord = words.pop();
+                      displayTitle = (
+                        <>
+                          {words.join(' ')}{' '}
+                          <span style={{
+                            fontStyle: "italic",
+                            fontWeight: 500,
+                            background: "linear-gradient(135deg, #08B5D6, #45D8F2)",
+                            backgroundSize: "200% 200%",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}>
+                            {lastWord}
+                          </span>
+                        </>
+                      );
+                    } else {
+                      displayTitle = titleText;
+                    }
+
+                    return (
+                      <h1 className="hero-title" style={{
+                        fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        color: "#FFFFFF",
+                        margin: 0,
+                        letterSpacing: "-0.01em",
+                        fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
+                      }}>
+                        {displayTitle}
+                      </h1>
+                    );
+                  })()}
                 </Rev>
                 <Rev delay={0.15}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="transparent" stroke={A || "#0097B2"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: "transparent" }}>
                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="transparent" />
                       <circle cx="12" cy="10" r="3" fill="transparent" />
@@ -993,8 +1089,8 @@ const ExperienceProduct = () => {
 
 
         {/* GALLERY SECTION */}
-        <section className="gallery-section" style={{ background: W, padding: "24px 80px 32px", overflow: "hidden" }}>
-          <div style={{ maxWidth: 1440, margin: "0 auto", position: "relative", overflow: "hidden" }}>
+        <section className="gallery-section" style={{ background: W, padding: "24px 0 32px", overflow: "hidden" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1600px", margin: "0 auto", position: "relative", overflow: "hidden" }}>
             {/* Left and Right Fade Overlays */}
             <div style={{
               position: "absolute",
@@ -1026,7 +1122,7 @@ const ExperienceProduct = () => {
               const doubledItems = [...filledItems, ...filledItems];
 
               const galleryDistance = filledItems.length * 316; // 300px width + 16px gap
-              const galleryDuration = galleryDistance / 60; // constant speed of 60px/s
+              const galleryDuration = galleryDistance / 35; // constant speed of 35px/s
 
               return (
                 <motion.div
@@ -1061,21 +1157,25 @@ const ExperienceProduct = () => {
               }}
               style={{
                 position: "absolute",
-                bottom: "40px",
-                right: "40px",
-                zIndex: 10,
+                bottom: 24,
+                right: 24,
+                background: "rgba(0, 0, 0, 0.3)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
+                borderRadius: 24,
+                padding: "8px 16px",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                background: W,
-                color: FG,
-                border: `1px solid ${B}`,
-                padding: "12px 24px",
-                borderRadius: "100px",
+                gap: 8,
                 fontSize: "13px",
-                fontWeight: 700,
-                boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-                cursor: "pointer"
+                fontWeight: 500,
+                fontFamily: '"Inter", sans-serif',
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                cursor: "pointer",
+                zIndex: 10,
+                transition: "all 0.3s ease"
               }}
             >
               <Camera size={16} />
@@ -1099,30 +1199,38 @@ const ExperienceProduct = () => {
 
 
         {/* DETAILS SECTION */}
-        <section className="details-section" style={{ background: BG, padding: "32px 80px" }}>
-          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }} className="details-grid-container">
-              {/* Narrative Block (Left-hand card) */}
+        <section className="details-section" style={{ background: BG, padding: "64px 0" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "1.2fr 1fr", 
+              gap: "24px", 
+              alignItems: "stretch"
+            }} className="details-grid-container">
+              
+              {/* Narrative Block (Left-hand section) */}
               <div className="narrative-card" style={{
-                background: W,
-                border: `1px solid ${B}`,
-                padding: "32px",
-                borderRadius: "24px",
+                padding: "36px 48px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)",
-                height: narrativeExpanded ? "auto" : "272px",
-                boxSizing: "border-box"
+                background: W,
+                borderRadius: "24px",
+                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.04)",
+                border: `1px solid ${B}`,
+                boxSizing: "border-box",
+                height: narrativeExpanded ? "auto" : "100%",
               }}>
                 <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
                   <div>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: A, letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: "Poppins, sans-serif" }}>The Experience</span>
-                    <h3 style={{ fontSize: "clamp(1.4rem, 2vw, 1.8rem)", fontWeight: 700, color: FG, lineHeight: 1.2, marginBottom: "12px", fontFamily: "Poppins, sans-serif" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>
+                      The Experience
+                    </span>
+                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                       Your Journey Begins
                     </h3>
-                    <div style={{ position: "relative", maxHeight: narrativeExpanded ? "none" : "110px", overflow: "hidden" }}>
-                      <p style={{ color: M, fontSize: "15px", lineHeight: "1.7", margin: 0, fontWeight: 400 }}>
+                    <div style={{ position: "relative", maxHeight: narrativeExpanded ? "none" : "80px", overflow: "hidden" }}>
+                      <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>
                         {description}
                       </p>
                       {!narrativeExpanded && (
@@ -1143,83 +1251,89 @@ const ExperienceProduct = () => {
                       background: "none",
                       border: "none",
                       color: A,
-                      fontSize: "11px",
+                      fontSize: "15px",
                       fontWeight: 700,
                       cursor: "pointer",
-                      padding: "8px 0 0 0",
-                      fontFamily: "Poppins, sans-serif",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
+                      padding: "16px 0 0 0",
+                      fontFamily: '"Inter", sans-serif',
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
                       alignSelf: "flex-start",
                       outline: "none"
                     }}
                   >
                     {narrativeExpanded ? "Read Less" : "Read More"}
+                    <span style={{ fontSize: "18px", lineHeight: 1 }}>&rarr;</span>
                   </button>
                 </div>
               </div>
 
               {/* Overview Cards (6-block flat facts grid) */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="facts-grid">
-                  {/* Fact 1: Duration */}
-                  <div className="fact-card" style={{ background: W, border: `1px solid ${B}`, height: "128px", boxSizing: "border-box", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-                    <Clock size={22} color={A} style={{ marginBottom: 12 }} />
-                    <p style={{ fontSize: "15px", fontWeight: 700, color: FG, marginBottom: 4, fontFamily: "Poppins, sans-serif" }}>
-                      {listing?.duration ? `${listing.duration} ${listing.durationUnit || ""}` : "2.5 Hrs"}
-                    </p>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600 }}>Duration</p>
-                  </div>
-                  {/* Fact 2: Min Age */}
-                  <div className="fact-card" style={{ background: W, border: `1px solid ${B}`, height: "128px", boxSizing: "border-box", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-                    <User size={22} color={A} style={{ marginBottom: 12 }} />
-                    <p style={{ fontSize: "15px", fontWeight: 700, color: FG, marginBottom: 4, fontFamily: "Poppins, sans-serif" }}>{listing?.minimumAge || "18+"}</p>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600 }}>Min Age</p>
-                  </div>
-                  {/* Fact 3: Difficulty */}
-                  <div className="fact-card" style={{ background: W, border: `1px solid ${B}`, height: "128px", boxSizing: "border-box", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-                    <Zap size={22} color={A} style={{ marginBottom: 12 }} />
-                    <p style={{ fontSize: "15px", fontWeight: 700, color: FG, marginBottom: 4, fontFamily: "Poppins, sans-serif" }}>{listing?.difficultyLevel || "Moderate"}</p>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600 }}>Difficulty</p>
-                  </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }} className="facts-grid">
+                
+                {/* Fact 1: Duration */}
+                <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Clock size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
+                    {listing?.duration ? `${listing.duration} ${listing.durationUnit || ""}` : "2.5 Hrs"}
+                  </p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Duration</p>
+                </div>
 
-                  {/* Fact 4: Infant Allowance */}
-                  <div className="fact-card" style={{ background: W, border: `1px solid ${B}`, height: "128px", boxSizing: "border-box", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-                    <Baby size={22} color={A} style={{ marginBottom: 12 }} />
-                    <p style={{ fontSize: "15px", fontWeight: 700, color: FG, marginBottom: 4, fontFamily: "Poppins, sans-serif" }}>{listing?.allowsInfants || listing?.infantsAllowed ? "Allowed" : "No"}</p>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600 }}>Infants</p>
-                  </div>
-                  {/* Fact 5: Languages */}
-                  <div className="fact-card" style={{ position: "relative", background: W, border: `1px solid ${B}`, height: "128px", boxSizing: "border-box", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-                    <Languages size={22} color={A} style={{ marginBottom: 12 }} />
-                    {(() => {
-                      const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
-                        ? listing.languagesOffered
-                        : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]);
-                      
-                      const displayStr = list.slice(0, 2).join(", ");
-                      const hasMore = list.length > 2;
-                      
-                      return (
-                        <>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center", width: "90%", marginBottom: 4 }}>
-                            <span style={{ fontSize: "14px", fontWeight: 700, color: FG, fontFamily: "Poppins, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {displayStr}
-                            </span>
-                            {hasMore && (
+                {/* Fact 2: Min Age */}
+                <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <User size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "12"}</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
+                </div>
+
+                {/* Fact 3: Difficulty */}
+                <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Zap size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.difficultyLevel || "Moderate"}</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Difficulty</p>
+                </div>
+
+                {/* Fact 4: Infant Allowance */}
+                <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Baby size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.allowsInfants || listing?.infantsAllowed ? "Allowed" : "No"}</p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Infants</p>
+                </div>
+
+                {/* Fact 5: Languages */}
+                <div className="fact-card" style={{ position: "relative", padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <Languages size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  {(() => {
+                    const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
+                      ? listing.languagesOffered
+                      : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]);
+                    
+                    const displayStr = list.slice(0, 2).join(", ");
+                    const hasMore = list.length > 2;
+                    
+                    return (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-start", width: "100%", marginBottom: 6 }}>
+                          <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {displayStr}
+                          </span>
+                          {hasMore && (
+                            <div style={{ position: "relative", display: "inline-flex" }}>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setLangPopoverOpen(!langPopoverOpen); }}
                                 style={{
-                                  background: AL,
+                                  background: W,
                                   color: A,
-                                  border: `1px solid ${B}`,
+                                  border: `1px solid ${A}`,
                                   borderRadius: "50%",
-                                  width: "20px",
-                                  height: "20px",
+                                  width: "18px",
+                                  height: "18px",
                                   display: "inline-flex",
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  fontSize: "10px",
+                                  fontSize: "12px",
                                   fontWeight: 700,
                                   cursor: "pointer",
                                   padding: 0,
@@ -1229,200 +1343,322 @@ const ExperienceProduct = () => {
                               >
                                 +
                               </button>
-                            )}
-                          </div>
-                          {hasMore && langPopoverOpen && (
-                            <div style={{
-                              position: "absolute",
-                              bottom: "105%",
-                              left: "50%",
-                              transform: "translateX(-50%)",
-                              background: W,
-                              border: `1px solid ${B}`,
-                              borderRadius: "12px",
-                              padding: "10px 16px",
-                              boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                              zIndex: 100,
-                              minWidth: "160px",
-                              maxWidth: "240px",
-                              textAlign: "center"
-                            }}>
-                              <p style={{ fontSize: "10px", textTransform: "uppercase", color: M, margin: "0 0 6px 0", fontWeight: 600 }}>All Languages</p>
-                              <p style={{ fontSize: "13px", color: FG, margin: 0, fontWeight: 600, lineHeight: 1.4 }}>
-                                {list.join(", ")}
-                              </p>
-                              <div style={{
-                                position: "absolute",
-                                top: "100%",
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                width: 0,
-                                height: 0,
-                                borderLeft: "6px solid transparent",
-                                borderRight: "6px solid transparent",
-                                borderTop: `6px solid ${B}`
-                              }} />
-                              <div style={{
-                                position: "absolute",
-                                top: "100%",
-                                left: "50%",
-                                transform: "translateX(-50%) translateY(-1px)",
-                                width: 0,
-                                height: 0,
-                                borderLeft: "5px solid transparent",
-                                borderRight: "5px solid transparent",
-                                borderTop: `5px solid ${W}`
-                              }} />
+                              {langPopoverOpen && (
+                                <div style={{
+                                  position: "absolute",
+                                  bottom: "calc(100% + 14px)",
+                                  left: "50%",
+                                  transform: "translateX(-50%)",
+                                  background: W,
+                                  border: `1px solid ${B}`,
+                                  borderRadius: "16px",
+                                  padding: "16px",
+                                  boxShadow: "0 12px 32px rgba(0, 0, 0, 0.08)",
+                                  zIndex: 100,
+                                  minWidth: "220px",
+                                  textAlign: "left"
+                                }}>
+                                  <p style={{ fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: M, margin: "0 0 12px 0", fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>All Languages</p>
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                                    {list.map((lang, idx) => (
+                                      <span key={idx} style={{ background: "transparent", color: A, padding: "6px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600, fontFamily: '"Inter", sans-serif', textTransform: "capitalize" }}>
+                                        {lang.trim().toLowerCase()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div style={{
+                                    position: "absolute",
+                                    top: "100%",
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    width: 0,
+                                    height: 0,
+                                    borderLeft: "8px solid transparent",
+                                    borderRight: "8px solid transparent",
+                                    borderTop: `8px solid ${B}`
+                                  }} />
+                                  <div style={{
+                                    position: "absolute",
+                                    top: "100%",
+                                    left: "50%",
+                                    transform: "translateX(-50%) translateY(-1px)",
+                                    width: 0,
+                                    height: 0,
+                                    borderLeft: "8px solid transparent",
+                                    borderRight: "8px solid transparent",
+                                    borderTop: `8px solid ${W}`
+                                  }} />
+                                </div>
+                              )}
                             </div>
                           )}
-                        </>
-                      );
-                    })()}
-                    <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600 }}>Languages</p>
-                  </div>
-                  {/* Fact 6: Private Tour */}
-                  <div className="fact-card" style={{ background: W, border: `1px solid ${B}`, height: "128px", boxSizing: "border-box", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-                    <ShieldCheck size={22} color={A} style={{ marginBottom: 12 }} />
-                    <p style={{ fontSize: "15px", fontWeight: 700, color: FG, marginBottom: 4, fontFamily: "Poppins, sans-serif" }}>
-                      {listing?.privateOptionAvailable ? "Yes" : "No"}
-                    </p>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600 }}>Private Tour</p>
-                  </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Languages</p>
+                </div>
+
+                {/* Fact 6: Private Tour */}
+                <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF' }}>
+                  <ShieldCheck size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
+                    {listing?.privateOptionAvailable ? "Yes" : "No"}
+                  </p>
+                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Private Tour</p>
                 </div>
               </div>
             </div>
-
-            {/* Premium Editorial Typographic Marquee */}
-            {(() => {
-              const rawTags = Array.isArray(listing?.tags) && listing.tags.length > 0
-                ? listing.tags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
-                : (Array.isArray(displayTags) && displayTags.length > 0
-                  ? displayTags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
-                  : ["Valparai Trekking", "Nature & Wildlife", "Mountain Adventure", "Western Ghats Trails", "Scenic Tea Estates", "Eco Tourism India"]);
-              
-              // Duplicate to ensure infinite seamless scrolling loop
-              const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-              const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-              const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-              const tagsDuration = tagsDistance / 60; // constant speed of 60px/s
-
-              return (
-                <div style={{
-                  margin: "48px -80px 0",
-                  overflow: "hidden",
-                  position: "relative",
-                  padding: "20px 0",
-                  background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-                  borderTop: `1px solid ${B}`,
-                  borderBottom: `1px solid ${B}`,
-                }}>
-                  {/* Left & Right Edge Fades */}
-                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "160px", background: `linear-gradient(to right, ${BG} 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
-                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "160px", background: `linear-gradient(to left, ${BG} 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
-
-                  <motion.div
-                    animate={{ x: ["0%", "-50%"] }}
-                    transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-                    style={{ display: "flex", alignItems: "center", gap: 32, width: "max-content" }}
-                  >
-                    {loopedTags.map((tag, idx) => {
-                      const isEven = idx % 2 === 0;
-                      return (
-                        <div
-                          key={idx}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "24px",
-                            whiteSpace: "nowrap"
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "18px",
-                              fontWeight: isEven ? 700 : 300,
-                              color: isEven ? FG : M,
-                              fontFamily: "Poppins, sans-serif",
-                              letterSpacing: "0.12em",
-                              textTransform: "uppercase",
-                              opacity: isEven ? 1 : 0.75
-                            }}
-                          >
-                            {tag}
-                          </span>
-                          <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ opacity: 0.6 }} />
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                </div>
-              );
-            })()}
           </div>
         </section>
 
+        {/* Premium Editorial Typographic Marquee */}
+        {(() => {
+          const rawTags = Array.isArray(listing?.tags) && listing.tags.length > 0
+            ? listing.tags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
+            : (Array.isArray(displayTags) && displayTags.length > 0
+              ? displayTags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
+              : ["Valparai Trekking", "Nature & Wildlife", "Mountain Adventure", "Western Ghats Trails", "Scenic Tea Estates", "Eco Tourism India"]);
+          
+          // Duplicate to ensure infinite seamless scrolling loop
+          const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
+
+          const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
+          const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
+          const tagsDuration = tagsDistance / 60; // constant speed of 60px/s
+
+          return (
+            <div style={{
+              width: "100%",
+              overflow: "hidden",
+              position: "relative",
+              padding: "20px 0",
+              background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
+              borderTop: `1px solid ${B}`,
+              borderBottom: `1px solid ${B}`,
+            }}>
+              {/* Left & Right Edge Fades */}
+              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "160px", background: `linear-gradient(to right, ${BG} 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
+              <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "160px", background: `linear-gradient(to left, ${BG} 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
+
+              <motion.div
+                animate={{ x: ["0%", "-50%"] }}
+                transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
+                style={{ display: "flex", alignItems: "center", width: "max-content" }}
+              >
+                {loopedTags.map((tag, idx) => {
+                  const isEven = idx % 2 === 0;
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "24px",
+                        whiteSpace: "nowrap",
+                        marginRight: "32px"
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "18px",
+                          fontWeight: isEven ? 700 : 300,
+                          color: isEven ? FG : M,
+                          fontFamily: "Poppins, sans-serif",
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          opacity: isEven ? 1 : 0.75
+                        }}
+                      >
+                        {tag}
+                      </span>
+                      <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
+                    </div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          );
+        })()}
+
 
         {/* TIMELINE SECTION */}
-        <section className="timeline-section" style={{ background: W, padding: "32px 80px" }}>
-          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+        <section className="timeline-section" style={{ background: BG, padding: "64px 0" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
             <Rev delay={0.4}>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 40, fontFamily: "Poppins, sans-serif" }}>
-                  How It Unfolds
-                </h3>
                 
-                <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                {/* Header Area */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+                  <div>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>
+                      The Experience Journey
+                    </span>
+                    <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                      How It Unfolds
+                    </h3>
+                    <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
+                      A thoughtfully curated journey that brings you closer to the natural beauty and rich experiences of this destination.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <Clock size={28} color={A} fill="transparent" />
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                       <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>
+                         {listing?.keyActivities?.length || 0} Unique Experiences
+                       </span>
+                       <span style={{ fontSize: "14px", color: M, fontFamily: '"Inter", sans-serif' }}>
+                         Carefully planned for you
+                       </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Activities List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {(listing?.keyActivities || []).map((it, i) => {
                     const activityImageUrl = getActivityImageUrl(it);
                     const numStr = String(i + 1).padStart(2, "0");
                     return (
-                      <div
+                      <motion.div
                         key={i}
                         className="activity-item"
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-50px" }}
+                        whileHover={{ y: -4, boxShadow: "0 15px 40px rgba(0, 0, 0, 0.08)" }}
+                        transition={{ duration: 0.5, delay: i * 0.1 }}
                         style={{
                           display: "flex",
-                          gap: "10%",
-                          alignItems: "flex-start",
-                          justifyContent: "flex-start",
-                          paddingBottom: 24,
-                          borderBottom: i === (listing.keyActivities.length - 1) ? "none" : `1px solid ${B}`
+                          background: W,
+                          borderRadius: "24px",
+                          overflow: "hidden",
+                          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.04)",
+                          border: `1px solid ${B}`,
+                          height: expandedActivities[i] ? "auto" : "180px",
+                          transition: "height 0.3s ease"
                         }}
                       >
                         {activityImageUrl && (
                           <div
-                            style={{ width: "30%", height: "120px", borderRadius: 12, overflow: "hidden", border: `1px solid ${B}`, flexShrink: 0, background: S, cursor: "pointer" }}
+                            style={{ 
+                              width: "220px", 
+                              alignSelf: "stretch", 
+                              flexShrink: 0, 
+                              cursor: "pointer",
+                              position: "relative",
+                              overflow: "hidden"
+                            }}
+                            onMouseOver={(e) => {
+                               const overlay = e.currentTarget.querySelector('.gallery-overlay');
+                               if (overlay) overlay.style.opacity = "1";
+                            }}
+                            onMouseOut={(e) => {
+                               const overlay = e.currentTarget.querySelector('.gallery-overlay');
+                               if (overlay) overlay.style.opacity = "0";
+                            }}
                             onClick={() => { 
-                              const idx = activityImages.indexOf(activityImageUrl);
-                              setActivityPhotoIndex(idx !== -1 ? idx : 0);
+                              const imgs = getActivityImages(it);
+                              setSelectedActivityImages(imgs);
+                              setActivityPhotoIndex(0);
                               setActivityPhotoVisible(true); 
                             }}
                           >
                             <img
                               src={activityImageUrl}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              style={{ width: "100%", height: "100%", minHeight: "180px", objectFit: "cover", transition: "transform 0.3s ease" }}
                               alt={it.name}
                             />
+                            <div
+                              className="gallery-overlay"
+                              style={{
+                                position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                                background: "rgba(0,0,0,0.3)", opacity: 0, transition: "opacity 0.3s ease",
+                                display: "flex", justifyContent: "center", alignItems: "center", pointerEvents: "none"
+                              }}
+                            >
+                              <div style={{ background: theme === "dark" ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.9)", padding: "8px 16px", borderRadius: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                <Camera size={16} color={A} />
+                                <span style={{ color: A, fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>View Gallery</span>
+                              </div>
+                            </div>
                           </div>
                         )}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, fontFamily: "Poppins, sans-serif" }}>
-                            <span style={{ color: A }}>{numStr}. </span>{it.name}
-                          </span>
-                          <p style={{ color: FG, fontSize: "14px", lineHeight: "1.8", margin: 0, fontWeight: 400, fontFamily: "Poppins, sans-serif" }}>
-                            {it.description}
-                          </p>
-                          {it.pilot && (
-                            <span style={{ fontSize: "12px", color: A, fontWeight: 700, marginTop: 4 }}>{it.pilot}</span>
-                          )}
+                        
+                          <div style={{ flex: 1, padding: "24px 32px", display: "flex", alignItems: "center", position: "relative" }}>
+                            {/* Vertical Line with Dot */}
+                            <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", height: "60%", width: "1px", background: B }}>
+                              <div style={{ position: "absolute", left: "-4px", top: "50%", transform: "translateY(-50%)", width: "9px", height: "9px", borderRadius: "50%", background: A }} />
+                            </div>
+                            
+                            <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
+                              {/* Big Faint Number */}
+                              <div style={{ fontSize: "80px", fontWeight: 700, color: theme === "dark" ? "#1E293B" : "#F0F4F8", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1, marginRight: "32px", letterSpacing: "-0.05em", userSelect: "none" }}>
+                                {numStr}
+                              </div>
+                            
+                            {/* Text Content */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: "12px", fontWeight: 700, color: A, marginBottom: "8px", fontFamily: '"Inter", sans-serif', letterSpacing: "0.15em", textTransform: "uppercase", whiteSpace: "normal", wordWrap: "break-word" }}>
+                                {it.title || it.name || "Activity"}
+                              </div>
+                              {(it.description || it.pilot || it.briefDescription) && (
+                                <div>
+                                  <p style={{ 
+                                    color: M, 
+                                    fontSize: "14px", 
+                                    lineHeight: "1.6", 
+                                    margin: 0, 
+                                    fontWeight: 400, 
+                                    fontFamily: '"Inter", sans-serif', 
+                                    maxWidth: "600px", 
+                                    whiteSpace: "normal", 
+                                    wordWrap: "break-word",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: expandedActivities[i] ? "none" : 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    transition: "all 0.3s ease"
+                                  }}>
+                                    {it.description || it.pilot || it.briefDescription}
+                                  </p>
+                                  {String(it.description || it.pilot || it.briefDescription).length > 180 && (
+                                    <button
+                                      onClick={() => setExpandedActivities(prev => ({ ...prev, [i]: !prev[i] }))}
+                                      style={{
+                                        background: "none",
+                                      border: "none",
+                                      padding: "8px 0 0 0",
+                                      color: A,
+                                      fontSize: "12px",
+                                        fontWeight: 700,
+                                        fontFamily: '"Inter", sans-serif',
+                                        cursor: "pointer",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.05em",
+                                        outline: "none"
+                                      }}
+                                    >
+                                      {expandedActivities[i] ? "Read Less" : "Read More"} <span style={{ fontSize: "14px", marginLeft: "4px" }}>&rarr;</span>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                   {(!listing?.keyActivities || listing.keyActivities.length === 0) && (
                     <p style={{ color: M, fontSize: 14 }}>Itinerary details are being finalized for this experience.</p>
                   )}
                 </div>
+
+
+
               </div>
             </Rev>
           </div>
@@ -1430,13 +1666,21 @@ const ExperienceProduct = () => {
 
 
         {/* ADDONS SECTION */}
-        <section className="addons-section" style={{ background: BG, padding: "32px 80px" }}>
-          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>
-                Make it Yours
-              </h3>
-              {(listing?.addons || []).length > 2 && (
+        <section className="addons-section" style={{ background: BG, padding: "64px 0" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "16px" }}>
+                  Enhance Your Experience
+                </span>
+                <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                  Make it Yours
+                </h3>
+                <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: '"Inter", sans-serif' }}>
+                  Curated add-ons to make your experience even more special.
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
                 <div style={{ display: "flex", gap: 12 }}>
                   <button
                     type="button"
@@ -1444,10 +1688,10 @@ const ExperienceProduct = () => {
                     style={{
                       width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
                       display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: FG, transition: "0.3s", outline: "none"
+                      color: M, transition: "0.3s", outline: "none"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = M; }}
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -1457,15 +1701,18 @@ const ExperienceProduct = () => {
                     style={{
                       width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
                       display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: FG, transition: "0.3s", outline: "none"
+                      color: M, transition: "0.3s", outline: "none"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = M; }}
                   >
                     <ChevronRight size={18} />
                   </button>
                 </div>
-              )}
+                <div style={{ fontSize: "12px", fontFamily: '"Inter", sans-serif', fontWeight: 600, paddingRight: 4 }}>
+                  <span style={{ color: A }}>{Math.min(currentAddonIndex, Math.max(1, (listing?.addons || []).length))}</span> <span style={{ color: M }}>/ {Math.max(1, (listing?.addons || []).length)}</span>
+                </div>
+              </div>
             </div>
             
             {(() => {
@@ -1476,6 +1723,23 @@ const ExperienceProduct = () => {
                 <div
                   ref={addonsSliderRef}
                   className={showScroll ? "no-scrollbar" : ""}
+                  onScroll={(e) => {
+                    if (!showScroll) return;
+                    const container = e.target;
+                    const stepSize = (container.clientWidth + 20) / 2;
+                    let newIndex = Math.round(container.scrollLeft / stepSize) + 2;
+                    
+                    // If we have hit the far right boundary, show the maximum number
+                    if (Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) <= 5) {
+                      newIndex = addonsList.length;
+                    } else {
+                      newIndex = Math.min(addonsList.length, newIndex);
+                    }
+
+                    if (newIndex !== currentAddonIndex) {
+                      setCurrentAddonIndex(newIndex);
+                    }
+                  }}
                   style={showScroll ? {
                     display: "flex",
                     gap: "20px",
@@ -1484,7 +1748,8 @@ const ExperienceProduct = () => {
                     paddingBottom: "12px",
                     width: "100%",
                     boxSizing: "border-box",
-                    scrollBehavior: "smooth"
+                    scrollBehavior: "smooth",
+                    scrollSnapType: "x mandatory"
                   } : {
                     display: "grid",
                     gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -1507,23 +1772,25 @@ const ExperienceProduct = () => {
                         style={{
                           display: "flex",
                           flexDirection: "row",
-                          height: "130px",
+                          height: "115px",
                           width: showScroll ? "calc((100% - 20px) / 2)" : "100%",
                           flexShrink: 0,
-                          background: isSelected ? AL : S,
+                          background: W,
                           borderRadius: "16px",
-                          border: `1px solid ${isSelected ? A : B}`,
-                          transition: "background 0.3s, border-color 0.3s",
+                          border: `1px solid ${isSelected ? A : "transparent"}`,
+                          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+                          transition: "box-shadow 0.3s, border-color 0.3s",
                           overflow: "hidden",
-                          boxSizing: "border-box"
+                          boxSizing: "border-box",
+                          scrollSnapAlign: "start"
                         }}
                       >
                         {/* Left side: ONLY image */}
-                        <div style={{ width: "130px", height: "100%", flexShrink: 0, overflow: "hidden", background: W, borderRight: `1px solid ${B}` }}>
+                        <div style={{ width: "160px", height: "100%", flexShrink: 0, overflow: "hidden", background: W, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {addonImage ? (
                             <img
                               src={formatImageUrl(addonImage)}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
                               alt={addon.title}
                               onError={(e) => {
                                 e.target.onerror = null;
@@ -1531,31 +1798,30 @@ const ExperienceProduct = () => {
                               }}
                             />
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: AL }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", background: AL }}>
                               <Plus size={24} color={A} />
                             </div>
                           )}
                         </div>
 
                         {/* Right side: Content info columns */}
-                        <div style={{ flex: 1, minWidth: 0, padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box" }}>
-                          <div>
-                            <span style={{ fontSize: "14px", fontWeight: 700, color: FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
+                        <div style={{ flex: 1, minWidth: 0, padding: "16px", display: "flex", flexDirection: "row", justifyContent: "space-between", boxSizing: "border-box" }}>
+                          
+                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: "6px", flex: 1, minWidth: 0, paddingRight: "16px" }}>
+                            <div style={{ border: `1px solid ${pricingType === "Group" ? "#EF4444" : "#00B4D8"}`, borderRadius: "4px", padding: "2px 6px", color: pricingType === "Group" ? "#EF4444" : "#00B4D8", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", width: "fit-content", letterSpacing: "0.05em" }}>
+                              {pricingType}
+                            </div>
+                            <h4 style={{ fontSize: "18px", fontWeight: 700, color: FG, margin: "4px 0 0 0", fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {addon.title}
-                            </span>
-                            <p style={{ fontSize: "11px", color: M, lineHeight: "1.4", margin: "4px 0 0 0", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                            </h4>
+                            <p style={{ fontSize: "12px", color: M, margin: 0, fontFamily: '"Inter", sans-serif', display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.5" }}>
                               {addon.briefDescription || addon.description}
                             </p>
                           </div>
 
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, borderTop: `1px solid ${B}`, paddingTop: "8px", marginTop: "4px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontSize: "9px", fontWeight: 800, color: "#FFFFFF", background: pricingType === "Group" ? "#EF4444" : A, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0 }}>
-                                {pricingType}
-                              </span>
-                              {addon.price > 0 && (
-                                <span style={{ fontSize: "13px", fontWeight: 700, color: FG, whiteSpace: "nowrap" }}>₹{addon.price}</span>
-                              )}
+                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-end", minWidth: "90px" }}>
+                            <div style={{ fontSize: "16px", fontWeight: 800, color: FG, fontFamily: '"Inter", sans-serif', marginBottom: "12px" }}>
+                              ₹{Number(addon.price || 0).toFixed(2)}
                             </div>
 
                             <div className="addon-actions" style={{ flexShrink: 0 }}>
@@ -1569,13 +1835,11 @@ const ExperienceProduct = () => {
                                       color: A,
                                       border: `1px solid ${A}50`,
                                       borderRadius: 100,
-                                      padding: "0 12px",
-                                      height: "28px",
-                                      fontSize: 9,
-                                      fontWeight: 800,
+                                      padding: "6px 16px",
+                                      fontSize: 12,
+                                      fontWeight: 700,
                                       cursor: "pointer",
                                       textTransform: "uppercase",
-                                      letterSpacing: "0.05em",
                                       transition: "all 0.2s",
                                       outline: "none"
                                     }}
@@ -1585,15 +1849,15 @@ const ExperienceProduct = () => {
                                     Remove
                                   </button>
                                 ) : (
-                                  <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 10, background: W, borderRadius: 100, padding: "0 8px", height: "28px", border: `1px solid ${A}` }}>
+                                  <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 10, background: W, borderRadius: 100, padding: "4px 8px", border: `1px solid ${A}` }}>
                                     <button
                                       type="button"
                                       onClick={() => handleUpdateAddonQuantity(addon, -1)}
                                       style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, color: A, outline: "none" }}
                                     >
-                                      <Minus size={10} />
+                                      <Minus size={14} />
                                     </button>
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: FG, minWidth: 12, textAlign: "center" }}>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>
                                       {selectedAddOns.find(a => (a.addonId || a.id) === addonId)?.quantity || 1}
                                     </span>
                                     <button
@@ -1601,7 +1865,7 @@ const ExperienceProduct = () => {
                                       onClick={() => handleUpdateAddonQuantity(addon, 1)}
                                       style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, color: A, outline: "none" }}
                                     >
-                                      <Plus size={10} />
+                                      <Plus size={14} />
                                     </button>
                                   </div>
                                 )
@@ -1610,22 +1874,17 @@ const ExperienceProduct = () => {
                                   type="button"
                                   onClick={() => handleUpdateAddonQuantity(addon, 1)}
                                   style={{
-                                    background: A,
-                                    color: W,
-                                    border: `1px solid ${A}`,
-                                    borderRadius: 100,
-                                    padding: "0 14px",
-                                    height: "28px",
-                                    fontSize: 9,
-                                    fontWeight: 800,
+                                    background: "#007B8F",
+                                    color: "#FFFFFF",
+                                    border: "none",
+                                    borderRadius: "100px",
+                                    padding: "6px 20px",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    fontFamily: '"Inter", sans-serif',
                                     cursor: "pointer",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
-                                    transition: "all 0.2s",
                                     outline: "none"
                                   }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = AH; e.currentTarget.style.borderColor = AH; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.background = A; e.currentTarget.style.borderColor = A; }}
                                 >
                                   Add
                                 </button>
@@ -1661,108 +1920,146 @@ const ExperienceProduct = () => {
           </div>
         </section>
         {/* PREPARATION SECTION */}
-        <section className="prep-section" style={{ background: W, padding: "32px 80px" }}>
-          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "45fr 55fr", gap: 64 }} className="prep-grid">
+        <section className="prep-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+            
+            {/* Header Area */}
+            <div style={{ marginBottom: 32 }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Location & Details</span>
+              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it All Happens</h3>
+              <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>Find your way to the experience and get all the essential details for a smooth journey.</p>
+            </div>
+
+            {/* Main Card Container */}
+            <div style={{ 
+              background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF', 
+              borderRadius: 24, 
+              border: `1px solid ${B}`, 
+              padding: 16, 
+              display: "grid", 
+              gridTemplateColumns: "1fr 1fr", 
+              gap: 32,
+              boxShadow: theme === 'dark' ? "none" : "0 8px 32px rgba(0,0,0,0.04)"
+            }} className="prep-grid">
+              
+              {/* LEFT: Map */}
               <Rev delay={0.1} style={{ height: "100%" }}>
-                <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                  <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it All Happens</h3>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <div style={{ background: W, border: `1px solid ${B}`, height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
-                      <div style={{
-                        position: "absolute",
-                        top: 16,
-                        left: 16,
-                        zIndex: 10,
-                        background: W,
-                        padding: "10px 16px",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)",
-                        border: `1px solid ${B}`,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        pointerEvents: "none"
-                      }}>
-                        <MapPin size={16} color={A} />
-                        <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{listing?.meetingLocationName || "The Grand Atrium"}</span>
-                      </div>
-                      {listing?.meetingLatitude && listing?.meetingLongitude ? (
-                        <iframe
-                           width="100%"
-                          height="100%"
-                          frameBorder="0"
-                          style={{ border: 0 }}
-                          src={`https://maps.google.com/maps?q=${listing.meetingLatitude},${listing.meetingLongitude}&hl=en&z=14&output=embed`}
-                          allowFullScreen
-                          title="Meeting Location"
-                        />
-                      ) : (
-                        <>
-                          <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "20px 20px" }} />
-                          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 12, height: 12, background: A, borderRadius: "50%" }}>
-                            <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-6px", border: `2px solid ${A}`, borderRadius: "50%" }} />
-                          </div>
-                        </>
-                      )}
-                    </div>
+                <div style={{ height: "100%", minHeight: 320, position: "relative", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
+                  <div style={{
+                    position: "absolute",
+                    top: 16,
+                    left: 16,
+                    zIndex: 10,
+                    background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                    padding: "8px 16px",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                    border: `1px solid ${B}`,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    pointerEvents: "none"
+                  }}>
+                    <MapPin size={16} color={A} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>{listing?.meetingLocationName || "The Grand Atrium"}</span>
                   </div>
+                  {listing?.meetingLatitude && listing?.meetingLongitude ? (
+                    <iframe
+                       width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      style={{ border: 0 }}
+                      src={`https://maps.google.com/maps?q=${listing.meetingLatitude},${listing.meetingLongitude}&hl=en&z=14&output=embed`}
+                      allowFullScreen
+                      title="Meeting Location"
+                    />
+                  ) : (
+                    <>
+                      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "20px 20px" }} />
+                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 12, height: 12, background: A, borderRadius: "50%" }}>
+                        <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-6px", border: `2px solid ${A}`, borderRadius: "50%" }} />
+                      </div>
+                    </>
+                  )}
                 </div>
               </Rev>
+              
+              {/* RIGHT: Details List */}
               <Rev delay={0.2} style={{ height: "100%" }}>
-                <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                  <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it is</h3>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", justifyContent: "space-between", height: 280, margin: 0, padding: 0 }}>
-                      {listing?.meetingAddress && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Address</span>
-                          <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{listing.meetingAddress}</span>
-                        </li>
-                      )}
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0" }}>
+                  <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
+                    {listing?.meetingAddress && (
+                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <MapPin size={20} color={A} fill="transparent" />
+                        </div>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingAddress}</span>
+                        </div>
+                      </li>
+                    )}
 
-                      {listing?.meetingLandmark && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Landmark</span>
-                          <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{listing.meetingLandmark}</span>
-                        </li>
-                      )}
+                    {listing?.meetingDistrict && (
+                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Building size={20} color={A} fill="transparent" />
+                        </div>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingDistrict}</span>
+                        </div>
+                      </li>
+                    )}
 
-                      {listing?.meetingDistrict && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>District</span>
-                          <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{listing.meetingDistrict}</span>
-                        </li>
-                      )}
+                    {listing?.meetingState && (
+                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Map size={20} color={A} fill="transparent" />
+                        </div>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingState}</span>
+                        </div>
+                      </li>
+                    )}
 
-                      {listing?.meetingState && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>State</span>
-                          <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{listing.meetingState}</span>
-                        </li>
-                      )}
+                    {listing?.meetingCountry && (
+                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Globe size={20} color={A} fill="transparent" />
+                        </div>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingCountry}</span>
+                        </div>
+                      </li>
+                    )}
 
-                      {listing?.meetingCountry && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Country</span>
-                          <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{listing.meetingCountry}</span>
-                        </li>
-                      )}
-
-                      {listing?.meetingInstructions && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Instructions</span>
-                          <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{listing.meetingInstructions}</span>
-                        </li>
-                      )}
-                      {(!listing?.meetingDistrict && !listing?.meetingState && !listing?.meetingCountry && !listing?.meetingAddress && !listing?.meetingLandmark) && (
-                        <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 16 }}>
-                          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Region</span>
-                          <span style={{ fontSize: 14, color: M, fontWeight: 500 }}>Specific regional details will be provided upon booking confirmation.</span>
-                        </li>
-                      )}
-                    </ul>
-                  </div>
+                    {listing?.meetingInstructions && (
+                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Info size={20} color={A} fill="transparent" />
+                        </div>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingInstructions}</span>
+                        </div>
+                      </li>
+                    )}
+                    
+                    {(!listing?.meetingDistrict && !listing?.meetingState && !listing?.meetingCountry && !listing?.meetingAddress) && (
+                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Info size={20} color={A} fill="transparent" />
+                        </div>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
+                          <span style={{ fontSize: 16, color: M, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
+                        </div>
+                      </li>
+                    )}
+                  </ul>
                 </div>
               </Rev>
             </div>
@@ -1785,7 +2082,7 @@ const ExperienceProduct = () => {
 
           return (
             <div style={{
-              margin: "0 -80px",
+              width: "100%",
               overflow: "hidden",
               position: "relative",
               padding: "20px 0",
@@ -1800,7 +2097,7 @@ const ExperienceProduct = () => {
               <motion.div
                 animate={{ x: ["0%", "-50%"] }}
                 transition={{ repeat: Infinity, ease: "linear", duration: catsDuration }}
-                style={{ display: "flex", alignItems: "center", gap: 32, width: "max-content" }}
+                style={{ display: "flex", alignItems: "center", width: "max-content" }}
               >
                 {loopedCats.map((cat, idx) => {
                   const isEven = idx % 2 === 0;
@@ -1811,7 +2108,8 @@ const ExperienceProduct = () => {
                         display: "flex",
                         alignItems: "center",
                         gap: "24px",
-                        whiteSpace: "nowrap"
+                        whiteSpace: "nowrap",
+                        marginRight: "32px"
                       }}
                     >
                       <span
@@ -1827,7 +2125,7 @@ const ExperienceProduct = () => {
                       >
                         {cat}
                       </span>
-                      <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ opacity: 0.6 }} />
+                      <Sparkles size={14} color={A} fill={A} style={{ opacity: 0.6 }} />
                     </div>
                   );
                 })}
@@ -1840,8 +2138,8 @@ const ExperienceProduct = () => {
 
         {/* HOST & QUALITY ROW (40% / 60%) */}
         {listing && (
-          <section className="host-quality-section" style={{ background: W, padding: "32px 80px" }}>
-            <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+          <section className="host-quality-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
+            <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
               <div style={{ display: "grid", gridTemplateColumns: "4fr 6fr", gap: 64 }} className="host-quality-grid">
                 
                 {/* Host Profile (40%) */}
@@ -2245,14 +2543,19 @@ const ExperienceProduct = () => {
           if (normalizedReviews.length === 0 && eligibleBookings.length === 0) return null;
 
           return (
-            <section className="testimonials-section" style={{ background: BG, padding: "32px 80px" }}>
-              <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+            <section className="testimonials-section" style={{ background: BG, padding: "64px 0" }}>
+              <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
                 {normalizedReviews.length > 0 && (
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-                      <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>
-                        What people say
-                      </h3>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+                      <div>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>
+                          Guest Reviews
+                        </span>
+                        <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                          What People Say
+                        </h3>
+                      </div>
                       <div style={{ display: "flex", gap: 12 }}>
                         <button
                           type="button"
@@ -2407,18 +2710,27 @@ const ExperienceProduct = () => {
           onUpdateAddonQuantity={handleUpdateAddonQuantity}
         />
 
-        <div className="related-listings-wrapper" style={{ padding: "32px 80px", background: W }}>
-          <RelatedListingsStrip
-            businessInterestId={1}
-            primaryCategoryId={primaryCategoryId}
-            currentListingId={currentListingId}
-            fallbackLocationValues={fallbackLocationValues}
-            fallbackTagValues={fallbackTagValues}
-            fallbackSpecialLabelValues={fallbackSpecialLabelValues}
-            title="More Experiences You May Like"
-            sectionStyle={{ padding: "0px", background: "transparent" }}
-            titleStyle={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontFamily: "Poppins, sans-serif", fontWeight: 700 }}
-          />
+        <div className="related-listings-wrapper" style={{ padding: "64px 0", background: theme === 'dark' ? BG : W }}>
+          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+            <RelatedListingsStrip
+              businessInterestId={1}
+              primaryCategoryId={primaryCategoryId}
+              currentListingId={currentListingId}
+              fallbackLocationValues={fallbackLocationValues}
+              fallbackTagValues={fallbackTagValues}
+              fallbackSpecialLabelValues={fallbackSpecialLabelValues}
+              title="More Experiences You May Like"
+              sectionStyle={{ padding: "0px", background: "transparent" }}
+              titleStyle={{ 
+                fontSize: "clamp(2.5rem, 4vw, 3.5rem)", 
+                fontWeight: 700, 
+                lineHeight: 1.1, 
+                fontFamily: '"Cormorant Garamond", "Playfair Display", serif', 
+                letterSpacing: "-0.02em",
+                color: FG
+              }}
+            />
+          </div>
         </div>
       </main>
       <AnimatePresence>
@@ -2485,8 +2797,8 @@ const ExperienceProduct = () => {
       <AnimatePresence>
         {activityPhotoVisible && (
           <FullScreenImage
-            src={activityImages[activityPhotoIndex] || "/images/content/placeholder.jpg"}
-            items={activityImages.length > 0 ? activityImages : ["/images/content/placeholder.jpg"]}
+            src={selectedActivityImages[activityPhotoIndex] || "/images/content/placeholder.jpg"}
+            items={selectedActivityImages.length > 0 ? selectedActivityImages : ["/images/content/placeholder.jpg"]}
             currentIndex={activityPhotoIndex}
             onNavigate={setActivityPhotoIndex}
             onClose={() => setActivityPhotoVisible(false)}
@@ -2760,7 +3072,7 @@ const ExperienceProduct = () => {
 
 
 function PolicyItem({ req }) {
-  const { tokens: { FG, A, M, AL, B, W } } = useTheme();
+  const { theme, tokens: { FG, A, M, AL, B, W } } = useTheme();
   const [op, setOp] = useState(false);
 
   const title = req.setting?.title || "Requirement";
@@ -2785,15 +3097,15 @@ function PolicyItem({ req }) {
     <motion.div
       layout
       style={{
-        background: op ? AL : W,
-        border: `1px solid ${op ? A : B}`,
+        background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
+        border: `1px solid ${B}`,
         borderRadius: "16px",
         overflow: "hidden",
         marginBottom: "16px",
-        transition: "background 0.3s, border-color 0.3s",
-        boxShadow: op ? "0 8px 30px rgba(0, 0, 0, 0.04)" : "none"
+        transition: "all 0.3s",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.02)"
       }}
-      whileHover={{ borderColor: A }}
+      whileHover={{ borderColor: A, boxShadow: "0 8px 30px rgba(0,0,0,0.06)" }}
     >
       <div
         onClick={() => setOp(!op)}
@@ -2814,16 +3126,15 @@ function PolicyItem({ req }) {
           justifyContent: "center",
           width: 40,
           height: 40,
-          borderRadius: 12,
-          background: op ? `${A}22` : AL,
-          flexShrink: 0,
-          transition: "background 0.3s"
+          borderRadius: 8,
+          background: theme === 'dark' ? '#1E293B' : '#F0F9FA',
+          flexShrink: 0
         }}>
           {getIcon()}
         </div>
         
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "15px", fontWeight: 700, color: FG, display: "block" }}>{title}</span>
+          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, display: "block", fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>{title}</span>
         </div>
 
         <motion.div
@@ -3265,18 +3576,21 @@ function QualityIndexSection({ qualityIndex }) {
 
 
 function ExperiencePolicies({ listing }) {
-  const { tokens: { FG, W, B, A, M, BG } } = useTheme();
+  const { theme, tokens: { FG, W, B, A, M, BG } } = useTheme();
 
   return (
-    <section className="policies-section" style={{ background: BG, padding: "32px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "45fr 55fr", gap: 64, alignItems: "start" }} className="pol-grid">
+    <section className="policies-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
+      <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "start" }} className="pol-grid">
           <Rev delay={0.1}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 12, fontFamily: "Poppins, sans-serif" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: '"Inter", sans-serif' }}>
+                Essential Guidelines
+              </span>
+              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "16px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                 Things to Keep in Mind
               </h3>
-              <p style={{ color: M, fontSize: "15px", lineHeight: "1.8", margin: 0, fontWeight: 400 }}>
+              <p style={{ color: M, fontSize: "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
                 Please review these guidelines and requirements carefully to ensure a safe, smooth, and enjoyable experience for everyone.
               </p>
             </div>
@@ -3414,9 +3728,14 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8, paddingBottom: 24, borderBottom: `1px solid ${B}` }}>
             <div style={{ fontSize: 48, fontWeight: 900, color: FG, lineHeight: 1 }}>{summary.averageRating.toFixed(1)}</div>
             <div>
-              <div style={{ display: "flex", color: "#FFC107", fontSize: 16, marginBottom: 4 }}>
+              <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                 {[...Array(5)].map((_, i) => (
-                  <span key={i}>{i < Math.round(summary.averageRating) ? "★" : "☆"}</span>
+                  <Star 
+                    key={i} 
+                    size={16} 
+                    style={{ fill: i < Math.round(summary.averageRating) ? "#F59E0B" : "transparent" }} 
+                    color={i < Math.round(summary.averageRating) ? "#F59E0B" : M} 
+                  />
                 ))}
               </div>
               <p style={{ fontSize: 10, color: M, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Average Guest Rating</p>
@@ -3439,9 +3758,14 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div>
                       <h4 style={{ fontSize: 14, fontWeight: 700, color: FG, marginBottom: 2 }}>{rev.customerName || rev.author || "Verified Guest"}</h4>
-                      <div style={{ display: "flex", gap: 2, color: "#FFC107", fontSize: 10 }}>
+                      <div style={{ display: "flex", gap: 4 }}>
                         {[...Array(5)].map((_, si) => (
-                          <span key={si}>{si < (rev.rating || 5) ? "★" : "☆"}</span>
+                          <Star 
+                            key={si} 
+                            size={14} 
+                            style={{ fill: si < (rev.rating || 5) ? "#F59E0B" : "transparent" }} 
+                            color={si < (rev.rating || 5) ? "#F59E0B" : M} 
+                          />
                         ))}
                       </div>
                     </div>
