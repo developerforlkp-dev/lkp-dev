@@ -2163,6 +2163,35 @@ const StayBookingSystem = ({
                         const allowedAdults = (pricing.baseAdultsLimit || 0) + (pricing.extraAdultsLimit || 0);
                         const allowedChildren = (pricing.baseChildrenLimit || 0) + (pricing.extraChildrenLimit || 0);
                         const isEntirelyBedBased = resolvedSelectedRooms.length > 0 && resolvedSelectedRooms.every(r => r.isBedConfig);
+                        
+                        const isPropertyBased = stay?.bookingScope === "Property-Based" || stay?.bookingScope === "Property Based";
+                        
+                        let absoluteMaxAdults = allowedAdults;
+                        let absoluteMaxChildren = allowedChildren;
+                        
+                        if (!isPropertyBased && selectedRooms.length > 0) {
+                          absoluteMaxAdults = 0;
+                          absoluteMaxChildren = 0;
+                          selectedRooms.forEach(selRoom => {
+                            const catalogRoom = stayRoomsCatalog.find(
+                              r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id) === String(selRoom.roomId)
+                            );
+                            const maxLimit = catalogRoom
+                              ? Number(catalogRoom.units || catalogRoom.totalRooms || catalogRoom.availableRooms || 99)
+                              : 99;
+
+                            const baseAdults = catalogRoom?.maxAdults || 1;
+                            const extraAdults = Number(catalogRoom?.maxExtraAdults ?? catalogRoom?.maxExtraAdultsAllowed ?? catalogRoom?.maxExtraBeds ?? stay?.maxExtraAdults ?? 0);
+                            const roomAdults = baseAdults + extraAdults;
+
+                            const baseChildren = catalogRoom?.maxChildren || 0;
+                            const extraChildren = Number(catalogRoom?.maxExtraChildren ?? catalogRoom?.maxExtraChildrenAllowed ?? stay?.maxExtraChildren ?? 0);
+                            const roomChildren = baseChildren + extraChildren;
+
+                            absoluteMaxAdults += roomAdults * maxLimit;
+                            absoluteMaxChildren += roomChildren * maxLimit;
+                          });
+                        }
 
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -2172,9 +2201,14 @@ const StayBookingSystem = ({
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Adults</p>
                                   <Counter 
                                     value={guests.adults} 
-                                    setValue={(v) => setGuests(prev => ({...prev, adults: v}))} 
+                                    setValue={(v) => {
+                                      if (!isPropertyBased && v > allowedAdults) {
+                                        handleAddAnotherRoom();
+                                      }
+                                      setGuests(prev => ({...prev, adults: v}));
+                                    }} 
                                     min={1} 
-                                    max={allowedAdults}
+                                    max={absoluteMaxAdults}
                                   />
                                 </div>
 
@@ -2182,9 +2216,14 @@ const StayBookingSystem = ({
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Children</p>
                                   <Counter 
                                     value={guests.children} 
-                                    setValue={(v) => setGuests(prev => ({...prev, children: v}))} 
+                                    setValue={(v) => {
+                                      if (!isPropertyBased && v > allowedChildren) {
+                                        handleAddAnotherRoom();
+                                      }
+                                      setGuests(prev => ({...prev, children: v}));
+                                    }} 
                                     min={0} 
-                                    max={allowedChildren}
+                                    max={absoluteMaxChildren}
                                   />
                                 </div>
                               </div>
