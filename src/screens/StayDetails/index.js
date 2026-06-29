@@ -2815,12 +2815,20 @@ const StayDetails = () => {
       })()}
 
 
-      <div style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="04" label="Accommodations" />
-          <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
-            Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
-          </p>
+      <div style={{ background: W, padding: isMobile ? "32px 24px" : "64px 0" }}>
+        <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: "40px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "16px" }}>
+              Stay In Style
+            </span>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+              Accommodations
+            </h3>
+            <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: '"Inter", sans-serif', maxWidth: "600px" }}>
+              Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
+            </p>
+          </div>
           {isPropertyBasedStay && (
             <PropertyStayCard stay={stay} />
           )}
