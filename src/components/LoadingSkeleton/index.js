@@ -112,7 +112,7 @@ const BookingsListSkeleton = ({ count = 3 }) => (
 );
 
 const CompletedSkeleton = ({ count = 3 }) => (
-  <div className={styles.completedSkeleton}>
+  <div className={styles.bookingsListSkeleton}>
     {Array.from({ length: count }).map((_, i) => (
       <SkeletonBookingCard key={i} />
     ))}

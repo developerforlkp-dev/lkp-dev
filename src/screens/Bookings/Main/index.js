@@ -1766,7 +1766,7 @@ const Main = ({
         >
           {loadingCompleted && displayedTab === "completed" ? (
             <div style={{ padding: "1rem 0" }}>
-              <LoadingSkeleton variant="completed" count={3} />
+              <LoadingSkeleton variant="bookingsList" count={3} />
             </div>
           ) : isTransforming ? (
             <div style={{ padding: "1rem 0" }}>
@@ -2009,7 +2009,7 @@ const Main = ({
       >
         <div className={cn(styles.cancelModalContent, styles.cancelModalContentScrollable)}>
           <div className={styles.cancelModalHeader}>
-            <h2 className={styles.cancelModalTitle} style={{ fontFamily: "Playfair Display, Lora, Georgia, serif", fontSize: "28px", fontWeight: "600", color: "#141416", marginBottom: "12px" }}>
+            <h2 className={styles.cancelModalTitle} style={{ fontSize: "28px", fontWeight: "600", color: "#141416", marginBottom: "12px" }}>
               Cancel Booking
             </h2>
             <p className={styles.cancelModalDescription} style={{ fontSize: "14px", color: "#777E90", lineHeight: "1.5" }}>
@@ -2044,7 +2044,7 @@ const Main = ({
                           transition: "all 0.2s ease"
                         }}
                       >
-                        <span style={{ fontSize: "15px", color: "#141416", fontFamily: "Playfair Display, Lora, Georgia, serif", fontWeight: isSelected ? "500" : "400" }}>
+                        <span style={{ fontSize: "15px", color: "#141416", fontWeight: isSelected ? "500" : "400" }}>
                           {reasonText}
                         </span>
                         <div style={{
