@@ -10,9 +10,11 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04)
     color: $n1
     transition: all .3s ease
+    transform: translateZ(0)
+    -webkit-mask-image: -webkit-radial-gradient(white, black)
     &:hover
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08)
-        transform: translateY(-4px)
+        transform: translateY(-4px) translateZ(0)
         .preview
             img
                 transform: scale(1.05) translateZ(0)
