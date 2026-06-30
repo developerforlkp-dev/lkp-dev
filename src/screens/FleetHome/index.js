@@ -876,6 +876,43 @@ const FleetHome = () => {
           </div>
         </div>
 
+        {/* Mobile Categories (Reference Image 3 style) */}
+        {isMobileOrTablet && (
+          <div className={styles.mobileCategoriesContainer}>
+            <div className={styles.mobileCategoriesScroll}>
+              {visibleFilterOptions.map((filter) => {
+                const isEnabledForListings = businessInterestAvailability[filter.id] !== false;
+                const isActive = activeFilter === filter.id;
+                return (
+                  <div 
+                    key={filter.id}
+                    className={cn(styles.mobileCategoryCard, {
+                      [styles.mobileCategoryCardActive]: isActive,
+                      [styles.mobileCategoryCardDisabled]: !isEnabledForListings,
+                    })}
+                    onClick={() => {
+                      if (isEnabledForListings) handleFilterClick(filter.id);
+                    }}
+                  >
+                    <img src={filter.image} alt={filter.label} className={styles.mobileCategoryBg} />
+                    <div className={styles.mobileCategoryOverlay} />
+                    <div className={styles.mobileCategoryContent}>
+                      <div className={styles.mobileCategoryIcon}>
+                        {filter.id === "experience" && <Compass size={28} />}
+                        {filter.id === "events" && <Ticket size={28} />}
+                        {filter.id === "stays" && <Home size={28} />}
+                        {filter.id === "food" && <Utensils size={28} />}
+                        {filter.id === "places" && <MapPin size={28} />}
+                      </div>
+                      <span className={styles.mobileCategoryLabel}>{filter.label}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Dynamic Sections from API */}
         {loading && (
           <LoadingSkeleton variant="homepage" sections={3} count={4} />
