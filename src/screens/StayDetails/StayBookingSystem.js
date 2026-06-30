@@ -850,10 +850,6 @@ const StayBookingSystem = ({
 
     const nights = Math.max(1, nightsCount);
     const grossSubtotal = totalOriginalPerNight * nights;
-    const longStayDiscountAmount = grossSubtotal * (appliedDiscountPercent / 100);
-    const billingConfigDiscountAmount = grossSubtotal * (billingConfigDiscountRate / 100);
-    const earlyBirdDiscountAmount = grossSubtotal * (earlyBirdDiscountPercent / 100);
-
     let addonsTotal = 0;
     if (Array.isArray(stay?.addons) && Array.isArray(selectedAddOns) && selectedAddOns.length > 0) {
       selectedAddOns.forEach(addonId => {
@@ -866,8 +862,21 @@ const StayBookingSystem = ({
       });
     }
 
-    const preTaxSubtotal = Math.max(0, grossSubtotal - longStayDiscountAmount - billingConfigDiscountAmount - earlyBirdDiscountAmount) + addonsTotal;
-    const discountAmount = longStayDiscountAmount + billingConfigDiscountAmount + earlyBirdDiscountAmount;
+    const discountableSubtotal = grossSubtotal + addonsTotal;
+    const longStayDiscountAmount = discountableSubtotal * (appliedDiscountPercent / 100);
+    const billingConfigDiscountAmount = discountableSubtotal * (billingConfigDiscountRate / 100);
+    const earlyBirdDiscountAmount = discountableSubtotal * (earlyBirdDiscountPercent / 100);
+    const preTaxSubtotal = Math.max(
+      0,
+      discountableSubtotal
+      - longStayDiscountAmount
+      - billingConfigDiscountAmount
+      - earlyBirdDiscountAmount
+    );
+    const discountAmount =
+      longStayDiscountAmount
+      + billingConfigDiscountAmount
+      + earlyBirdDiscountAmount;
     const discountedPerNight = Math.max(0, preTaxSubtotal - addonsTotal) / nights;
 
     // Taxes from stay config; fallback to legacy 18% GST + 2% service charge
