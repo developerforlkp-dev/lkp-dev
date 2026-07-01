@@ -2012,13 +2012,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const appliedDiscountRate = activeGuestPricing?.discountRate ?? 0;
   const appliedTaxRate = activeGuestPricing?.customerTaxRate ?? 0;
   const subtotalBeforeAdjustments = rawBaseTotal + addOnsTotal;
-  // Discounts should only apply to the base ticket price, not add-ons
-  const totalDiscountAmount = rawBaseTotal * (appliedDiscountRate / 100);
-  const totalPromoDiscountAmount = rawBaseTotal * ((activeGuestPricing?.promoDiscountRate || 0) / 100);
-  const totalEarlyBirdDiscountAmount = rawBaseTotal * ((activeGuestPricing?.earlyBirdDiscountRate || 0) / 100);
+  const discountableAmount = subtotalBeforeAdjustments;
+  const totalDiscountAmount = discountableAmount * (appliedDiscountRate / 100);
+  const totalPromoDiscountAmount = discountableAmount * ((activeGuestPricing?.promoDiscountRate || 0) / 100);
+  const totalEarlyBirdDiscountAmount = discountableAmount * ((activeGuestPricing?.earlyBirdDiscountRate || 0) / 100);
 
-  const taxableBase = Math.max(0, rawBaseTotal - totalDiscountAmount);
-  const taxableSubtotal = taxableBase + addOnsTotal;
+  const taxableSubtotal = Math.max(0, discountableAmount - totalDiscountAmount);
   const totalTaxAmount = taxableSubtotal * (appliedTaxRate / 100);
   const finalTotal = taxableSubtotal + totalTaxAmount;
 
