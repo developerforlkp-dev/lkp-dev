@@ -641,6 +641,89 @@ const FleetHome = () => {
     loadHomepageData();
   }, [activeFilter]);
 
+  // ── Explore By Cards Micro-Interaction ─────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMobileOrTablet) return;
+
+    // Respect prefers-reduced-motion
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) return;
+
+    let timeoutId;
+    let observer;
+    let isVisible = false;
+    let availableCards = [];
+
+    const runMicroInteraction = () => {
+      // Don't run if tab is inactive or section is off-screen
+      if (document.hidden || !isVisible) {
+        scheduleNext();
+        return;
+      }
+
+      const cards = Array.from(document.querySelectorAll(`.${styles.mobileCategoryCard}`));
+      if (!cards || cards.length === 0) {
+        scheduleNext();
+        return;
+      }
+
+      // Refill the bag if all cards have animated in this round
+      if (availableCards.length === 0) {
+        availableCards = [...cards];
+      }
+
+      // Randomly pick a card from the remaining available pool
+      const randomIndex = Math.floor(Math.random() * availableCards.length);
+      const card = availableCards[randomIndex];
+
+      // Remove it from the available pool so it doesn't repeat this round
+      availableCards.splice(randomIndex, 1);
+
+      if (!card.classList.contains("global-micro-tilt")) {
+        card.classList.add("global-micro-tilt");
+        // Remove class after animation duration (1000ms)
+        setTimeout(() => {
+          if (card) card.classList.remove("global-micro-tilt");
+        }, 1000);
+      }
+
+      scheduleNext();
+    };
+
+    const scheduleNext = (isFirst = false) => {
+      // Delay between 1100ms and 3000ms to guarantee no two cards animate at once (anim is 1000ms)
+      const delay = isFirst ? 500 : Math.random() * (3000 - 1100) + 1100;
+      timeoutId = setTimeout(() => {
+        window.requestAnimationFrame(runMicroInteraction);
+      }, delay);
+    };
+
+    // Use IntersectionObserver to pause when the section is not visible
+    const section = document.getElementById("explore-by-section");
+    if (section) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            isVisible = entry.isIntersecting;
+          });
+        },
+        { threshold: 0.1 }
+      );
+      observer.observe(section);
+    } else {
+      // Fallback if section isn't immediately found
+      isVisible = true; 
+    }
+
+    // Start loop with initial quick trigger
+    scheduleNext(true);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (observer && section) observer.unobserve(section);
+    };
+  }, [isMobileOrTablet, activeFilter]);
+
   return (
     <div className={cn("section", styles.section)}>
       {/* Sticky Header — appears on scroll past hero (desktop only) */}

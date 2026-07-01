@@ -966,6 +966,7 @@
     cursor: pointer
     transition: transform 0.2s ease
     box-shadow: 0 4px 10px rgba(0,0,0,0.1)
+    z-index: 1
     &:active
         transform: scale(0.95)
 
@@ -978,6 +979,42 @@
 .mobileCategoryCardActive
     border: 2px solid #0097B2
 
+@keyframes bgBreathe
+    0%
+        transform: scale(1)
+    50%
+        transform: scale(1.08)
+    100%
+        transform: scale(1)
+
+@keyframes shimmerSweep
+    0%
+        transform: translateX(-150%) skewX(-20deg)
+        opacity: 0
+    20%
+        opacity: 1
+    80%
+        opacity: 1
+    100%
+        transform: translateX(150%) skewX(-20deg)
+        opacity: 0
+
+:global(.global-micro-tilt)
+    z-index: 2 !important
+    img
+        animation: bgBreathe 1s cubic-bezier(0.215, 0.610, 0.355, 1.000) !important
+    &::after
+        content: ''
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 100%)
+        z-index: 10
+        pointer-events: none
+        animation: shimmerSweep 1s cubic-bezier(0.4, 0, 0.2, 1) forwards !important
+
 .mobileCategoryBg
     display: block
     position: absolute
@@ -986,6 +1023,7 @@
     width: 100%
     height: 100%
     object-fit: cover
+    transition: transform 0.3s ease
 
 .mobileCategoryOverlay
     position: absolute
