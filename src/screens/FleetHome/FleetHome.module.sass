@@ -27,9 +27,11 @@
         margin-right: -50vw
         border-radius: 0
     +m
-        width: 100vw
-        margin-left: -50vw
-        margin-right: -50vw
+        width: 100%
+        left: auto
+        right: auto
+        margin-left: 0
+        margin-right: 0
         border-radius: 0
         overflow: visible
         margin-bottom: 0
@@ -46,7 +48,7 @@
         padding-top: 52px
     +m
         padding: 0 32px
-        padding-top: 52px
+        padding-top: 48px
 
 .glassContainer
     max-width: 950px
@@ -476,9 +478,9 @@
     margin-bottom: 24px
     text-align: left
     +m
-        flex-direction: column
-        align-items: flex-start
-        gap: 16px
+        flex-direction: row
+        align-items: flex-end
+        gap: 8px
         margin-bottom: 16px
 
 .titleBlock
@@ -493,6 +495,9 @@
     text-transform: uppercase
     color: #0097B2
     margin-bottom: 8px
+    +m
+        font-size: 10px
+        margin-bottom: 4px
 
 .sectionTitleLink
     display: inline-block
@@ -517,8 +522,8 @@
     +dark
         color: $n8
     +m
-        font-size: 24px
-        line-height: 1.0
+        font-size: 18px
+        line-height: 1.1
     .accentWord
         font-style: italic
         color: #0097B2
@@ -533,6 +538,8 @@
     align-items: center
     gap: 4px
     transition: color 0.2s ease
+    +m
+        font-size: 12px
     &:hover
         color: darken(#0097B2, 10%)
 
@@ -545,6 +552,8 @@
     display: flex
     align-items: center
     gap: 8px
+    +m
+        display: none
 
 .sliderArrow
     display: flex
@@ -557,11 +566,17 @@
     background: transparent
     cursor: pointer
     transition: all 0.2s ease
+    +m
+        width: 26px
+        height: 26px
     +dark
         border-color: $n3
     svg
         fill: $n4
         transition: fill 0.2s ease
+        +m
+            width: 12px
+            height: 12px
         +dark
             fill: $n5
     &:hover
@@ -631,9 +646,9 @@
     position: relative
     overflow: visible
     +m
-        margin-left: -32px
-        margin-right: -32px
-        padding: 16px 32px 20px
+        margin-left: -20px
+        margin-right: -20px
+        padding: 16px 0 20px
 
 .horizontalScroll
     position: relative
@@ -644,6 +659,13 @@
             margin: 0
             overflow-y: visible !important
             overflow-x: auto !important
+            +m
+                padding: 4px 20px 0 20px !important
+                &::after
+                    content: ""
+                    display: block
+                    min-width: 1px
+                    min-height: 1px
 
 .destinationCard
     flex: 0 0 auto
@@ -826,9 +848,9 @@
     position: relative
     overflow: visible
     +m
-        margin-left: -32px
-        margin-right: -32px
-        padding: 16px 32px 20px
+        margin-left: -20px
+        margin-right: -20px
+        padding: 16px 0 20px
 
 .horizontalScroll
     position: relative
@@ -839,6 +861,13 @@
             margin: 0
             overflow-y: visible !important
             overflow-x: auto !important
+            +m
+                padding: 4px 20px 0 20px !important
+                &::after
+                    content: ""
+                    display: block
+                    min-width: 1px
+                    min-height: 1px
 
 .destinationCard
     flex: 0 0 auto
@@ -882,12 +911,28 @@
                 &:before
                     padding-bottom: 60% !important
     +m
-        width: 280px
-        min-width: 280px
+        width: 240px
+        min-width: 240px
+        border-radius: 12px !important
         :global
             div[class*="preview"]
                 &:before
                     padding-bottom: 62% !important
+            div[class*="title"]
+                font-size: 14px !important
+                line-height: 1.3 !important
+            div[class*="line"]
+                font-size: 12px !important
+            div[class*="price"]
+                font-size: 13px !important
+            div[class*="body"]
+                padding: 10px 12px 12px !important
+            div[class*="foot"]
+                padding-top: 8px !important
+            div[class*="rating"]
+                flex-direction: row !important
+                align-items: center !important
+                gap: 4px !important
     &:hover
         transform: translateY(-4px)
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08)
