@@ -775,6 +775,10 @@ const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
     actions = actions.filter((a) => a.label !== "Cancel Booking");
   }
 
+  if (String(booking?.bookingData?.orderStatus || "").toUpperCase() === "PENDING_CONFIRMATION") {
+    actions = actions.filter((a) => a.label !== "Cancel Booking");
+  }
+
   return actions;
 };
 
