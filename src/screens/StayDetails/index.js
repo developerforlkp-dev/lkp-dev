@@ -3320,21 +3320,27 @@ const StayDetails = () => {
         onToggleAddOn={handleToggleAddOn}
       />
 
-      <div className="related-listings-wrapper" style={{ padding: "64px 0", background: theme === 'dark' ? BG : W }}>
-        <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+      <div className="related-listings-wrapper" style={{ padding: isMobile ? "24px 0" : "64px 0", background: theme === 'dark' ? BG : W }}>
+        <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          {isMobile && (
+            <div style={{ padding: "0 20px", paddingBottom: 8 }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", fontFamily: '"Inter", sans-serif' }}>Discover More</span>
+            </div>
+          )}
           <RelatedListingsStrip
             businessInterestId={3}
             primaryCategoryId={primaryCategoryId}
             currentListingId={currentListingId}
             title="More Stays You May Like"
-            sectionStyle={{ padding: "0px", background: "transparent" }}
+            sectionStyle={{ padding: isMobile ? "0 0 0 20px" : "0px", background: "transparent" }}
             titleStyle={{ 
-              fontSize: "clamp(2.5rem, 4vw, 3.5rem)", 
+              fontSize: isMobile ? "clamp(1.6rem, 7vw, 2.2rem)" : "clamp(2.5rem, 4vw, 3.5rem)", 
               fontWeight: 700, 
               lineHeight: 1.1, 
               fontFamily: '"Cormorant Garamond", "Playfair Display", serif', 
               letterSpacing: "-0.02em",
-              color: FG
+              color: FG,
+              margin: 0
             }}
           />
         </div>
