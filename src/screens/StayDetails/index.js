@@ -4253,17 +4253,11 @@ function PropertyStayCard({ stay }) {
         )}
 
         {/* Property Badge Tag */}
-        <div style={{ position: "absolute", top: 12, left: 12, padding: "6px 12px", borderRadius: "100px", background: "rgba(0,0,0,0.65)", color: "#FFF", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ position: "absolute", top: 12, left: 12, padding: "4px 10px", borderRadius: "100px", background: W, border: `1px solid ${B}`, color: FG, fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: "6px" }}>
           <Home size={14} /> PROPERTY STAY
         </div>
 
-        {/* Photos Tag */}
-        {isMobile && (
-          <div style={{ position: "absolute", bottom: 12, right: 12, padding: "6px 12px", borderRadius: "100px", background: "rgba(0,0,0,0.65)", color: "#FFF", fontSize: "11px", fontWeight: 700, backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: "6px" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            {totalPhotos} Photos
-          </div>
-        )}
+
 
         {/* View Gallery Overlay Button */}
         <AnimatePresence>
@@ -4308,7 +4302,7 @@ function PropertyStayCard({ stay }) {
             {/* Amenities Row */}
             <div style={{ display: "flex", flexWrap: isMobile ? "nowrap" : "wrap", gap: "8px", overflowX: isMobile ? "auto" : "visible", paddingBottom: isMobile ? "4px" : "0", scrollbarWidth: "none", msOverflowStyle: "none" }}>
               {amenities.map((amenity, idx) => (
-                <span key={idx} style={{ flexShrink: 0, fontSize: "11px", fontWeight: 600, color: FG, background: W, padding: "6px 12px", borderRadius: "100px", border: `1px solid ${B}`, whiteSpace: "nowrap" }}>{amenity}</span>
+                <span key={idx} style={{ flexShrink: 0, fontSize: "11px", fontWeight: 700, color: A, background: "rgba(0, 151, 178, 0.06)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(0, 151, 178, 0.15)", whiteSpace: "nowrap" }}>{amenity}</span>
               ))}
             </div>
           </div>
