@@ -952,11 +952,6 @@ function CulinaryHero({ food, galleryItems }) {
           }}>
             {food?.shortDescription || "Authentic Taste Experience"}
           </h2>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-            <Star size={14} fill="#F59E0B" color="#F59E0B" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{food?.googleRating || food?.rating || "4.8"}</span>
-            <span style={{ fontSize: 11, color: M }}>(Google Rating)</span>
-          </div>
           <p style={{
             fontSize: "13px",
             color: M,
@@ -1065,7 +1060,7 @@ function CulinaryHero({ food, galleryItems }) {
                 fontWeight: 600,
                 letterSpacing: "0.05em",
                 textTransform: "uppercase",
-                fontFamily: "Poppins, sans-serif",
+                fontFamily: '"Inter", sans-serif',
                 zIndex: 2
               }}>
                 {category}
@@ -1084,14 +1079,14 @@ function CulinaryHero({ food, galleryItems }) {
               }}>
                 <Rev>
                   <h1 className="hero-title" style={{
-                    fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
+                    fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
                     fontWeight: 700,
-                    lineHeight: 1.2,
+                    lineHeight: 1.1,
                     color: "#FFFFFF",
                     WebkitTextFillColor: "#FFFFFF",
                     margin: 0,
-                    letterSpacing: "-0.01em",
-                    fontFamily: "Poppins, sans-serif"
+                    letterSpacing: "-0.02em",
+                    fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
                   }}>
                     {title}
                   </h1>
@@ -1100,12 +1095,6 @@ function CulinaryHero({ food, galleryItems }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500 }}>
                     <Globe size={15} color={A || "#0097B2"} />
                     <span>{source}</span>
-                  </div>
-                </Rev>
-                <Rev delay={0.2}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#FFFFFF", fontSize: "13px", fontWeight: 700 }}>
-                    <Star size={14} fill="#F59E0B" color="#F59E0B" />
-                    <span>{food?.googleRating || food?.rating || "4.8"} Google Rating</span>
                   </div>
                 </Rev>
               </div>
@@ -1132,7 +1121,7 @@ function CulinaryHero({ food, galleryItems }) {
                 fontWeight: 600,
                 letterSpacing: "0.05em",
                 textTransform: "uppercase",
-                fontFamily: "Poppins, sans-serif",
+                fontFamily: '"Inter", sans-serif',
                 zIndex: 2
               }}>
                 {category}
@@ -1151,14 +1140,14 @@ function CulinaryHero({ food, galleryItems }) {
               }}>
                 <Rev>
                   <h1 className="hero-title" style={{
-                    fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
+                    fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
                     fontWeight: 700,
-                    lineHeight: 1.2,
+                    lineHeight: 1.1,
                     color: "#FFFFFF",
                     WebkitTextFillColor: "#FFFFFF",
                     margin: 0,
-                    letterSpacing: "-0.01em",
-                    fontFamily: "Poppins, sans-serif"
+                    letterSpacing: "-0.02em",
+                    fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
                   }}>
                     {title}
                   </h1>
@@ -1167,12 +1156,6 @@ function CulinaryHero({ food, galleryItems }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500 }}>
                     <Globe size={15} color={A || "#0097B2"} />
                     <span>{source}</span>
-                  </div>
-                </Rev>
-                <Rev delay={0.2}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#FFFFFF", fontSize: "13px", fontWeight: 700 }}>
-                    <Star size={14} fill="#F59E0B" color="#F59E0B" />
-                    <span>{food?.googleRating || food?.rating || "4.8"} Google Rating</span>
                   </div>
                 </Rev>
               </div>
@@ -1401,7 +1384,7 @@ function LocationSection({ food }) {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "45fr 55fr", gap: isMobile ? 32 : 64 }} className="prep-grid">
           <Rev delay={0.1} style={{ height: "100%" }}>
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it All Happens</h3>
+              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it All Happens</h3>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <div style={{ background: W, border: `1px solid ${B}`, height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
                   <div style={{
@@ -1458,7 +1441,7 @@ function LocationSection({ food }) {
           </Rev>
           <Rev delay={0.2} style={{ height: "100%" }}>
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it is</h3>
+              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it is</h3>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", justifyContent: "space-between", height: 280, margin: 0, padding: 0 }}>
                   {(food?.meetingAddress || food?.address) && (
@@ -2281,7 +2264,7 @@ const FoodDetails = () => {
                         fontSize: "18px",
                         fontWeight: isEven ? 700 : 300,
                         color: isEven ? FG : M,
-                        fontFamily: "Poppins, sans-serif",
+                        fontFamily: '"Inter", sans-serif',
                         letterSpacing: "0.12em",
                         textTransform: "uppercase",
                         opacity: isEven ? 1 : 0.75
@@ -2289,7 +2272,7 @@ const FoodDetails = () => {
                     >
                       {dish}
                     </span>
-                    <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ opacity: 0.6 }} />
+                    <Sparkles size={14} color={A || "#0097B2"} fill={A || "#0097B2"} style={{ opacity: 0.6 }} />
                   </div>
                 );
               })}
