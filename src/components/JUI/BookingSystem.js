@@ -3674,6 +3674,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                                 delete next.slot;
                                                 return next;
                                               });
+                                              setTimeout(() => {
+                                                const guestsSection = document.getElementById("booking-guests-section-exp");
+                                                if (guestsSection) {
+                                                  guestsSection.classList.add("highlight-next-step");
+                                                  setTimeout(() => {
+                                                    guestsSection.classList.remove("highlight-next-step");
+                                                  }, 2500);
+                                                }
+                                              }, 300);
                                             }}
                                             selectedTime={startTime}
                                             timeSlots={timeSlots}
@@ -3879,7 +3888,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             </AnimatePresence>
                         </div>
 
-                        <div className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16 }}>
+                        <div id="booking-guests-section-exp" className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16, scrollMarginTop: "24px" }}>
                           <div style={{ fontSize: 11, color: validationErrors.adults ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
                             02. Guests
                             {validationErrors.adults && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Min 1 Adult Required</span>}
