@@ -439,6 +439,17 @@ const StayBookingSystem = ({
           setCheckOutDate(date);
           setSelectionMode("done");
           setShowCalendarModal(false);
+          
+          // Visually highlight the next section to guide user
+          setTimeout(() => {
+            const guestsSection = document.getElementById("booking-guests-section");
+            if (guestsSection) {
+              guestsSection.classList.add("highlight-next-step");
+              setTimeout(() => {
+                guestsSection.classList.remove("highlight-next-step");
+              }, 2500);
+            }
+          }, 300);
         } else {
           // If clicked date is before check-in, treat as new Check-in
           if (isBlocked) return;
@@ -850,10 +861,6 @@ const StayBookingSystem = ({
 
     const nights = Math.max(1, nightsCount);
     const grossSubtotal = totalOriginalPerNight * nights;
-    const longStayDiscountAmount = grossSubtotal * (appliedDiscountPercent / 100);
-    const billingConfigDiscountAmount = grossSubtotal * (billingConfigDiscountRate / 100);
-    const earlyBirdDiscountAmount = grossSubtotal * (earlyBirdDiscountPercent / 100);
-
     let addonsTotal = 0;
     if (Array.isArray(stay?.addons) && Array.isArray(selectedAddOns) && selectedAddOns.length > 0) {
       selectedAddOns.forEach(addonId => {
@@ -866,8 +873,21 @@ const StayBookingSystem = ({
       });
     }
 
-    const preTaxSubtotal = Math.max(0, grossSubtotal - longStayDiscountAmount - billingConfigDiscountAmount - earlyBirdDiscountAmount) + addonsTotal;
-    const discountAmount = longStayDiscountAmount + billingConfigDiscountAmount + earlyBirdDiscountAmount;
+    const discountableSubtotal = grossSubtotal + addonsTotal;
+    const longStayDiscountAmount = discountableSubtotal * (appliedDiscountPercent / 100);
+    const billingConfigDiscountAmount = discountableSubtotal * (billingConfigDiscountRate / 100);
+    const earlyBirdDiscountAmount = discountableSubtotal * (earlyBirdDiscountPercent / 100);
+    const preTaxSubtotal = Math.max(
+      0,
+      discountableSubtotal
+      - longStayDiscountAmount
+      - billingConfigDiscountAmount
+      - earlyBirdDiscountAmount
+    );
+    const discountAmount =
+      longStayDiscountAmount
+      + billingConfigDiscountAmount
+      + earlyBirdDiscountAmount;
     const discountedPerNight = Math.max(0, preTaxSubtotal - addonsTotal) / nights;
 
     // Taxes from stay config; fallback to legacy 18% GST + 2% service charge
@@ -1670,6 +1690,16 @@ const StayBookingSystem = ({
   return (
     <>
       <style>{`
+        @keyframes premiumHighlight {
+          0% { box-shadow: 0 0 0 0 rgba(0, 151, 178, 0); background-color: transparent; }
+          15% { box-shadow: 0 0 20px 2px rgba(0, 151, 178, 0.2); background-color: rgba(0, 151, 178, 0.04); }
+          100% { box-shadow: 0 0 0 0 rgba(0, 151, 178, 0); background-color: transparent; }
+        }
+        .highlight-next-step {
+          animation: premiumHighlight 2.5s ease-out;
+          border-radius: 16px;
+        }
+
         .SingleDatePicker_picker,
         .SingleDatePickerPortal,
         .DateRangePicker_picker,
@@ -1783,14 +1813,17 @@ const StayBookingSystem = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               onClick={() => setShow(false)}
               style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} 
             />
             
             <motion.div
               className="booking-modal-container"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               style={{
                 background: BG,
                 borderRadius: 32,
@@ -2154,7 +2187,7 @@ const StayBookingSystem = ({
                     </div>
 
                     {/* Section 02: Guests & Accommodations */}
-                    <div>
+                    <div id="booking-guests-section" style={{ scrollMarginTop: "24px" }}>
                       <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", lineHeight: "1.2" }}>
                         02. Guests & Accommodations
                       </div>

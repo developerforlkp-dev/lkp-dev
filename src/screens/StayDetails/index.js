@@ -7,7 +7,7 @@ import {
   Phone, Clock, FileText, MapPin, ChevronDown, CheckCircle, Info, Building,
   ArrowRight, ShieldCheck, Mail, Globe, Map, Navigation, ArrowDown, Car, AirVent,
   Users, DoorOpen, Bed, Bath, Maximize, Calendar, Star, Share2, Heart, ArrowLeft,
-  Tv, Coffee, ChevronLeft, ChevronRight, Plus, Minus, Check, Camera
+  Tv, Coffee, ChevronLeft, ChevronRight, Plus, Minus, Check, Camera, Home
 } from "lucide-react";
 import moment from "moment";
 import cn from "classnames";
@@ -238,27 +238,47 @@ const ScopedStyles = () => (
       text-align: center;
     }
     .premium-editorial-tag {
-      font-size: 10px;
+      font-size: 12px;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       font-weight: 700;
       color: var(--A);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       display: inline-block;
+      font-family: "Inter", sans-serif;
     }
     .editorial-headline {
-      font-family: var(--font-fraunces, Georgia, serif);
-      font-size: clamp(2rem, 4.5vw, 2.8rem);
+      font-family: "Cormorant Garamond", "Playfair Display", serif;
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
       font-weight: 700;
-      line-height: 1.25;
-      margin: 0 0 20px 0;
+      line-height: 1.1;
+      margin: 0 0 24px 0;
       color: var(--FG);
+      letter-spacing: -0.02em;
     }
     .editorial-divider {
       width: 40px;
-      height: 1.5px;
-      background: var(--B);
+      height: 2px;
       margin: 16px auto 24px auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .editorial-divider::before,
+    .editorial-divider::after {
+      content: '';
+      flex: 1;
+      height: 1.5px;
+      background: var(--A);
+    }
+    .editorial-divider-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--A);
+      transform: rotate(45deg);
+      flex-shrink: 0;
     }
     
     /* Highlights Banner Strip */
@@ -303,17 +323,18 @@ const ScopedStyles = () => (
       align-items: flex-start;
     }
     .highlight-label {
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
       color: var(--M);
       font-weight: 600;
+      font-family: "Inter", sans-serif;
     }
     .highlight-value {
-      font-size: 13.5px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--FG);
-      font-family: "Poppins", sans-serif;
+      font-family: "Inter", sans-serif;
     }
 
     /* Amenities Grid and Tabs Section */
@@ -404,14 +425,230 @@ const ScopedStyles = () => (
       .stay-details-premium .desk-only { display: none !important; }
       .pol-contact-grid, .amenities-grid, .location-grid, .reviews-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
       .property-stay-card { grid-template-columns: 1fr !important; }
-      .premium-hero-grid { padding: 0 12px 12px 12px; }
-      .hero-thumbnail-strip { bottom: 16px; right: 16px; padding: 6px 8px; gap: 6px; border-radius: 12px; }
+      .premium-hero-grid { padding: 0 !important; }
+      .hero-spotlight { border-radius: 0 0 24px 24px !important; }
+      .hero-thumbnail-strip { display: none !important; }
       .hero-mini-thumb { width: 44px; height: 33px; border-radius: 6px; }
       .premium-view-all-btn { padding: 6px 10px; font-size: 10px; border-radius: 8px; }
       .highlight-item:not(:last-child) { border-right: none !important; }
-      .highlights-banner { flex-direction: column !important; align-items: stretch !important; border-radius: 12px !important; padding: 16px !important; }
+      .highlights-banner { display: none !important; }
+      .editorial-narrative-block { display: none !important; }
       .highlight-item { justify-content: flex-start !important; padding-bottom: 12px !important; border-bottom: 1px solid var(--B) !important; }
       .highlight-item:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
+
+      /* Mobile Carousel Dots */
+      .mobile-carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 0 4px 0;
+      }
+      .mobile-carousel-dots .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--M, #888);
+        opacity: 0.35;
+        transition: all 0.3s ease;
+      }
+      .mobile-carousel-dots .dot.active {
+        background: var(--A, #0097B2);
+        opacity: 1;
+        width: 20px;
+        border-radius: 4px;
+      }
+
+      /* Mobile Thumbnail Strip Below Hero */
+      .mobile-thumb-strip {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .mobile-thumb-strip::-webkit-scrollbar { display: none; }
+      .mobile-thumb-strip .thumb-item {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .mobile-thumb-strip .thumb-item.active {
+        border-color: var(--A, #0097B2);
+      }
+      .mobile-thumb-strip .thumb-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .mobile-thumb-strip .thumb-more {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--S, #1a1a1a);
+        border: 1px solid var(--B, #333);
+        color: var(--FG, #fff);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      /* Mobile Early Bird Banner */
+      .mobile-earlybird-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        margin: 0 16px;
+        border-radius: 12px;
+        background: var(--S, #1a1a1a);
+        border: 1px solid var(--B, #333);
+      }
+
+      /* Mobile Title Section */
+      .mobile-title-section {
+        padding: 16px 16px 0;
+      }
+      .mobile-title-section h1 {
+        font-family: "Cormorant Garamond", "Playfair Display", serif;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0 0 8px 0;
+        color: var(--FG, #fff);
+        letter-spacing: -0.01em;
+        word-break: break-word;
+      }
+      .mobile-title-section .location-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--M, #888);
+        font-size: 13px;
+        font-weight: 500;
+        font-family: "Inter", sans-serif;
+      }
+
+      /* Mobile Feature Grid */
+      .mobile-feature-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        margin: 20px 16px 0;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--B, #333);
+        background: var(--S, #1a1a1a);
+      }
+      .mobile-feature-grid .feature-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 4px;
+        gap: 6px;
+        text-align: center;
+        border-right: 1px solid var(--B, #333);
+      }
+      .mobile-feature-grid .feature-card:last-child {
+        border-right: none;
+      }
+      .mobile-feature-grid .feature-card .feature-icon {
+        color: var(--A, #0097B2);
+        margin-bottom: 2px;
+      }
+      .mobile-feature-grid .feature-card .feature-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--FG, #fff);
+        font-family: "Inter", sans-serif;
+        line-height: 1.2;
+      }
+      .mobile-feature-grid .feature-card .feature-label {
+        font-size: 10px;
+        color: var(--M, #888);
+        font-family: "Inter", sans-serif;
+        text-transform: capitalize;
+      }
+
+      /* Mobile About Section */
+      .mobile-about-section {
+        padding: 24px 16px 12px;
+      }
+      .mobile-about-section h2 {
+        font-family: "Cormorant Garamond", "Playfair Display", serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--FG, #fff);
+        margin: 0 0 12px 0;
+      }
+      .mobile-about-section .about-text {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--M, #888);
+        font-family: "Inter", sans-serif;
+        margin: 0;
+      }
+      .mobile-about-section .read-more-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: none;
+        border: none;
+        color: var(--A, #0097B2);
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 0;
+        cursor: pointer;
+        font-family: "Inter", sans-serif;
+      }
+
+      /* Mobile Floating Badge */
+      .mobile-floating-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 60;
+        pointer-events: none;
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Hide desktop overlay elements on mobile */
+      .hero-earlybird-desktop { display: none !important; }
+      .hero-badge-desktop { display: none !important; }
+      .hero-overlay-details-desktop {
+        display: flex !important;
+        padding: 24px 20px !important;
+        background: linear-gradient(to top, rgba(11, 11, 11, 0.95) 0%, rgba(11, 11, 11, 0.5) 50%, rgba(11, 11, 11, 0) 100%) !important;
+      }
+      .hero-overlay-details-desktop .hero-title {
+        font-size: clamp(2rem, 8vw, 3rem) !important;
+      }
+    }
+    @media(min-width:769px){
+      .mobile-carousel-dots,
+      .mobile-thumb-strip,
+      .mobile-earlybird-banner,
+      .mobile-title-section,
+      .mobile-feature-grid,
+      .mobile-about-section,
+      .mobile-floating-badge,
+      .mobile-bottom-below-hero { display: none !important; }
+      .hero-overlay-details-desktop { display: flex !important; }
     }
     
     @media(max-width:480px){
@@ -720,6 +957,31 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
   );
 };
 
+/* ─── MOBILE ABOUT SECTION ─────────── */
+function MobileAboutSection({ stay }) {
+  const { tokens: { A, FG, M } } = useTheme();
+  const [expanded, setExpanded] = useState(false);
+  
+  const description = stay?.detailedDescription || stay?.description || stay?.shortDescription || "A luxury stay with modern amenities and premium comfort. Perfect for a peaceful escape surrounded by nature and privacy.";
+  const isLong = description.length > 150;
+  const displayText = (!expanded && isLong) ? description.slice(0, 150) + "..." : description;
+  
+  return (
+    <div className="mobile-about-section">
+      <span style={{ display: "block", fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "16px" }}>
+        Overview
+      </span>
+      <p className="about-text" style={{ color: FG }}>{displayText}</p>
+      {isLong && (
+        <button className="read-more-btn" onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Read less" : "Read more"}{" "}
+          <ChevronDown size={16} style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.3s" }} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ─── STAY SECTIONS ─────────── */
 function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
   const history = useHistory();
@@ -799,11 +1061,11 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
   };
 
   return (
-    <section ref={heroRef} style={{ position: "relative", height: isMobile ? "60vh" : "75vh", background: BG, overflow: "hidden", padding: "0", zIndex: 50 }}>
-      <div className="premium-hero-grid">
+    <section ref={heroRef} style={{ position: "relative", height: isMobile ? "auto" : "75vh", background: BG, overflow: isMobile ? "visible" : "hidden", padding: "0", zIndex: 50 }}>
+      <div className="premium-hero-grid" style={isMobile ? { position: "relative", height: "55vh" } : {}}>
         
         {/* Main Cover Image View */}
-        <div className="hero-spotlight" onClick={() => openFullscreen(activeIdx)} style={{ cursor: "pointer" }}>
+        <div className="hero-spotlight" onClick={() => openFullscreen(activeIdx)} style={{ cursor: "pointer", height: isMobile ? "100%" : undefined }}>
           
           {/* Top Controls */}
           <div style={{ position: "absolute", top: 24, left: 24, right: 24, display: "flex", justifyContent: "flex-end", zIndex: 70, pointerEvents: "none" }}>
@@ -876,8 +1138,8 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
               <button
                 onClick={handlePrev}
                 style={{
-                  position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)",
-                  width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
+                  position: "absolute", left: isMobile ? 12 : 20, top: "50%", transform: "translateY(-50%)",
+                  width: isMobile ? 36 : 44, height: isMobile ? 36 : 44, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
                   backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)",
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                   color: "#fff", zIndex: 30, transition: "all 0.3s ease"
@@ -885,13 +1147,13 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.25)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.05)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={isMobile ? 18 : 20} />
               </button>
               <button
                 onClick={handleNext}
                 style={{
-                  position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)",
-                  width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
+                  position: "absolute", right: isMobile ? 12 : 20, top: "50%", transform: "translateY(-50%)",
+                  width: isMobile ? 36 : 44, height: isMobile ? 36 : 44, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
                   backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)",
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                   color: "#fff", zIndex: 30, transition: "all 0.3s ease"
@@ -899,12 +1161,12 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.25)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.05)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}
               >
-                <ChevronLeft size={20} style={{ transform: "rotate(180deg)" }} />
+                <ChevronLeft size={isMobile ? 18 : 20} style={{ transform: "rotate(180deg)" }} />
               </button>
             </>
           )}
 
-          {/* Thumbnails & View button in right bottom corner */}
+          {/* Thumbnails & View button in right bottom corner - Desktop */}
           <div className="hero-thumbnail-strip">
             {thumbnailItems.map((imgUrl, idx) => (
               <div
@@ -952,17 +1214,16 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
             )}
           </div>
 
-          {/* Redesigned Premium Overlay Details */}
-          <div style={{
+          {/* Redesigned Premium Overlay Details - Desktop only */}
+          <div className="hero-overlay-details-desktop" style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            padding: isMobile ? "24px 20px" : "48px 48px",
+            padding: "48px 48px",
             background: "linear-gradient(to top, rgba(11, 11, 11, 0.85) 0%, rgba(11, 11, 11, 0.4) 60%, rgba(11, 11, 11, 0) 100%)",
             zIndex: 40,
             pointerEvents: "none",
-            display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
             height: "60%"
@@ -1025,50 +1286,69 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
 
             </motion.div>
           </div>
-        </div>
 
+          {/* Mobile Floating Badge */}
+          <div className="mobile-floating-badge">
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", width: "100%", height: "100%" }}>
+              <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+                <path id="mBadgePath" d="M 50, 50 m -40, 0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" fill="transparent" />
+                <text style={{ fontSize: 7, fontWeight: 900, fill: "#FFFFFF", textTransform: "uppercase", letterSpacing: "2.4px" }}>
+                  <textPath xlinkHref="#mBadgePath">Luxury Retreat — Premium Stay —</textPath>
+                </text>
+              </svg>
+            </motion.div>
+            <span style={{ fontSize: 9, fontWeight: 800, color: A || "#0097B2", textTransform: "uppercase", textAlign: "center", letterSpacing: "0.1em", lineHeight: 1.2, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
+              {toDisplayString(stay?.propertyType) || "LUXURY"}
+            </span>
+          </div>
+
+          {/* Mobile Carousel Dots */}
+          {isMobile && allImages.length > 1 && (
+            <div className="mobile-carousel-dots" style={{ position: "absolute", bottom: 12, left: 0, right: 0, zIndex: 45 }}>
+              {allImages.slice(0, Math.min(allImages.length, 5)).map((_, i) => (
+                <div key={i} className={`dot ${activeIdx === i ? "active" : ""}`} onClick={(e) => { e.stopPropagation(); handleThumbnailClick(i); }} style={{ cursor: "pointer" }} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Floating Badges & Back/Share Controls */}
-      {!isMobile && (
-        <div style={{ position: "absolute", top: 44, left: 44, zIndex: 60, pointerEvents: "none", width: 90, height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", width: "100%", height: "100%" }}>
-            <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
-              <path id="badgePath" d="M 50, 50 m -40, 0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" fill="transparent" />
-              <text style={{ fontSize: 7, fontWeight: 900, fill: "#FFFFFF", textTransform: "uppercase", letterSpacing: "2.4px" }}>
-                <textPath xlinkHref="#badgePath">Luxury Retreat — Premium Stay —</textPath>
-              </text>
-            </svg>
-          </motion.div>
-          <span style={{ fontSize: 10, fontWeight: 800, color: A || "#0097B2", textTransform: "uppercase", textAlign: "center", letterSpacing: "0.1em", lineHeight: 1.2, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
-            {toDisplayString(stay?.propertyType) || "LUXURY"}
-          </span>
-        </div>
-      )}
+      {/* Floating Badges - Desktop only */}
+      <div className="hero-badge-desktop" style={{ position: "absolute", top: 44, left: 44, zIndex: 60, pointerEvents: "none", width: 90, height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", width: "100%", height: "100%" }}>
+          <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+            <path id="badgePath" d="M 50, 50 m -40, 0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" fill="transparent" />
+            <text style={{ fontSize: 7, fontWeight: 900, fill: "#FFFFFF", textTransform: "uppercase", letterSpacing: "2.4px" }}>
+              <textPath xlinkHref="#badgePath">Luxury Retreat — Premium Stay —</textPath>
+            </text>
+          </svg>
+        </motion.div>
+        <span style={{ fontSize: 10, fontWeight: 800, color: A || "#0097B2", textTransform: "uppercase", textAlign: "center", letterSpacing: "0.1em", lineHeight: 1.2, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
+          {toDisplayString(stay?.propertyType) || "LUXURY"}
+        </span>
+      </div>
 
-      {/* Early Bird Overlay */}
+      {/* Early Bird Overlay - Desktop only */}
       {stay?.earlyBirdDiscounts?.some(d => d.isActive) && (
-        <div style={{
+        <div className="hero-earlybird-desktop" style={{
           position: "absolute",
-          bottom: isMobile ? 96 : 120,
-          right: isMobile ? 28 : 48,
+          bottom: 120,
+          right: 48,
           zIndex: 60,
           background: theme === 'dark' ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.9)",
           backdropFilter: "blur(20px)",
-          padding: isMobile ? "8px 14px" : "10px 20px",
+          padding: "10px 20px",
           borderRadius: 16,
           border: theme === 'dark' ? "1px solid rgba(255,255,255,0.15)" : `1px solid ${B}`,
           boxShadow: theme === 'dark' ? "0 10px 30px rgba(0,0,0,0.4)" : `0 10px 30px ${M}33`,
           display: "flex",
           alignItems: "center",
-          gap: isMobile ? 6 : 8,
-          maxWidth: isMobile ? "calc(100vw - 32px)" : "auto"
+          gap: 8
         }}>
-          <Sparkles size={isMobile ? 14 : 16} color={A} />
+          <Sparkles size={16} color={A} />
           <EarlyBirdTicker discounts={stay.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={theme === 'dark' ? "#FFF" : FG} isDark={theme === "dark"} />
         </div>
       )}
-
 
       {ReactDOM.createPortal(
         <AnimatePresence>
@@ -1083,6 +1363,66 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
           )}
         </AnimatePresence>,
         document.body
+      )}
+
+      {/* === MOBILE CONTENT BELOW HERO === */}
+      {isMobile && (
+        <div className="mobile-bottom-below-hero" style={{ background: BG }}>
+          {/* Mobile Thumbnail Strip */}
+          <div className="mobile-thumb-strip">
+            {allImages.slice(0, 5).map((imgUrl, idx) => (
+              <div
+                key={idx}
+                className={`thumb-item ${activeIdx === idx ? "active" : ""}`}
+                onClick={() => handleThumbnailClick(idx)}
+              >
+                <img src={imgUrl} alt="" />
+              </div>
+            ))}
+            {allImages.length > 5 && (
+              <div className="thumb-more" onClick={() => openFullscreen(0)}>
+                +{allImages.length - 5}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Early Bird Banner */}
+          {stay?.earlyBirdDiscounts?.some(d => d.isActive) && (
+            <div className="mobile-earlybird-banner" style={{ background: S, borderColor: B }}>
+              <Sparkles size={14} color={A} />
+              <EarlyBirdTicker discounts={stay.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={theme === 'dark' ? "#FFF" : FG} isDark={theme === "dark"} />
+            </div>
+          )}
+
+
+
+          {/* Mobile Feature Grid */}
+          <div className="mobile-feature-grid" style={{ background: S, borderColor: B }}>
+            <div className="feature-card" style={{ borderColor: B }}>
+              <Building size={20} className="feature-icon" color={A} />
+              <span className="feature-value">{toDisplayString(stay?.propertyType) || "Bespoke Retreat"}</span>
+              <span className="feature-label">Accommodation</span>
+            </div>
+            <div className="feature-card" style={{ borderColor: B }}>
+              <Users size={20} className="feature-icon" color={A} />
+              <span className="feature-value">{stay?.maxGuests ? `${stay.maxGuests} Guests` : "Flexible Occupancy"}</span>
+              <span className="feature-label">Max Capacity</span>
+            </div>
+            <div className="feature-card" style={{ borderColor: B }}>
+              <ShieldCheck size={20} className="feature-icon" color={A} />
+              <span className="feature-value">{stay?.coupleFriendly ? "Couple Friendly" : "Standard Rules"}</span>
+              <span className="feature-label">House Rules</span>
+            </div>
+            <div className="feature-card" style={{ borderColor: B }}>
+              <Sparkles size={20} className="feature-icon" color={A} />
+              <span className="feature-value">{stay?.petAllowed ? "Pets Welcomed" : "No Pets"}</span>
+              <span className="feature-label">Pet Policy</span>
+            </div>
+          </div>
+
+          {/* Mobile About Section */}
+          <MobileAboutSection stay={stay} />
+        </div>
       )}
     </section>
   );
@@ -1174,13 +1514,15 @@ function StayAmenities({ stay }) {
             <Rev className="editorial-narrative-block">
               <span className="premium-editorial-tag">Overview</span>
               <h2 className="editorial-headline">{short}</h2>
-              <div className="editorial-divider" />
-              <div style={{ display: "flex", flexDirection: "column", gap: 16, maxW: 800, margin: "0 auto" }}>
-                <p style={{ fontSize: "16px", color: FG, lineHeight: 1.75, fontWeight: 500, opacity: 0.95, margin: 0, fontFamily: "Poppins, sans-serif" }}>
+              <div className="editorial-divider">
+                <div className="editorial-divider-dot" />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 800, margin: "0 auto" }}>
+                <p style={{ fontSize: "16px", color: M, lineHeight: 1.7, fontWeight: 400, margin: 0, fontFamily: '"Inter", sans-serif' }}>
                   {leadParagraph}
                 </p>
                 {bodyParagraph && (
-                  <p style={{ fontSize: "14px", color: M, lineHeight: 1.7, margin: 0, fontWeight: 400, opacity: 0.85 }}>
+                  <p style={{ fontSize: "15px", color: M, lineHeight: 1.7, margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', opacity: 0.85 }}>
                     {bodyParagraph}
                   </p>
                 )}
@@ -1377,7 +1719,7 @@ function PolicyItem({ rule }) {
 }
 
 function PolicyCategoryItem({ category }) {
-  const { tokens: { FG, A, M, AL, B, W } } = useTheme();
+  const { tokens: { FG, A, M, AL, B, W }, theme } = useTheme();
   const [op, setOp] = useState(false);
 
   const getIcon = () => {
@@ -1395,15 +1737,15 @@ function PolicyCategoryItem({ category }) {
     <motion.div
       layout
       style={{
-        background: op ? AL : W,
-        border: `1px solid ${op ? A : B}`,
+        background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
+        border: `1px solid ${B}`,
         borderRadius: "16px",
         overflow: "hidden",
         marginBottom: "16px",
-        transition: "background 0.3s, border-color 0.3s",
-        boxShadow: op ? "0 8px 30px rgba(0, 0, 0, 0.04)" : "none",
+        transition: "all 0.3s",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.02)"
       }}
-      whileHover={{ borderColor: A }}
+      whileHover={{ borderColor: A, boxShadow: "0 8px 30px rgba(0,0,0,0.06)" }}
     >
       <div
         onClick={() => setOp(!op)}
@@ -1424,16 +1766,15 @@ function PolicyCategoryItem({ category }) {
           justifyContent: "center",
           width: 40,
           height: 40,
-          borderRadius: 12,
-          background: op ? `${A}22` : AL,
+          borderRadius: 8,
+          background: theme === 'dark' ? '#1E293B' : '#F0F9FA',
           flexShrink: 0,
-          transition: "background 0.3s",
         }}>
           {getIcon()}
         </div>
 
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "15px", fontWeight: 700, color: FG, display: "block" }}>{category.title}</span>
+          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, display: "block", fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>{category.title}</span>
         </div>
 
         <motion.div
@@ -1531,38 +1872,44 @@ function PolicyCategoryItem({ category }) {
 
     // Property Rules
     const propItems = [];
+    const generalRules = [];
+    
     if (stay?.privacyAndPolicy?.propertyRulesTemplate && stay.privacyAndPolicy.propertyRulesTemplate !== "No property rules defined.") {
       const lines = stay.privacyAndPolicy.propertyRulesTemplate.split('\n').map(l => l.trim()).filter(Boolean);
-      lines.forEach((line, i) => {
+      lines.forEach((line) => {
+        if (line.toLowerCase() === "check-in and check-out" || line.toLowerCase() === "property rules") return;
+        
         const colonIdx = line.indexOf(':');
         if (colonIdx > 0 && colonIdx < 60) {
-          propItems.push({ id: `prop-${i}`, title: line.substring(0, colonIdx).trim(), body: line.substring(colonIdx + 1).trim() });
+          generalRules.push({ title: line.substring(0, colonIdx).trim(), valueText: line.substring(colonIdx + 1).trim() });
         } else {
-          if (line.toLowerCase() !== "check-in and check-out" && line.toLowerCase() !== "property rules") {
-            propItems.push({ id: `prop-${i}`, title: line, body: line });
-          }
+          generalRules.push({ title: line });
         }
       });
     } else {
       const rawPropRules = stay?.propertyRulesDefaultTemplate || stay?.propertyRules || stay?.propertyRule || findArrayWithKey(stay, 'propertyRule');
       if (Array.isArray(rawPropRules) && rawPropRules.length > 0) {
-        rawPropRules.forEach((r, i) => propItems.push({ id: `prop-${i}`, title: `Rule ${i + 1}`, body: extractText(r) }));
+        rawPropRules.forEach(r => generalRules.push({ title: extractText(r) }));
       } else if (stay?.houseRules) {
-        propItems.push({ id: `prop-0`, title: "General Rules", body: stay.houseRules });
+        generalRules.push({ title: stay.houseRules });
       } else if (stay?.checkInTime || stay?.checkOutTime) {
-        propItems.push({ id: `prop-0`, title: "Check-in / Check-out", body: `Check-in from ${stay.checkInTime || "2:00 PM"}. Check-out by ${stay.checkOutTime || "11:00 AM"}.` });
+        generalRules.push({ title: "Check-in", valueText: `From ${stay.checkInTime || "2:00 PM"}` });
+        generalRules.push({ title: "Check-out", valueText: `By ${stay.checkOutTime || "11:00 AM"}` });
       } else {
-        propItems.push({ id: `prop-0`, title: "General Rules", body: "Check-in from 2:00 PM. Check-out by 11:00 AM." });
+        generalRules.push({ title: "Check-in", valueText: "From 2:00 PM" });
+        generalRules.push({ title: "Check-out", valueText: "By 11:00 AM" });
       }
     }
+    
     if (stay?.ageRestriction != null && stay.ageRestriction !== "") {
-      propItems.push({ id: "age_restriction", title: "Minimum Age", body: `${stay.ageRestriction}+` });
+      generalRules.push({ title: "Minimum Age", valueText: `${stay.ageRestriction}+` });
     }
-    propItems.push({ id: "id_required", title: "ID Required at Check-in", body: stay?.idRequiredAtCheckIn ? "Yes" : "No" });
-    propItems.push({ id: "pets_allowed", title: "Pets Allowed", body: stay?.petAllowed ? "Yes" : "No" });
-    propItems.push({ id: "couple_friendly", title: "Couple Friendly", body: stay?.coupleFriendly ? "Yes" : "No" });
+    generalRules.push({ title: "ID Required at Check-in", valueText: stay?.idRequiredAtCheckIn ? "Yes" : "No" });
+    generalRules.push({ title: "Pets Allowed", valueText: stay?.petAllowed ? "Yes" : "No" });
+    generalRules.push({ title: "Couple Friendly", valueText: stay?.coupleFriendly ? "Yes" : "No" });
 
-    if (propItems.length > 0) {
+    if (generalRules.length > 0) {
+      propItems.push({ id: "prop-all", title: null, questions: generalRules });
       categories.push({ id: 'cat-prop', title: "Property Rules", items: propItems });
     }
 
@@ -1571,11 +1918,7 @@ function PolicyCategoryItem({ category }) {
     if (Array.isArray(stay?.guestRequirements) && stay.guestRequirements.length > 0) {
       stay.guestRequirements.forEach((req, i) => {
         const title = req.setting?.title || req.description || `Requirement ${i + 1}`;
-        let body = "";
-        if (Array.isArray(req.questions)) {
-          body = req.questions.map(q => `• ${q.title || q.question?.title}`).join("\n");
-        }
-        guestItems.push({ id: `guest-${i}`, title, body: body || title, questions: req.questions });
+        guestItems.push({ id: `guest-${i}`, title, body: null, questions: req.questions });
       });
     }
     if (guestItems.length > 0) {
@@ -1619,15 +1962,18 @@ function PolicyCategoryItem({ category }) {
   }, [stay]);
 
   return (
-    <section className="policies-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "45fr 55fr", gap: isMobile ? 40 : 64, alignItems: "start" }} className="pol-grid">
+    <section className="policies-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "48px 24px" : "64px 0" }}>
+      <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 64, alignItems: "start" }} className="pol-grid">
           <Rev delay={0.1}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 12, fontFamily: "Poppins, sans-serif" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "12px", fontFamily: '"Inter", sans-serif' }}>
+                Essential Guidelines
+              </span>
+              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "16px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                 Things to Keep in Mind
               </h3>
-              <p style={{ color: M, fontSize: "15px", lineHeight: "1.8", margin: 0, fontWeight: 400 }}>
+              <p style={{ color: M, fontSize: "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
                 Please review these guidelines, requirements, and policies carefully to ensure a safe, smooth, and enjoyable stay.
               </p>
             </div>
@@ -1683,9 +2029,9 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
   const frontOffice = stay?.contactInformation?.frontOfficePhone || stay?.frontOfficePhone || stay?.frontOfficeContact;
 
   return (
-    <section className="host-quality-section" style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "4fr 6fr", gap: isMobile ? 40 : 64 }} className="host-quality-grid">
+    <section className="host-quality-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
+      <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "4fr 6fr", gap: 64 }} className="host-quality-grid">
           
           {/* Host Profile (40%) */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%" }}>
@@ -1933,126 +2279,153 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                   : "0 20px 40px rgba(15, 23, 42, 0.04)";
               }}
               >
-                {/* Visual Accent Top Bar */}
-                <div style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  background: `linear-gradient(90deg, #8B5CF6 0%, ${A} 100%)`
-                }} />
+                {stay?.lkpQualityIndex ? (
+                  <>
+                    {/* Visual Accent Top Bar */}
+                    <div style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: `linear-gradient(90deg, #8B5CF6 0%, ${A} 100%)`
+                    }} />
 
-                {/* Background Ambient Glow under the circle */}
-                <div style={{
-                  position: "absolute",
-                  left: 20,
-                  top: 50,
-                  width: 140,
-                  height: 140,
-                  borderRadius: "50%",
-                  background: `radial-gradient(circle, ${A}12 0%, rgba(255,255,255,0) 70%)`,
-                  pointerEvents: "none"
-                }} />
+                    {/* Background Ambient Glow under the circle */}
+                    <div style={{
+                      position: "absolute",
+                      left: 20,
+                      top: 50,
+                      width: 140,
+                      height: 140,
+                      borderRadius: "50%",
+                      background: `radial-gradient(circle, ${A}12 0%, rgba(255,255,255,0) 70%)`,
+                      pointerEvents: "none"
+                    }} />
 
-                {/* Left: Score Circle */}
-                {(() => {
-                  const displayScore = stay?.lkpQualityIndex?.score || 9.2;
-                  const scoreInt = Math.floor(displayScore);
-                  const scoreDec = (displayScore - scoreInt).toFixed(1).replace("0.", "");
+                    {/* Left: Score Circle */}
+                    {(() => {
+                      const displayScore = stay.lkpQualityIndex.score || 9.2;
+                      const scoreInt = Math.floor(displayScore);
+                      const scoreDec = (displayScore - scoreInt).toFixed(1).replace("0.", "");
 
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: 130, height: 130, flexShrink: 0 }}>
-                      <svg width="130" height="130" viewBox="0 0 130 130" style={{ transform: "rotate(-90deg)", filter: "drop-shadow(0px 4px 10px rgba(0,0,0,0.05))" }}>
-                        <defs>
-                          <linearGradient id="scoreGradStay" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#8B5CF6" />
-                            <stop offset="100%" stopColor={A} />
-                          </linearGradient>
-                          <filter id="glowStay" x="-20%" y="-20%" width="140%" height="140%">
-                            <feGaussianBlur stdDeviation="6" result="blur" />
-                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                          </filter>
-                        </defs>
-                        <circle cx="65" cy="65" r="55" fill="none" stroke={`${A}12`} strokeWidth="3" />
-                        <motion.circle
-                          cx="65" cy="65" r="55" fill="none" stroke="url(#scoreGradStay)" strokeWidth="6" strokeLinecap="round"
-                          style={{ filter: "url(#glowStay)" }}
-                          initial={{ strokeDasharray: "0 346" }}
-                          whileInView={{ strokeDasharray: `${(displayScore / 10) * 346} 346` }}
-                          transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      </svg>
-                      <div style={{ position: "absolute", textAlign: "center" }}>
-                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
-                          <span style={{ fontSize: 42, fontWeight: 900, color: FG, letterSpacing: "-0.05em", fontFamily: "Poppins, sans-serif" }}>{scoreInt}</span>
-                          <span style={{ fontSize: 16, fontWeight: 800, color: A, marginLeft: 1 }}>.{scoreDec}</span>
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: 130, height: 130, flexShrink: 0 }}>
+                          <svg width="130" height="130" viewBox="0 0 130 130" style={{ transform: "rotate(-90deg)", filter: "drop-shadow(0px 4px 10px rgba(0,0,0,0.05))" }}>
+                            <defs>
+                              <linearGradient id="scoreGradStay" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#8B5CF6" />
+                                <stop offset="100%" stopColor={A} />
+                              </linearGradient>
+                              <filter id="glowStay" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="6" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                              </filter>
+                            </defs>
+                            <circle cx="65" cy="65" r="55" fill="none" stroke={`${A}12`} strokeWidth="3" />
+                            <motion.circle
+                              cx="65" cy="65" r="55" fill="none" stroke="url(#scoreGradStay)" strokeWidth="6" strokeLinecap="round"
+                              style={{ filter: "url(#glowStay)" }}
+                              initial={{ strokeDasharray: "0 346" }}
+                              whileInView={{ strokeDasharray: `${(displayScore / 10) * 346} 346` }}
+                              transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+                            />
+                          </svg>
+                          <div style={{ position: "absolute", textAlign: "center" }}>
+                            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
+                              <span style={{ fontSize: 42, fontWeight: 900, color: FG, letterSpacing: "-0.05em", fontFamily: "Poppins, sans-serif" }}>{scoreInt}</span>
+                              <span style={{ fontSize: 16, fontWeight: 800, color: A, marginLeft: 1 }}>.{scoreDec}</span>
+                            </div>
+                            <span style={{ fontSize: 8, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>LKP Index</span>
+                          </div>
                         </div>
-                        <span style={{ fontSize: 8, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.1em" }}>LKP Index</span>
+                      );
+                    })()}
+
+                    {/* Right: Narrative Details & Verification Checks */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
+                      <div>
+                        <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
+                        <h4 style={{ fontSize: 18, fontWeight: 800, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Verified Trust Score</h4>
+                      </div>
+                      
+                      <p style={{ fontSize: 12.5, color: M, lineHeight: 1.6, margin: 0, fontWeight: 400 }}>
+                        {stay.lkpQualityIndex.description || "Consistently delivers outstanding hospitality, verified standards, and top-tier guest experiences."}
+                      </p>
+
+                      {/* Verification Criteria Pills */}
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                        <span style={{
+                          fontSize: "9px",
+                          fontWeight: 700,
+                          color: A,
+                          background: theme === "dark" ? "rgba(0, 151, 178, 0.08)" : "rgba(0, 151, 178, 0.05)",
+                          border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.2)" : "rgba(0, 151, 178, 0.12)"}`,
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}>
+                          ✓ Verified Host
+                        </span>
+
+                        <span style={{
+                          fontSize: "9px",
+                          fontWeight: 700,
+                          color: "#10B981",
+                          background: theme === "dark" ? "rgba(16, 185, 129, 0.08)" : "rgba(16, 185, 129, 0.05)",
+                          border: `1px solid ${theme === "dark" ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.12)"}`,
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}>
+                          ✓ Safety Check
+                        </span>
+
+                        <span style={{
+                          fontSize: "9px",
+                          fontWeight: 700,
+                          color: "#D97706",
+                          background: theme === "dark" ? "rgba(245, 158, 11, 0.08)" : "rgba(245, 158, 11, 0.05)",
+                          border: `1px solid ${theme === "dark" ? "rgba(245, 158, 11, 0.2)" : "rgba(245, 158, 11, 0.12)"}`,
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}>
+                          ✓ High Rated
+                        </span>
                       </div>
                     </div>
-                  );
-                })()}
-
-                {/* Right: Narrative Details & Verification Checks */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
-                  <div>
-                    <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
-                    <h4 style={{ fontSize: 18, fontWeight: 800, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Verified Trust Score</h4>
-                  </div>
-                  
-                  <p style={{ fontSize: 12.5, color: M, lineHeight: 1.6, margin: 0, fontWeight: 400 }}>
-                    {stay?.lkpQualityIndex?.description || "Consistently delivers outstanding hospitality, verified standards, and top-tier guest experiences."}
-                  </p>
-
-                  {/* Verification Criteria Pills */}
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                  </>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", textAlign: "center" }}>
                     <span style={{
-                      fontSize: "9px",
-                      fontWeight: 700,
-                      color: A,
-                      background: theme === "dark" ? "rgba(0, 151, 178, 0.08)" : "rgba(0, 151, 178, 0.05)",
-                      border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.2)" : "rgba(0, 151, 178, 0.12)"}`,
-                      padding: "3px 8px",
-                      borderRadius: "6px",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 4
-                    }}>
-                      ✓ Verified Host
-                    </span>
-
-                    <span style={{
-                      fontSize: "9px",
-                      fontWeight: 700,
+                      justifyContent: "center",
+                      background: theme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)",
                       color: "#10B981",
-                      background: theme === "dark" ? "rgba(16, 185, 129, 0.08)" : "rgba(16, 185, 129, 0.05)",
-                      border: `1px solid ${theme === "dark" ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.12)"}`,
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4
+                      padding: "6px 16px",
+                      borderRadius: "20px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      marginBottom: 16
                     }}>
-                      ✓ Safety Check
+                      Newly Added
                     </span>
-
-                    <span style={{
-                      fontSize: "9px",
-                      fontWeight: 700,
-                      color: "#D97706",
-                      background: theme === "dark" ? "rgba(245, 158, 11, 0.08)" : "rgba(245, 158, 11, 0.05)",
-                      border: `1px solid ${theme === "dark" ? "rgba(245, 158, 11, 0.2)" : "rgba(245, 158, 11, 0.12)"}`,
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4
-                    }}>
-                      ✓ High Rated
-                    </span>
+                    <h4 style={{ fontSize: 20, fontWeight: 700, color: FG, margin: "0 0 8px 0", fontFamily: "Poppins, sans-serif" }}>Welcome to LKP</h4>
+                    <p style={{ fontSize: 13, color: M, margin: 0, maxWidth: 280, lineHeight: 1.5 }}>
+                      This listing is new to our platform. It is currently building its verified trust score based on guest experiences.
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </Rev>
@@ -2252,6 +2625,7 @@ const StayDetails = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [addOnQuantities, setAddOnQuantities] = useState({});
+  const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
 
   const handleToggleAddOn = useCallback((addOnId, pricingType) => {
     setSelectedAddOns((prev) => {
@@ -2538,7 +2912,7 @@ const StayDetails = () => {
       <ScopedStyles />
       {unavailablePopup}
 
-      <DetailPageNavPortal heroRef={heroRef} activeCategory="stays" />
+      {!isMobile && <DetailPageNavPortal heroRef={heroRef} activeCategory="stays" />}
       <ProgressBar />
 
       <StayHeroCarousel stay={stay} galleryItems={galleryItems} heroRef={heroRef} />
@@ -2546,52 +2920,89 @@ const StayDetails = () => {
       <StayAmenities stay={stay} />
 
       {/* ADDONS SECTION */}
-      {stay?.addons && stay.addons.length > 0 && (
-        <section className="addons-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <SHdr idx="03" label="Make it Yours" />
-              {stay.addons.length > 2 && (
-                <div style={{ display: "flex", gap: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => scrollAddonsSlider("left")}
-                    style={{
-                      width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
-                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: FG, transition: "0.3s", outline: "none"
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => scrollAddonsSlider("right")}
-                    style={{
-                      width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
-                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                      color: FG, transition: "0.3s", outline: "none"
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = FG; }}
-                  >
-                    <ChevronRight size={18} />
-                  </button>
+      {(() => {
+        const activeAddons = Array.isArray(stay?.addons) 
+          ? stay.addons.filter(a => a.isActive || a.status === 'Active' || a.addon?.isActive || a.addon?.status === 'Active')
+          : [];
+        if (activeAddons.length === 0) return null;
+
+        return (
+        <section className="addons-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "64px 0" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "16px" }}>
+                  Enhance Your Stay
+                </span>
+                <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+                  Make it Yours
+                </h3>
+                <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: '"Inter", sans-serif' }}>
+                  Curated add-ons to make your stay even more special.
+                </p>
+              </div>
+              {!isMobile && activeAddons.length > 2 && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <button
+                      type="button"
+                      onClick={() => scrollAddonsSlider("left")}
+                      style={{
+                        width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
+                        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                        color: M, transition: "0.3s", outline: "none"
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = M; }}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollAddonsSlider("right")}
+                      style={{
+                        width: 40, height: 40, borderRadius: "50%", border: `1px solid ${B}`, background: W,
+                        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                        color: M, transition: "0.3s", outline: "none"
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.color = A; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.color = M; }}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                  <div style={{ fontSize: "12px", fontFamily: '"Inter", sans-serif', fontWeight: 600, paddingRight: 4 }}>
+                    <span style={{ color: A }}>{Math.min(currentAddonIndex, Math.max(1, activeAddons.length))}</span> <span style={{ color: M }}>/ {Math.max(1, activeAddons.length)}</span>
+                  </div>
                 </div>
               )}
             </div>
             
             {(() => {
-              const addonsList = stay.addons;
+              const addonsList = activeAddons;
               const showScroll = addonsList.length > 2;
 
               return (
                 <div
                   ref={addonsSliderRef}
                   className={showScroll ? "no-scrollbar" : ""}
-                  style={showScroll ? {
+                  onScroll={(e) => {
+                    if (!showScroll) return;
+                    const container = e.target;
+                    const stepSize = (container.clientWidth + 20) / 2;
+                    let newIndex = Math.round(container.scrollLeft / stepSize) + 2;
+                    
+                    if (Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) <= 5) {
+                      newIndex = addonsList.length;
+                    } else {
+                      newIndex = Math.min(addonsList.length, newIndex);
+                    }
+
+                    if (newIndex !== currentAddonIndex) {
+                      setCurrentAddonIndex(newIndex);
+                    }
+                  }}
+                  style={showScroll && !isMobile ? {
                     display: "flex",
                     gap: "20px",
                     overflowX: "auto",
@@ -2599,61 +3010,93 @@ const StayDetails = () => {
                     paddingBottom: "12px",
                     width: "100%",
                     boxSizing: "border-box",
-                    scrollBehavior: "smooth"
+                    scrollBehavior: "smooth",
+                    scrollSnapType: "x mandatory"
                   } : {
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                    gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(320px, 1fr))",
                     gap: "20px"
                   }}
                 >
                   {addonsList.map((item, i) => {
                     const addon = item.addon || item;
-                    const addonId = addon.addonId || addon.assignmentId || addon.id;
-                    const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
-                    const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+                    const addonId = addon.addonId || item.assignmentId || addon.id || item.id;
+                    const pricingType = addon.pricingType || item.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
+                    const addonImage = addon.imageUrl || (Array.isArray(addon.imageUrls) && addon.imageUrls[0]) || addon.image || (Array.isArray(item.imageUrls) && item.imageUrls[0]) || item.imageUrl;
 
                     return (
                       <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
                         key={addonId}
+                        className="addon-item"
+                        whileHover={{ y: -2, borderColor: A, boxShadow: "0 8px 20px rgba(0,0,0,0.03)" }}
+                        transition={{ duration: 0.2 }}
                         style={{
-                          background: "transparent",
                           display: "flex",
-                          flexDirection: "column",
-                          gap: "12px"
+                          flexDirection: "row",
+                          height: isMobile ? "auto" : "115px",
+                          width: isMobile ? "100%" : (showScroll ? "calc((100% - 20px) / 2)" : "100%"),
+                          flexShrink: 0,
+                          background: W,
+                          borderRadius: "16px",
+                          border: `1px solid ${selectedAddOns.includes(addonId) ? A : "transparent"}`,
+                          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+                          transition: "box-shadow 0.3s, border-color 0.3s",
+                          overflow: "hidden",
+                          boxSizing: "border-box",
+                          scrollSnapAlign: "start"
                         }}
                       >
-                        {addonImage && (
-                          <div style={{ width: "100%", height: "180px", background: S, borderRadius: "12px", overflow: "hidden", position: "relative" }}>
-                            <img src={addonImage} alt={addon.title || addon.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            {selectedAddOns.includes(addonId) && (
-                              <div style={{ position: "absolute", top: 12, right: 12, width: 28, height: 28, background: A, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF", boxShadow: `0 4px 12px ${A}44` }}>
-                                <Check size={16} />
+                        {/* Left side: Image */}
+                        <div style={{ width: isMobile ? "64px" : "160px", height: isMobile ? "64px" : "100%", margin: isMobile ? "16px 0 16px 16px" : 0, borderRadius: isMobile ? "8px" : 0, flexShrink: 0, overflow: "hidden", background: W, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {addonImage ? (
+                            <img
+                              src={addonImage}
+                              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                              alt={addon.title || addon.name}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "/images/content/placeholder.jpg";
+                              }}
+                            />
+                          ) : (
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", background: `${A}08` }}>
+                              <Plus size={24} color={A} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right side: Content */}
+                        <div style={{ flex: 1, minWidth: 0, padding: isMobile ? "12px 16px 12px 8px" : "16px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: isMobile ? "center" : "stretch", boxSizing: "border-box" }}>
+                          
+                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: isMobile ? "4px" : "6px", flex: 1, minWidth: 0, paddingRight: isMobile ? "12px" : "16px" }}>
+                            {!isMobile && (
+                              <div style={{ border: `1px solid ${pricingType === "Group" ? "#EF4444" : "#00B4D8"}`, borderRadius: "4px", padding: "2px 6px", color: pricingType === "Group" ? "#EF4444" : "#00B4D8", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", width: "fit-content", letterSpacing: "0.05em" }}>
+                                {pricingType}
                               </div>
                             )}
+                            <h4 style={{ fontSize: isMobile ? "15px" : "18px", fontWeight: 700, color: FG, margin: isMobile ? 0 : "4px 0 0 0", fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {addon.title || addon.name}
+                            </h4>
+                            {isMobile ? (
+                              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                                <span style={{ fontSize: "14px", fontWeight: 700, color: FG }}>₹{Number(addon.price || 0).toLocaleString()}</span>
+                                <span style={{ fontSize: "11px", color: M, fontWeight: 500 }}>/{pricingType === "Group" ? "group" : "person"}</span>
+                              </div>
+                            ) : (
+                              <p style={{ fontSize: "12px", color: M, margin: 0, fontFamily: '"Inter", sans-serif', display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.5" }}>
+                                {addon.briefDescription || addon.description}
+                              </p>
+                            )}
                           </div>
-                        )}
-                        <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "0 4px" }}>
-                          <h4 style={{ fontSize: "16px", fontWeight: 700, color: FG, margin: "0 0 6px 0", lineHeight: 1.3 }}>{addon.title || addon.name}</h4>
-                          {addon.description && (
-                            <p style={{ fontSize: "14px", color: M, margin: "0 0 16px 0", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                              {addon.description}
-                            </p>
-                          )}
-                          
-                          <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <span style={{ fontSize: "10px", fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                {pricingType}
-                              </span>
-                              {addon.price > 0 && (
-                                <span style={{ fontSize: "15px", fontWeight: 700, color: FG }}>₹{addon.price}</span>
-                              )}
-                            </div>
 
-                            <div className="addon-actions">
+                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-end", minWidth: isMobile ? "auto" : "90px" }}>
+                            {!isMobile && (
+                              <div style={{ fontSize: "16px", fontWeight: 800, color: FG, fontFamily: '"Inter", sans-serif', marginBottom: "12px" }}>
+                                ₹{Number(addon.price || 0).toFixed(2)}
+                              </div>
+                            )}
+
+                            <div className="addon-actions" style={{ flexShrink: 0 }}>
                               {selectedAddOns.includes(addonId) ? (
                                 pricingType === "Group" ? (
                                   <button
@@ -2662,13 +3105,15 @@ const StayDetails = () => {
                                     style={{
                                       background: `${A}15`,
                                       color: A,
-                                      border: "none",
+                                      border: `1px solid ${A}50`,
                                       borderRadius: 100,
-                                      padding: "6px 14px",
-                                      fontSize: 11,
-                                      fontWeight: 800,
+                                      padding: "6px 16px",
+                                      fontSize: 12,
+                                      fontWeight: 700,
                                       cursor: "pointer",
-                                      transition: "all 0.2s"
+                                      textTransform: "uppercase",
+                                      transition: "all 0.2s",
+                                      outline: "none"
                                     }}
                                     onMouseEnter={(e) => { e.currentTarget.style.background = A; e.currentTarget.style.color = W; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.background = `${A}15`; e.currentTarget.style.color = A; }}
@@ -2676,21 +3121,21 @@ const StayDetails = () => {
                                     Remove
                                   </button>
                                 ) : (
-                                  <div style={{ display: "flex", alignItems: "center", gap: 12, background: `${A}08`, borderRadius: 100, padding: "4px 8px" }}>
+                                  <div className="addon-counter" style={{ display: "flex", alignItems: "center", gap: 10, background: W, borderRadius: 100, padding: "4px 8px", border: `1px solid ${A}` }}>
                                     <button
                                       type="button"
                                       onClick={() => handleAddOnQuantityChange(addonId, (addOnQuantities[addonId] || 1) - 1)}
-                                      style={{ background: W, borderRadius: "50%", width: 28, height: 28, border: `1px solid ${A}22`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: A, boxShadow: `0 2px 6px ${A}11` }}
+                                      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, color: A, outline: "none" }}
                                     >
                                       <Minus size={14} />
                                     </button>
-                                    <span style={{ fontSize: 14, fontWeight: 700, color: FG, minWidth: 16, textAlign: "center" }}>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>
                                       {addOnQuantities[addonId] || 1}
                                     </span>
                                     <button
                                       type="button"
                                       onClick={() => handleAddOnQuantityChange(addonId, (addOnQuantities[addonId] || 1) + 1)}
-                                      style={{ background: W, borderRadius: "50%", width: 28, height: 28, border: `1px solid ${A}22`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: A, boxShadow: `0 2px 6px ${A}11` }}
+                                      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, color: A, outline: "none" }}
                                     >
                                       <Plus size={14} />
                                     </button>
@@ -2700,20 +3145,29 @@ const StayDetails = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleAddOn(addonId, pricingType)}
-                                  style={{
-                                    background: A,
-                                    color: W,
-                                    border: "none",
-                                    borderRadius: 100,
-                                    padding: "8px 18px",
-                                    fontSize: 12,
-                                    fontWeight: 800,
+                                  style={isMobile ? {
+                                    background: "transparent",
+                                    color: A,
+                                    border: `1px solid ${A}`,
+                                    borderRadius: "100px",
+                                    padding: "6px 20px",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    fontFamily: '"Inter", sans-serif',
                                     cursor: "pointer",
-                                    transition: "all 0.2s",
-                                    boxShadow: `0 4px 12px ${A}33`
+                                    outline: "none"
+                                  } : {
+                                    background: "#007B8F",
+                                    color: "#FFFFFF",
+                                    border: "none",
+                                    borderRadius: "100px",
+                                    padding: "6px 20px",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    fontFamily: '"Inter", sans-serif',
+                                    cursor: "pointer",
+                                    outline: "none"
                                   }}
-                                  onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-1px)"}
-                                  onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
                                 >
                                   Add
                                 </button>
@@ -2729,15 +3183,24 @@ const StayDetails = () => {
             })()}
           </div>
         </section>
-      )}
+        );
+      })()}
 
 
-      <div style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <SHdr idx="04" label="Accommodations" />
-          <p style={{ fontSize: 16, color: M, marginBottom: 56, maxWidth: 600, lineHeight: 1.7 }}>
-            Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
-          </p>
+      <div style={{ background: W, padding: isMobile ? "32px 24px" : "64px 0" }}>
+        <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: "40px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif', marginBottom: "16px" }}>
+              Stay In Style
+            </span>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, margin: 0, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
+              Accommodations
+            </h3>
+            <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: '"Inter", sans-serif', maxWidth: "600px" }}>
+              Choose from our curated selection of rooms and suites. Each space is thoughtfully designed for an unparalleled stay experience.
+            </p>
+          </div>
           {isPropertyBasedStay && (
             <PropertyStayCard stay={stay} />
           )}
@@ -2780,7 +3243,7 @@ const StayDetails = () => {
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
               transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-              style={{ display: "flex", alignItems: "center", gap: 32, width: "max-content" }}
+              style={{ display: "flex", alignItems: "center", width: "max-content" }}
             >
               {loopedTags.map((tag, idx) => {
                 const isEven = idx % 2 === 0;
@@ -2791,7 +3254,8 @@ const StayDetails = () => {
                       display: "flex",
                       alignItems: "center",
                       gap: "24px",
-                      whiteSpace: "nowrap"
+                      whiteSpace: "nowrap",
+                      marginRight: "32px"
                     }}
                   >
                     <span
@@ -2807,7 +3271,7 @@ const StayDetails = () => {
                     >
                       {tag}
                     </span>
-                    <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ opacity: 0.6 }} />
+                    <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
                   </div>
                 );
               })}
@@ -2856,12 +3320,31 @@ const StayDetails = () => {
         onToggleAddOn={handleToggleAddOn}
       />
 
-      <RelatedListingsStrip
-        businessInterestId={3}
-        primaryCategoryId={primaryCategoryId}
-        currentListingId={currentListingId}
-        title="More Stays You May Like"
-      />
+      <div className="related-listings-wrapper" style={{ padding: isMobile ? "24px 0" : "64px 0", background: theme === 'dark' ? BG : W }}>
+        <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          {isMobile && (
+            <div style={{ padding: "0 20px", paddingBottom: 8 }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", fontFamily: '"Inter", sans-serif' }}>Discover More</span>
+            </div>
+          )}
+          <RelatedListingsStrip
+            businessInterestId={3}
+            primaryCategoryId={primaryCategoryId}
+            currentListingId={currentListingId}
+            title="More Stays You May Like"
+            sectionStyle={{ padding: isMobile ? "0 0 0 20px" : "0px", background: "transparent" }}
+            titleStyle={{ 
+              fontSize: isMobile ? "clamp(1.6rem, 7vw, 2.2rem)" : "clamp(2.5rem, 4vw, 3.5rem)", 
+              fontWeight: 700, 
+              lineHeight: 1.1, 
+              fontFamily: '"Cormorant Garamond", "Playfair Display", serif', 
+              letterSpacing: "-0.02em",
+              color: FG,
+              margin: 0
+            }}
+          />
+        </div>
+      </div>
 
     </div>
   );
@@ -3620,6 +4103,7 @@ function PropertyStayCard({ stay }) {
   const [isHoveringCover, setIsHoveringCover] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [isImgHovered, setIsImgHovered] = useState(false);
 
   const toDateOnly = (value) => {
     if (!value) return null;
@@ -3716,79 +4200,144 @@ function PropertyStayCard({ stay }) {
   const totalPhotos = Math.max(1, allImages.length);
 
   return (
-    <div className={roomStyles.card} style={{ marginBottom: 24 }}>
+    <motion.div 
+      whileHover={{ y: -1, boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}
+      transition={{ duration: 0.3 }}
+      className={roomStyles.card}
+      style={{
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: "stretch",
+        background: W,
+        border: `1px solid ${B}`,
+        borderRadius: isMobile ? "24px" : "20px",
+        padding: "0",
+        position: "relative",
+        gap: 0,
+        minHeight: "220px",
+        overflow: "hidden",
+        boxShadow: isMobile ? "0 4px 20px rgba(0,0,0,0.06)" : "none",
+        boxSizing: "border-box",
+        marginBottom: "24px"
+      }}
+    >
+      {/* Left: Image Mosaic */}
       <div 
-        className={roomStyles.collageWrap} 
+        onMouseEnter={() => setIsImgHovered(true)}
+        onMouseLeave={() => setIsImgHovered(false)}
         onClick={() => setShowModal(true)}
+        style={{
+          width: isMobile ? "100%" : "280px",
+          height: isMobile ? "200px" : "auto",
+          flexShrink: 0,
+          display: "flex",
+          borderRight: isMobile ? "none" : `1px solid ${B}`,
+          borderBottom: isMobile ? `1px solid ${B}` : "none",
+          background: W,
+          position: "relative",
+          cursor: "pointer",
+          overflow: "hidden"
+        }}
       >
         {allImages.length >= 3 ? (
           <>
-            <img src={allImages[0]} alt={propertyName} className={roomStyles.mainImg} />
-            <div className={roomStyles.subImgCol}>
-              <img src={allImages[1]} alt={propertyName} className={roomStyles.subImg} />
-              <img src={allImages[2]} alt={propertyName} className={roomStyles.subImg} />
+            <img src={allImages[0]} alt={propertyName} style={{ width: "65%", height: "100%", objectFit: "cover" }} />
+            <div style={{ width: "35%", display: "flex", flexDirection: "column", height: "100%" }}>
+              <img src={allImages[1]} alt={propertyName} style={{ width: "100%", height: "50%", objectFit: "cover", borderLeft: "2px solid #FFF", borderBottom: "1px solid #FFF" }} />
+              <div style={{ width: "100%", height: "50%", position: "relative", overflow: "hidden", borderLeft: "2px solid #FFF", borderTop: "1px solid #FFF" }}>
+                <img src={allImages[2]} alt={propertyName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                {totalPhotos > 3 && (
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF", fontSize: "14px", fontWeight: 700 }}>
+                    +{totalPhotos - 3}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         ) : (
-          <img src={allImages[0] || "/images/content/card-pic-13.jpg"} alt={propertyName} className={roomStyles.singleImg} />
+          <img src={allImages[0] || "/images/content/card-pic-13.jpg"} alt={propertyName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         )}
-        <span className={roomStyles.badge}>PROPERTY STAY</span>
-        
-        <div className={roomStyles.viewPhotosOverlay}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 4 }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-          <span>{totalPhotos} Photos</span>
+
+        {/* Property Badge Tag */}
+        <div style={{ position: "absolute", top: 12, left: 12, padding: "4px 10px", borderRadius: "100px", background: W, border: `1px solid ${B}`, color: FG, fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: "6px" }}>
+          <Home size={14} /> PROPERTY STAY
         </div>
+
+
+
+        {/* View Gallery Overlay Button */}
+        <AnimatePresence>
+          {isImgHovered && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)" }}
+            >
+              <div style={{ padding: "10px 20px", borderRadius: "100px", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", color: FG, fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px", textTransform: "uppercase", letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                View Gallery
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-      <div className={roomStyles.body}>
-        <div className={roomStyles.infoCol}>
-          <div className={roomStyles.splitHeader}>
-            <div className={roomStyles.leftHeader}>
-              <h4 className={roomStyles.roomName}>{propertyName}</h4>
-              
-              <div className={roomStyles.amenitiesRow}>
-                {amenities.map((amenity, idx) => (
-                  <span key={idx} className={roomStyles.amenityTag}>{amenity}</span>
-                ))}
+
+      {/* Middle: Content details */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: isMobile ? "16px" : "24px 32px", minWidth: 0, justifyContent: "space-between" }}>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "10px" : "12px" }}>
+          <h4 style={{ fontSize: isMobile ? "24px" : "28px", fontWeight: 800, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', color: FG, margin: 0, lineHeight: 1.2 }}>
+            {propertyName}
+          </h4>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "4px" }}>
+            {/* Checkin/Checkout prominent display */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "13px", fontWeight: 600, color: FG, fontFamily: '"Inter", sans-serif' }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Clock size={16} color={A} />
+                <span>Check-in: {checkInText}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Clock size={16} color={A} />
+                <span>Check-out: {checkOutText}</span>
               </div>
             </div>
-
-            <div className={roomStyles.rightHeader}>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end", marginBottom: 8 }}>
-                <span className={roomStyles.guestCount}>
-                  <Clock size={14} className={roomStyles.guestIcon} />
-                  Check-in: {checkInText}
-                </span>
-                <span className={roomStyles.guestCount}>
-                  <Clock size={14} className={roomStyles.guestIcon} />
-                  Check-out: {checkOutText}
-                </span>
-              </div>
-
-              <div className={roomStyles.priceBlock}>
-                <span className={roomStyles.priceLabel}>PRICE</span>
-                <div className={roomStyles.amount}>
-                  {priceValue != null ? (
-                    <>
-                      {discountRate > 0 && (
-                        <span className={roomStyles.strikePrice}>
-                          {"\u20B9"}{Number(priceValue).toLocaleString("en-IN")}
-                        </span>
-                      )}
-                      {"\u20B9"}{Number(discountRate > 0 ? discountedPriceValue : priceValue).toLocaleString("en-IN")}
-                      <span className={roomStyles.perNight}> / night</span>
-                    </>
-                  ) : (
-                    <span className={roomStyles.priceOnRequest}>Price on request</span>
-                  )}
-                </div>
-              </div>
+            
+            {/* Amenities Row */}
+            <div style={{ display: "flex", flexWrap: isMobile ? "nowrap" : "wrap", gap: "8px", overflowX: isMobile ? "auto" : "visible", paddingBottom: isMobile ? "4px" : "0", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+              {amenities.map((amenity, idx) => (
+                <span key={idx} style={{ flexShrink: 0, fontSize: "11px", fontWeight: 700, color: A, background: "rgba(0, 151, 178, 0.06)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(0, 151, 178, 0.15)", whiteSpace: "nowrap" }}>{amenity}</span>
+              ))}
             </div>
           </div>
+        </div>
 
-          <div className={roomStyles.descBlock}>
-            <p className={roomStyles.descText}>
-              Entire-property booking with curated comfort and premium amenities.
-            </p>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", marginTop: isMobile ? "16px" : "24px", gap: isMobile ? "16px" : "0" }}>
+          <p style={{ fontSize: "13px", color: M, margin: 0, flex: 1, paddingRight: isMobile ? "0" : "16px", lineHeight: 1.5 }}>
+            Entire-property booking with curated comfort and premium amenities.
+          </p>
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "flex-start" : "flex-end", flexShrink: 0 }}>
+            <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: M, marginBottom: "4px" }}>
+              STARTING FROM
+            </span>
+            <div style={{ fontSize: "24px", fontWeight: 800, color: FG, fontFamily: '"Inter", sans-serif', lineHeight: 1 }}>
+              {priceValue != null ? (
+                <>
+                  {discountRate > 0 && discountedPriceValue && (
+                    <span style={{ fontSize: "14px", color: M, textDecoration: "line-through", marginRight: "8px" }}>
+                      {"\u20B9"}{Number(priceValue).toLocaleString("en-IN")}
+                    </span>
+                  )}
+                  {"\u20B9"}{Number(discountRate > 0 ? discountedPriceValue : priceValue).toLocaleString("en-IN")}
+                  <span style={{ fontSize: "12px", fontWeight: 500, color: M }}> / night</span>
+                </>
+              ) : (
+                <span style={{ fontSize: "16px", fontWeight: 600, color: M }}>Price on request</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -3807,7 +4356,7 @@ function PropertyStayCard({ stay }) {
         </AnimatePresence>,
         document.body
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -3870,14 +4419,16 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
   ];
 
   return (
-    <section className="testimonials-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px", overflow: "hidden" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+    <section className="testimonials-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0", overflow: "hidden" }}>
+      <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
         
         {/* Header and Scroll Buttons */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-          <div>
-            <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Guest Reviews</span>
-            <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>
+              Guest Feedback
+            </span>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, margin: 0, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
               What people say
             </h3>
           </div>
@@ -3929,7 +4480,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
         >
           {displayReviews.map((rev, idx) => {
             const name = rev.customerName || rev.author || "Guest";
-            const rating = rev.rating || 5;
+            const rating = Number(rev.rating) || 5;
             const text = rev.comment || rev.text || "";
             const vendorResponse = rev.vendorResponse || rev.hostResponse || rev.reply || "";
 
@@ -3976,7 +4527,12 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                 <div style={{ position: "relative", zIndex: 2 }}>
                   <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill={i < rating ? "#F59E0B" : "none"} color={i < rating ? "#F59E0B" : M} />
+                      <Star 
+                        key={i} 
+                        size={14} 
+                        style={{ fill: i < rating ? "#F59E0B" : "transparent" }} 
+                        color={i < rating ? "#F59E0B" : M} 
+                      />
                     ))}
                   </div>
                   <p style={{ fontSize: 13, color: FG, lineHeight: 1.6, margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: vendorResponse ? 3 : 4, WebkitBoxOrient: "vertical", fontWeight: 400 }}>
@@ -4090,7 +4646,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
 
 function StayLocation({ stay }) {
   const { isMobile } = useWindowSize();
-  const { tokens: { A, BG, FG, M, S, B, W } } = useTheme();
+  const { tokens: { A, BG, FG, M, S, B, W }, theme } = useTheme();
   const { city, district, state } = getStayLocationParts(stay);
 
   // Coordinates
@@ -4109,100 +4665,199 @@ function StayLocation({ stay }) {
   const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=m&z=15&output=embed&iwloc=near`;
 
   return (
-    <section className="prep-section" style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "45fr 55fr", gap: isMobile ? 40 : 64 }} className="prep-grid">
+    <section className="prep-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "48px 24px" : "64px 0" }}>
+      <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+        
+        {/* Header Area */}
+        <div style={{ marginBottom: 32 }}>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Location & Details</span>
+          <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it All Happens</h3>
+          <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600, display: isMobile ? "none" : "block" }}>Find your way to the property and get all the essential details for a smooth arrival.</p>
+        </div>
+
+        {/* Main Card Container */}
+        <div style={{ 
+          background: isMobile ? "transparent" : (theme === 'dark' ? '#0A0A0A' : '#FFFFFF'), 
+          borderRadius: isMobile ? 0 : 24, 
+          border: isMobile ? "none" : `1px solid ${B}`, 
+          padding: isMobile ? "16px 0 0 0" : 16, 
+          display: "grid", 
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", 
+          gap: isMobile ? 24 : 32,
+          boxShadow: isMobile || theme === 'dark' ? "none" : "0 8px 32px rgba(0,0,0,0.04)"
+        }} className="prep-grid">
+          
+          {/* LEFT: Map */}
           <Rev delay={0.1} style={{ height: "100%" }}>
-            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it All Happens</h3>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ background: W, border: `1px solid ${B}`, height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
-                  <div style={{
-                    position: "absolute",
-                    bottom: 16,
-                    left: 16,
-                    zIndex: 10,
-                    background: W,
-                    padding: "10px 16px",
-                    borderRadius: "12px",
-                    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)",
-                    border: `1px solid ${B}`,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    pointerEvents: "none"
-                  }}>
-                    <MapPin size={16} color={A} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{locationName}</span>
-                  </div>
-                  <iframe
-                    title="Property Location Map"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    src={embedUrl}
-                  />
-                </div>
+            <div style={{ height: isMobile ? "240px" : "100%", minHeight: isMobile ? "240px" : 320, position: "relative", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
+              <div style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                zIndex: 10,
+                background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                padding: "8px 16px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                border: `1px solid ${B}`,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                pointerEvents: "none"
+              }}>
+                <MapPin size={16} color={A} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>{locationName}</span>
               </div>
+              <iframe
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                style={{ border: 0 }}
+                loading="lazy"
+                src={embedUrl}
+                allowFullScreen
+                title="Property Location"
+              />
             </div>
           </Rev>
+          
+          {/* RIGHT: Details List */}
           <Rev delay={0.2} style={{ height: "100%" }}>
-            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it is</h3>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 280, margin: 0, padding: 0 }}>
-                  {address && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Address</span>
-                      <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{address}</span>
-                    </li>
-                  )}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: isMobile ? "0" : "16px 16px 16px 0" }}>
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
+                {address && (
+                  <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: `1px solid ${B}` }}>
+                    <div style={{ width: 40, height: 40, borderRadius: isMobile ? "50%" : "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <MapPin size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>Address</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{address}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{address}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
 
-                  {landmark && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Landmark</span>
-                      <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{landmark}</span>
-                    </li>
-                  )}
+                {landmark && (
+                  <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: !address ? `1px solid ${B}` : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: isMobile ? "50%" : "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Building size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>Landmark</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{landmark}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{landmark}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
 
-                  {(district || city) && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>District</span>
-                      <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{district || city}</span>
-                    </li>
-                  )}
+                {(district || city) && (
+                  <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: (!address && !landmark) ? `1px solid ${B}` : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: isMobile ? "50%" : "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Map size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>District</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{district || city}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{district || city}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
 
-                  {state && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>State</span>
-                      <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{state}</span>
-                    </li>
-                  )}
+                {state && (
+                  <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: (!address && !landmark && !district && !city) ? `1px solid ${B}` : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: isMobile ? "50%" : "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Map size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>State</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{state}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{state}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
 
-                  {country && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Country</span>
-                      <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{country}</span>
-                    </li>
-                  )}
+                {country && (
+                  <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: (!address && !landmark && !district && !city && !state) ? `1px solid ${B}` : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: isMobile ? "50%" : "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Globe size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>Country</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{country}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{country}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
 
-                  {instructions && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 8 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Instructions</span>
-                      <span style={{ fontSize: 14, color: FG, fontWeight: 500, lineHeight: 1.4 }}>{instructions}</span>
-                    </li>
-                  )}
+                {instructions && (
+                  <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: (!address && !landmark && !district && !city && !state && !country) ? `1px solid ${B}` : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: isMobile ? "50%" : "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Info size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>Instructions</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{instructions}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{instructions}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
 
-                  {(!district && !state && !country && !address && !landmark) && (
-                    <li style={{ display: "flex", gap: 16, alignItems: "baseline", borderBottom: `1px solid ${B}`, paddingBottom: 16 }}>
-                      <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 120, flexShrink: 0, fontWeight: 600 }}>Region</span>
-                      <span style={{ fontSize: 14, color: M, fontWeight: 500 }}>Specific regional details will be provided upon booking confirmation.</span>
-                    </li>
-                  )}
-                </ul>
-              </div>
+                {(!district && !city && !state && !country && !address && !landmark) && (
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: isMobile ? "flex-start" : "center", borderBottom: `1px solid ${B}`, padding: isMobile ? "16px 0" : "12px 0", borderTop: `1px solid ${B}` }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <MapPin size={isMobile ? 18 : 20} color={A} fill="transparent" />
+                    </div>
+                    {isMobile ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                        <span style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 800 }}>Region</span>
+                        <span style={{ fontSize: "14px", color: FG, fontWeight: 600, lineHeight: 1.4 }}>{locationName}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{locationName}</span>
+                      </div>
+                    )}
+                  </li>
+                )}
+              </ul>
             </div>
           </Rev>
         </div>

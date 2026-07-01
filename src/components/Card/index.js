@@ -75,7 +75,7 @@ const Item = ({ className, item, row, car, hidePrice }) => {
         { [styles.car]: car }
       )}
       to={item.url}
-      target="_blank"
+      target={window.innerWidth <= 768 ? "_self" : "_blank"}
       rel="noopener noreferrer"
     >
       <div className={cn(styles.preview, { [styles.loaded]: imageLoaded })}>
@@ -93,6 +93,12 @@ const Item = ({ className, item, row, car, hidePrice }) => {
             setImageLoaded(true);
           }}
         />
+        {isClosedEvent && (
+          <div className={styles.closedBadge}>
+            <div className={styles.closedDot} />
+            CLOSED
+          </div>
+        )}
         {wishlistConfig && (
           <Favorite
             className={styles.favorite}
@@ -113,14 +119,6 @@ const Item = ({ className, item, row, car, hidePrice }) => {
             )}
           >
             {item.categoryText}
-          </div>
-        )}
-        {isClosedEvent && (
-          <div
-            className={cn(styles.category, styles.closedBadge)}
-            style={item.categoryText ? { right: 12, left: 'auto', top: 32 } : { right: 12, left: 'auto', top: 0 }}
-          >
-            Closed
           </div>
         )}
         {item.dateBadge && (

@@ -134,6 +134,72 @@ const getConfirmCancelSummaryRows = (preview) => {
   ];
 };
 
+// Helper function to extract booking status lightly without calling external APIs
+const enrichRawBooking = (apiBooking) => {
+  const statusMap = {
+    PENDING: "Pending",
+    CONFIRMED: "Upcoming",
+    SUCCESS: "Upcoming",
+    PAID: "Upcoming",
+    BOOKED: "Upcoming",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
+  };
+
+  const normalizedOrderStatus = String(apiBooking?.orderStatus || "").toUpperCase().trim();
+  let status = statusMap[normalizedOrderStatus] || "Upcoming";
+
+  if (status === "Upcoming" || status === "Completed") {
+    const stayRooms = Array.isArray(apiBooking?.stayOrderRooms) ? apiBooking.stayOrderRooms : [];
+    const roomCheckOutDates = stayRooms
+      .map((room) => room?.checkOutDate || room?.checkoutDate || room?.check_out_date)
+      .filter(Boolean);
+    const roomCheckOutTimes = stayRooms
+      .map((room) => room?.checkOutTime || room?.checkoutTime || room?.check_out_time)
+      .filter(Boolean);
+
+    const bookingDateStr =
+      roomCheckOutDates[0] ||
+      apiBooking.checkOutDate ||
+      apiBooking.checkoutDate ||
+      apiBooking.checkInDate ||
+      apiBooking.bookingDate ||
+      apiBooking.eventDate ||
+      apiBooking.eventDetails?.eventDate ||
+      null;
+
+    if (bookingDateStr) {
+      const deadline = new Date(bookingDateStr);
+      const endTimeStr =
+        roomCheckOutTimes[0] ||
+        apiBooking.timeSlotEndTime ||
+        apiBooking.checkOutTime ||
+        apiBooking.checkoutTime ||
+        apiBooking.endTime ||
+        apiBooking.bookingTime;
+
+      if (endTimeStr && typeof endTimeStr === 'string' && endTimeStr.includes(':')) {
+        const [hours, minutes, seconds] = endTimeStr.split(':').map(Number);
+        deadline.setHours(hours || 0, minutes || 0, seconds || 0, 0);
+      } else {
+        deadline.setHours(23, 59, 59, 999);
+      }
+      if (deadline < new Date()) {
+        status = "Completed";
+      } else {
+        status = "Upcoming";
+      }
+    }
+  }
+  return { 
+    id: `bk-${apiBooking.orderId}`,
+    orderId: apiBooking.orderId,
+    statusTone: status.toLowerCase(),
+    status: status,
+    bookingData: apiBooking 
+  };
+};
+
 // Helper function to transform multiple bookings with listing data
 // Optimized to cache listing data and avoid duplicate API calls
 const transformMultipleBookings = async (bookingsArray) => {
@@ -683,6 +749,44 @@ const isPastStayCheckInTime = (booking) => {
   return new Date() >= checkInDatetime;
 };
 
+const isPastStayCheckOutTime = (booking) => {
+  if (!booking) return false;
+  const { bookingData, stayData } = booking;
+
+  // Only apply to Stays
+  const businessInterestCode = String(bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
+  const isStayOrder = businessInterestCode === "STAYS" ||
+    bookingData?.stayId != null ||
+    (bookingData?.stayOrderRooms && bookingData?.stayOrderRooms.length > 0) ||
+    stayData != null;
+
+  if (!isStayOrder) return true; // Non-stays bypass stay checkout restriction
+
+  const checkOutDateStr =
+    bookingData?.checkOutDate ||
+    bookingData?.endDate ||
+    stayData?.checkOutDate;
+
+  if (!checkOutDateStr) return true; // If missing checkout date, don't restrict
+
+  const checkOutDatetime = new Date(checkOutDateStr);
+
+  const checkOutTimeStr =
+    bookingData?.checkOutTime ||
+    bookingData?.endTime ||
+    stayData?.checkOutTime ||
+    "11:00:00";
+
+  if (checkOutTimeStr && typeof checkOutTimeStr === 'string' && checkOutTimeStr.includes(':')) {
+    const parts = checkOutTimeStr.split(':').map(Number);
+    checkOutDatetime.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+  } else {
+    checkOutDatetime.setHours(11, 0, 0, 0);
+  }
+
+  return new Date() >= checkOutDatetime;
+};
+
 const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
   const baseActions = actionsByStatus[booking?.status] || [];
 
@@ -701,11 +805,15 @@ const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
   } else if (tabId === "completed") {
     actions = actions.filter((a) => {
       if (a.label !== "Leave review") return true;
-      return orderIdsEligibleForReview.has(booking.orderId);
+      return orderIdsEligibleForReview.has(booking.orderId) && isPastStayCheckOutTime(booking);
     });
   }
 
   if (isPastStayCheckInTime(booking)) {
+    actions = actions.filter((a) => a.label !== "Cancel Booking");
+  }
+
+  if (String(booking?.bookingData?.orderStatus || "").toUpperCase() === "PENDING_CONFIRMATION") {
     actions = actions.filter((a) => a.label !== "Cancel Booking");
   }
 
@@ -734,11 +842,17 @@ const Main = ({
   const [cancellationReasons, setCancellationReasons] = useState([]);
   const [selectedReason, setSelectedReason] = useState("");
   const [confirmCancelModalVisible, setConfirmCancelModalVisible] = useState(false);
-  const [transformedBookings, setTransformedBookings] = useState([]);
-  const [transformedCompletedBookings, setTransformedCompletedBookings] = useState([]);
+  const [rawBookings, setRawBookings] = useState([]);
+  const [rawCompletedBookings, setRawCompletedBookings] = useState([]);
+  const [paginatedTransformedBookings, setPaginatedTransformedBookings] = useState([]);
+  const [isTransforming, setIsTransforming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingCompleted, setLoadingCompleted] = useState(false);
   const [initialTabSet, setInitialTabSet] = useState(false); // Track if initial tab has been set
+
+  // Cache of already-transformed bookings keyed by orderId.
+  // This prevents re-fetching API data when switching back to a previously loaded tab.
+  const transformedCacheRef = React.useRef(new Map());
   // Review modal state (completed orders only)
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [bookingToReview, setBookingToReview] = useState(null);
@@ -1067,11 +1181,11 @@ const Main = ({
 
   // Transform booking data when propBookingData is provided
   useEffect(() => {
-    const transformBookings = async () => {
+    const processBookings = () => {
       setLoading(true);
       try {
-        let regularTransformed = [];
-        let completedTransformed = [];
+        let regularRaw = [];
+        let completedRaw = [];
 
         // Handle regular bookings (upcoming, pending, cancelled - excluding completed)
         if (propBookingData !== null && propBookingData !== undefined) {
@@ -1085,13 +1199,13 @@ const Main = ({
           );
 
           if (filteredBookings.length > 0) {
-            regularTransformed = await transformMultipleBookings(filteredBookings);
-            setTransformedBookings(regularTransformed);
+            regularRaw = filteredBookings.map(enrichRawBooking);
+            setRawBookings(regularRaw);
           } else {
-            setTransformedBookings([]);
+            setRawBookings([]);
           }
         } else {
-          setTransformedBookings([]);
+          setRawBookings([]);
         }
 
         // Handle completed/expired orders separately
@@ -1104,13 +1218,13 @@ const Main = ({
           const validCompletedOrders = completedArray.filter(order => order);
 
           if (validCompletedOrders.length > 0) {
-            completedTransformed = await transformMultipleBookings(validCompletedOrders);
-            setTransformedCompletedBookings(completedTransformed);
+            completedRaw = validCompletedOrders.map(enrichRawBooking);
+            setRawCompletedBookings(completedRaw);
           } else {
-            setTransformedCompletedBookings([]);
+            setRawCompletedBookings([]);
           }
         } else {
-          setTransformedCompletedBookings([]);
+          setRawCompletedBookings([]);
         }
 
         // Always open on the Upcoming tab on initial load
@@ -1120,21 +1234,21 @@ const Main = ({
           setInitialTabSet(true);
         }
       } catch (error) {
-        console.error("Error transforming booking data:", error);
+        console.error("Error processing booking data:", error);
         // Fallback: transform with empty arrays on error
-        setTransformedBookings([]);
-        setTransformedCompletedBookings([]);
+        setRawBookings([]);
+        setRawCompletedBookings([]);
       } finally {
         setLoading(false);
       }
     };
 
-    transformBookings();
+    processBookings();
   }, [propBookingData, propCompletedOrders, initialTabSet]);
 
   const countsByTab = useMemo(() => {
     // Count upcoming, completed (date-overridden), pending, and cancelled from regular bookings
-    const categorized = transformedBookings.reduce((acc, booking) => {
+    const categorized = rawBookings.reduce((acc, booking) => {
       const tabId = booking.statusTone === "upcoming" ? "upcoming"
         : booking.statusTone === "completed" ? "completed"
           : booking.statusTone === "pending" ? "pending"
@@ -1145,8 +1259,8 @@ const Main = ({
 
     // Add server-side completed orders; also include date-overridden completed from regular bookings
     const dateOverriddenCompleted = categorized.completed || 0;
-    if (transformedCompletedBookings.length > 0) {
-      categorized.completed = transformedCompletedBookings.length + dateOverriddenCompleted;
+    if (rawCompletedBookings.length > 0) {
+      categorized.completed = rawCompletedBookings.length + dateOverriddenCompleted;
     } else {
       categorized.completed = (completedCount || 0) + dateOverriddenCompleted;
     }
@@ -1155,19 +1269,19 @@ const Main = ({
       acc[tab.id] = categorized[tab.id] || 0;
       return acc;
     }, {});
-  }, [transformedBookings, transformedCompletedBookings, completedCount]);
+  }, [rawBookings, rawCompletedBookings, completedCount]);
 
   const bookingsForTab = useMemo(() => {
     let result = [];
     // For completed tab: merge server-side completed orders + date-overridden ones from regular bookings
     if (displayedTab === "completed") {
-      const dateOverridden = transformedBookings.filter(
+      const dateOverridden = rawBookings.filter(
         (b) => b.statusTone === "completed"
       );
-      result = [...dateOverridden, ...transformedCompletedBookings];
+      result = [...dateOverridden, ...rawCompletedBookings];
     } else {
       // For upcoming, pending, and cancelled tabs, exclude date-overridden completed bookings
-      result = transformedBookings.filter((booking) => {
+      result = rawBookings.filter((booking) => {
         const tabId = booking.statusTone === "upcoming" ? "upcoming"
           : booking.statusTone === "completed" ? null  // exclude — goes to completed tab
             : booking.statusTone === "pending" ? "pending"
@@ -1208,13 +1322,62 @@ const Main = ({
       const dateB = b.bookingData?.checkInDate || b.bookingData?.bookingDate || b.bookingData?.eventDate || "";
       return dateB.localeCompare(dateA);
     });
-  }, [transformedBookings, transformedCompletedBookings, displayedTab]);
+  }, [rawBookings, rawCompletedBookings, displayedTab]);
 
   // Paginated bookings
   const paginatedBookings = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return bookingsForTab.slice(startIndex, startIndex + itemsPerPage);
   }, [bookingsForTab, currentPage]);
+
+  // Lazy transform: only transform bookings on the current page.
+  // Uses a cache keyed by orderId so switching back to an already-loaded
+  // tab renders instantly with NO skeleton shown.
+  useEffect(() => {
+    const transformPage = async () => {
+      if (paginatedBookings.length === 0) {
+        setPaginatedTransformedBookings([]);
+        return;
+      }
+
+      const cache = transformedCacheRef.current;
+
+      // Check if every booking on this page is already cached
+      const allCached = paginatedBookings.every(b => cache.has(String(b.orderId)));
+
+      if (allCached) {
+        // Instant render from cache — no skeleton, no API calls
+        setPaginatedTransformedBookings(
+          paginatedBookings.map(b => cache.get(String(b.orderId)))
+        );
+        return;
+      }
+
+      // Some bookings are not yet cached — transform only the missing ones
+      setIsTransforming(true);
+      try {
+        const missing = paginatedBookings.filter(b => !cache.has(String(b.orderId)));
+        const missingRaw = missing.map(b => b.bookingData);
+        const freshTransformed = await transformMultipleBookings(missingRaw);
+
+        // Store the newly transformed bookings in the cache
+        freshTransformed.forEach(t => {
+          if (t && t.orderId != null) {
+            cache.set(String(t.orderId), t);
+          }
+        });
+
+        // Build the full ordered result from cache
+        const result = paginatedBookings.map(b => cache.get(String(b.orderId))).filter(Boolean);
+        setPaginatedTransformedBookings(result);
+      } catch (err) {
+        console.error("Error transforming page:", err);
+      } finally {
+        setIsTransforming(false);
+      }
+    };
+    transformPage();
+  }, [paginatedBookings]);
 
   const totalPages = Math.ceil(bookingsForTab.length / itemsPerPage);
 
@@ -1275,7 +1438,7 @@ const Main = ({
     setTransitionPhase("fadingOut");
 
     // If clicking on completed tab and we haven't loaded completed orders yet, fetch them
-    if (nextTab === "completed" && transformedCompletedBookings.length === 0 && !loadingCompleted) {
+    if (nextTab === "completed" && rawCompletedBookings.length === 0 && !loadingCompleted) {
       setLoadingCompleted(true);
       try {
         const [completedOrdersData, eligibleData] = await Promise.all([
@@ -1285,8 +1448,8 @@ const Main = ({
         console.log("✅ Fetched completed orders:", completedOrdersData);
 
         if (Array.isArray(completedOrdersData) && completedOrdersData.length > 0) {
-          const transformed = await transformMultipleBookings(completedOrdersData);
-          setTransformedCompletedBookings(transformed);
+          const completedRaw = completedOrdersData.filter(order => order).map(enrichRawBooking);
+          setRawCompletedBookings(completedRaw);
         }
         // Eligible bookings = completed orders without reviews; show "Leave review" for these orderIds
         const eligibleList = Array.isArray(eligibleData) ? eligibleData : [];
@@ -1420,8 +1583,8 @@ const Main = ({
         await cancelOrder(orderIdForCancel, cancelRequestBody);
       }
 
-      // Update the booking status in the transformed bookings
-      setTransformedBookings((prevBookings) => {
+      // Update the booking status in the raw bookings
+      setRawBookings((prevBookings) => {
         return prevBookings.map((booking) => {
           if (booking.orderId === orderIdForCancel) {
             // Update the booking to cancelled status
@@ -1440,6 +1603,9 @@ const Main = ({
           return booking;
         });
       });
+
+      // Invalidate this booking in the transform cache so the cancelled tab shows fresh data
+      transformedCacheRef.current.delete(String(orderIdForCancel));
 
       // Switch to cancelled tab if not already there, using handleTabChange for proper animation
       if (activeTab !== "cancelled") {
@@ -1571,8 +1737,7 @@ const Main = ({
             return b;
           });
 
-          setTransformedBookings(updateBooking);
-          setTransformedCompletedBookings(updateBooking);
+          setPaginatedTransformedBookings(updateBooking);
           console.log(`✅ UI updated for order ${bookingToReview.orderId}: ${rating} stars, ${reviewCount} reviews`);
         }
       } catch (refreshErr) {
@@ -1598,9 +1763,9 @@ const Main = ({
     }
   };
 
-  // Show loading state while fetching/transforming data
-  // Show loading if: (1) currently loading, OR (2) no data provided yet (null)
-  if ((loading && transformedBookings.length === 0) || (propBookingData === null && transformedBookings.length === 0)) {
+  // Show loading state while fetching order list data only on initial load
+  // Do NOT block on isTransforming — that is handled inline in the list area
+  if ((loading && rawBookings.length === 0) || (propBookingData === null && rawBookings.length === 0)) {
     return (
       <div style={{ padding: "4rem 2rem", minHeight: "80vh" }}>
         <LoadingSkeleton variant="bookings" count={3} />
@@ -1643,11 +1808,15 @@ const Main = ({
         >
           {loadingCompleted && displayedTab === "completed" ? (
             <div style={{ padding: "1rem 0" }}>
-              <LoadingSkeleton variant="completed" count={3} />
+              <LoadingSkeleton variant="bookingsList" count={3} />
+            </div>
+          ) : isTransforming ? (
+            <div style={{ padding: "1rem 0" }}>
+              <LoadingSkeleton variant="bookingsList" count={3} />
             </div>
           ) : bookingsForTab.length > 0 ? (
             <div className={styles.list}>
-              {paginatedBookings.map((booking) => (
+              {paginatedTransformedBookings.map((booking) => (
                 <article className={styles.card} key={booking.id}>
                   <div className={styles.media}>
                     <img
@@ -1882,7 +2051,7 @@ const Main = ({
       >
         <div className={cn(styles.cancelModalContent, styles.cancelModalContentScrollable)}>
           <div className={styles.cancelModalHeader}>
-            <h2 className={styles.cancelModalTitle} style={{ fontFamily: "Playfair Display, Lora, Georgia, serif", fontSize: "28px", fontWeight: "600", color: "#141416", marginBottom: "12px" }}>
+            <h2 className={styles.cancelModalTitle} style={{ fontSize: "28px", fontWeight: "600", color: "#141416", marginBottom: "12px" }}>
               Cancel Booking
             </h2>
             <p className={styles.cancelModalDescription} style={{ fontSize: "14px", color: "#777E90", lineHeight: "1.5" }}>
@@ -1917,7 +2086,7 @@ const Main = ({
                           transition: "all 0.2s ease"
                         }}
                       >
-                        <span style={{ fontSize: "15px", color: "#141416", fontFamily: "Playfair Display, Lora, Georgia, serif", fontWeight: isSelected ? "500" : "400" }}>
+                        <span style={{ fontSize: "15px", color: "#141416", fontWeight: isSelected ? "500" : "400" }}>
                           {reasonText}
                         </span>
                         <div style={{
