@@ -1205,6 +1205,43 @@ const ViewDetails = () => {
     return new Date() >= checkInDatetime;
   };
 
+  const isPastStayCheckOutTime = () => {
+    if (!booking) return false;
+
+    // Only apply to Stays
+    const businessInterestCode = String(booking?.originalData?.businessInterestCode || "").toUpperCase();
+    const isStayOrder = businessInterestCode === "STAYS" ||
+      booking?.originalData?.stayId != null ||
+      (booking?.originalData?.stayOrderRooms && booking?.originalData?.stayOrderRooms.length > 0) ||
+      booking?.stayData != null;
+
+    if (!isStayOrder) return true; // If not a stay, we don't restrict by stay rules
+
+    const checkOutDateStr =
+      booking?.originalData?.checkOutDate ||
+      booking?.originalData?.endDate ||
+      booking?.stayData?.checkOutDate;
+
+    if (!checkOutDateStr) return true; // If no check out date, allow it
+
+    const checkOutDatetime = new Date(checkOutDateStr);
+
+    const checkOutTimeStr =
+      booking?.originalData?.checkOutTime ||
+      booking?.originalData?.endTime ||
+      booking?.stayData?.checkOutTime ||
+      "11:00:00";
+
+    if (checkOutTimeStr && typeof checkOutTimeStr === 'string' && checkOutTimeStr.includes(':')) {
+      const parts = checkOutTimeStr.split(':').map(Number);
+      checkOutDatetime.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+    } else {
+      checkOutDatetime.setHours(11, 0, 0, 0);
+    }
+
+    return new Date() >= checkOutDatetime;
+  };
+
   const handleCancelBookingClick = async () => {
     if (isPastStayCheckInTime()) {
       return;
@@ -2564,7 +2601,7 @@ const ViewDetails = () => {
       if (!isPastStayCheckInTime()) {
         actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
       }
-      if (canLeaveReview && sourceTab !== "upcoming") {
+      if (canLeaveReview && isPastStayCheckOutTime() && sourceTab !== "upcoming") {
         actions.push({
           label: "Leave Review",
           variant: "secondary",
@@ -2587,7 +2624,7 @@ const ViewDetails = () => {
       const actions = [
         { label: "Download Receipt", variant: "primary", onClick: handleDownloadReceiptClick },
       ];
-      if (canLeaveReview && sourceTab !== "upcoming") {
+      if (canLeaveReview && isPastStayCheckOutTime() && sourceTab !== "upcoming") {
         actions.push({
           label: "Leave Review",
           variant: "secondary",
@@ -3032,8 +3069,8 @@ const ViewDetails = () => {
           </div>
         </div>
 
-        {/* Review Section - Only show for completed orders */}
-        {(isCompletedOrder && (canLeaveReview || reviewSubmitted)) && (
+        {/* Review Section - Only show for completed orders and after checkout */}
+        {(isCompletedOrder && isPastStayCheckOutTime() && (canLeaveReview || reviewSubmitted)) && (
           <div className={cn(styles.card, styles.reviewCard)}>
             <h2 className={styles.cardTitle}>Leave a Review</h2>
             {reviewSubmitted ? (
