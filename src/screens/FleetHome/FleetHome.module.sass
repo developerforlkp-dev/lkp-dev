@@ -43,7 +43,6 @@
     position: relative
     +t
         padding: 0 40px
-        // Space for the pill that hangs -26px below the hero edge
         padding-top: 52px
     +m
         padding: 0 32px
@@ -746,5 +745,327 @@
     +t
         display: none !important
 
+.mobileCategoriesContainer
+    display: none
+    +m
+        display: block
+        width: 100%
+        margin-top: 16px
+        margin-bottom: 24px
+        overflow: hidden
+
+.mobileCategoriesScroll
+    display: flex
+    overflow-x: auto
+    gap: 12px
+    padding: 0 20px
+    -webkit-overflow-scrolling: touch
+    &::-webkit-scrollbar
+        display: none
+
+.mobileCategoryCard
+    position: relative
+    flex: 0 0 100px
+    height: 140px
+    border-radius: 16px
+    margin-bottom: 8px
+    +m
+        flex-direction: column
+        gap: 4px
+        align-items: flex-start
+        margin-bottom: 12px
+
+.priceStarting
+    +body-2
+    color: $n4
+    font-size: 14px
+    +dark
+        color: $n5
+    span
+        font-weight: 600
+        color: #0097B2
+        font-size: 18px
+        margin-left: 4px
+
+.sectionSubtitle
+    +body-2
+    color: $n4
+    +dark
+        color: $n5
+    +m
+        font-size: 14px
+
+// Browse Card Square - CARD_SQUARE_HORIZONTAL_NODETAIL
+// Uses same structure as other card styles (HorizontalScroll wrapper)
+.browseCardSquare
+    flex: 0 0 auto
+    width: 240px
+    min-width: 240px
+    margin: 0
+    scroll-snap-align: start
+    scroll-snap-stop: always
+    box-sizing: border-box
+    // Ensure preview container is exactly 240px × 240px (square)
+    :global
+        .preview
+            width: 240px !important
+            max-width: 240px !important
+            height: 240px !important
+            margin-bottom: 20px
+            box-sizing: border-box !important
+            &:before
+                padding-bottom: 0 !important
+                height: 240px !important
+                display: block !important
+
+// Horizontal Scroll Wrapper - Used by all sections
+.horizontalScrollWrapper
+    margin-left: -32px
+    margin-right: -32px
+    padding: 22px 32px 30px
+    position: relative
+    overflow: visible
+    +m
+        margin-left: -32px
+        margin-right: -32px
+        padding: 16px 32px 20px
+
+.horizontalScroll
+    position: relative
+    width: 100%
+    :global
+        .scrollWrapper
+            padding: 4px 0 0
+            margin: 0
+            overflow-y: visible !important
+            overflow-x: auto !important
+
+.destinationCard
+    flex: 0 0 auto
+    width: 180px
+    min-width: 180px
+    margin: 0
+    position: relative
+    scroll-snap-align: start
+    scroll-snap-stop: always
+    overflow: visible
+    padding: 10px 0
+    margin-top: -10px
+    margin-bottom: -10px
+    +m
+        width: 120px
+        min-width: 120px
+        padding: 8px 0
+        margin-top: -8px
+        margin-bottom: -8px
+    &:hover
 
 
+// Grid Card - Horizontal scroll version
+.gridCardHorizontal
+    flex: 0 0 auto
+    width: 340px
+    min-width: 340px
+    margin: 0
+    transition: transform .2s ease, box-shadow .2s ease
+    scroll-snap-align: start
+    scroll-snap-stop: always
+    :global
+        div[class*="preview"]
+            &:before
+                padding-bottom: 55% !important
+    +t
+        width: 300px
+        min-width: 300px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 60% !important
+    +m
+        width: 280px
+        min-width: 280px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 62% !important
+    &:hover
+        transform: translateY(-4px)
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08)
+        +dark
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3)
+
+// Destination Card Horizontal - Horizontal scroll version
+.destinationCardHorizontal
+    flex: 0 0 auto
+    width: 360px
+    min-width: 360px
+    margin: 0
+    scroll-snap-align: start
+    scroll-snap-stop: always
+    :global
+        div[class*="preview"]
+            &:before
+                padding-bottom: 52% !important
+    +t
+        width: 320px
+        min-width: 320px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 58% !important
+    +m
+        width: 300px
+        min-width: 300px
+        :global
+            div[class*="preview"]
+                &:before
+                    padding-bottom: 60% !important
+    // Override title font size and style to match other card styles
+    // Target title and content elements using universal selector for CSS modules
+    :global
+        div[class*="title"]
+            font-size: 16px !important
+            line-height: (24/16) !important
+            font-weight: 500 !important
+            margin-bottom: 8px
+            overflow: hidden
+            text-overflow: ellipsis
+            white-space: nowrap
+        div[class*="content"]
+            display: none !important
+        div[class*="foot"]
+            display: none !important
+
+.desktopFilters
+    +t
+        display: none !important
+
+.mobileCategoriesContainer
+    display: none
+    +m
+        display: block
+        width: 100vw
+        margin-left: -32px
+        margin-top: 8px
+        margin-bottom: 24px
+        overflow: hidden
+
+.mobileCategoriesScroll
+    display: flex
+    gap: 4px
+    width: 100%
+    padding: 0 8px
+    justify-content: space-between
+
+.mobileCategoryCard
+    position: relative
+    flex: 0 0 calc((100% - 16px) / 5)
+    height: 90px
+    border-radius: 10px
+    overflow: hidden
+    cursor: pointer
+    transition: transform 0.2s ease
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1)
+    z-index: 1
+    &:active
+        transform: scale(0.95)
+
+.mobileCategoryCardDisabled
+    opacity: 0.5
+    cursor: not-allowed
+    &:active
+        transform: none
+
+.mobileCategoryCardActive
+    border: 2px solid #0097B2
+
+@keyframes bgBreathe
+    0%
+        transform: scale(1)
+    50%
+        transform: scale(1.08)
+    100%
+        transform: scale(1)
+
+@keyframes shimmerSweep
+    0%
+        transform: translateX(-150%) skewX(-20deg)
+        opacity: 0
+    20%
+        opacity: 1
+    80%
+        opacity: 1
+    100%
+        transform: translateX(150%) skewX(-20deg)
+        opacity: 0
+
+:global(.global-micro-tilt)
+    z-index: 2 !important
+    img
+        animation: bgBreathe 1s cubic-bezier(0.215, 0.610, 0.355, 1.000) !important
+    &::after
+        content: ''
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 100%)
+        z-index: 10
+        pointer-events: none
+        animation: shimmerSweep 1s cubic-bezier(0.4, 0, 0.2, 1) forwards !important
+
+.mobileCategoryBg
+    display: block
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    object-fit: cover
+    transition: transform 0.3s ease
+
+.mobileCategoryOverlay
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.85) 100%)
+
+.mobileCategoryContent
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    padding: 8px 2px
+    z-index: 2
+
+.mobileCategoryIcon
+    color: #ffffff
+    margin-bottom: auto
+    margin-top: 6px
+    svg
+        width: 22px
+        height: 22px
+        stroke-width: 1.5px
+        fill: none !important
+        stroke: currentColor !important
+
+.mobileCategoryLabel
+    color: #ffffff
+    font-family: 'Inter', sans-serif
+    font-size: 9px
+    font-weight: 600
+    letter-spacing: -0.2px
+    text-align: center
+    width: 100%
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    padding: 0 2px
