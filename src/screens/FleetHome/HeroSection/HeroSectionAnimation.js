@@ -434,8 +434,6 @@ const HeroSectionAnimation = ({ containerRef, destinations = [], onReady }) => {
             stroke-linecap="round"
           />
 
-          <!-- Small bottom corner element -->
-          <path class="hero-curve-fill" d="M1000 750 C960 800, 980 920, 880 1000 L1000 1000 Z" />
         </svg>
       </div>
     `;
