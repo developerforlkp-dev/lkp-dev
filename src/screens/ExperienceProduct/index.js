@@ -1486,24 +1486,12 @@ const ExperienceProduct = () => {
                       A thoughtfully curated journey that brings you closer to the natural beauty and rich experiences of this destination.
                     </p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <Clock size={28} color={A} fill="transparent" />
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                       <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>
-                         {listing?.keyActivities?.length || 0} Unique Experiences
-                       </span>
-                       <span style={{ fontSize: "14px", color: M, fontFamily: '"Inter", sans-serif' }}>
-                         Carefully planned for you
-                       </span>
-                    </div>
-                  </div>
                 </div>
                 
                 {/* Activities List */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {(listing?.keyActivities || []).map((it, i) => {
                     const activityImageUrl = getActivityImageUrl(it);
-                    const numStr = String(i + 1).padStart(2, "0");
                     return (
                       <motion.div
                         key={i}
@@ -1571,16 +1559,8 @@ const ExperienceProduct = () => {
                         )}
                         
                           <div style={{ flex: 1, padding: "24px 32px", display: "flex", alignItems: "center", position: "relative" }}>
-                            {/* Vertical Line with Dot */}
-                            <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", height: "60%", width: "1px", background: B }}>
-                              <div style={{ position: "absolute", left: "-4px", top: "50%", transform: "translateY(-50%)", width: "9px", height: "9px", borderRadius: "50%", background: A }} />
-                            </div>
                             
                             <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
-                              {/* Big Faint Number */}
-                              <div style={{ fontSize: "80px", fontWeight: 700, color: theme === "dark" ? "#1E293B" : "#F0F4F8", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1, marginRight: "32px", letterSpacing: "-0.05em", userSelect: "none" }}>
-                                {numStr}
-                              </div>
                             
                             {/* Text Content */}
                             <div style={{ flex: 1, minWidth: 0 }}>
