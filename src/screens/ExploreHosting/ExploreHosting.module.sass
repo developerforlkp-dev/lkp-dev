@@ -1,0 +1,290 @@
+@import ../../styles/helpers
+
+.container
+  max-width: 800px
+  margin: 0 auto
+  padding: 40px 20px
+  +t
+    padding: 24px 16px
+
+.header
+  text-align: center
+  margin-bottom: 40px
+  h1
+    font-size: 48px
+    line-height: 1.2
+    font-weight: 700
+    margin-bottom: 12px
+  p
+    +body-1
+    color: $n4
+
+.section
+  margin-bottom: 32px
+  padding-bottom: 32px
+  border-bottom: 1px solid $n6
+  +dark
+    border-color: $n3
+
+.sectionTitle
+  +body-1
+  font-weight: 500
+  margin-bottom: 24px
+
+.row
+  display: flex
+  flex-wrap: wrap
+  margin: 0 -10px
+
+.col
+  flex: 0 0 50%
+  max-width: 50%
+  padding: 0 10px
+  margin-bottom: 20px
+  +m
+    flex: 0 0 100%
+    max-width: 100%
+
+.fullCol
+  flex: 0 0 100%
+  max-width: 100%
+  padding: 0 10px
+  margin-bottom: 20px
+
+.field
+  margin-bottom: 0
+
+.label
+  +hairline-2
+  color: $n5
+  margin-bottom: 12px
+  display: block
+
+.input
+  width: 100%
+  height: 48px
+  padding: 0 14px
+  border-radius: 12px
+  border: 2px solid $n6
+  background: none
+  +poppins
+  +caption-1
+  color: $n2
+  transition: border-color .2s
+  +dark
+    border-color: $n3
+    color: $n8
+  &:focus
+    border-color: $n4
+  &::placeholder
+    color: $n4
+
+.select
+  width: 100%
+  height: 48px
+  padding: 0 14px
+  border-radius: 12px
+  border: 2px solid $n6
+  background: none
+  +poppins
+  +caption-1
+  color: $n2
+  appearance: none
+  +dark
+    border-color: $n3
+    color: $n8
+  &:focus
+    border-color: $n4
+
+.checkboxList
+  display: flex
+  flex-wrap: wrap
+  gap: 16px
+
+.checkboxItem
+  display: flex
+  align-items: center
+  cursor: pointer
+  input
+    margin-right: 8px
+
+.actions
+  display: flex
+  justify-content: flex-end
+  gap: 16px
+  margin-top: 40px
+
+.submitBtn
+  background: $p1
+  color: $n8
+  &:hover
+    background: darken($p1, 10%)
+
+.resetBtn
+  background: none
+  color: $n2
+  border: 2px solid $n6
+  +dark
+    color: $n8
+    border-color: $n3
+  &:hover
+    border-color: $n4
+
+.error
+  color: $p3
+  font-size: 12px
+  margin-top: 4px
+  display: block
+
+// Success Page
+.successContainer
+  text-align: center
+  padding: 60px 20px
+  max-width: 600px
+  margin: 0 auto
+
+.successIcon
+  width: 80px
+  height: 80px
+  border-radius: 50%
+  background: rgba($p4, 0.2)
+  color: $p4
+  display: flex
+  align-items: center
+  justify-content: center
+  margin: 0 auto 24px
+  svg
+    width: 40px
+    height: 40px
+    fill: currentColor
+
+.detailsCard
+  background: $n8
+  border-radius: 16px
+  padding: 24px
+  text-align: left
+  margin: 32px 0
+  border: 1px solid $n6
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05)
+  +dark
+    background: $n2
+    border-color: $n3
+
+.detailGroup
+  margin-bottom: 16px
+  padding-bottom: 16px
+  border-bottom: 1px solid $n6
+  +dark
+    border-color: $n3
+  &:last-child
+    margin-bottom: 0
+    padding-bottom: 0
+    border-bottom: none
+
+.detailTitle
+  font-size: 14px
+  color: $n4
+  margin-bottom: 8px
+  text-transform: uppercase
+  letter-spacing: 1px
+
+.detailText
+  font-size: 16px
+  color: $n2
+  margin-bottom: 4px
+  +dark
+    color: $n8
+
+// Modal
+.modalOverlay
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  background: rgba($n1, 0.8)
+  display: flex
+  align-items: center
+  justify-content: center
+  z-index: 999
+  padding: 20px
+
+.modal
+  background: $n8
+  border-radius: 24px
+  padding: 40px
+  width: 100%
+  max-width: 480px
+  position: relative
+  +dark
+    background: $n2
+
+.modalClose
+  position: absolute
+  top: 20px
+  right: 20px
+  background: none
+  border: none
+  cursor: pointer
+  color: $n4
+  svg
+    fill: currentColor
+  &:hover
+    color: $n2
+    +dark
+      color: $n8
+
+.modalTitle
+  +body-1
+  font-weight: 500
+  margin-bottom: 8px
+  text-align: center
+
+.modalSubtitle
+  font-size: 14px
+  color: $n4
+  text-align: center
+  margin-bottom: 32px
+
+.otpContainer
+  display: flex
+  justify-content: space-between
+  margin-bottom: 24px
+
+.otpInput
+  width: 48px
+  height: 56px
+  border-radius: 12px
+  border: 2px solid $n6
+  text-align: center
+  font-size: 24px
+  font-weight: 600
+  background: none
+  color: $n2
+  +dark
+    border-color: $n3
+    color: $n8
+  &:focus
+    border-color: $p1
+    outline: none
+
+.resendText
+  text-align: center
+  font-size: 14px
+  color: $n4
+  margin-bottom: 24px
+  button
+    background: none
+    border: none
+    color: $p1
+    font-weight: 500
+    cursor: pointer
+    margin-left: 4px
+    &:hover
+      text-decoration: underline
+    &:disabled
+      color: $n4
+      cursor: not-allowed
+
+.modalBtn
+  width: 100%

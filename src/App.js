@@ -39,6 +39,7 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 import TermsOfService from "./screens/TermsOfService";
 import PrivacyPolicy from "./screens/PrivacyPolicy";
 import MobileBottomNavbar from "./components/MobileBottomNavbar";
+import ExploreHosting from "./screens/ExploreHosting";
 
 function App() {
   const [isMobileOrTablet, setIsMobileOrTablet] = React.useState(false);
@@ -256,6 +257,15 @@ function App() {
             render={() => (
               <Page>
                 <Support />
+              </Page>
+            )}
+          />
+          <Route
+            exact
+            path="/explore-hosting"
+            render={() => (
+              <Page separatorHeader>
+                <ExploreHosting />
               </Page>
             )}
           />

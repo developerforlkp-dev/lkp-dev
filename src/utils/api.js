@@ -2058,3 +2058,33 @@ export const getBlogBySlug = async (slug) => {
   }
 };
 
+// Explore Hosting APIs
+export const submitHostingApplication = async (data) => {
+  try {
+    const response = await ListingsAPI.post("/public/hosting/request-otp", data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error submitting hosting application:", error);
+    throw error;
+  }
+};
+
+export const resendHostingOTP = async (sessionId) => {
+  try {
+    const response = await ListingsAPI.post("/public/hosting/resend-otp", { sessionId });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error resending hosting OTP:", error);
+    throw error;
+  }
+};
+
+export const verifyHostingOTP = async (sessionId, otp) => {
+  try {
+    const response = await ListingsAPI.post("/public/hosting/verify-otp", { sessionId, otp });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error verifying hosting OTP:", error);
+    throw error;
+  }
+};

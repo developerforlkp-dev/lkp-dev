@@ -99,6 +99,7 @@ export function Footer() {
 
             <FooterCol title="Company"><ul>
                 <li><Link to="/">About Little Known Planet</Link></li>
+                <li><Link to="/explore-hosting">Explore Hosting</Link></li>
                 <li><Link to="/host-profile">Become a Host</Link></li>
                 <li><Link to="/">Partner With Us</Link></li>
                 <li><Link to="/">Careers</Link></li>
