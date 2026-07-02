@@ -713,6 +713,17 @@ export const loginWithGoogle = async (idToken) => {
   }
 };
 
+// Complete Customer Profile
+export const completeCustomerProfile = async (profileData) => {
+  try {
+    const response = await ListingsAPI.put("/customers/auth/complete-profile", profileData);
+    return response.data;
+  } catch (error) {
+    console.error("Error completing customer profile:", error);
+    throw error;
+  }
+};
+
 // ✅ Customer Profile API functions
 export const getCustomerProfile = async () => {
   try {
