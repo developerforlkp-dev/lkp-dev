@@ -6,6 +6,12 @@
     border-bottom: 1px solid $n6
     +dark
         border-color: $n2
+    +m
+        order: 1
+        margin-top: 0
+        padding-bottom: 16px
+        margin-bottom: 16px
+        border-bottom: none
 
 .amountToPay
     margin-bottom: 24px
@@ -70,6 +76,10 @@
     color: $n4
     margin-top: -16px
     margin-bottom: 24px
+    +m
+        order: 2
+        margin-top: -8px
+        margin-bottom: 16px
 
 .stepper
     display: flex
@@ -79,6 +89,15 @@
     border-bottom: 1px solid $n6
     +dark
         border-color: $n3
+    +m
+        display: none
+
+.list
+    +m
+        order: 4
+        display: flex
+        flex-direction: column
+        gap: 16px
 
 .step, .stepActive
     display: flex
@@ -133,13 +152,19 @@
     gap: 16px
     margin-bottom: 32px
     +m
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr 1fr
+        gap: 12px
 
 .tripCard
     border: 1px solid $n6
     border-radius: 16px
     padding: 16px
+    background: $n8
     +dark
+        border-color: $n3
+        background: $n2
+    +m
+        padding: 12px
         border-color: $n3
 
 .cardHeader
