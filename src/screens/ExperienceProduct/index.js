@@ -939,23 +939,7 @@ const ExperienceProduct = () => {
             width: "100%"
           }}>
             {/* Top Row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-              <div style={{
-                color: "#FFFFFF",
-                fontSize: "13px",
-                fontWeight: 500,
-                fontFamily: '"Inter", sans-serif',
-                opacity: 0.9,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}>
-                <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
-                <ChevronRight size={12} opacity={0.6} />
-                <Link to="/experience" style={{ color: "inherit", textDecoration: "none" }}>Experiences</Link>
-                <ChevronRight size={12} opacity={0.6} />
-                <span style={{ fontWeight: 700 }}>{listing?.title || "Experience"}</span>
-              </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", width: "100%" }}>
 
               {/* Early Bird Ticker */}
               {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
@@ -1024,7 +1008,7 @@ const ExperienceProduct = () => {
                   })()}
                 </Rev>
                 <Rev delay={0.15}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: "14px", fontWeight: 500, fontFamily: '"Inter", sans-serif' }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", fontSize: 16, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="transparent" stroke={A || "#0097B2"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: "transparent" }}>
                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="transparent" />
                       <circle cx="12" cy="10" r="3" fill="transparent" />
@@ -1600,7 +1584,7 @@ const ExperienceProduct = () => {
                             
                             {/* Text Content */}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: "12px", fontWeight: 700, color: A, marginBottom: "8px", fontFamily: '"Inter", sans-serif', letterSpacing: "0.15em", textTransform: "uppercase", whiteSpace: "normal", wordWrap: "break-word" }}>
+                              <div style={{ fontSize: "11px", fontWeight: 600, color: A, marginBottom: "8px", fontFamily: '"Inter", sans-serif', letterSpacing: "0.1em", textTransform: "uppercase", whiteSpace: "normal", wordWrap: "break-word" }}>
                                 {it.title || it.name || "Activity"}
                               </div>
                               {(it.description || it.pilot || it.briefDescription) && (
@@ -2470,7 +2454,7 @@ const ExperienceProduct = () => {
                           <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
                             <div>
                               <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
-                              <h4 style={{ fontSize: 18, fontWeight: 800, color: FG, margin: 0, fontFamily: '"Inter", sans-serif' }}>Verified Trust Score</h4>
+                              <h4 style={{ fontSize: 18, fontWeight: 600, color: FG, margin: 0, fontFamily: '"Inter", sans-serif' }}>Verified Trust Score</h4>
                             </div>
                             
                             <p style={{ fontSize: 12.5, color: M, lineHeight: 1.6, margin: 0, fontWeight: 400 }}>
@@ -3719,7 +3703,7 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
             exit={{ opacity: 0, y: -10 }}
             style={{ background: S, border: `1px solid ${B}`, padding: 24, borderRadius: 20 }}
           >
-            <h3 style={{ fontSize: 18, fontWeight: 800, color: FG, marginBottom: 8 }}>Share your experience</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: FG, marginBottom: 8 }}>Share your experience</h3>
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
                 <p style={{ fontSize: 10, fontWeight: 700, color: FG, marginBottom: 8, textTransform: "uppercase" }}>Rating</p>
@@ -3786,7 +3770,7 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div>
-                      <h4 style={{ fontSize: 14, fontWeight: 700, color: FG, marginBottom: 2 }}>{rev.customerName || rev.author || "Verified Guest"}</h4>
+                      <h4 style={{ fontSize: 14, fontWeight: 700, color: FG, marginBottom: 2 , fontFamily: '"Inter", sans-serif' }}>{rev.customerName || rev.author || "Verified Guest"}</h4>
                       <div style={{ display: "flex", gap: 4 }}>
                         {[...Array(5)].map((_, si) => (
                           <Star 
