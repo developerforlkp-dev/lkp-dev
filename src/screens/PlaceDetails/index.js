@@ -16,6 +16,8 @@ import { getPlaceDetails, getHost, getHostContent } from "../../utils/api";
 import ShareButton from "../../components/ShareButton";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import DetailPageNavPortal from "../../components/DetailPageNavPortal";
+import Favorite from "../../components/Favorite";
+import Icon from "../../components/Icon";
 
 /* ─── RESPONSIVE HOOK ─────────── */
 function useWindowSize() {
