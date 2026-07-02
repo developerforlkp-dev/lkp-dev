@@ -23,7 +23,7 @@ function FooterCol({ title, children }) {
 
 export function Footer() {
   return (
-    <footer className={styles.footer}>
+    <footer id="main-footer" className={styles.footer}>
       {/* Background Image on Left */}
       <div className={styles.bgImage} style={{ backgroundImage: "url('/images/footerimage.webp')" }} />
 
