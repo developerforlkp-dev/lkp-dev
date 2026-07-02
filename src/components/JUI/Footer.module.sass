@@ -25,11 +25,16 @@
   opacity: 1
   background-size: cover
   background-position: center
-  mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)
-  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 90%)
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 90%)
 
   @media (min-width: 768px)
     width: 50%
+
+  @media (min-width: 1024px)
+    width: 50%
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)
+    -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)
 
 .waveMask
   position: absolute
@@ -60,21 +65,22 @@
   position: relative
   z-index: 20
   color: #fff !important
-  padding: 6rem 1.5rem 4rem
+  padding: 4rem 1.5rem 3rem
 
   @media (min-width: 768px)
     padding-top: 8rem
+    padding-bottom: 4rem
 
 .container
   max-width: 80rem
   margin: 0 auto
   display: flex
   flex-direction: column
-  gap: 4rem
+  gap: 2.5rem
 
   @media (min-width: 1024px)
     flex-direction: row
-    gap: 3rem
+    gap: 4rem
 
 .leftSection
   display: flex
