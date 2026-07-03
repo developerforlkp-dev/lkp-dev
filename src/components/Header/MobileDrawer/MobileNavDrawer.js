@@ -109,6 +109,17 @@ const MobileNavDrawer = ({
               </span>
               <span className={styles.navLabel}>Bookings</span>
             </NavLink>
+            <NavLink
+              className={styles.navLink}
+              to="/wishlists"
+              activeClassName={styles.navLinkActive}
+              onClick={onClose}
+            >
+              <span className={styles.navIcon}>
+                <Icon name="heart" size="20" />
+              </span>
+              <span className={styles.navLabel}>Wishlist</span>
+            </NavLink>
           </nav>
 
           {/* Account Section (authenticated users) */}
