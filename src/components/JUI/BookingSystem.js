@@ -1141,7 +1141,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [startDate, setStartDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startTime, setStartTime] = useState(null);
-  const [guests, setGuests] = useState({ adults: 0, children: 0, infants: 0 });
+  const [guests, setGuests] = useState({ adults: 0, children: 0, infants: 0, childAges: [] });
   const totalGuests = guests.adults + guests.children;
   const billableAdults = guests.adults;
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -1995,6 +1995,21 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const showExperienceChildAgeHint = !isEventBooking && allowChildPricing && childrenAllowed && hasChildAgeRange;
   const hasChildPricing = childrenAllowed && rawChildPrice > 0 && guests.children > 0;
   const baseAdultPricePerPerson = parseFloat(effectiveRawPrice || 0);
+  
+  let eventChildPriceTotal = 0;
+  if (isEventBooking && selectedTicket && guests.children > 0) {
+    for (let i = 0; i < guests.children; i++) {
+      const age = guests.childAges?.[i] ?? 0;
+      let matchedPrice = 0; // Default price is 0 if no tier matches
+      const tiers = selectedTicket.childPricingTiers || selectedTicket.child_pricing_tiers || [];
+      const tier = tiers.find(t => age >= (t.ageFrom ?? t.age_from ?? 0) && age <= (t.ageTo ?? t.age_to ?? 100));
+      if (tier) {
+        matchedPrice = Number(tier.pricePerChild ?? tier.price_per_child ?? tier.price ?? 0);
+      }
+      eventChildPriceTotal += matchedPrice;
+    }
+  }
+
   const baseChildPricePerChild = hasChildPricing ? parseFloat(rawChildPrice || 0) : baseAdultPricePerPerson;
 
   const data = {
@@ -2005,13 +2020,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   // Compute totals with child pricing split
   const adultSubtotal = parseFloat(extractedPrice || 0) * guests.adults;
-  const childSubtotal = effectiveChildPrice * guests.children;
-  const baseTotal = isEventBooking
-    ? adultSubtotal + childSubtotal
-    : adultSubtotal + childSubtotal;
+  const childSubtotal = isEventBooking ? eventChildPriceTotal : effectiveChildPrice * guests.children;
+  const baseTotal = adultSubtotal + childSubtotal;
   const rawBaseTotal = !isEventBooking
     ? (baseAdultPricePerPerson * guests.adults) + (baseChildPricePerChild * guests.children)
-    : ((eventGuestPricing.baseUnitPrice * guests.adults) + (baseChildPricePerChild * guests.children));
+    : ((eventGuestPricing.baseUnitPrice * guests.adults) + eventChildPriceTotal);
   const activeGuestPricing = isEventBooking ? eventGuestPricing : experienceGuestPricing;
   const appliedDiscountRate = activeGuestPricing?.discountRate ?? 0;
   const appliedTaxRate = activeGuestPricing?.customerTaxRate ?? 0;
@@ -2146,9 +2159,26 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const updateGuestsWithinSeatLimit = useCallback((updater) => {
     setGuests((current) => {
       const nextGuests = typeof updater === "function" ? updater(current) : updater;
-      return clampGuestsToSeatLimit(nextGuests);
+      const clamped = clampGuestsToSeatLimit(nextGuests);
+      
+      let nextChildAges = [...(current.childAges || [])];
+      if (clamped.children > nextChildAges.length) {
+        nextChildAges = [...nextChildAges, ...Array(clamped.children - nextChildAges.length).fill(0)];
+      } else if (clamped.children < nextChildAges.length) {
+        nextChildAges = nextChildAges.slice(0, clamped.children);
+      }
+      
+      return { ...clamped, childAges: nextChildAges };
     });
   }, [clampGuestsToSeatLimit]);
+
+  const updateChildAge = useCallback((index, age) => {
+    setGuests(current => {
+      const nextAges = [...(current.childAges || [])];
+      nextAges[index] = Number(age);
+      return { ...current, childAges: nextAges };
+    });
+  }, []);
 
   const adultMax = bookingGuestLimit !== undefined
     ? Math.max(bookingGuestLimit === 0 ? 0 : 1, bookingGuestLimit - (guests.children || 0))
@@ -2365,6 +2395,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           childQuantity: guests.children || 0,
           pricePerTicket: Number(pricePerTicket.toFixed(2)),
         }],
+        childAges: guests.childAges || [],
         appliedDiscountCode: null,
         notes: null,
       };
@@ -2494,10 +2525,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             guestCount: totalGuests,
           },
           receipt: [
-            {
-              title: `${currency} ${eventGuestPricing.baseUnitPrice.toFixed(2)} x ${totalGuests} ${totalGuests === 1 ? "ticket" : "tickets"}`,
-              content: `${currency} ${eventBaseTotal.toFixed(2)}`,
-            },
+            ...(guests.adults > 0 ? [{
+              title: `${currency} ${eventGuestPricing.baseUnitPrice.toFixed(2)} x ${guests.adults} adult ${guests.adults === 1 ? "ticket" : "tickets"}`,
+              content: `${currency} ${(eventGuestPricing.baseUnitPrice * guests.adults).toFixed(2)}`,
+            }] : []),
+            ...(guests.children > 0 ? [{
+              title: `Child tickets x ${guests.children}`,
+              content: `${currency} ${(eventBaseTotal - eventGuestPricing.baseUnitPrice * guests.adults).toFixed(2)}`,
+            }] : []),
             ...(eventEarlyBirdDiscountTotal > 0 ? [{
               title: `Early Bird Discount (${eventGuestPricing.earlyBirdDiscountRate}%)`,
               content: `- ${currency} ${eventEarlyBirdDiscountTotal.toFixed(2)}`,
@@ -3983,14 +4018,40 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               />
                             </div>
                             {childrenAllowed && (
-                              <div style={{ padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Children</span>
-                                <Counter
-                                  value={guests.children}
-                                  setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, children: v }))}
-                                  min={0}
-                                  max={childMax}
-                                />
+                              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                <div style={{ padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Children</span>
+                                  <Counter
+                                    value={guests.children}
+                                    setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, children: v }))}
+                                    min={0}
+                                    max={childMax}
+                                  />
+                                </div>
+                                {isEventBooking && guests.children > 0 && Array.from({ length: guests.children }).map((_, i) => (
+                                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", background: `${B}22`, borderRadius: 12 }}>
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: M }}>Child {i + 1} Age</span>
+                                    <select
+                                      value={guests.childAges?.[i] ?? 0}
+                                      onChange={(e) => updateChildAge(i, e.target.value)}
+                                      style={{
+                                        padding: "4px 8px",
+                                        borderRadius: 8,
+                                        border: `1px solid ${B}`,
+                                        background: BG,
+                                        color: FG,
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        outline: "none",
+                                        cursor: "pointer"
+                                      }}
+                                    >
+                                      {[...Array(14).keys()].map(age => (
+                                        <option key={age} value={age}>{age} {age === 1 ? 'year' : 'years'}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
