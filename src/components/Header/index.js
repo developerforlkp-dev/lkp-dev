@@ -109,6 +109,12 @@ const Header = ({ separatorHeader, wide, notAuthorized, hideOnMobile, isHomepage
     window.dispatchEvent(new CustomEvent("open-mobile-search"));
   };
 
+  useEffect(() => {
+    const handleOpenNav = () => setVisibleNav(true);
+    window.addEventListener("open-mobile-nav", handleOpenNav);
+    return () => window.removeEventListener("open-mobile-nav", handleOpenNav);
+  }, []);
+
   return (
     <>
       <div

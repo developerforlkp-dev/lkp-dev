@@ -38,7 +38,6 @@ import ScrollToTop from "./components/ScrollToTop";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import TermsOfService from "./screens/TermsOfService";
 import PrivacyPolicy from "./screens/PrivacyPolicy";
-import MobileBottomNavbar from "./components/MobileBottomNavbar";
 
 function App() {
   const [isMobileOrTablet, setIsMobileOrTablet] = React.useState(false);
@@ -343,7 +342,6 @@ function App() {
             )}
           />
           </Switch>
-          {isMobileOrTablet && <MobileBottomNavbar />}
         </Router>
       </ThemeProvider>
     </GoogleOAuthProvider>
