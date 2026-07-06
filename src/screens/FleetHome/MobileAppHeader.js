@@ -40,34 +40,38 @@ const MobileAppHeader = ({
   }, []);
 
   return (
-    <div className={cn(styles.container, { [styles.visible]: isStickyNav })}>
+    <div className={cn(styles.container, { [styles.solidBackground]: isStickyNav })}>
       <div className={styles.headerTop}>
         <img 
           src="/images/littleplanet-logo.svg" 
           alt="Little Planet" 
           className={styles.logo} 
         />
-        <div className={styles.searchBar} onClick={onSearchClick}>
-          <Search size={18} className={styles.searchIcon} />
-          <div className={styles.searchText}>
-            <div className={styles.searchTitle}>Search by...</div>
+        {isStickyNav && (
+          <div className={styles.searchBar} onClick={onSearchClick}>
+            <Search size={18} className={styles.searchIcon} />
+            <div className={styles.searchText}>
+              <div className={styles.searchTitle}>Search by...</div>
+            </div>
           </div>
-        </div>
+        )}
         
         <div className={styles.actions}>
-          <button 
-            className={styles.iconButton}
-            onClick={() => history.push("/wishlists")}
-            aria-label="Wishlists"
-            style={{ position: 'relative' }}
-          >
-            <Heart size={20} />
-            {wishlistCount > 0 && (
-              <span className={styles.wishlistBadge}>
-                {wishlistCount > 99 ? "99+" : wishlistCount}
-              </span>
-            )}
-          </button>
+          {isStickyNav && (
+            <button 
+              className={styles.iconButton}
+              onClick={() => history.push("/wishlists")}
+              aria-label="Wishlists"
+              style={{ position: 'relative' }}
+            >
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span className={styles.wishlistBadge}>
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </button>
+          )}
           <button 
             className={styles.iconButton}
             onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-nav"))}

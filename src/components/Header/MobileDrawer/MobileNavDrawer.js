@@ -117,7 +117,7 @@ const MobileNavDrawer = ({
               onClick={onClose}
             >
               <span className={styles.navIcon}>
-                <Heart size={20} />
+                <Heart size={20} className={styles.strokeIcon} />
               </span>
               <span className={styles.navLabel}>Wishlists</span>
             </NavLink>
