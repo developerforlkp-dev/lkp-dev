@@ -6,26 +6,11 @@ import { getCustomerWishlistItems } from "../../utils/api";
 import styles from "./MobileAppHeader.module.sass";
 
 const MobileAppHeader = ({
-  visibleFilterOptions,
-  activeFilter,
-  handleFilterClick,
-  businessInterestAvailability,
   onSearchClick,
+  isStickyNav,
 }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
   const history = useHistory();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsScrolled(scrollY > 150); // Threshold to show the sticky header
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     // Check if authenticated
@@ -55,7 +40,7 @@ const MobileAppHeader = ({
   }, []);
 
   return (
-    <div className={cn(styles.container, { [styles.visible]: isScrolled })}>
+    <div className={cn(styles.container, { [styles.visible]: isStickyNav })}>
       <div className={styles.headerTop}>
         <img 
           src="/images/littleplanet-logo.svg" 
@@ -89,31 +74,6 @@ const MobileAppHeader = ({
           >
             <Menu size={20} />
           </button>
-        </div>
-      </div>
-      
-      <div className={styles.categoriesScroll}>
-        <div className={styles.categoriesRow}>
-          {visibleFilterOptions.map((filter) => {
-            const isEnabledForListings = businessInterestAvailability[filter.id] !== false;
-            const isActive = activeFilter === filter.id;
-            
-            return (
-              <button
-                key={filter.id}
-                className={cn(styles.categoryCard, {
-                  [styles.active]: isActive,
-                  [styles.disabled]: !isEnabledForListings,
-                })}
-                onClick={() => {
-                  if (isEnabledForListings) handleFilterClick(filter.id);
-                }}
-              >
-                <img src={filter.image} alt={filter.label} className={styles.categoryImage} />
-                <span className={styles.categoryLabel}>{filter.label}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

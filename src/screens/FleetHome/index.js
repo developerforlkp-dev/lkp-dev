@@ -14,7 +14,7 @@ import MobileCinematicSearch from "./MobileCinematicSearch";
 import StickyHeaderController from "./StickyHeaderController";
 import MobileAppHeader from "./MobileAppHeader";
 import { Compass, Ticket, Home, Utensils, MapPin, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 
@@ -735,13 +735,10 @@ const FleetHome = () => {
   }, [isMobileOrTablet, activeFilter]);
 
   return (
-    <div className={cn("section", styles.section)}>
-      {isMobileOrTablet && (
+    <LayoutGroup>
+      <div className={cn("section", styles.section)}>
+        {isMobileOrTablet && (
         <MobileAppHeader 
-          visibleFilterOptions={visibleFilterOptions}
-          activeFilter={activeFilter}
-          handleFilterClick={handleFilterClick}
-          businessInterestAvailability={businessInterestAvailability}
           onSearchClick={() => setSheetOpen(true)}
           isStickyNav={isStickyNav}
         />
@@ -985,11 +982,6 @@ const FleetHome = () => {
           <div 
             id="explore-by-section" 
             className={styles.mobileCategoriesContainer}
-            style={{ 
-              opacity: isStickyNav ? 0 : 1, 
-              pointerEvents: isStickyNav ? 'none' : 'auto',
-              transition: 'opacity 0.3s ease',
-            }}
           >
             <div style={{ marginBottom: '16px', padding: '0 20px' }}>
               <div style={{ margin: 0, fontFamily: '"Inter", sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', color: '#0097B2', textTransform: 'uppercase' }}>Explore By</div>
@@ -1088,6 +1080,7 @@ const FleetHome = () => {
           })}
       </div>
     </div>
+    </LayoutGroup>
   );
 };
 
