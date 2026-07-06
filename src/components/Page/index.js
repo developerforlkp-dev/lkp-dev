@@ -172,20 +172,24 @@ const Page = ({
         
         @media (max-width: 768px) {
           .slim-header-bg.is-detail-page {
-            height: 50px !important;
+            height: 60px !important;
           }
           .slim-header-wrapper.is-detail-page {
-            margin-top: ${separatorHeader ? "-50px" : "0"} !important;
+            margin-top: ${separatorHeader ? "-60px" : "0"} !important;
           }
           .slim-header-wrapper.is-detail-page > div {
-            padding: 4px 0 0 0 !important;
+            padding: 12px 0 !important;
+          }
+          .slim-header-wrapper.is-detail-page [class*="Header_container"] {
+            padding: 0 16px !important;
           }
           .slim-header-wrapper.is-detail-page img {
-            width: 100px !important;
+            height: 36px !important;
+            width: auto !important;
           }
           .slim-header-wrapper.is-detail-page [class*="Header_burger"] {
-             transform: scale(0.85);
-             margin-top: 2px;
+             transform: none;
+             margin-top: 0;
           }
         }
       `}</style>
