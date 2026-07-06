@@ -38,6 +38,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
   const [, setActiveInput] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [step, setStep] = useState("phone"); // "phone", "otp"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +65,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
       setOtp(["", "", "", "", "", ""]);
       setFirstName("");
       setLastName("");
+      setDateOfBirth("");
       setStep("phone");
       setActiveInput(0);
       setError("");
@@ -170,7 +172,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
       if (!tokenResponse?.credential) {
         throw new Error("No Google ID token received");
       }
-      const response = await loginWithGoogle(tokenResponse.credential);
+      const response = await loginWithGoogle(tokenResponse.credential, dateOfBirth);
 
       // Store JWT token from response
       const token = response?.token;
@@ -215,6 +217,10 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
   // Send OTP when phone number is submitted
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
+    if (!dateOfBirth) {
+      setError("Please enter your date of birth.");
+      return;
+    }
     if (!isMountedRef.current) return;
     setError("");
 
@@ -261,7 +267,8 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
         otpString,
         countryCode,
         firstName.trim(),
-        lastName.trim()
+        lastName.trim(),
+        dateOfBirth
       );
 
       // Store JWT token if provided in response
@@ -342,7 +349,27 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
             <div className={styles.item}>
               <div className={cn("h3", styles.title)}>Sign up on Little Known Planet</div>
               <div className={styles.info}>Login with your Google account</div>
-              <div className={styles.btns}>
+              
+                <div className={styles.field} style={{ marginBottom: "16px", textAlign: "left" }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#1a202c' }}>
+                    Date of Birth (Required)
+                  </label>
+                  <input
+                    type="date"
+                    className={styles.input}
+                    placeholder="Date of Birth"
+                    value={dateOfBirth}
+                    onChange={(e) => {
+                      setDateOfBirth(e.target.value);
+                      setError("");
+                    }}
+                    disabled={loading}
+                    max={new Date().toISOString().split("T")[0]}
+                    required
+                  />
+                </div>
+
+                <div className={styles.btns} style={{ pointerEvents: dateOfBirth ? 'auto' : 'none', opacity: dateOfBirth ? 1 : 0.5 }}>
                 <button 
                   className={cn("button-stroke", styles.googleBtn)} 
                   onClick={handleGoogleClick}
