@@ -133,7 +133,7 @@ const Login = ({ onClose }) => {
       if (!tokenResponse?.credential) {
         throw new Error("No Google ID token received");
       }
-      const response = await loginWithGoogle(tokenResponse.credential);
+      const response = await loginWithGoogle(tokenResponse.credential, dateOfBirth);
 
       // Store JWT token from response
       const token = response?.token;
@@ -233,6 +233,10 @@ const Login = ({ onClose }) => {
   // Send OTP when phone number is submitted
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
+    if (!dateOfBirth) {
+      setError("Please enter your date of birth.");
+      return;
+    }
     if (!isMountedRef.current) return;
     setError("");
 
@@ -279,7 +283,8 @@ const Login = ({ onClose }) => {
         otpString,
         countryCode,
         firstName.trim(),
-        lastName.trim()
+        lastName.trim(),
+        dateOfBirth
       );
 
       // Store JWT token if provided in response
@@ -350,7 +355,27 @@ const Login = ({ onClose }) => {
         <div className={styles.item}>
           <div className={cn("h3", styles.title)}>Sign up on Little Known Planet</div>
           <div className={styles.info}>Login with your Google account</div>
-          <div className={styles.btns}>
+          
+          <div className={styles.field} style={{ marginBottom: "16px", textAlign: "left" }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#1a202c' }}>
+              Date of Birth (Required)
+            </label>
+            <input
+              type="date"
+              className={styles.input}
+              placeholder="Date of Birth"
+              value={dateOfBirth}
+              onChange={(e) => {
+                setDateOfBirth(e.target.value);
+                setError("");
+              }}
+              disabled={loading}
+              max={new Date().toISOString().split("T")[0]}
+              required
+            />
+          </div>
+
+          <div className={styles.btns} style={{ pointerEvents: dateOfBirth ? 'auto' : 'none', opacity: dateOfBirth ? 1 : 0.5 }}>
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => {
