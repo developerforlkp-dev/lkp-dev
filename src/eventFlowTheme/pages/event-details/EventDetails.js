@@ -747,23 +747,24 @@ const SpecCard = ({ label, value, sub, index, A, B, FG, M, W, theme, isCount }) 
       }}
     >
       <p style={{
-        fontSize: "15px",
+        fontSize: "16px",
         fontWeight: 700,
         color: hovered ? A : FG,
-        marginBottom: 4,
-        fontFamily: "Poppins, sans-serif",
+        marginBottom: 6,
+        fontFamily: '"Inter", sans-serif',
         transition: "color 0.3s",
         margin: "0 0 4px 0"
       }}>
         {isCount ? <Count to={value} /> : value}
       </p>
       <p style={{
-        fontSize: "10px",
+        fontSize: "11px",
         letterSpacing: "0.1em",
         textTransform: "uppercase",
         color: M,
         margin: 0,
         fontWeight: 600,
+        fontFamily: '"Inter", sans-serif',
         transition: "color 0.3s"
       }}>
         {label}
@@ -2043,7 +2044,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueAddress}</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueAddress}</span>
                       </div>
                     </li>
                   )}
@@ -2054,7 +2055,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueLandmark}</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueLandmark}</span>
                       </div>
                     </li>
                   )}
@@ -2065,7 +2066,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueDistrict}</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueDistrict}</span>
                       </div>
                     </li>
                   )}
@@ -2076,7 +2077,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueState}</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueState}</span>
                       </div>
                     </li>
                   )}
@@ -2087,7 +2088,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueCountry}</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueCountry}</span>
                       </div>
                     </li>
                   )}
@@ -2098,7 +2099,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 700, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueInstructions}</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{venueInstructions}</span>
                       </div>
                     </li>
                   )}
@@ -2109,7 +2110,7 @@ function Venue({ event, hostName }) {
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
-                        <span style={{ fontSize: 16, color: M, fontWeight: 500, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
+                        <span style={{ fontSize: 16, color: M, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
                       </div>
                     </li>
                   )}
@@ -2124,7 +2125,7 @@ function Venue({ event, hostName }) {
 }
 
 function PolicyItem({ req }) {
-  const { tokens: { FG, A, M, AL, B, W } } = useTheme();
+  const { theme, tokens: { FG, A, M, AL, B, W } } = useTheme();
   const [op, setOp] = useState(false);
 
   const title = req.setting?.title || req.title || "Requirement";
@@ -2149,15 +2150,15 @@ function PolicyItem({ req }) {
     <motion.div
       layout
       style={{
-        background: op ? AL : W,
-        border: `1px solid ${op ? A : B}`,
+        background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
+        border: `1px solid ${B}`,
         borderRadius: "16px",
         overflow: "hidden",
         marginBottom: "16px",
-        transition: "background 0.3s, border-color 0.3s",
-        boxShadow: op ? "0 8px 30px rgba(0, 0, 0, 0.04)" : "none"
+        transition: "all 0.3s",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.02)"
       }}
-      whileHover={{ borderColor: A }}
+      whileHover={{ borderColor: A, boxShadow: "0 8px 30px rgba(0,0,0,0.06)" }}
     >
       <div
         onClick={() => setOp(!op)}
@@ -2178,16 +2179,15 @@ function PolicyItem({ req }) {
           justifyContent: "center",
           width: 40,
           height: 40,
-          borderRadius: 12,
-          background: op ? `${A}22` : AL,
-          flexShrink: 0,
-          transition: "background 0.3s"
+          borderRadius: 8,
+          background: theme === 'dark' ? '#1E293B' : '#F0F9FA',
+          flexShrink: 0
         }}>
           {getIcon()}
         </div>
         
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, display: "block", fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>{title}</span>
+          <span style={{ fontSize: 16, fontWeight: 500, color: FG, display: "block", fontFamily: '"Inter", sans-serif' }}>{title}</span>
         </div>
 
         <motion.div
