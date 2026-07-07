@@ -1811,7 +1811,7 @@ function PolicyCategoryItem({ category }) {
         </div>
 
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "18px", fontWeight: 700, color: FG, display: "block", fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>{category.title}</span>
+          <span style={{ fontSize: "16px", fontWeight: 500, color: FG, display: "block", fontFamily: '"Inter", sans-serif' }}>{category.title}</span>
         </div>
 
         <motion.div
