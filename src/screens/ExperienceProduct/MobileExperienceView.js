@@ -205,7 +205,7 @@ export default function MobileExperienceView({
                 })()}
               </h1>
               <div className="mob-hero-loc" style={{ color: "#E0E0E0", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-                <MapPin size={14} color={A || "#08B5D6"} style={{ flexShrink: 0 }} />
+                <MapPin size={14} color={A || "#08B5D6"} fill="none" style={{ flexShrink: 0 }} />
                 <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>
                   {listing?.locationName || fallbackLocationValues?.[0] || "Location TBD"}
                 </span>
