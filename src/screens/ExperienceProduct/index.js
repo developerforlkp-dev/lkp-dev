@@ -1255,7 +1255,7 @@ const ExperienceProduct = () => {
               </div>
 
               {/* Overview Cards (6-block flat facts grid) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gridAutoRows: "1fr", gap: "16px" }} className="facts-grid">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: "1fr", gap: "16px" }} className="facts-grid">
                 
                 {/* Fact 1: Duration */}
                 <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF', height: "100%", boxSizing: "border-box" }}>
