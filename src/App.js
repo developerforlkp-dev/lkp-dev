@@ -15,7 +15,7 @@ import FullPhoto from "./screens/FullPhoto";
 import HostProfile from "./screens/HostProfile";
 import ProfileUser from "./screens/ProfileUser";
 import AccountSettings from "./screens/AccountSettings";
-import Support from "./screens/Support";
+
 
 import MessageCenter from "./screens/MessageCenter";
 import Wishlists from "./screens/Wishlists";
@@ -247,15 +247,6 @@ function App() {
             render={() => (
               <Page>
                 <AccountSettings />
-              </Page>
-            )}
-          />
-          <Route
-            exact
-            path="/support"
-            render={() => (
-              <Page>
-                <Support />
               </Page>
             )}
           />
