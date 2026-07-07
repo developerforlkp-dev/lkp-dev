@@ -187,7 +187,22 @@ export default function MobileExperienceView({
                 </span>
               )}
               <h1 className="mob-hero-title" style={{ color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", background: "none", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
-                {listing?.title || "Experience"}
+                {(() => {
+                  const titleStr = listing?.title || "Experience";
+                  const words = titleStr.trim().split(" ");
+                  if (words.length > 1) {
+                    const lastWord = words.pop();
+                    return (
+                      <>
+                        {words.join(" ")}{" "}
+                        <span style={{ color: A || "#08B5D6", fontStyle: "italic", WebkitTextFillColor: A || "#08B5D6" }}>
+                          {lastWord}
+                        </span>
+                      </>
+                    );
+                  }
+                  return titleStr;
+                })()}
               </h1>
               <div className="mob-hero-loc" style={{ color: "#E0E0E0", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                 <MapPin size={14} color={A || "#08B5D6"} style={{ flexShrink: 0 }} />
