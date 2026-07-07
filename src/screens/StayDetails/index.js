@@ -616,8 +616,8 @@ const ScopedStyles = () => (
       /* Mobile Floating Badge */
       .mobile-floating-badge {
         position: absolute;
-        top: 12px;
-        left: 12px;
+        bottom: 32px;
+        right: 24px;
         z-index: 60;
         pointer-events: none;
         width: 70px;
