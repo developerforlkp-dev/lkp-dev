@@ -5,6 +5,53 @@ import styles from "./LoginModal.module.sass";
 import Icon from "../Icon";
 import { sendPhoneOTP, verifyPhoneOTP, loginWithGoogle, completeCustomerProfile } from "../../utils/api";
 
+const JWT_TOKEN_KEY = "jwtToken";
+const JWT_TOKEN_SAVED_AT_KEY = "jwtTokenSavedAt";
+const PENDING_GOOGLE_CREDENTIAL_KEY = "pendingGoogleCredential";
+const PENDING_GOOGLE_CREDENTIAL_SAVED_AT_KEY = "pendingGoogleCredentialSavedAt";
+const RECENT_LOGIN_WINDOW_MS = 10 * 60 * 1000;
+
+const storeJwtToken = (token) => {
+  if (!token) return;
+  localStorage.setItem(JWT_TOKEN_KEY, token);
+  localStorage.setItem(JWT_TOKEN_SAVED_AT_KEY, String(Date.now()));
+};
+
+const getRecentStoredJwtToken = () => {
+  const token = localStorage.getItem(JWT_TOKEN_KEY);
+  const savedAt = Number(localStorage.getItem(JWT_TOKEN_SAVED_AT_KEY) || 0);
+
+  if (!token || !savedAt || Date.now() - savedAt > RECENT_LOGIN_WINDOW_MS) {
+    return null;
+  }
+
+  return token;
+};
+
+const storePendingGoogleCredential = (credential) => {
+  if (!credential) return;
+  localStorage.setItem(PENDING_GOOGLE_CREDENTIAL_KEY, credential);
+  localStorage.setItem(PENDING_GOOGLE_CREDENTIAL_SAVED_AT_KEY, String(Date.now()));
+};
+
+const getRecentPendingGoogleCredential = () => {
+  const credential = localStorage.getItem(PENDING_GOOGLE_CREDENTIAL_KEY);
+  const savedAt = Number(localStorage.getItem(PENDING_GOOGLE_CREDENTIAL_SAVED_AT_KEY) || 0);
+
+  if (!credential || !savedAt || Date.now() - savedAt > RECENT_LOGIN_WINDOW_MS) {
+    localStorage.removeItem(PENDING_GOOGLE_CREDENTIAL_KEY);
+    localStorage.removeItem(PENDING_GOOGLE_CREDENTIAL_SAVED_AT_KEY);
+    return "";
+  }
+
+  return credential;
+};
+
+const clearPendingGoogleCredential = () => {
+  localStorage.removeItem(PENDING_GOOGLE_CREDENTIAL_KEY);
+  localStorage.removeItem(PENDING_GOOGLE_CREDENTIAL_SAVED_AT_KEY);
+};
+
 const isDateOfBirthRequiredError = (err) => {
   const dobErrors = err?.response?.data?.fieldErrors?.dateOfBirth;
   const message =
@@ -197,13 +244,14 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
       const token = response?.token;
 
       if (response?.requiresProfileCompletion) {
+        storeJwtToken(token);
         setPendingToken(token);
         setStep("profile");
         return;
       }
 
       if (token) {
-        localStorage.setItem("jwtToken", token);
+        storeJwtToken(token);
       }
 
       const customer = response?.customer || {};
@@ -215,6 +263,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
         loginMethod: 'google'
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
+      clearPendingGoogleCredential();
 
       if (onPhoneLogin) {
         onPhoneLogin(null, response);
@@ -225,6 +274,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
       if (isMountedRef.current) {
         if (isDateOfBirthRequiredError(err) && tokenResponse?.credential) {
           setPendingGoogleCredential(tokenResponse.credential);
+          storePendingGoogleCredential(tokenResponse.credential);
           setPendingToken(null);
           setDateOfBirth("");
           setError("");
@@ -310,6 +360,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
         response.data?.accessToken;
 
       if (response?.requiresProfileCompletion || response?.data?.requiresProfileCompletion) {
+        storeJwtToken(token);
         setPendingToken(token);
         setStep("profile");
         const customer = response?.customer || response?.data?.customer || {};
@@ -319,7 +370,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
       }
 
       if (token) {
-        localStorage.setItem("jwtToken", token);
+        storeJwtToken(token);
         console.log("✅ JWT token stored in localStorage");
       } else {
         console.warn("⚠️ No JWT token found in response:", response);
@@ -382,12 +433,48 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
 
     setLoading(true);
     try {
-      if (pendingGoogleCredential && !pendingToken) {
-        const response = await loginWithGoogle(pendingGoogleCredential, dateOfBirth);
+      const googleCredential = pendingGoogleCredential || getRecentPendingGoogleCredential();
+
+      if (googleCredential && !pendingToken) {
+        const recentJwtToken = getRecentStoredJwtToken();
+
+        if (recentJwtToken) {
+          try {
+            const profileData = { dateOfBirth };
+            const fullName = `${firstName} ${lastName}`.trim();
+            if (fullName) {
+              profileData.fullName = fullName;
+            }
+
+            const response = await completeCustomerProfile(profileData, recentJwtToken);
+            storeJwtToken(recentJwtToken);
+
+            const customer = response?.customer || {};
+            const userInfo = {
+              firstName: customer?.firstName || "",
+              lastName: customer?.lastName || "",
+              email: customer?.email || "",
+              customerId: customer?.customerId,
+              loginMethod: 'google'
+            };
+            localStorage.setItem("userInfo", JSON.stringify(userInfo));
+            clearPendingGoogleCredential();
+
+            if (onPhoneLogin) {
+              onPhoneLogin(null, response);
+            }
+            onClose();
+            return;
+          } catch (profileErr) {
+            console.warn("Recent JWT token profile completion failed, retrying with Google credential.", profileErr);
+          }
+        }
+
+        const response = await loginWithGoogle(googleCredential, dateOfBirth);
         const token = response?.token;
 
         if (token) {
-          localStorage.setItem("jwtToken", token);
+          storeJwtToken(token);
         }
 
         const customer = response?.customer || {};
@@ -399,6 +486,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
           loginMethod: 'google'
         };
         localStorage.setItem("userInfo", JSON.stringify(userInfo));
+        clearPendingGoogleCredential();
 
         if (onPhoneLogin) {
           onPhoneLogin(null, response);
@@ -413,7 +501,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
       }, pendingToken);
 
       if (pendingToken) {
-        localStorage.setItem("jwtToken", pendingToken);
+        storeJwtToken(pendingToken);
       }
 
       const customer = response?.customer || {};
@@ -425,6 +513,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
         loginMethod: 'google'
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
+      clearPendingGoogleCredential();
 
       if (onPhoneLogin) {
         onPhoneLogin(null, response);
@@ -645,7 +734,7 @@ const LoginModal = ({ visible, onClose, onPhoneLogin }) => {
                   disabled={loading || !dateOfBirth || (!(pendingGoogleCredential && !pendingToken) && (!firstName || !lastName))}
                   style={{ width: "100%" }}
                 >
-                  {loading ? "Saving..." : pendingGoogleCredential && !pendingToken ? "Continue with Google" : "Complete Profile"}
+                  {loading ? "Saving..." : pendingGoogleCredential && !pendingToken ? "Submit" : "Complete Profile"}
                 </button>
               </form>
             </div>
