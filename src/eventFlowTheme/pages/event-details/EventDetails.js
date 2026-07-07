@@ -2404,20 +2404,7 @@ function HostDetails({ event, hostName }) {
             {hostDescription && hostDescription.length > 150 ? hostDescription.substring(0, 150) + "..." : hostDescription}
           </p>
 
-          {(hostPhone || hostEmail) && (
-            <div className="mob-host-contact" style={{ marginTop: 16 }}>
-              {hostPhone && (
-                <a href={`tel:${hostPhone}`} className="mob-host-contact-btn" style={{ borderColor: B, color: FG, background: "transparent", textDecoration: "none" }}>
-                  <Phone size={14} /> Call
-                </a>
-              )}
-              {hostEmail && (
-                <a href={`mailto:${hostEmail}`} className="mob-host-contact-btn" style={{ borderColor: B, color: FG, background: "transparent", textDecoration: "none" }}>
-                  <Mail size={14} /> Email
-                </a>
-              )}
-            </div>
-          )}
+
 
           <button onClick={navigateToHostProfile}
             style={{ marginTop: 16, width: "100%", padding: "12px", borderRadius: 100, border: `1.5px solid ${A}`, background: "transparent", color: A, fontSize: 13, fontWeight: 700, cursor: "pointer", outline: "none" }}>
