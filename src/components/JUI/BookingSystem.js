@@ -2029,7 +2029,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     }
   }
 
-  const baseChildPricePerChild = hasChildPricing ? parseFloat(rawChildPrice || 0) : baseAdultPricePerPerson;
+  const isEventTieredChildPricing = isEventBooking && guests.children > 0 && eventChildPriceTotal > 0;
+  const actualHasChildPricing = hasChildPricing || isEventTieredChildPricing;
+
+  const baseChildPricePerChild = actualHasChildPricing 
+    ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : parseFloat(rawChildPrice || 0)) 
+    : baseAdultPricePerPerson;
 
   const data = {
     price: extractedPrice,
@@ -2767,13 +2772,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         currency: "INR",
         basePrice: rawBaseTotal,
         // Adult/child split for checkout page
-        allowChildPricing: hasChildPricing,
+        allowChildPricing: actualHasChildPricing,
         adultsCount: guests.adults,
         childrenCount: guests.children,
         pricePerPerson: parseFloat(extractedPrice || 0),
         basePricePerPerson: baseAdultPricePerPerson,
         adultBasePricePerPerson: baseAdultPricePerPerson,
-        childPricePerChild: hasChildPricing ? effectiveChildPrice : 0,
+        childPricePerChild: actualHasChildPricing ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : effectiveChildPrice) : 0,
         baseChildPricePerChild,
         discount: totalDiscountAmount,
         promoDiscount: totalPromoDiscountAmount,
@@ -2823,7 +2828,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       bookingSlotId: Number(slotId),
       guestCount: totalGuests,
       childCount: guests.children || 0,
-      childPricePerChild: Number(hasChildPricing ? baseChildPricePerChild : 0),
+      childPricePerChild: Number(actualHasChildPricing ? baseChildPricePerChild : 0),
       customer: {
         name: userInfo.name || (userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ""}`.trim() : "") || "Guest User",
         email: userInfo.email || userInfo.customerEmail || "guest@example.com",
