@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 // Force HMR re-render
 import { useParams, useHistory } from "react-router-dom";
-import { mapApiBlogToComponentFormat } from "../../utils/blogData";
+import { mapApiBlogToComponentFormat, getLayoutVariant } from "../../utils/blogData";
+
 import { getBlogBySlug } from "../../utils/api";
 import { 
   Layout1ModernMinimalist,
   Layout2EditorialMagazine,
-  Layout3ImmersiveDark
+  Layout3ImmersiveDark,
+  Layout4AsymmetricMosaic
 } from "../../components/Blog/BlogLayouts";
+
 import { blogTailwindCss } from "../../styles/blogTailwindString";
 
 export default function BlogDetails() {
@@ -62,7 +65,10 @@ export default function BlogDetails() {
 
   if (!post) return null;
 
-  const variant = post.layoutId || ((String(post.id).charCodeAt(0) % 3) + 1);
+  // Use layoutId from post (set in blogData / mapApiBlogToComponentFormat) 
+  // Cycles variants 1-4 for API posts, uses static mapping for local posts
+  const variant = post.layoutId ?? getLayoutVariant(post.id);
+
 
   let LayoutComponent;
   switch (variant) {
@@ -73,9 +79,15 @@ export default function BlogDetails() {
       LayoutComponent = Layout2EditorialMagazine;
       break;
     case 3:
-    default:
       LayoutComponent = Layout3ImmersiveDark;
       break;
+    case 4:
+      LayoutComponent = Layout4AsymmetricMosaic;
+      break;
+    default:
+      LayoutComponent = Layout1ModernMinimalist;
+      break;
+
   }
 
   console.log("Currently rendering Blog Layout Variant:", variant);
@@ -96,9 +108,23 @@ export default function BlogDetails() {
           --blog-body-color: #6b7280;
           --blog-muted-color: #9ca3af;
         }
-        .blog-page-root *, .blog-page-root ::before, .blog-page-root ::after {
-          box-sizing: border-box;
+        .blog-page-root *, .blog-page-root ::before, .blog-page-root ::after { box-sizing: border-box; }
+
+        /* FIX: Override global body:not(.dark-mode) h1,p { color !important } from common.sass */
+        body:not(.dark-mode) .blog-page-root h1,
+        body:not(.dark-mode) .blog-page-root h2,
+        body:not(.dark-mode) .blog-page-root h3,
+        body:not(.dark-mode) .blog-page-root h4,
+        body:not(.dark-mode) .blog-page-root h5,
+        body:not(.dark-mode) .blog-page-root h6,
+        body:not(.dark-mode) .blog-page-root p,
+        body:not(.dark-mode) .blog-page-root label,
+        body:not(.dark-mode) .blog-page-root strong,
+        body:not(.dark-mode) .blog-page-root em,
+        body:not(.dark-mode) .blog-page-root li {
+          color: inherit !important;
         }
+
         html.dark .blog-page-root,
         body.dark .blog-page-root,
         [data-theme="dark"] .blog-page-root,
@@ -111,9 +137,8 @@ export default function BlogDetails() {
           --blog-body-color: #a0a0a0;
           --blog-muted-color: #666666;
         }
-        .blog-page-root img {
-          max-width: 100%;
-        }
+        .blog-page-root img { max-width: 100%; }
+
       `}</style>
     </div>
   );

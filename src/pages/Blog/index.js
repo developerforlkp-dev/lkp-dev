@@ -83,8 +83,28 @@ export default function Blog() {
           --blog-desc-color: #4b5563;
           --blog-quote-color: #001F3F;
         }
-        
-        /* Global Dark Mode Triggers */
+
+        /*
+         * FIX: Override the global body:not(.dark-mode) h1,p { color: $n2 !important }
+         * rule from common.sass. Our selector has equal specificity (0,1,2)
+         * but is declared LATER (runtime injection) so it wins.
+         * Using color:inherit lets blog layout CSS set the actual colors.
+         */
+        body:not(.dark-mode) .blog-page-root h1,
+        body:not(.dark-mode) .blog-page-root h2,
+        body:not(.dark-mode) .blog-page-root h3,
+        body:not(.dark-mode) .blog-page-root h4,
+        body:not(.dark-mode) .blog-page-root h5,
+        body:not(.dark-mode) .blog-page-root h6,
+        body:not(.dark-mode) .blog-page-root p,
+        body:not(.dark-mode) .blog-page-root label,
+        body:not(.dark-mode) .blog-page-root strong,
+        body:not(.dark-mode) .blog-page-root em,
+        body:not(.dark-mode) .blog-page-root li {
+          color: inherit !important;
+        }
+
+        /* Dark Mode Triggers */
         html.dark .blog-page-root,
         body.dark .blog-page-root,
         [data-theme="dark"] .blog-page-root,
@@ -94,9 +114,7 @@ export default function Blog() {
           --blog-quote-color: #ffffff;
         }
 
-        .blog-page-root img {
-          max-width: 100%;
-        }
+        .blog-page-root img { max-width: 100%; }
       `}</style>
     </div>
   );
