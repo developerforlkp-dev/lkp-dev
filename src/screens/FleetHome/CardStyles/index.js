@@ -198,7 +198,7 @@ const transformListingToCard = (listing, section) => {
 
   // Price formatting
   const price = listing.individualPrice ?? listing.startingPrice ?? 0;
-  const hasPrice = price > 0;
+  const hasPrice = price > 0 && entityType !== "place";
   let suffix = "";
   if (entityType === "experience" || entityType === "event") suffix = " / person";
   if (entityType === "stay") suffix = " / night";
@@ -244,6 +244,10 @@ const transformListingToCard = (listing, section) => {
   } else if (normalizedTags.includes("TRENDING")) {
     finalCategoryText = "TRENDING";
     badgeColor = "orange";
+  }
+
+  if (entityType === "place") {
+    finalCategoryText = null;
   }
 
   return {
