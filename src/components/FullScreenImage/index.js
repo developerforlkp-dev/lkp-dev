@@ -168,6 +168,7 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
           transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
           box-sizing: border-box;
           transform: scale(0.98);
+          flex-shrink: 0;
         }
         
         .fs-thumb:hover {
