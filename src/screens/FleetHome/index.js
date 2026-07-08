@@ -5,7 +5,7 @@ import moment from "moment";
 import styles from "./FleetHome.module.sass";
 import Icon from "../../components/Icon";
 import CategoryCard from "../../components/CategoryCard";
-import { getHomepageSections, getHomepageSectionListings, getEventListings, getStayListings, getFoodMenus, getPlaces, getBusinessInterests } from "../../utils/api";
+import { getHomepageSections, getHomepageSectionListings, getEventListings, getStayListings, getFoodMenus, getBusinessInterests } from "../../utils/api";
 import { HomepageSectionCard } from "./CardStyles";
 import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
@@ -428,44 +428,6 @@ const FleetHome = () => {
   // Fetch homepage sections and their listings
   // Business interest IDs: 1=Experience, 2=Events, 3=Stays, 4=Places, 5=Food
   useEffect(() => {
-
-    if (activeFilter === "places") {
-      const loadPlaces = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-          const result = await getPlaces(20, 0);
-          // result is now { section, listings }; use backend section info if available
-          const backendSection = result?.section;
-          const listings = Array.isArray(result?.listings) ? result.listings : [];
-          console.log("📍 Places result from API:", result);
-          const newSections = [
-            {
-              section: {
-                sectionId: backendSection?.sectionId || backendSection?.id || "places",
-                sectionTitle: backendSection?.sectionTitle || backendSection?.title || backendSection?.name || "Places Nearby",
-                businessInterestId: backendSection?.businessInterestId || 4,
-                businessInterest: backendSection?.businessInterest || "PLACE",
-                businessInterestCode: backendSection?.businessInterestCode || "PLACE",
-              },
-              listings,
-            },
-          ];
-          console.log("📍 Setting sectionsData for places:", newSections);
-          setSectionsData(newSections);
-        } catch (err) {
-          console.error("❌ Error loading places nearby:", err);
-          setSectionsData([]);
-          setError(err.message || "Failed to load places");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      loadPlaces();
-      return;
-    }
 
     const businessInterestId = getBusinessInterestId(activeFilter) ?? (activeFilter === "experience" ? 1 : null);
     if (businessInterestId == null) {
