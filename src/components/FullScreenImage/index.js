@@ -59,8 +59,8 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
       <style>{`
         .fs-modal-box {
           width: 100%;
-          max-width: 1400px;
-          height: 85vh;
+          max-width: 1100px;
+          height: 75vh;
           background: ${isDark ? '#0A0A0A' : '#FFFFFF'};
           border-radius: 32px;
           box-shadow: 0 30px 80px rgba(0,0,0,0.25);
@@ -80,7 +80,7 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
         }
         
         .fs-right-pane {
-          width: clamp(200px, 20vw, 300px);
+          width: clamp(160px, 18vw, 240px);
           display: flex;
           flex-direction: column;
           border-left: 1px solid ${isDark ? '#333' : '#F0F0F0'};
@@ -108,24 +108,24 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
         }
         
         .fs-image {
-          object-fit: contain !important;
+          object-fit: cover !important;
           width: 100% !important;
           height: 100% !important;
           filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
           position: absolute;
           top: 0;
           left: 0;
-          padding: 24px;
+          padding: 0;
           box-sizing: border-box;
         }
         
         .fs-thumbnail-list {
           flex: 1;
           overflow-y: auto;
-          padding: 24px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
           scrollbar-width: none;
         }
         
@@ -177,7 +177,7 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
         
         .fs-thumb.active {
           opacity: 1;
-          border: 3px solid ${A || '#0097B2'};
+          border: 2px solid ${A || '#0097B2'};
           box-shadow: 0 10px 24px ${A ? A + '40' : 'rgba(0,151,178,0.25)'};
           transform: scale(1.02);
         }
@@ -240,25 +240,21 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
       >
+        <motion.button
+          onClick={onClose}
+          whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
+          whileTap={{ scale: 0.92 }}
+          style={{ position: 'absolute', top: 24, right: 24, zIndex: 100, width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+        >
+          <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
+        </motion.button>
 
         {/* LEFT PANE - Image Viewer */}
         <div className="fs-left-pane">
-          <div className="fs-header">
-            <div style={{ background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+          <div className="fs-image-container">
+            <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 100, background: pillBg, backdropFilter: 'blur(20px)', border: `1px solid ${pillBorder}`, padding: '8px 24px', borderRadius: 100, color: pillText, fontSize: 13, letterSpacing: '0.15em', fontWeight: 800, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
               {currentIndex + 1} <span style={{ opacity: 0.3, margin: '0 6px', color: textMain }}>/</span> <span style={{ color: textMain }}>{Math.max(1, items.length)}</span>
             </div>
-
-            <motion.button
-              onClick={onClose}
-              whileHover={{ scale: 1.08, backgroundColor: btnHoverBg }}
-              whileTap={{ scale: 0.92 }}
-              style={{ width: 48, height: 48, borderRadius: '50%', background: btnBg, border: `1px solid ${btnBorder}`, color: textMain, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(20px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
-            >
-              <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
-            </motion.button>
-          </div>
-
-          <div className="fs-image-container">
             <AnimatePresence>
               <motion.img
                 className="fs-image"
