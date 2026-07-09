@@ -18,7 +18,7 @@ import { buildExperienceUrl } from "../../../utils/experienceUrl";
 
 // Helper to format image URL from API
 const formatImageUrl = (url) => {
-  if (!url) return "/images/content/card-pic-13.jpg";
+  if (!url) return "/images/footerimage.webp";
 
   // If already a full URL, check if it's an Azure blob with SAS token
   if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -31,7 +31,7 @@ const formatImageUrl = (url) => {
         return url;
       }
       // No SAS token, fallback to default image
-      return "/images/content/card-pic-13.jpg";
+      return "/images/footerimage.webp";
     }
     // Not an Azure blob URL, return as-is
     return url;
@@ -42,14 +42,14 @@ const formatImageUrl = (url) => {
   if (url.includes("/") && !url.startsWith("/")) {
     // This would create an Azure blob URL which requires auth
     // Return default image instead to prevent failed requests
-    return "/images/content/card-pic-13.jpg";
+    return "/images/footerimage.webp";
   }
 
   if (url.startsWith("/")) {
     return url;
   }
 
-  return "/images/content/card-pic-13.jpg";
+  return "/images/footerimage.webp";
 };
 
 const getEntityId = (listing) => {

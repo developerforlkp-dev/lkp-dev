@@ -6,7 +6,7 @@ import styles from "./DestinationCard.module.sass";
 const DestinationCard = ({ className, item }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const defaultImage = "/images/content/card-pic-13.jpg";
+  const defaultImage = "/images/footerimage.webp";
   const finalSrc = imageError ? defaultImage : item.src;
   const finalSrcSet = imageError ? undefined : (item.srcSet ? `${item.srcSet} 2x` : undefined);
   return (
