@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Hero, Filters, BlogGrid as Grid } from "../../components/Blog/BlogComponents";
+import { Hero } from "../../components/Blog/Hero";
+import { Filters } from "../../components/Blog/Filters";
+import { BlogGrid } from "../../components/Blog/BlogGrid";
 import { getBlogs } from "../../utils/api";
-import { mapApiBlogToComponentFormat } from "../../utils/blogData";
+import { mapApiBlogToComponentFormat, staticPosts } from "../../utils/blogData";
 import { blogTailwindCss } from "../../styles/blogTailwindString";
 
 export default function Blog() {
@@ -10,7 +12,7 @@ export default function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Posts");
 
-  // Instantly inject the CSS string without any network requests or SCSS compiler bugs
+  // Inject the Tailwind CSS string
   useEffect(() => {
     let style = document.getElementById('blog-tailwind-style-inline');
     if (!style) {
@@ -30,10 +32,19 @@ export default function Blog() {
     const fetchBlogs = async () => {
       try {
         const rawBlogs = await getBlogs();
-        const mappedBlogs = rawBlogs.map(mapApiBlogToComponentFormat);
-        setPosts(mappedBlogs);
+        console.log("🔥 [Blog Listing] Raw API Data from getBlogs():", rawBlogs);
+        if (rawBlogs && rawBlogs.length > 0) {
+          const mappedBlogs = rawBlogs.map((blog, idx) => mapApiBlogToComponentFormat(blog, idx));
+          console.log("✨ [Blog Listing] Mapped Data for UI:", mappedBlogs);
+          setPosts(mappedBlogs);
+        } else {
+          // Fallback to static data when API returns empty
+          setPosts(staticPosts);
+        }
       } catch (error) {
         console.error("Failed to fetch blogs:", error);
+        // Fallback to static data on error
+        setPosts(staticPosts);
       } finally {
         setLoading(false);
       }
@@ -43,23 +54,19 @@ export default function Blog() {
 
   // Compute filtered posts
   const filteredPosts = posts.filter(post => {
-    // 1. Category Filter
     const matchesCategory = selectedCategory === "All Posts" || post.category === selectedCategory;
-    
-    // 2. Search Filter
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch = !query || 
       (post.title && post.title.toLowerCase().includes(query)) ||
       (post.description && post.description.toLowerCase().includes(query)) ||
       (post.category && post.category.toLowerCase().includes(query));
-
     return matchesCategory && matchesSearch;
   });
 
   return (
     <div className="blog-page-root">
-      <main className="flex min-h-screen flex-col items-center pt-2">
-        <Hero posts={posts} />
+      <main className="flex min-h-screen flex-col items-center overflow-x-hidden pt-2">
+        <Hero />
         <Filters 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -71,52 +78,9 @@ export default function Blog() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-brand)]"></div>
           </div>
         ) : (
-          <Grid posts={filteredPosts} />
+          <BlogGrid posts={filteredPosts} />
         )}
       </main>
-      <style>{`
-        .blog-page-root {
-          overflow-x: clip;
-          --color-brand: #00A4C4;
-          --color-brand-dark: #001F3F;
-          --blog-title-color: #001F3F;
-          --blog-desc-color: #4b5563;
-          --blog-quote-color: #001F3F;
-        }
-
-        /*
-         * FIX: Override the global body:not(.dark-mode) h1,p { color: $n2 !important }
-         * rule from common.sass. Our selector has equal specificity (0,1,2)
-         * but is declared LATER (runtime injection) so it wins.
-         * Using color:inherit lets blog layout CSS set the actual colors.
-         */
-        body:not(.dark-mode) .blog-page-root h1,
-        body:not(.dark-mode) .blog-page-root h2,
-        body:not(.dark-mode) .blog-page-root h3,
-        body:not(.dark-mode) .blog-page-root h4,
-        body:not(.dark-mode) .blog-page-root h5,
-        body:not(.dark-mode) .blog-page-root h6,
-        body:not(.dark-mode) .blog-page-root p,
-        body:not(.dark-mode) .blog-page-root label,
-        body:not(.dark-mode) .blog-page-root strong,
-        body:not(.dark-mode) .blog-page-root em,
-        body:not(.dark-mode) .blog-page-root li {
-          color: inherit !important;
-        }
-
-        /* Dark Mode Triggers */
-        html.dark .blog-page-root,
-        body.dark .blog-page-root,
-        [data-theme="dark"] .blog-page-root,
-        .dark-mode .blog-page-root {
-          --blog-title-color: #ffffff;
-          --blog-desc-color: #d1d5db;
-          --blog-quote-color: #ffffff;
-        }
-
-        .blog-page-root img { max-width: 100%; }
-      `}</style>
     </div>
   );
 }
-

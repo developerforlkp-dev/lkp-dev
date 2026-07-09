@@ -1,25 +1,21 @@
 import React, { useEffect, useState } from "react";
-// Force HMR re-render
 import { useParams, useHistory } from "react-router-dom";
-import { mapApiBlogToComponentFormat, getLayoutVariant } from "../../utils/blogData";
-
-import { getBlogBySlug } from "../../utils/api";
-import { 
-  Layout1ModernMinimalist,
-  Layout2EditorialMagazine,
-  Layout3ImmersiveDark,
-  Layout4AsymmetricMosaic
-} from "../../components/Blog/BlogLayouts";
-
+import { mapApiBlogToComponentFormat, staticPosts, getLayoutVariant } from "../../utils/blogData";
+import { getBlogs, getBlogBySlug } from "../../utils/api";
+import Layout1CinematicHero from "../../components/Blog/blog-layouts/Layout1CinematicHero";
+import Layout2EditorialMagazine from "../../components/Blog/blog-layouts/Layout2EditorialMagazine";
+import Layout3ImmersiveDark from "../../components/Blog/blog-layouts/Layout3ImmersiveDark";
+import Layout4AsymmetricMosaic from "../../components/Blog/blog-layouts/Layout4AsymmetricMosaic";
 import { blogTailwindCss } from "../../styles/blogTailwindString";
 
 export default function BlogDetails() {
   const { slug } = useParams();
   const history = useHistory();
   const [post, setPost] = useState(null);
+  const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Instantly inject the CSS string without any network requests or SCSS compiler bugs
+  // Inject the Tailwind CSS string
   useEffect(() => {
     let style = document.getElementById('blog-tailwind-style-inline');
     if (!style) {
@@ -35,19 +31,51 @@ export default function BlogDetails() {
     };
   }, []);
 
+  // Fetch all posts for related posts section
+  useEffect(() => {
+    const fetchAllPosts = async () => {
+      try {
+        const rawBlogs = await getBlogs();
+        if (rawBlogs && rawBlogs.length > 0) {
+          setAllPosts(rawBlogs.map((b, i) => mapApiBlogToComponentFormat(b, i)));
+        } else {
+          setAllPosts(staticPosts);
+        }
+      } catch {
+        setAllPosts(staticPosts);
+      }
+    };
+    fetchAllPosts();
+  }, []);
+
+  // Fetch single blog by slug
   useEffect(() => {
     const fetchBlog = async () => {
       try {
         const rawBlog = await getBlogBySlug(slug);
-        console.log("🔥 Raw blog data from backend:", rawBlog);
+        console.log(`🔥 [Blog Details] Raw API Data for slug "${slug}":`, rawBlog);
         if (!rawBlog) {
-          history.push("/blog");
+          // Try finding in static posts
+          const staticMatch = staticPosts.find(p => p.slug === slug);
+          if (staticMatch) {
+            setPost(staticMatch);
+          } else {
+            history.push("/blog");
+          }
         } else {
-          setPost(mapApiBlogToComponentFormat(rawBlog));
+          const mapped = mapApiBlogToComponentFormat(rawBlog);
+          console.log(`✨ [Blog Details] Mapped Data for UI:`, mapped);
+          setPost(mapped);
         }
       } catch (error) {
         console.error("Failed to fetch blog:", error);
-        history.push("/blog");
+        // Try finding in static posts as fallback
+        const staticMatch = staticPosts.find(p => p.slug === slug);
+        if (staticMatch) {
+          setPost(staticMatch);
+        } else {
+          history.push("/blog");
+        }
       } finally {
         setLoading(false);
       }
@@ -65,15 +93,13 @@ export default function BlogDetails() {
 
   if (!post) return null;
 
-  // Use layoutId from post (set in blogData / mapApiBlogToComponentFormat) 
-  // Cycles variants 1-4 for API posts, uses static mapping for local posts
+  // Use layoutId from post or compute from id
   const variant = post.layoutId ?? getLayoutVariant(post.id);
-
 
   let LayoutComponent;
   switch (variant) {
     case 1:
-      LayoutComponent = Layout1ModernMinimalist;
+      LayoutComponent = Layout1CinematicHero;
       break;
     case 2:
       LayoutComponent = Layout2EditorialMagazine;
@@ -85,62 +111,13 @@ export default function BlogDetails() {
       LayoutComponent = Layout4AsymmetricMosaic;
       break;
     default:
-      LayoutComponent = Layout1ModernMinimalist;
+      LayoutComponent = Layout1CinematicHero;
       break;
-
   }
-
-  console.log("Currently rendering Blog Layout Variant:", variant);
 
   return (
     <div className="blog-page-root">
-      <LayoutComponent post={post} />
-      <style>{`
-        .blog-page-root {
-          overflow-x: clip;
-          --color-brand: #00A4C4;
-          --color-brand-dark: #001F3F;
-          --blog-title-color: #001F3F;
-          --blog-desc-color: #4b5563;
-          --blog-bg: #ffffff;
-          --blog-card-bg: #ffffff;
-          --blog-border-color: #f0f0f0;
-          --blog-body-color: #6b7280;
-          --blog-muted-color: #9ca3af;
-        }
-        .blog-page-root *, .blog-page-root ::before, .blog-page-root ::after { box-sizing: border-box; }
-
-        /* FIX: Override global body:not(.dark-mode) h1,p { color !important } from common.sass */
-        body:not(.dark-mode) .blog-page-root h1,
-        body:not(.dark-mode) .blog-page-root h2,
-        body:not(.dark-mode) .blog-page-root h3,
-        body:not(.dark-mode) .blog-page-root h4,
-        body:not(.dark-mode) .blog-page-root h5,
-        body:not(.dark-mode) .blog-page-root h6,
-        body:not(.dark-mode) .blog-page-root p,
-        body:not(.dark-mode) .blog-page-root label,
-        body:not(.dark-mode) .blog-page-root strong,
-        body:not(.dark-mode) .blog-page-root em,
-        body:not(.dark-mode) .blog-page-root li {
-          color: inherit !important;
-        }
-
-        html.dark .blog-page-root,
-        body.dark .blog-page-root,
-        [data-theme="dark"] .blog-page-root,
-        .dark-mode .blog-page-root {
-          --blog-title-color: #ffffff;
-          --blog-desc-color: #d1d5db;
-          --blog-bg: #0a0a0a;
-          --blog-card-bg: #1a1a1a;
-          --blog-border-color: #2a2a2a;
-          --blog-body-color: #a0a0a0;
-          --blog-muted-color: #666666;
-        }
-        .blog-page-root img { max-width: 100%; }
-
-      `}</style>
+      <LayoutComponent post={post} allPosts={allPosts} />
     </div>
   );
 }
-
