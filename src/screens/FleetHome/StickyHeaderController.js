@@ -222,7 +222,7 @@ const StickyHeaderController = ({
                 })}
                 onClick={() => {
                   if (isEnabledForListings) {
-                    handleFilterClick(filter.id);
+                    handleFilterClick(filter.id, true);
                   }
                 }}
                 disabled={!isEnabledForListings}
