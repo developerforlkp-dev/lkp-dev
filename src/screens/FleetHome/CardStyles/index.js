@@ -70,7 +70,12 @@ const getEntityId = (listing) => {
     listing.placeId ??
     listing.place_id ??
     listing.id ??
-    listing._id
+    listing._id ??
+    listing.listing?.id ??
+    listing.stay?.id ??
+    listing.event?.id ??
+    listing.foodMenu?.id ??
+    listing.place?.id
   );
 };
 
@@ -103,19 +108,19 @@ const getEntityIdByType = (listing, entityType) => {
   if (!listing || typeof listing !== "object") return undefined;
 
   if (entityType === "event") {
-    return listing.eventId ?? listing.event_id ?? listing.id ?? listing._id;
+    return listing.eventId ?? listing.event_id ?? listing.event?.id ?? listing.id ?? listing._id;
   }
   if (entityType === "stay") {
-    return listing.stayId ?? listing.stay_id ?? listing.propertyId ?? listing.property_id ?? listing.id ?? listing._id;
+    return listing.stayId ?? listing.stay_id ?? listing.stay?.id ?? listing.propertyId ?? listing.property_id ?? listing.property?.id ?? listing.id ?? listing._id;
   }
   if (entityType === "food") {
-    return listing.foodMenuId ?? listing.food_menu_id ?? listing.id ?? listing._id;
+    return listing.foodMenuId ?? listing.food_menu_id ?? listing.foodMenu?.id ?? listing.id ?? listing._id;
   }
   if (entityType === "place") {
-    return listing.placeId ?? listing.place_id ?? listing.id ?? listing._id;
+    return listing.placeId ?? listing.place_id ?? listing.place?.id ?? listing.id ?? listing._id;
   }
   // experience
-  return listing.listingId ?? listing.listing_id ?? listing.experienceId ?? listing.experience_id ?? listing.id ?? listing._id;
+  return listing.listingId ?? listing.listing_id ?? listing.listing?.id ?? listing.experienceId ?? listing.experience_id ?? listing.id ?? listing._id;
 };
 
 const getEntityImageUrl = (listing) => {

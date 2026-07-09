@@ -186,11 +186,22 @@ const Listings = () => {
     return count;
   }, [filters]);
 
+  const getListingTerm = (interest, count) => {
+    const normalized = String(interest || "").toUpperCase();
+    const isPlural = count !== 1;
+    if (normalized.includes("EXPERIENCE")) return isPlural ? "experiences" : "experience";
+    if (normalized.includes("EVENT")) return isPlural ? "events" : "event";
+    if (normalized.includes("STAY")) return isPlural ? "stays" : "stay";
+    if (normalized.includes("FOOD")) return isPlural ? "food listings" : "food listing";
+    if (normalized.includes("PLACE")) return isPlural ? "places" : "place";
+    return isPlural ? "properties" : "property";
+  };
+
   const sortOptions = ["newest", "rating"];
   const isEventInterest = String(businessInterest || "").toUpperCase().includes("EVENT");
   const emptyMessage = isEventInterest && selectedDate
     ? "No events in this date."
-    : "No listings found. Try adjusting your filters.";
+    : `No ${getListingTerm(businessInterest, 2)} found. Try adjusting your filters.`;
 
   const effectiveCategoryFilter = useMemo(() => {
     if (
@@ -646,7 +657,7 @@ const Listings = () => {
                 <span className={styles.resultCount}>
                   {loading && listings.length === 0
                     ? "Loading..."
-                    : `${listings.length} ${listings.length === 1 ? "property" : "properties"} found`
+                    : `${listings.length} ${getListingTerm(businessInterest, listings.length)} found`
                   }
                 </span>
                 <div className={styles.viewToggle}>
