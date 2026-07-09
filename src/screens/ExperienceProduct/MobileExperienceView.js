@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft, ChevronDown, Clock, User, Zap, Baby, Languages,
-  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Compass, Heart
+  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Compass, Heart, Building, Map, Globe
 } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import PhotoView from "../../components/PhotoView";
@@ -593,7 +593,7 @@ export default function MobileExperienceView({
           {listing?.meetingDistrict && (
             <div className="mob-detail-row" style={{ borderColor: B }}>
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <MapPin size={18} color={A} />
+                <Building size={18} color={A} />
               </div>
               <div>
                 <p className="mob-detail-label" style={{ color: A }}>District</p>
@@ -604,7 +604,7 @@ export default function MobileExperienceView({
           {listing?.meetingState && (
             <div className="mob-detail-row" style={{ borderColor: B }}>
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <MapPin size={18} color={A} />
+                <Map size={18} color={A} />
               </div>
               <div>
                 <p className="mob-detail-label" style={{ color: A }}>State</p>
@@ -615,7 +615,7 @@ export default function MobileExperienceView({
           {listing?.meetingCountry && (
             <div className="mob-detail-row" style={{ borderColor: B }}>
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <MapPin size={18} color={A} />
+                <Globe size={18} color={A} />
               </div>
               <div>
                 <p className="mob-detail-label" style={{ color: A }}>Country</p>
