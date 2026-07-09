@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, createContext, useContext, useRef } from "react";
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
-import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, ChevronRight, Share2, Sparkles, ShieldCheck, Mail, Star, Heart, Compass, Info } from "lucide-react";
+import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, ChevronRight, Share2, Sparkles, ShieldCheck, Mail, Star, Heart, Compass, Info, Building, Map } from "lucide-react";
 import { X, Plus as PlusIcon } from "lucide-react";
 import { BookingSystem } from "../../../components/JUI/BookingSystem";
 import { Footer } from "../../../components/JUI/Footer";
@@ -1993,7 +1993,7 @@ function Venue({ event, hostName }) {
             {venueDistrict && (
               <div className="mob-detail-row" style={{ borderColor: B }}>
                 <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                  <MapPin size={18} color={A} />
+                  <Building size={18} color={A} />
                 </div>
                 <div>
                   <p className="mob-detail-label" style={{ color: A }}>District</p>
@@ -2004,7 +2004,7 @@ function Venue({ event, hostName }) {
             {venueState && (
               <div className="mob-detail-row" style={{ borderColor: B }}>
                 <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                  <MapPin size={18} color={A} />
+                  <Map size={18} color={A} />
                 </div>
                 <div>
                   <p className="mob-detail-label" style={{ color: A }}>State</p>
@@ -2015,7 +2015,7 @@ function Venue({ event, hostName }) {
             {venueCountry && (
               <div className="mob-detail-row" style={{ borderColor: B }}>
                 <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                  <MapPin size={18} color={A} />
+                  <Globe size={18} color={A} />
                 </div>
                 <div>
                   <p className="mob-detail-label" style={{ color: A }}>Country</p>
@@ -2135,7 +2135,7 @@ function Venue({ event, hostName }) {
                   {venueDistrict && (
                     <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
+                        <Building size={20} color={A} fill="transparent" />
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
@@ -2146,7 +2146,7 @@ function Venue({ event, hostName }) {
                   {venueState && (
                     <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
+                        <Map size={20} color={A} fill="transparent" />
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
@@ -2157,7 +2157,7 @@ function Venue({ event, hostName }) {
                   {venueCountry && (
                     <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict && !venueState) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
+                        <Globe size={20} color={A} fill="transparent" />
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
@@ -2168,7 +2168,7 @@ function Venue({ event, hostName }) {
                   {venueInstructions && (
                     <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict && !venueState && !venueCountry) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
+                        <Info size={20} color={A} fill="transparent" />
                       </div>
                       <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                         <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
