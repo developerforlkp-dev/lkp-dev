@@ -192,7 +192,7 @@ const FleetHome = () => {
   );
 
   // Handle filter click by navigating to new URL
-  const handleFilterClick = (filterId) => {
+  const handleFilterClick = (filterId, shouldScroll = false) => {
     if (businessInterestActiveMap[filterId] === false) return;
     if (businessInterestAvailability[filterId] === false) return;
     if (activeFilter !== filterId) {
@@ -204,8 +204,18 @@ const FleetHome = () => {
         history.push(targetPath);
       }
 
-      // Scroll to top when switching categories
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (shouldScroll) {
+        // Scroll to the first listing when switching categories from sticky headers
+        setTimeout(() => {
+          const target = document.getElementById("listings-scroll-target");
+          if (target) {
+            const offset = target.getBoundingClientRect().top + window.scrollY - 120; // 120px offset for sticky headers on desktop
+            window.scrollTo({ top: offset, behavior: "smooth" });
+          } else {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }, 100);
+      }
     }
   };
 
@@ -988,6 +998,8 @@ const FleetHome = () => {
               </div>
             </div>
           )}
+
+          <div id="listings-scroll-target"></div>
 
           {/* Dynamic Sections from API */}
           {loading && (
