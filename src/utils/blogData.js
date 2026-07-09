@@ -367,6 +367,7 @@ export function mapApiBlogToComponentFormat(apiBlog) {
 
   return {
     id: apiBlog.blogPostId || Math.random(),
+    layoutId: apiBlog.layoutId,
     slug: apiBlog.slug,
     image: imageUrl,
     heroImage: imageUrl,

@@ -3,11 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import { mapApiBlogToComponentFormat } from "../../utils/blogData";
 import { getBlogBySlug } from "../../utils/api";
-import { 
-  Layout1ModernMinimalist,
-  Layout2EditorialMagazine,
-  Layout3ImmersiveDark
-} from "../../components/Blog/BlogLayouts";
+import Layout1 from "./Layouts/Layout1";
+import Layout2 from "./Layouts/Layout2";
+import Layout3 from "./Layouts/Layout3";
 import { blogTailwindCss } from "../../styles/blogTailwindString";
 
 export default function BlogDetails() {
@@ -62,19 +60,19 @@ export default function BlogDetails() {
 
   if (!post) return null;
 
-  const variant = post.layoutId || ((String(post.id).charCodeAt(0) % 3) + 1);
+  const variant = Number(post.layoutId) || ((String(post.id).charCodeAt(0) % 3) + 1);
 
   let LayoutComponent;
   switch (variant) {
     case 1:
-      LayoutComponent = Layout1ModernMinimalist;
+      LayoutComponent = Layout1;
       break;
     case 2:
-      LayoutComponent = Layout2EditorialMagazine;
+      LayoutComponent = Layout2;
       break;
     case 3:
     default:
-      LayoutComponent = Layout3ImmersiveDark;
+      LayoutComponent = Layout3;
       break;
   }
 
