@@ -1826,12 +1826,12 @@ const StayBookingSystem = ({
         }}
       >
         <Bed size={22} />
-        Reserve
+        Reserve Now
       </motion.button>
 
       <AnimatePresence>
         {show && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: window.innerWidth <= 768 ? 0 : 20, overflow: "auto" }}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", padding: window.innerWidth <= 768 ? 0 : 20, overflowY: "auto", overflowX: "hidden" }}>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1848,6 +1848,7 @@ const StayBookingSystem = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               style={{
+                margin: "auto",
                 background: BG,
                 borderRadius: 32,
                 overflow: "hidden",
@@ -2627,7 +2628,7 @@ const StayBookingSystem = ({
                     const hasSelection = isPropertyBased || resolvedSelectedRooms.length > 0;
                     const isCapacityExceeded = pricing.isOver && !loading;
                     const isDisabled = loading;
-                    const buttonText = loading ? "Processing..." : (pricing.isOver ? "Add Another Room" : (hasSelection ? "Reserve Stay" : "Select Room"));
+                    const buttonText = loading ? "Processing..." : (pricing.isOver ? "Add Another Room" : (hasSelection ? "Reserve Now" : "Select Room"));
 
                     return (
                       <motion.button
