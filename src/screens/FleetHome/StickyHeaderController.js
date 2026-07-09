@@ -75,8 +75,8 @@ const StickyHeaderController = ({
     const handleScroll = () => {
       if (!heroRef?.current) return;
       const rect = heroRef.current.getBoundingClientRect();
-      // 125px ensures the sticky header appears right as the category cards go under it
-      const shouldBeSticky = rect.bottom < 125;
+      // 72px is roughly the height of the top navbar
+      const shouldBeSticky = rect.bottom < 72;
       
       if (shouldBeSticky !== isSticky) {
         setIsSticky(shouldBeSticky);
@@ -90,7 +90,9 @@ const StickyHeaderController = ({
     // Initial check
     handleScroll();
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [heroRef, isSticky]);
 
   // ─── Close search panel and dropdowns on outside click or Escape ────────

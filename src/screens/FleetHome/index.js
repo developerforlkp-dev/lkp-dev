@@ -209,8 +209,9 @@ const FleetHome = () => {
         setTimeout(() => {
           const target = document.getElementById("listings-scroll-target");
           if (target) {
-            // Use 120px offset, which perfectly aligns with the 125px sticky threshold
-            const offset = target.getBoundingClientRect().top + window.scrollY - 120; 
+            // Use 70px offset so target goes to 70px.
+            // This satisfies the rect.bottom < 72 threshold, keeping the sticky header active.
+            const offset = target.getBoundingClientRect().top + window.scrollY - 70; 
             window.scrollTo({ top: offset, behavior: "smooth" });
           } else {
             window.scrollTo({ top: 0, behavior: "smooth" });
