@@ -678,6 +678,28 @@ const StayBookingSystem = ({
       return { ...room, ...sel, calculatedPrice: roomBasePrice, seasonalExtraAdultPrice, seasonalExtraChildPrice };
     }).filter(Boolean);
   }, [stay, selectedRooms, availabilityData, checkInDate, stayRoomsCatalog]);
+  const isEntirelyBedBased = useMemo(
+    () => resolvedSelectedRooms.length > 0 && resolvedSelectedRooms.every((room) => room.isBedConfig),
+    [resolvedSelectedRooms]
+  );
+  const totalSelectedBeds = useMemo(
+    () => resolvedSelectedRooms.reduce((sum, room) => sum + Number(room.count || 0), 0),
+    [resolvedSelectedRooms]
+  );
+
+  useEffect(() => {
+    if (!isHostelBooking(stay) || !isEntirelyBedBased || totalSelectedBeds <= 0) return;
+
+    setGuests((prev) => {
+      const nextAdults = totalSelectedBeds;
+      if (prev.adults === nextAdults && prev.children === 0) return prev;
+      return {
+        ...prev,
+        adults: nextAdults,
+        children: 0,
+      };
+    });
+  }, [stay, isEntirelyBedBased, totalSelectedBeds, setGuests]);
 
   const nightsCount = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
@@ -1542,8 +1564,36 @@ const StayBookingSystem = ({
       if (isPresent(finalGuestPrice)) receipt.push({ title: "Final Guest Price", content: formatMoney(finalGuestPrice) });
 
       const nightsFromOrder = firstNumber(orderResponse?.numberOfNights, pricing.nightsCount) || 1;
+      const activeSeasonForReceipt = checkInDate ? (stay.seasonalPeriods || []).find((period) =>
+        moment(checkInDate).isSameOrAfter(period.startDate, "day") &&
+        moment(checkInDate).isSameOrBefore(period.endDate, "day")
+      ) : null;
+      const propertySeasonIdForReceipt =
+        activeSeasonForReceipt?.tempId ||
+        activeSeasonForReceipt?.id ||
+        activeSeasonForReceipt?.seasonalPeriodId;
+      const propertySeasonData = propertySeasonIdForReceipt
+        ? ((stay.propertySeasonalPricing || {})[propertySeasonIdForReceipt] || stay[propertySeasonIdForReceipt])
+        : null;
+      const propertyBaseNightly = isPropertyBased
+        ? firstNumber(
+            propertySeasonData?.fullPropertyHikePrice,
+            propertySeasonData?.hikePrice,
+            propertySeasonData?.fullPropertyB2cPrice,
+            propertySeasonData?.fullPropertyb2cPrice,
+            propertySeasonData?.full_property_b2c_price,
+            propertySeasonData?.b2cPrice,
+            stay?.fullPropertyHikePrice,
+            stay?.fullPropertyB2cPrice,
+            stay?.fullPropertyb2cPrice,
+            stay?.full_property_b2c_price,
+            stay?.b2cPrice,
+            stay?.pricePerNight,
+            stay?.price
+          )
+        : null;
       const nightlyFromOrder = isPropertyBased
-        ? (firstNumber(orderResponse?.pricePerNight, pricing.originalPerNight) || 0)
+        ? (firstNumber(propertyBaseNightly, orderResponse?.pricePerNight, pricing.originalPerNight) || 0)
         : (firstNumber(pricing.originalPerNight, orderResponse?.pricePerNight) || 0);
       const totalFromOrder = firstNumber(orderResponse?.totalPrice, orderResponse?.finalPrice, backendTotalRupees, pricing.finalTotal) || 0;
       const nightlyExtraAdults = Number(extraAdultsCount || 0) * Number(pricing.activeExtraAdultPrice || 0);
@@ -1552,7 +1602,7 @@ const StayBookingSystem = ({
       const nightlyBaseOnly = Math.max(0, Number(nightlyFromOrder || 0) - nightlyExtras);
       const fallbackBaseStayTotal = Math.max(0, Number(nightlyBaseOnly || 0) * Number(nightsFromOrder || 1));
       const baseStayDisplayTotal = isPropertyBased
-        ? (firstNumber(basePrice, fallbackBaseStayTotal) || 0)
+        ? (firstNumber(propertyBaseNightly != null ? propertyBaseNightly * nightsFromOrder : null, basePrice, fallbackBaseStayTotal) || 0)
         : fallbackBaseStayTotal;
 
       const frontendReceipt = [
@@ -2266,16 +2316,18 @@ const StayBookingSystem = ({
                       {(() => {
                         const allowedAdults = (pricing.baseAdultsLimit || 0) + (pricing.extraAdultsLimit || 0);
                         const allowedChildren = (pricing.baseChildrenLimit || 0) + (pricing.extraChildrenLimit || 0);
-                        const isEntirelyBedBased = resolvedSelectedRooms.length > 0 && resolvedSelectedRooms.every(r => r.isBedConfig);
-                        
+                        const isHostel = isHostelBooking(stay);
                         const isPropertyBased = isPropertyBasedBooking(stay);
+                        const shouldShowBedCounter = isHostel && isEntirelyBedBased;
                         
                         let absoluteMaxAdults = allowedAdults;
                         let absoluteMaxChildren = allowedChildren;
+                        let absoluteMaxBeds = totalSelectedBeds;
                         
                         if (!isPropertyBased && selectedRooms.length > 0) {
                           absoluteMaxAdults = 0;
                           absoluteMaxChildren = 0;
+                          absoluteMaxBeds = 0;
                           selectedRooms.forEach(selRoom => {
                             const catalogRoom = stayRoomsCatalog.find(
                               r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id) === String(selRoom.roomId)
@@ -2294,12 +2346,33 @@ const StayBookingSystem = ({
 
                             absoluteMaxAdults += roomAdults * maxLimit;
                             absoluteMaxChildren += roomChildren * maxLimit;
+                            if (catalogRoom?.isBedConfig) {
+                              absoluteMaxBeds += maxLimit;
+                            }
                           });
                         }
 
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {!isEntirelyBedBased && (
+                            {shouldShowBedCounter ? (
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
+                                <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Beds</p>
+                                <Counter
+                                  value={totalSelectedBeds}
+                                  setValue={(v) => {
+                                    const primaryBed = resolvedSelectedRooms[0];
+                                    if (!primaryBed) return;
+                                    const otherBedsCount = resolvedSelectedRooms
+                                      .slice(1)
+                                      .reduce((sum, room) => sum + Number(room.count || 0), 0);
+                                    const nextPrimaryCount = Math.max(1, v - otherBedsCount);
+                                    handleRoomCountChangeWithReset(primaryBed.roomId || primaryBed.id, nextPrimaryCount);
+                                  }}
+                                  min={1}
+                                  max={Math.max(1, absoluteMaxBeds)}
+                                />
+                              </div>
+                            ) : !isEntirelyBedBased && (
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Adults</p>
