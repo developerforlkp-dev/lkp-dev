@@ -150,10 +150,11 @@ const ScopedStyles = () => (
     @media(max-width:768px){
       /* Base Mobile Viewport Enforcement */
       .event-details-premium {
-        width: 100vw !important;
+        width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
+        position: relative;
       }
       .event-details-premium *, .event-details-premium *::before, .event-details-premium *::after {
         box-sizing: border-box !important;
