@@ -12,6 +12,7 @@ import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
 import { getBusinessInterestFilters } from "../../utils/api";
 import { Compass, Ticket, Home, Utensils, MapPin } from "lucide-react";
+import Loader from "../../components/Loader";
 
 const GOOGLE_MAPS_SCRIPT_ID = "google-maps-places-script";
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -656,7 +657,16 @@ const Listings = () => {
               </div>
             </>
           )}
-          <button className={styles.searchButton} onClick={handleSearch}>Search</button>
+          <button className={styles.searchButton} onClick={handleSearch} disabled={loading}>
+            {loading ? (
+              <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                <Loader color="white" />
+                Searching...
+              </span>
+            ) : (
+              "Search"
+            )}
+          </button>
         </div>
       </div>
 
