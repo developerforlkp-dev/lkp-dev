@@ -1944,7 +1944,7 @@ function Venue({ event, hostName }) {
   const venueDistrict = event?.district || event?.venueDistrict;
   const venueState = event?.state || event?.venueState;
   const venueCountry = event?.country || event?.venueCountry;
-  const venueInstructions = event?.checkInInstructions || event?.venueInstructions;
+  const venueInstructions = event?.checkinInstructions || event?.instructions || event?.checkInInstructions || event?.venueInstructions || event?.meetingInstructions;
 
   if (isMobile) {
     return (
