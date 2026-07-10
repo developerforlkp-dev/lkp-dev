@@ -1799,7 +1799,7 @@ function Artists({ event }) {
   const ARTISTS = eventArtists.length > 0 ? eventArtists.map((a, i) => ({
     id: a.id || `artist-${i}`,
     name: a.name || a.artistName || "Guest Artist",
-    origin: a.origin || a.location || "INTL",
+    origin: a.origin || a.location || "",
     bio: a.bio || a.description || "Performing live at Solstice.",
     image: formatImageUrl(a.photoUrl || a.imageUrl || a.profileImage || a.avatar || a.photo || a.artistImage) || `https://picsum.photos/seed/artist-${a.name || i}/600/450`
   })) : [
@@ -1829,7 +1829,7 @@ function Artists({ event }) {
                 )}
               </div>
               <h3 className="mob-host-name" style={{ color: FG }}>{a.name}</h3>
-              <p className="mob-host-label" style={{ color: A }}>{a.origin || "Artist"}</p>
+              {a.origin && <p className="mob-host-label" style={{ color: A }}>{a.origin}</p>}
               <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center" }}>{a.bio}</p>
             </div>
           ))}
