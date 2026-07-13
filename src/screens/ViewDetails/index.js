@@ -11,7 +11,7 @@ import Modal from "../../components/Modal";
 import html2pdf from "html2pdf.js";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 
-// Helper to format money
+// Helper 
 const formatMoney = (amount, currency = "INR") => {
   if (amount == null) return "0.00";
   const value = Number(amount);
@@ -251,7 +251,7 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
     const isEpoch = !isNaN(Number(timeString)) && String(timeString).trim().length > 0;
     const isIsoOrFullDate = typeof timeString === 'string' && (timeString.includes("T") || timeString.match(/[a-zA-Z]{3}.*\d{4}/));
-    
+
     if (isEpoch || isIsoOrFullDate) {
       const date = new Date(isEpoch ? Number(timeString) : timeString);
       if (!Number.isNaN(date.getTime())) {
@@ -269,10 +269,10 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     }
     const parts = timePart.split(":");
     if (parts.length < 2) return timeString;
-    
+
     const hour = parseInt(parts[0], 10);
     if (isNaN(hour)) return timeString;
-    
+
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${parts[1]} ${ampm}`;
