@@ -163,6 +163,7 @@ const Listings = () => {
   const autocompleteServiceRef = useRef(null);
   const autocompleteSessionTokenRef = useRef(null);
   const debounceTimerRef = useRef(null);
+  const isUserTyping = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -600,7 +601,9 @@ const Listings = () => {
         (predictions, status) => {
           if (status === "OK" && Array.isArray(predictions) && predictions.length > 0) {
             setDestinationSuggestions(predictions);
-            setShowDestinationSuggestions(true);
+            if (isUserTyping.current) {
+              setShowDestinationSuggestions(true);
+            }
             setActiveSuggestionIndex(-1);
           } else {
             setDestinationSuggestions([]);
@@ -712,6 +715,7 @@ const Listings = () => {
                 className={styles.searchInput}
                 value={searchLocation}
                 onChange={(e) => {
+                  isUserTyping.current = true;
                   const value = e.target.value;
                   setIsCategoryDerivedSearch(false);
                   setSearchLocation(value);
