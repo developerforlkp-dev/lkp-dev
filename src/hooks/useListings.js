@@ -54,6 +54,9 @@ export const useListings = ({
 
   const fetchListings = useCallback(async (currentOffset = 0, reset = false) => {
     try {
+      if (reset) {
+        setData([]);
+      }
       setLoading(true);
       setError(null);
 
