@@ -120,6 +120,15 @@ const Listings = () => {
     return categoryValues[0] ? String(categoryValues[0]) : "";
   }, [categoryTypeParam, selectedCategoryLabel, categoryValues]);
 
+  const hasExplicitSearchText = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return Boolean(
+      params.get("location") ||
+      params.get("search") ||
+      locationState.location
+    );
+  }, [location.search, locationState.location]);
+
   const categoryFilter = useMemo(() => {
     if (!categoryTypeParam || categoryValues.length === 0) return null;
     return {
@@ -212,6 +221,9 @@ const Listings = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid");
   const [businessInterestFilters, setBusinessInterestFilters] = useState(null);
+  const [isCategoryDerivedSearch, setIsCategoryDerivedSearch] = useState(
+    Boolean(!hasExplicitSearchText && derivedCategorySearchText)
+  );
 
   // Mobile sticky search scroll state
   const [isScrolled, setIsScrolled] = useState(false);
@@ -244,19 +256,16 @@ const Listings = () => {
   }, [routeCategoryFilterState]);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const explicitSearchText =
-      params.get("location") ||
-      params.get("search") ||
-      locationState.location ||
-      "";
-
-    if (explicitSearchText || !derivedCategorySearchText) return;
+    if (hasExplicitSearchText || !derivedCategorySearchText) {
+      setIsCategoryDerivedSearch(false);
+      return;
+    }
 
     setSearchLocation(derivedCategorySearchText);
-    setActiveSearch(derivedCategorySearchText);
+    setActiveSearch("");
     setSelectedDestination(null);
-  }, [derivedCategorySearchText, location.search, locationState.location]);
+    setIsCategoryDerivedSearch(true);
+  }, [derivedCategorySearchText, hasExplicitSearchText]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -332,7 +341,7 @@ const Listings = () => {
 
   // Use listings hook - only re-renders when activeSearch or other filters change
   const { data: listings, loading, error, hasMore, fetchMore } = useListings({
-    location: activeSearch,
+    location: isCategoryDerivedSearch ? "" : activeSearch,
     dateRange,
     guests,
     filters,
@@ -362,7 +371,7 @@ const Listings = () => {
   } = {}) => {
     const params = new URLSearchParams();
 
-    if (searchLocation) params.set("search", searchLocation);
+    if (searchLocation && !isCategoryDerivedSearch) params.set("search", searchLocation);
     if (selectedDestination?.placeId) params.set("placeId", selectedDestination.placeId);
     if (selectedDate) params.set("date", moment(selectedDate).format("YYYY-MM-DD"));
 
@@ -473,6 +482,7 @@ const Listings = () => {
     if (!suggestion) return;
     const description = suggestion.description || "";
     const placeId = suggestion.place_id || suggestion.placeId || "";
+    setIsCategoryDerivedSearch(false);
     setSearchLocation(description);
     setSelectedDestination({ description, placeId });
     setDestinationSuggestions([]);
@@ -484,6 +494,7 @@ const Listings = () => {
   const handleCategorySwitch = (newBusinessInterest) => {
     resetFiltersState(null);
     setSortBy("newest");
+    setIsCategoryDerivedSearch(false);
 
     const newState = {
       location: searchLocation,
@@ -501,6 +512,7 @@ const Listings = () => {
 
   // Handle search button click or Enter key
   const handleSearch = () => {
+    setIsCategoryDerivedSearch(false);
     setActiveSearch(searchLocation);
 
     const newState = {
@@ -701,6 +713,7 @@ const Listings = () => {
                 value={searchLocation}
                 onChange={(e) => {
                   const value = e.target.value;
+                  setIsCategoryDerivedSearch(false);
                   setSearchLocation(value);
                   if (!selectedDestination || value !== selectedDestination.description) {
                     setSelectedDestination(null);
