@@ -11,6 +11,29 @@ import Modal from "../../components/Modal";
 import html2pdf from "html2pdf.js";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 
+// Helper to format money
+const formatMoney = (amount, currency = "INR") => {
+  if (amount == null) return "0.00";
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return "0.00";
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+// Helper to format refund status
+const formatRefundStatus = (status) => {
+  if (!status) return "N/A";
+  const s = String(status).toUpperCase();
+  if (s === "COMPLETED" || s === "SUCCESS") return "Refunded";
+  if (s === "PENDING" || s === "INITIATED") return "Processing";
+  if (s === "FAILED") return "Failed";
+  return status;
+};
+
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
   if (!url) return "";
