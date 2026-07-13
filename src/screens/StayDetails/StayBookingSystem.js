@@ -2372,7 +2372,7 @@ const StayBookingSystem = ({
                                   max={Math.max(1, absoluteMaxBeds)}
                                 />
                               </div>
-                            ) : !isEntirelyBedBased && (
+                            ) : (!isEntirelyBedBased && !isHostelBooking(stay)) && (
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Adults</p>
@@ -2645,7 +2645,7 @@ const StayBookingSystem = ({
                           </div>
 
                           {/* Occupancy & Extra Pricing Breakdown */}
-                          {(!isEntirelyBedBased && (pricing.extraAdultsCount > 0 || pricing.extraChildrenCount > 0)) && (
+                          {(!isEntirelyBedBased && !isHostelBooking(stay) && (pricing.extraAdultsCount > 0 || pricing.extraChildrenCount > 0)) && (
                             <>
                               <div style={{ height: 1, background: `${A}22`, margin: "12px 0 8px" }} />
                               
