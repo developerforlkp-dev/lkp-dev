@@ -878,14 +878,7 @@ const Listings = () => {
             </>
           )}
           <button className={styles.searchButton} onClick={handleSearch} disabled={loading}>
-            {loading ? (
-              <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
-                <Loader color="white" />
-                Searching...
-              </span>
-            ) : (
-              "Search"
-            )}
+            Search
           </button>
         </div>
       </div>
