@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import ReactDOM from "react-dom";
 import { useLocation, useHistory } from "react-router-dom";
 import cn from "classnames";
 import moment from "moment";
@@ -229,6 +230,25 @@ const Listings = () => {
   // Mobile sticky search scroll state
   const [isScrolled, setIsScrolled] = useState(false);
   const searchBarRef = useRef(null);
+
+  const [portalTarget, setPortalTarget] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth > 1023 : true
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => setIsDesktop(window.innerWidth > 1023);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const target = document.getElementById("header-center-portal");
+    if (target) {
+      setPortalTarget(target);
+    }
+  }, []);
 
   useEffect(() => {
     setFilters((prev) => {
@@ -683,25 +703,46 @@ const Listings = () => {
       </div>
 
       <div className={cn("container", styles.container)}>
-        {/* Category Navigation Header */}
-        <div className={styles.categoryNav}>
-          {categoryOptions.map((opt) => {
-            const isActive = String(businessInterest || "").toUpperCase().includes(opt.id);
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                className={cn(styles.categoryNavItem, {
-                  [styles.categoryNavItemActive]: isActive,
-                })}
-                onClick={() => handleCategorySwitch(opt.id)}
-              >
-                <opt.IconComponent size={18} strokeWidth={2} />
-                <span>{opt.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Category Navigation Header inside Portal */}
+        {(portalTarget && isDesktop) ? ReactDOM.createPortal(
+          <div className={styles.categoryNav}>
+            {categoryOptions.map((opt) => {
+              const isActive = String(businessInterest || "").toUpperCase().includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={cn(styles.categoryPill, {
+                    [styles.categoryPillActive]: isActive,
+                  })}
+                  onClick={() => handleCategorySwitch(opt.id)}
+                >
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>,
+          portalTarget
+        ) : (
+          <div className={styles.categoryNav}>
+            {categoryOptions.map((opt) => {
+              const isActive = String(businessInterest || "").toUpperCase().includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={cn(styles.categoryNavItem, {
+                    [styles.categoryNavItemActive]: isActive,
+                  })}
+                  onClick={() => handleCategorySwitch(opt.id)}
+                >
+                  <opt.IconComponent size={18} strokeWidth={2} />
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Search Bar Section */}
         <div className={styles.searchBar} ref={searchBarRef}>
@@ -837,14 +878,7 @@ const Listings = () => {
             </>
           )}
           <button className={styles.searchButton} onClick={handleSearch} disabled={loading}>
-            {loading ? (
-              <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
-                <Loader color="white" />
-                Searching...
-              </span>
-            ) : (
-              "Search"
-            )}
+            Search
           </button>
         </div>
       </div>
