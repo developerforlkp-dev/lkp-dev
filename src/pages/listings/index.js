@@ -712,12 +712,11 @@ const Listings = () => {
                 <button
                   key={opt.id}
                   type="button"
-                  className={cn(styles.categoryNavItem, {
-                    [styles.categoryNavItemActive]: isActive,
+                  className={cn(styles.categoryPill, {
+                    [styles.categoryPillActive]: isActive,
                   })}
                   onClick={() => handleCategorySwitch(opt.id)}
                 >
-                  <opt.IconComponent size={18} strokeWidth={2} />
                   <span>{opt.label}</span>
                 </button>
               );
