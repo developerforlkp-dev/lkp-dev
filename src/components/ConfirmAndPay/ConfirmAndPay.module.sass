@@ -146,11 +146,14 @@
         background: $n3
 
 .tripGrid
-    display: grid
-    grid-template-columns: 1fr 1fr
+    display: flex
     gap: 16px
     margin-bottom: 32px
+    > *
+        flex: 1
+        min-width: 0
     +m
+        display: grid
         grid-template-columns: 1fr 1fr
         gap: 12px
 
