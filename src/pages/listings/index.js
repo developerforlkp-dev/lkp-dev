@@ -386,6 +386,9 @@ const Listings = () => {
       ...prev,
       [filterType]: value,
     }));
+
+    // Scroll to top of the page when a filter is applied
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const buildBaseSearchParams = ({
