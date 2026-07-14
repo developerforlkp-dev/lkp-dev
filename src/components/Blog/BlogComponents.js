@@ -27,7 +27,7 @@ export function Hero({ posts = [] }) {
   }, [heroImages.length]);
 
   return (
-    <section className="hero-mobile-container relative w-full max-w-7xl mx-auto px-6 pt-16 lg:pt-24 pb-12 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 overflow-hidden lg:overflow-visible">
+    <section className="hero-mobile-container relative w-full max-w-6xl mx-auto px-6 pt-16 lg:pt-20 pb-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-16 overflow-hidden lg:overflow-visible">
       <style>{`
         .hero-mobile-container {
           height: 320px;
@@ -129,18 +129,18 @@ export function Hero({ posts = [] }) {
           </p>
         </div>
         
-        <h1 className="hero-text-mobile-white title text-[42px] md:text-6xl lg:text-[80px] font-extrabold leading-[1.1] mb-5">
+        <h1 className="hero-text-mobile-white title text-[42px] md:text-5xl lg:text-[64px] font-extrabold leading-[1.1] mb-5">
           Stories that <br />
           inspire <span className="italic font-light text-cyan-400 lg:text-[#00a4c4]">journeys</span>
         </h1>
         
-        <p className="hero-text-mobile-white desc text-base md:text-xl max-w-md mx-auto lg:mx-0 mb-6" style={{ lineHeight: '1.6' }}>
+        <p className="hero-text-mobile-white desc text-base md:text-lg max-w-md mx-auto lg:mx-0 mb-6" style={{ lineHeight: '1.6' }}>
           Travel guides, hidden gems and real stories from around the world.
         </p>
       </motion.div>
 
       {/* Right Content - Images */}
-      <div className="hero-desktop-images flex-1 relative h-[380px] sm:h-[500px] lg:h-[600px] w-full items-center justify-center mt-8 lg:mt-0">
+      <div className="hero-desktop-images flex-1 relative h-[380px] sm:h-[450px] lg:h-[500px] w-full items-center justify-center mt-8 lg:mt-0">
 
         
         {/* Main Image */}
