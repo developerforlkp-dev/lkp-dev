@@ -3322,9 +3322,11 @@ const StayDetails = () => {
       </div>
 
       {(() => {
-        const rawTags = Array.isArray(stay?.tags) && stay.tags.length > 0
-          ? stay.tags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
-          : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection", "Luxury Accommodations", "Stunning Views", "Premium Amenities"];
+        const rawTags = Array.isArray(stay?.whatsSpecial) && stay.whatsSpecial.length > 0
+          ? stay.whatsSpecial.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
+          : typeof stay?.whatsSpecial === "string" && stay.whatsSpecial.trim() !== ""
+            ? stay.whatsSpecial.split(",").map((s) => s.trim()).filter(Boolean)
+            : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection", "Luxury Accommodations", "Stunning Views", "Premium Amenities"];
         
         // Duplicate to ensure infinite seamless scrolling loop
         const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
