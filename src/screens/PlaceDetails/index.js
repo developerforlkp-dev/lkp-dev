@@ -655,8 +655,8 @@ function PlaceHero({ place, galleryItems, id }) {
                 style={{
                   height: 44,
                   borderRadius: 22,
-                  background: "#FFFFFF",
-                  border: `1.5px solid ${shareHovered ? glow : `${glow}4D`}`,
+                  background: theme === "dark" ? "#141414" : "#FFFFFF",
+                  border: `1.5px solid ${shareHovered ? glow : (theme === "dark" ? `${glow}66` : `${glow}4D`)}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-start",
