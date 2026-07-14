@@ -27,7 +27,7 @@ export function Hero({ posts = [] }) {
   }, [heroImages.length]);
 
   return (
-    <section className="hero-mobile-container relative w-full max-w-7xl mx-auto px-0 lg:px-6 pt-0 lg:pt-24 pb-0 lg:pb-12 flex flex-col justify-end lg:flex-row lg:items-center lg:justify-start lg:gap-20 lg:overflow-visible">
+    <section className="hero-mobile-container relative w-full max-w-7xl mx-auto px-6 pt-16 lg:pt-24 pb-12 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 overflow-hidden lg:overflow-visible">
       <style>{`
         .hero-mobile-container {
           height: 320px;
@@ -44,31 +44,34 @@ export function Hero({ posts = [] }) {
           color: #f3f4f6 !important;
           text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
-        .hero-text-container {
-          padding-left: 24px;
-          padding-right: 24px;
-          padding-top: 32px;
-          padding-bottom: 32px;
-          margin-top: auto;
-          text-align: left;
+        .hero-text-mobile-white.label {
+          color: white !important;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.8);
         }
+        /* Mobile Specific Overrides */
+        @media (max-width: 1023px) {
+          .hero-mobile-container {
+            padding: 0 !important;
+            justify-content: flex-end !important;
+            align-items: flex-start !important;
+          }
+          .hero-text-container {
+            flex: none !important;
+            padding: 0 24px 32px 24px !important;
+            margin: 0 !important;
+          }
+        }
+
         .hero-desktop-images {
           display: none;
         }
+
         @media (min-width: 1024px) {
           .hero-mobile-container {
             height: auto;
-            padding-top: 6rem;
           }
           .hero-mobile-bg {
             display: none;
-          }
-          .hero-text-container {
-            padding-left: 0;
-            padding-right: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-            margin-top: 0;
           }
           .hero-text-mobile-white.title {
             color: var(--blog-title-color) !important;
@@ -76,6 +79,10 @@ export function Hero({ posts = [] }) {
           }
           .hero-text-mobile-white.desc {
             color: var(--blog-desc-color) !important;
+            text-shadow: none;
+          }
+          .hero-text-mobile-white.label {
+            color: var(--blog-title-color) !important;
             text-shadow: none;
           }
           .hero-desktop-images {
@@ -114,10 +121,10 @@ export function Hero({ posts = [] }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-        className="hero-text-container lg:flex-1 z-10 w-full"
+        className="hero-text-container flex-1 z-10 w-full"
       >
         <div style={{ marginBottom: '16px' }}>
-          <p className="font-bold tracking-widest text-xs uppercase text-white lg:text-[#00a4c4]" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+          <p className="hero-text-mobile-white label font-bold tracking-widest text-xs uppercase lg:text-[#00a4c4]">
             Our Blog
           </p>
         </div>
