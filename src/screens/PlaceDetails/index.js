@@ -4,7 +4,7 @@ import { useLocation, Link, useHistory } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Calendar, ArrowDown, ExternalLink, Map, Navigation,
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart, X
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
@@ -655,8 +655,8 @@ function PlaceHero({ place, galleryItems, id }) {
                 style={{
                   height: 44,
                   borderRadius: 22,
-                  background: "#FFFFFF",
-                  border: `1.5px solid ${shareHovered ? glow : `${glow}4D`}`,
+                  background: theme === "dark" ? "#141414" : "#FFFFFF",
+                  border: `1.5px solid ${shareHovered ? glow : (theme === "dark" ? `${glow}66` : `${glow}4D`)}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-start",
@@ -939,7 +939,7 @@ function PlaceHero({ place, galleryItems, id }) {
                   outline: "none"
                 }}
               >
-                <XCircle size={22} />
+                <X size={22} />
               </button>
             </div>
 
@@ -2533,7 +2533,7 @@ function MobileGallery({ galleryItems }) {
                   cursor: "pointer"
                 }}
               >
-                <XCircle size={22} />
+                <X size={22} />
               </button>
             </div>
 
