@@ -773,6 +773,30 @@ export const requestHostingOtp = async (hostingData) => {
   }
 };
 
+// Verify Hosting OTP
+export const verifyHostingOtp = async (sessionId, otp) => {
+  try {
+    const response = await ListingsAPI.post("/public/hosting/verify-otp", { sessionId, otp });
+    console.log("✅ Hosting OTP verified successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error verifying Hosting OTP:", error);
+    throw error;
+  }
+};
+
+// Resend Hosting OTP
+export const resendHostingOtp = async (sessionId) => {
+  try {
+    const response = await ListingsAPI.post("/public/hosting/resend-otp", { sessionId });
+    console.log("✅ Hosting OTP resent successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error resending Hosting OTP:", error);
+    throw error;
+  }
+};
+
 // Google OAuth login
 export const loginWithGoogle = async (idToken, dateOfBirth = "") => {
   try {
