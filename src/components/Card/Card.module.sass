@@ -295,6 +295,7 @@
         fill: $n4
 
 .foot
+    margin-top: auto
     padding-top: 16px
     border-top: 1px solid $n6
     +dark
@@ -321,7 +322,7 @@
 .flex
     display: flex
     justify-content: space-between
-    align-items: flex-end
+    align-items: center
     width: 100%
     gap: 8px
     margin-top: 8px
@@ -356,6 +357,28 @@
         fill: #FFB800
         width: 14px
         height: 14px
+
+.newBadge
+    display: flex
+    align-items: center
+    gap: 4px
+    padding: 4px 10px
+    border: 1px solid rgba(255, 184, 0, 0.4)
+    border-radius: 20px
+    background: transparent
+    flex-shrink: 0
+    svg
+        fill: #FFB800
+        width: 14px
+        height: 14px
+    span
+        font-size: 13px
+        font-weight: 600
+        color: $n2
+        +dark
+            color: $n8
+        text-transform: capitalize
+        letter-spacing: 0.01em
 
 .number
     margin-left: 4px
