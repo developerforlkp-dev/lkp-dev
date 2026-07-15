@@ -1406,10 +1406,10 @@ function PremiumMarquee({ items }) {
   
   const rawTags = items && items.length > 0 ? items : ["Experience", "Premium", "Event", "Curated", "Editorial"];
   // Duplicate to ensure infinite seamless scrolling loop
-  const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
+  const loopedTags = Array(24).fill(rawTags).flat();
 
   const estimatedTagWidth = (tag) => String(tag).length * 9.5 + 75; // text width + margin + icon + padding
-  const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50%
+  const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 12; // offset 50% is 12 copies
   const tagsDuration = tagsDistance / 60; // constant speed of 60px/s
 
   return (
@@ -1950,7 +1950,6 @@ function Venue({ event, hostName }) {
   if (isMobile) {
     return (
       <>
-        <PremiumMarquee items={tags} />
         <div className="mob-section" id="venue" style={{ background: isDark ? BG : W }}>
           <span className="mob-section-eyebrow" style={{ color: A }}>Location & Details</span>
           <h2 className="mob-section-title" style={{ color: FG }}>Where it All Happens</h2>
@@ -2038,13 +2037,20 @@ function Venue({ event, hostName }) {
             )}
           </div>
         </div>
+        {(() => {
+          let whatsSpecialArray = Array.isArray(event?.whatsSpecial) && event?.whatsSpecial.length > 0
+            ? event.whatsSpecial
+            : typeof event?.whatsSpecial === "string" && event?.whatsSpecial.trim() !== ""
+              ? event.whatsSpecial.split(",").map(s => s.trim()).filter(Boolean)
+              : ["Experience", "Premium", "Event"];
+          return <PremiumMarquee items={whatsSpecialArray} />;
+        })()}
       </>
     );
   }
 
   return (
     <>
-      <PremiumMarquee items={tags} />
       <section id="venue" style={{ background: BG, padding: "32px 80px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           {/* Header Area */}
@@ -2195,6 +2201,14 @@ function Venue({ event, hostName }) {
           </div>
         </div>
       </section>
+      {(() => {
+        let whatsSpecialArray = Array.isArray(event?.whatsSpecial) && event?.whatsSpecial.length > 0
+          ? event.whatsSpecial
+          : typeof event?.whatsSpecial === "string" && event?.whatsSpecial.trim() !== ""
+            ? event.whatsSpecial.split(",").map(s => s.trim()).filter(Boolean)
+            : ["Experience", "Premium", "Event"];
+        return <PremiumMarquee items={whatsSpecialArray} />;
+      })()}
     </>
   );
 }

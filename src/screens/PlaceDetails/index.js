@@ -4,7 +4,7 @@ import { useLocation, Link, useHistory } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Calendar, ArrowDown, ExternalLink, Map, Navigation,
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart, X
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
@@ -411,7 +411,7 @@ function SHdr({ idx, label }) {
 
 /* ─── PLACE SECTIONS ─────────── */
 function PlaceHero({ place, galleryItems, id }) {
-  const { tokens: { A, FG, M, W, B, S } } = useTheme();
+  const { theme, tokens: { A, FG, M, W, B, S } } = useTheme();
   const r = useRef(null);
   const sliderRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: r, offset: ["start start", "end start"] });
@@ -608,6 +608,44 @@ function PlaceHero({ place, galleryItems, id }) {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 32 }}>
 
+              <Favorite itemType="place" itemId={id}>
+                {({ saved, pending, onClick }) => {
+                  const isDark = theme === "dark";
+                  const textColor = isDark ? FG : (A || "#0097B2");
+                  return (
+                    <motion.button
+                      onClick={(e) => { e.stopPropagation(); onClick(e); }}
+                      whileTap={{ scale: 0.86 }}
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "50%",
+                        background: isDark ? "#141414" : "#FFFFFF",
+                        border: `1.5px solid ${isDark ? `${A}66` : `${A}4D`}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 6px 18px rgba(15,15,15,0.12)",
+                        cursor: "pointer",
+                        pointerEvents: "auto",
+                        position: "relative",
+                        zIndex: 200,
+                        outline: "none"
+                      }}
+                    >
+                      <style>{`
+                        .desktop-save-icon-${id} svg {
+                          fill: ${saved ? (A || "#0097B2") : textColor};
+                          transition: fill 0.3s ease;
+                        }
+                      `}</style>
+                      <div className={`desktop-save-icon-${id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon name={saved ? "heart-fill" : "heart"} size={20} />
+                      </div>
+                    </motion.button>
+                  );
+                }}
+              </Favorite>
 
               <motion.button
                 onClick={handleShare}
@@ -617,8 +655,8 @@ function PlaceHero({ place, galleryItems, id }) {
                 style={{
                   height: 44,
                   borderRadius: 22,
-                  background: "#FFFFFF",
-                  border: `1.5px solid ${shareHovered ? glow : `${glow}4D`}`,
+                  background: theme === "dark" ? "#141414" : "#FFFFFF",
+                  border: `1.5px solid ${shareHovered ? glow : (theme === "dark" ? `${glow}66` : `${glow}4D`)}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-start",
@@ -901,7 +939,7 @@ function PlaceHero({ place, galleryItems, id }) {
                   outline: "none"
                 }}
               >
-                <XCircle size={22} />
+                <X size={22} />
               </button>
             </div>
 
@@ -2184,6 +2222,21 @@ function MobileHero({ place, galleryItems, id }) {
           <ChevronLeft size={22} color={theme === "dark" ? "#FFFFFF" : "#111111"} />
         </button>
         <div style={{ display: "flex", gap: 12, pointerEvents: "auto" }}>
+          <Favorite itemType="place" itemId={id}>
+            {({ saved, onClick }) => (
+              <button onClick={(e) => { e.stopPropagation(); onClick(e); }} style={{ width: 44, height: 44, borderRadius: "50%", background: theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)", border: `1px solid ${A}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", outline: "none", cursor: "pointer" }}>
+                <style>{`
+                  .mobile-save-icon-alt-${id} svg {
+                    fill: ${saved ? (A || "#0097B2") : (theme === "dark" ? "#FFFFFF" : "#111111")};
+                    transition: fill 0.3s ease;
+                  }
+                `}</style>
+                <div className={`mobile-save-icon-alt-${id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name={saved ? "heart-fill" : "heart"} size={20} />
+                </div>
+              </button>
+            )}
+          </Favorite>
           <button onClick={async (e) => { 
             e.stopPropagation(); 
             try {
@@ -2480,7 +2533,7 @@ function MobileGallery({ galleryItems }) {
                   cursor: "pointer"
                 }}
               >
-                <XCircle size={22} />
+                <X size={22} />
               </button>
             </div>
 
@@ -2998,6 +3051,64 @@ function MobileCTA({ place }) {
   );
 }
 
+function PremiumMarquee({ items, isMobile, fallbackItems }) {
+  const { theme, tokens } = useTheme();
+  const { A, B, BG, FG, M } = tokens;
+  
+  const rawTags = Array.isArray(items) && items.length > 0
+    ? items.map((t) => (typeof t === "string" ? t : t?.name || t?.title || t?.tag || t?.label || t?.value || "")).filter(Boolean)
+    : (typeof items === "string" ? items.split(",").map(s=>s.trim()).filter(Boolean) : fallbackItems);
+    
+  const marqueeItems = rawTags.length > 0 ? rawTags : fallbackItems;
+  const loopedTags = Array(12).fill(marqueeItems).flat();
+  const estimatedTagWidth = (tag) => tag.length * 9.5 + 75;
+  const tagsDistance = marqueeItems.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 6;
+  const tagsDuration = Math.max(tagsDistance / 60, 10);
+
+  return (
+    <div style={{
+      margin: "0",
+      overflow: "hidden",
+      position: "relative",
+      padding: "20px 0",
+      background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
+      borderTop: `1px solid ${B}`,
+      borderBottom: `1px solid ${B}`,
+    }}>
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to right, ${BG} 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to left, ${BG} 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
+
+      <motion.div
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
+        style={{ display: "flex", alignItems: "center", width: "max-content" }}
+      >
+        {loopedTags.map((tag, idx) => {
+          const isEven = idx % 2 === 0;
+          return (
+            <div key={idx} style={{ display: "flex", alignItems: "center", gap: 40, marginRight: 40 }}>
+              <span
+                style={{
+                  fontFamily: "Poppins, sans-serif",
+                  fontSize: isMobile ? "12px" : "14px",
+                  fontWeight: isEven ? 700 : 400,
+                  color: isEven ? FG : M,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  opacity: isEven ? 1 : 0.75
+                }}
+              >
+                {tag}
+              </span>
+              <Star size={14} color={A || "#0097B2"} fill={A || "#0097B2"} style={{ opacity: 0.6 }} />
+            </div>
+          );
+        })}
+      </motion.div>
+    </div>
+  );
+}
+
 function MobilePlaceDetails({
   place,
   galleryItems,
@@ -3016,6 +3127,7 @@ function MobilePlaceDetails({
 
       {/* Place Description */}
       <PlaceDescription place={place} />
+      <PremiumMarquee items={place?.tags} isMobile={true} fallbackItems={["Authentic Experience", "Local Heritage", "Curated Journey", "Memorable Moments"]} />
 
       {/* 4. Gallery with Lightbox */}
       <MobileGallery galleryItems={galleryItems} />
@@ -3030,6 +3142,7 @@ function MobilePlaceDetails({
       <MobileGoodToKnow place={place} />
 
       {/* Location Map Section */}
+      <PremiumMarquee items={place?.whatsSpecial} isMobile={true} fallbackItems={["Signature Offerings", "Exclusive Moments", "Bespoke Journey"]} />
       <LocationSection place={place} />
 
       {/* Community Feedback */}
@@ -3255,6 +3368,7 @@ const PlaceDetails = () => {
       <PlaceHero place={place} galleryItems={galleryItems} id={currentListingId} />
 
       <PlaceDescription place={place} />
+      <PremiumMarquee items={place?.tags} isMobile={false} fallbackItems={["Authentic Experience", "Local Heritage", "Curated Journey", "Memorable Moments"]} />
 
       <Itinerary place={place} />
 
@@ -3262,6 +3376,7 @@ const PlaceDetails = () => {
 
       <GoodToKnow place={place} />
 
+      <PremiumMarquee items={place?.whatsSpecial} isMobile={false} fallbackItems={["Signature Offerings", "Exclusive Moments", "Bespoke Journey"]} />
       <LocationSection place={place} />
 
       <CommunityFeedback />
