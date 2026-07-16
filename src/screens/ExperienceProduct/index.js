@@ -3625,7 +3625,7 @@ function ExperiencePolicies({ listing }) {
     if (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) {
       cancelItems.push({
         id: 'cancel',
-        title: "Cancellation Terms",
+        title: null,
         body: listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy
       });
     }

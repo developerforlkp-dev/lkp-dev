@@ -782,7 +782,24 @@ export default function MobileExperienceView({
                         {item.title && item.title !== item.desc && (
                           <p style={{ fontWeight: 700, fontSize: 14, color: FG, marginBottom: 4 }}>{item.title}</p>
                         )}
-                        {item.desc && <p style={{ fontSize: 13, color: M, marginBottom: 8 }}>{item.desc}</p>}
+                        {item.desc && (
+                          <div style={{ fontSize: 13, color: M, marginBottom: 8 }}>
+                            {catTitle.toLowerCase().includes('cancellation') && item.desc.split('. ').filter(s => s.trim().length > 0).length > 1 ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                                {item.desc.split('. ').filter(s => s.trim().length > 0).map((sentence, idx) => (
+                                  <div key={idx} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                                    <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
+                                    <div style={{ flex: 1 }}>
+                                      {sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p style={{ margin: 0 }}>{item.desc}</p>
+                            )}
+                          </div>
+                        )}
                         {item.questions?.map((q, qi) => {
                           const questionTitle = q.title || q.question?.title;
                           const answerText = q.answer?.valueText || q.valueText;
