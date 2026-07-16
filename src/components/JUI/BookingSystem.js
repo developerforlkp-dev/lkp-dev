@@ -1342,7 +1342,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         const isLoggedIn = !!token && token !== "undefined" && token !== "null";
 
         if (stored?.listingId === currentListingId && isLoggedIn) {
-          console.log("🔄 Restoring persistent booking state after auth redirect:", stored);
+          //console.log("🔄 Restoring persistent booking state after auth redirect:", stored);
 
           pendingRestoreRef.current = stored;
 
@@ -1717,8 +1717,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       .then((payload) => {
         if (cancelled || !isMountedRef.current) return;
         const normalized = normalizeEventAvailability(payload);
-        console.log("Event slot availability raw payload:", payload);
-        console.log("Event slot availability normalized records:", normalized);
+        //console.log("Event slot availability raw payload:", payload);
+        //console.log("Event slot availability normalized records:", normalized);
         setEventAvailabilityRecords(normalized);
 
         if (pendingRestoreRef.current) {
@@ -1777,14 +1777,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       .then((payload) => {
         if (cancelled || !isMountedRef.current) return;
         const normalized = normalizeExperienceSlots(unwrapSlotsPayload(payload), selectedDateKey);
-        console.log("[BookingSystem] getListingSlots debug", {
+        /*console.log("[BookingSystem] getListingSlots debug", {
           selectedDateKey,
           listingId,
           rawPayload: payload,
           unwrappedSlots: unwrapSlotsPayload(payload),
           normalizedSlots: normalized,
           baseTimeSlots,
-        });
+        });*/
         setDateFilteredSlots(normalized);
         setDateFilteredSlotsLoaded(true);
 
@@ -2052,8 +2052,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const isEventTieredChildPricing = isEventBooking && guests.children > 0 && eventChildPriceTotal > 0;
   const actualHasChildPricing = hasChildPricing || isEventTieredChildPricing;
 
-  const baseChildPricePerChild = actualHasChildPricing 
-    ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : parseFloat(rawChildPrice || 0)) 
+  const baseChildPricePerChild = actualHasChildPricing
+    ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : parseFloat(rawChildPrice || 0))
     : baseAdultPricePerPerson;
 
   const data = {
@@ -2084,7 +2084,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   useEffect(() => {
     if (!show || isEventBooking) return;
-    console.log("[BookingSystem] pricing selection debug", {
+    /*console.log("[BookingSystem] pricing selection debug", {
       selectedDateKey,
       startTime,
       guests,
@@ -2111,7 +2111,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       totalEarlyBirdDiscountAmount,
       totalTaxAmount,
       finalTotal,
-    });
+    });*/
   }, [
     show,
     isEventBooking,
@@ -2204,14 +2204,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     setGuests((current) => {
       const nextGuests = typeof updater === "function" ? updater(current) : updater;
       const clamped = clampGuestsToSeatLimit(nextGuests);
-      
+
       let nextChildAges = [...(current.childAges || [])];
       if (clamped.children > nextChildAges.length) {
         nextChildAges = [...nextChildAges, ...Array(clamped.children - nextChildAges.length).fill(0)];
       } else if (clamped.children < nextChildAges.length) {
         nextChildAges = nextChildAges.slice(0, clamped.children);
       }
-      
+
       return { ...clamped, childAges: nextChildAges };
     });
   }, [clampGuestsToSeatLimit]);
@@ -2610,7 +2610,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         const isFreeBooking = finalTotal === 0;
 
         if (!razorpayOrderId && !isFreeBooking) {
-          console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
+          //console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
         }
 
         if (razorpayKeyId) {
@@ -2978,9 +2978,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       return;
 
       if (isMountedRef.current) setBookingLoading(true);
-      console.log("Creating experience order from BookingSystem:", orderData);
+      //console.log("Creating experience order from BookingSystem:", orderData);
       const res = await createOrder(orderData);
-      console.log("Experience order created from BookingSystem:", res);
+      //console.log("Experience order created from BookingSystem:", res);
 
       const order = res?.order || res?.data?.order || res;
       const payment = res?.payment || res?.data?.payment || order?.payment || null;
@@ -3015,7 +3015,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const isFreeBooking = finalTotal === 0;
 
       if (!razorpayOrderId && !isFreeBooking) {
-        console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
+        //console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
       }
 
       const paymentData = {
@@ -4165,7 +4165,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   />
                                 </div>
                               )}
-                              
+
                               {childrenAllowed && isEventBooking && guests.children > 0 && (
                                 <div style={{ flex: "1 1 100%", padding: "12px 16px", background: "transparent", border: `1px solid ${B}55`, borderRadius: 12, display: "flex", flexDirection: "column", gap: 12 }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -4177,7 +4177,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                       <span style={{ fontSize: 11, fontWeight: 400, color: M }}>Please select the age for each child.</span>
                                     </div>
                                   </div>
-                                  
+
                                   <div style={{ display: "flex", flexDirection: "column" }}>
                                     {Array.from({ length: guests.children }).map((_, i) => (
                                       <div key={i} style={{ display: "flex", flexDirection: "column" }}>

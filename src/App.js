@@ -73,7 +73,7 @@ function App() {
 
   // Log for debugging
   if (process.env.REACT_APP_GOOGLE_CLIENT_ID) {
-    console.log("✅ Google Client ID loaded from environment variable");
+    //console.log("✅ Google Client ID loaded from environment variable");
   } else {
     console.warn("⚠️ REACT_APP_GOOGLE_CLIENT_ID not found, using fallback value");
     console.warn("⚠️ For production, set REACT_APP_GOOGLE_CLIENT_ID in your deployment platform");
