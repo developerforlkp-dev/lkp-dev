@@ -54,7 +54,7 @@ const HostingApplicationForm = ({ visible, onClose }) => {
     lastName: "",
     accountType: "Individual",
     companyName: "",
-    phoneNumber: "",
+    phoneNumber: "+91",
     altPhoneNumber: "",
     email: "",
     altEmail: "",
@@ -186,7 +186,7 @@ const HostingApplicationForm = ({ visible, onClose }) => {
         lastName: "",
         accountType: "Individual",
         companyName: "",
-        phoneNumber: "",
+        phoneNumber: "+91",
         altPhoneNumber: "",
         email: "",
         altEmail: "",
@@ -211,6 +211,25 @@ const HostingApplicationForm = ({ visible, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "firstName" || name === "lastName") {
+      if (value !== "" && !/^[a-zA-Z\s]*$/.test(value)) return;
+    }
+
+    if (name === "phoneNumber") {
+      if (value !== "" && !/^\+?[0-9]*$/.test(value)) return;
+      
+      let val = value;
+      if (!val.startsWith("+91")) {
+        val = "+91";
+      }
+      
+      if (val.length > 13) return;
+      
+      setFormData(prev => ({ ...prev, [name]: val }));
+      return;
+    }
+
     if (name === "state") {
       setFormData(prev => ({ ...prev, [name]: value, district: "" }));
     } else {
@@ -258,8 +277,15 @@ const HostingApplicationForm = ({ visible, onClose }) => {
 
     // Basic required validation
     if (!formData.firstName.trim()) return setError("First Name is required");
+    
     if (!formData.email.trim()) return setError("Email is required");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) return setError("Please enter a valid email address");
+
     if (!formData.phoneNumber.trim()) return setError("Phone Number is required");
+    const phoneRegex = /^\+91[0-9]{10}$/;
+    if (!phoneRegex.test(formData.phoneNumber.trim())) return setError("Phone number must be +91 followed by 10 digits");
+
     if (!formData.address.trim()) return setError("Address is required");
     if (formData.interestIds.length === 0) return setError("Please select at least one Business Interest");
 
@@ -379,22 +405,22 @@ const HostingApplicationForm = ({ visible, onClose }) => {
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>First Name *</label>
-                <input type="text" className={styles.input} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="John" disabled={loading} required />
+                <input type="text" className={styles.input} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Your Name" disabled={loading} required />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>Last Name</label>
-                <input type="text" className={styles.input} name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" disabled={loading} />
+                <input type="text" className={styles.input} name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Your Last Name" disabled={loading} />
               </div>
             </div>
 
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>Email *</label>
-                <input type="email" className={styles.input} name="email" value={formData.email} onChange={handleChange} placeholder="john@example.com" disabled={loading} required />
+                <input type="email" className={styles.input} name="email" value={formData.email} onChange={handleChange} placeholder="youremail@gmail.com" disabled={loading} required />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>Phone Number *</label>
-                <input type="tel" className={styles.input} name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="9876543210" disabled={loading} required />
+                <input type="tel" className={styles.input} name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="+919876543210" maxLength={13} disabled={loading} required />
               </div>
             </div>
 
@@ -432,11 +458,11 @@ const HostingApplicationForm = ({ visible, onClose }) => {
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>City/Location</label>
-                <input type="text" className={styles.input} name="location" value={formData.location} onChange={handleChange} placeholder="Mumbai" disabled={loading} />
+                <input type="text" className={styles.input} name="location" value={formData.location} onChange={handleChange} placeholder="Your City" disabled={loading} />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>Pincode</label>
-                <input type="text" className={styles.input} name="pincode" value={formData.pincode} onChange={handleChange} placeholder="400001" disabled={loading} />
+                <input type="text" className={styles.input} name="pincode" value={formData.pincode} onChange={handleChange} placeholder="Your Pincode" disabled={loading} />
               </div>
             </div>
 
