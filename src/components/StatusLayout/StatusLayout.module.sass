@@ -1,7 +1,7 @@
 @import ../../styles/helpers
 
 .section
-  padding: 30px 0 10px 0
+  padding: 10px 0 0 0
   display: flex
   align-items: center
   justify-content: center
@@ -23,7 +23,7 @@
   display: flex
   align-items: center
   justify-content: center
-  margin-bottom: 24px
+  margin-bottom: 8px
 
 .title
   font-size: 24px
@@ -49,43 +49,50 @@
   width: 100%
   
 .buttonPrimary
-  min-width: 160px
-  height: 38px
-  padding: 0 16px
+  height: 44px
+  border-radius: 22px
+  padding: 0 32px
   font-size: 13px
-  background: #00A3A6
+  white-space: nowrap
+  background: #0097B2
   color: $n8
   display: flex
   align-items: center
   justify-content: center
+  gap: 6px
+  transition: all .2s
   &:hover
-    background: darken(#00A3A6, 5%)
+    background: darken(#0097B2, 5%)
 
 .buttonSecondary
-  min-width: 180px
-  height: 38px
-  padding: 0 16px
+  height: 44px
+  border-radius: 22px
+  padding: 0 32px
   font-size: 13px
+  white-space: nowrap
   color: #0B253A
+  background: transparent
   display: flex
   align-items: center
   justify-content: center
-  border-color: #E2E8F0
+  gap: 6px
+  border: 1px solid #E2E8F0
+  transition: all .2s
   +dark
     color: $n8
     border-color: $n3
 
 .btnIcon
-  margin-right: 6px
   fill: $n8
   width: 14px
   height: 14px
+  flex-shrink: 0
 
 .btnIconDark
-  margin-right: 6px
   fill: currentColor
   width: 14px
   height: 14px
+  flex-shrink: 0
 
 .supportWrapper
   width: 100%

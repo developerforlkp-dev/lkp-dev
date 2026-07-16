@@ -7,14 +7,7 @@ import styles from "./NotFound.module.sass";
 const NotFound = () => {
   const graphic = (
     <div className={styles.graphic}>
-      <div className={styles.planet}>
-        <div className={styles.astronaut}>
-          <Icon name="user" size="32" className={styles.astroIcon} />
-          <span className={styles.questionMark}>?</span>
-        </div>
-      </div>
-      <div className={styles.floatingPlanet1}></div>
-      <div className={styles.floatingPlanet2}></div>
+      <img src="/images/404_illustration.png" alt="404 Not Found" className={styles.illustrationImage} />
       <h1 className={styles.huge404}>404</h1>
     </div>
   );
