@@ -10,7 +10,7 @@ import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
-import { persistPendingCheckout } from "../../utils/paymentSession";
+import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
 
 
@@ -2484,6 +2484,101 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           return;
         }
 
+        const previewCurrency = listing?.currency || "INR";
+        const previewBookingData = {
+          checkoutType: "event",
+          eventId: eventIdNum,
+          eventSlotId: eventSlotIdNum,
+          eventSlotIds,
+          listingTitle: listing?.title || "Event Booking",
+          listingImage: listing?.coverPhotoUrl || listing?.listingMedia?.[0]?.url || "",
+          returnTo: `/event?id=${eventIdNum}`,
+          bookingSummary: {
+            date: dateStr,
+            time: selectedEventSlots.map((slot) => slot.startTime || slot.slotName).filter(Boolean).join(", "),
+            guestCount: totalGuests,
+          },
+          guests,
+          selectedAddOns: selectedAddOns.map(item => ({ ...(item.addon || item), quantity: item.quantity || 1 })),
+          addOnQuantities: selectedAddOns.reduce((acc, a) => {
+            const id = a.addon?.addonId || a.addonId || a.id;
+            if (id) acc[id] = a.quantity || 1;
+            return acc;
+          }, {}),
+          priceDetails: {
+            pricePerPerson: eventGuestPricing.finalUnitPrice,
+            basePricePerTicket: pricePerTicket,
+            totalPrice: finalTotal,
+          },
+          pricing: {
+            currency: previewCurrency,
+            pricePerPerson: eventGuestPricing.finalUnitPrice,
+            basePrice: eventBaseTotal,
+            allowChildPricing: hasChildPricing,
+            adultsCount: guests.adults,
+            childrenCount: guests.children,
+            basePricePerPerson: eventGuestPricing.baseUnitPrice,
+            adultBasePricePerPerson: eventGuestPricing.baseUnitPrice,
+            childPricePerChild: hasChildPricing ? effectiveChildPrice : 0,
+            baseChildPricePerChild,
+            discount: eventDiscountTotal,
+            promoDiscount: eventPromoDiscountTotal,
+            earlyBirdDiscount: eventEarlyBirdDiscountTotal,
+            discountRate: appliedDiscountRate,
+            tax: eventTaxTotal,
+            taxRate: appliedTaxRate,
+            addonsTotal: addOnsTotal,
+            subtotal: subtotalBeforeAdjustments,
+            total: finalTotal,
+            guestCount: totalGuests,
+          },
+          receipt: [
+            {
+              title: `${previewCurrency} ${eventGuestPricing.baseUnitPrice.toFixed(2)} x ${totalGuests} ${totalGuests === 1 ? "ticket" : "tickets"}`,
+              content: `${previewCurrency} ${eventBaseTotal.toFixed(2)}`,
+            },
+            ...(eventEarlyBirdDiscountTotal > 0 ? [{
+              title: `Early Bird Discount (${eventGuestPricing.earlyBirdDiscountRate}%)`,
+              content: `- ${previewCurrency} ${eventEarlyBirdDiscountTotal.toFixed(2)}`,
+            }] : []),
+            ...(eventPromoDiscountTotal > 0 ? [{
+              title: `Promo Discount (${eventGuestPricing.promoDiscountRate}%)`,
+              content: `- ${previewCurrency} ${eventPromoDiscountTotal.toFixed(2)}`,
+            }] : []),
+            ...(eventTaxTotal > 0 ? [{
+              title: `Taxes & Fees (${appliedTaxRate}%)`,
+              content: `+ ${previewCurrency} ${eventTaxTotal.toFixed(2)}`,
+            }] : []),
+            ...(addOnsTotal > 0 ? [{
+              title: "Add-ons",
+              content: `+ ${previewCurrency} ${addOnsTotal.toFixed(2)}`,
+              kind: "addons",
+              showInCheckout: true
+            }] : []),
+            {
+              title: "Total",
+              content: `${previewCurrency} ${finalTotal.toFixed(2)}`,
+            },
+          ],
+          currency: previewCurrency,
+          finalTotal,
+          ticketType: ticketTypeName,
+          ticketTypeId,
+          selectedSlot: selectedEventSlot,
+          selectedSlots: selectedEventSlots,
+          cancellationPolicySummary: listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText,
+          orderRequest: payload,
+        };
+
+        clearPendingCheckoutState();
+        persistPendingCheckout({ bookingData: previewBookingData });
+        localStorage.removeItem("frontendPendingBookingState");
+        history.replace("/experience-checkout", {
+          bookingData: previewBookingData,
+          addOns: selectedAddOns.map(item => ({ ...(item.addon || item), quantity: item.quantity || 1 }))
+        });
+        return;
+
         const res = await createEventOrder(payload);
         const order = res?.order || res;
         const payment = res?.payment || res?.data?.payment || res?.order?.payment || order?.payment || null;
@@ -2861,6 +2956,26 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     if (privateBooking) orderData.privateBooking = true;
 
     try {
+      const previewBookingData = {
+        ...bookingData,
+        checkoutType: "experience",
+        currency: "INR",
+        orderRequest: orderData,
+      };
+
+      clearPendingCheckoutState();
+      persistPendingCheckout({ bookingData: previewBookingData, saveCheckoutBooking: true });
+      localStorage.removeItem("frontendPendingBookingState");
+      history.push({
+        pathname: "/experience-checkout",
+        search: `?listingId=${listingId}&startDate=${dateStr}&guests=${totalGuests}${startTime ? `&startTime=${encodeURIComponent(startTime)}` : ""}`,
+        state: {
+          addOns: selectedAddOns.map(item => item.addon || item),
+          bookingData: previewBookingData,
+        }
+      });
+      return;
+
       if (isMountedRef.current) setBookingLoading(true);
       console.log("Creating experience order from BookingSystem:", orderData);
       const res = await createOrder(orderData);
