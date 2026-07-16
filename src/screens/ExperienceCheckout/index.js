@@ -779,6 +779,8 @@ const Checkout = () => {
   const isEventBooking = Boolean(bookingData?.eventId);
   const isStayBooking = Boolean(bookingData?.stayId);
   const isAmountInPaise = paymentData?.paymentMethod === "razorpay";
+  const resolvedCurrency = paymentData?.currency || bookingData?.currency || bookingData?.pricing?.currency || "INR";
+  const resolvedAmountToPay = paymentData?.amount ?? finalTotal ?? bookingData?.finalTotal ?? bookingData?.totalAmount ?? null;
   const backUrl =
     bookingData?.returnTo ||
     (isEventBooking ? `/event?id=${bookingData.eventId}` : null) ||
@@ -847,7 +849,7 @@ const Checkout = () => {
             setMessageText={setMessageText}
             addonDetails={addonDetails}
             addOns={selectedAddOns}
-            currency={paymentData?.currency || "INR"}
+            currency={resolvedCurrency}
           >
             <HeadOptions
               image={listingImage}
@@ -865,9 +867,9 @@ const Checkout = () => {
             table={table}
             addonDetails={addonDetails}
             addOns={selectedAddOns}
-            amountToPay={paymentData?.amount}
+            amountToPay={resolvedAmountToPay}
             amountInPaise={isAmountInPaise}
-            currency={paymentData?.currency || "INR"}
+            currency={resolvedCurrency}
             hostName={hostName}
             hostAvatar={hostAvatar}
             cancellationPolicy={isEventBooking ? null : cancellationPolicy}
@@ -876,6 +878,7 @@ const Checkout = () => {
             buttonUrl="/experience-checkout-complete"
             paymentData={paymentData}
             messageText={messageText}
+            bookingData={bookingData}
           />
         </div>
       </div>

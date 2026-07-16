@@ -9,7 +9,7 @@ import InlineDatePicker from "../../components/InlineDatePicker";
 import Loader from "../../components/Loader";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { getStayDetails, getStayRoomAvailability, createStayOrder, getStayReviews } from "../../utils/api";
-import { persistPendingCheckout } from "../../utils/paymentSession";
+import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { useTheme } from "../../components/JUI/Theme";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -2062,6 +2062,110 @@ const StayProduct = () => {
     }
 
     console.log("📤 Stay booking payload:", bookingPayload);
+
+    // Defer order creation until the final pay click on Confirm and Pay.
+    const getMealLabel = (code) => ({
+      EP: "EP (Room Only)", CP: "CP (Breakfast)", BB: "BB (Bed & Breakfast)",
+      MAP: "MAP (Half Board)", AP: "AP (Full Board)"
+    }[code] || code);
+
+    const roomLabel = selectedRoom
+      ? (selectedRoom.roomName || selectedRoom.name || selectedRoom.roomTypeName || `Room ${selectedRoom.roomId || selectedRoom.id}`)
+      : null;
+
+    const mealCode = isRoomBased && selectedRoom
+      ? (inferMealPlanCode(selectedRoom) || (Number(selectedRoom.bbPrice) > 0 ? "BB" : Number(selectedRoom.cpPrice) > 0 ? "CP" : Number(selectedRoom.mapPrice) > 0 ? "MAP" : "EP"))
+      : null;
+
+    const rawCoverImg =
+      stay?.coverImageUrl ||
+      stay?.coverPhotoUrl ||
+      (Array.isArray(stay?.listingMedia) && stay.listingMedia[0]
+        ? (stay.listingMedia[0].url || stay.listingMedia[0].blobName || stay.listingMedia[0].fileUrl)
+        : null) ||
+      (Array.isArray(stay?.media) && stay.media[0]
+        ? (stay.media[0].url || stay.media[0].blobName || stay.media[0].fileUrl)
+        : null) ||
+      (Array.isArray(stay?.images) && stay.images[0]
+        ? (stay.images[0].url || stay.images[0].blobName || stay.images[0].fileUrl || (typeof stay.images[0] === "string" ? stay.images[0] : null))
+        : null) ||
+      (Array.isArray(stay?.propertyImages) && stay.propertyImages[0]
+        ? (stay.propertyImages[0].url || stay.propertyImages[0].blobName || stay.propertyImages[0].fileUrl || (typeof stay.propertyImages[0] === "string" ? stay.propertyImages[0] : null))
+        : null) ||
+      "";
+    const coverImg = formatImageUrl(rawCoverImg) || "";
+
+    const rawRoomImg = selectedRoom
+      ? (selectedRoom.photoUrl || selectedRoom.imageUrl || selectedRoom.coverPhotoUrl ||
+        (Array.isArray(selectedRoom.images) && selectedRoom.images[0]
+          ? (selectedRoom.images[0].url || selectedRoom.images[0].blobName || selectedRoom.images[0].fileUrl || (typeof selectedRoom.images[0] === "string" ? selectedRoom.images[0] : null))
+          : null))
+      : null;
+    const roomImg = formatImageUrl(rawRoomImg) || coverImg;
+
+    const currency = "INR";
+    const formatMoney = (value) => `${currency} ${Number(value || 0).toFixed(2)}`;
+    const frontendReceipt = frontendBreakdown ? [
+      { title: `Base Stay (${frontendBreakdown.nightsCount} night${frontendBreakdown.nightsCount !== 1 ? "s" : ""})`, content: formatMoney(frontendBreakdown.baseStayTotal) },
+      { title: "Adults", content: `${guests?.adults || 0}` },
+      { title: "Children", content: `${guests?.children || 0}` },
+    ] : [];
+    if (frontendBreakdown && frontendBreakdown.extraAdults > 0) {
+      frontendReceipt.push({
+        title: `Extra Adult Charges (${frontendBreakdown.extraAdults} x ${formatMoney(frontendBreakdown.extraAdultPrice)} x ${frontendBreakdown.nightsCount} night${frontendBreakdown.nightsCount !== 1 ? "s" : ""})`,
+        content: formatMoney(frontendBreakdown.extraAdultTotal),
+      });
+    }
+    if (frontendBreakdown && frontendBreakdown.extraChildren > 0) {
+      frontendReceipt.push({
+        title: `Extra Child Charges (${frontendBreakdown.extraChildren} x ${formatMoney(frontendBreakdown.extraChildPrice)} x ${frontendBreakdown.nightsCount} night${frontendBreakdown.nightsCount !== 1 ? "s" : ""})`,
+        content: formatMoney(frontendBreakdown.extraChildTotal),
+      });
+    }
+    if ((frontendBreakdown?.discountAmount || 0) > 0) {
+      frontendReceipt.push({
+        title: "Discounts",
+        content: `- ${formatMoney(frontendBreakdown.discountAmount)}`,
+      });
+    }
+    if ((frontendBreakdown?.taxAmount || 0) > 0) {
+      frontendReceipt.push({
+        title: `Tax (${Number(frontendBreakdown?.taxRate || 0).toFixed(2)}%)`,
+        content: `+ ${formatMoney(frontendBreakdown.taxAmount)}`,
+      });
+    }
+    if (frontendBreakdown) {
+      frontendReceipt.push({ title: "Final Guest Price", content: formatMoney(frontendBreakdown.finalGuestPrice) });
+    }
+
+    const stayBookingData = {
+      checkoutType: "stay",
+      stayId: Number(stayId),
+      listingTitle: stay?.propertyName || stay?.title || stay?.name || "Stay",
+      listingImage: coverImg,
+      roomImage: roomImg,
+      isStay: true,
+      checkInDate: checkInDate ? new Date(checkInDate).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : null,
+      checkOutDate: checkOutDate ? new Date(checkOutDate).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : null,
+      roomType: roomLabel,
+      roomsBooked: bookingInfo?.roomsNeeded || 1,
+      mealPlan: mealCode ? getMealLabel(mealCode) : null,
+      guests,
+      bookingSummary: {
+        guestCount: (guests?.adults || 0) + (guests?.children || 0),
+      },
+      receipt: frontendReceipt,
+      totalAmount: frontendBreakdown?.finalGuestPrice || 0,
+      finalTotal: frontendBreakdown?.finalGuestPrice || 0,
+      currency,
+      orderRequest: bookingPayload,
+      timestamp: new Date().toISOString(),
+    };
+
+    clearPendingCheckoutState();
+    persistPendingCheckout({ bookingData: stayBookingData });
+    history.push("/checkout");
+    return;
 
     setAvailabilityLoading(true);
     try {
