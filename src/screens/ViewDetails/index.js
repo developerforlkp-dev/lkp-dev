@@ -310,11 +310,11 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
     const mappedStatus = statusMap[normalizedStatus] || "Pending";
 
     // Log status mapping for debugging
-    console.log("📊 Status mapping:", {
-      originalOrderStatus: orderStatus,
-      normalizedStatus: normalizedStatus,
-      mappedStatus: mappedStatus,
-    });
+    //console.log("📊 Status mapping:", {
+    //   originalOrderStatus: orderStatus,
+    //    normalizedStatus: normalizedStatus,
+    //   mappedStatus: mappedStatus,
+    // });
 
     return mappedStatus;
   };
@@ -1748,7 +1748,7 @@ const ViewDetails = () => {
       setLoading(true);
       setError(null);
 
-      console.log("🔍 Loading booking with bookingId:", bookingId);
+      //console.log("🔍 Loading booking with bookingId:", bookingId);
 
       try {
         // Extract orderId from bookingId (e.g., "bk-57" -> 57)
@@ -1767,7 +1767,7 @@ const ViewDetails = () => {
           }
         }
 
-        console.log("🔍 Extracted orderId:", orderId);
+        //console.log("🔍 Extracted orderId:", orderId);
 
         if (!orderId || isNaN(orderId)) {
           const errorMsg = `Invalid booking ID format: "${bookingId}". Expected format: "bk-57" or "57"`;
@@ -1785,13 +1785,13 @@ const ViewDetails = () => {
         // Use event-specific API if type=event
         try {
           if (bookingType === "event") {
-            console.log("📦 Fetching EVENT order details for orderId:", orderId);
+            //console.log("📦 Fetching EVENT order details for orderId:", orderId);
             orderResponse = await getEventOrderDetails(orderId);
-            console.log("✅ Event order details fetched from API:", orderResponse);
+            //console.log("✅ Event order details fetched from API:", orderResponse);
           } else {
-            console.log("📦 Fetching regular order details for orderId:", orderId);
+            //console.log("📦 Fetching regular order details for orderId:", orderId);
             orderResponse = await getOrderDetails(orderId);
-            console.log("✅ Order details fetched from API:", orderResponse);
+            // console.log("✅ Order details fetched from API:", orderResponse);
           }
 
           // The response structure can be:
@@ -1801,17 +1801,17 @@ const ViewDetails = () => {
             if (orderResponse.order) {
               // Wrapped in order property
               apiBookingData = orderResponse.order;
-              console.log("✅ Order data extracted from order property:", apiBookingData);
+              // console.log("✅ Order data extracted from order property:", apiBookingData);
             } else if (orderResponse.orderId) {
               // Direct order object
               apiBookingData = orderResponse;
-              console.log("✅ Order data is direct object:", apiBookingData);
+              //console.log("✅ Order data is direct object:", apiBookingData);
             }
 
             if (apiBookingData) {
-              console.log("✅ Order data extracted:", apiBookingData);
-              console.log("✅ Order addons:", orderResponse.addons || apiBookingData.addons);
-              console.log("✅ Order history:", orderResponse.history);
+              // console.log("✅ Order data extracted:", apiBookingData);
+              // console.log("✅ Order addons:", orderResponse.addons || apiBookingData.addons);
+              // console.log("✅ Order history:", orderResponse.history);
             }
           }
         } catch (apiErr) {
@@ -1874,7 +1874,7 @@ const ViewDetails = () => {
             endTime: apiBookingData.timeSlotEndTime,
             maxSeats: apiBookingData.timeSlotMaxSeats,
           };
-          console.log("✅ Using time slot from order data:", slotDetails);
+          //console.log("✅ Using time slot from order data:", slotDetails);
         }
 
         // Merge addons from orderResponse if available (they might be in response root or in order.addons)
@@ -1905,7 +1905,7 @@ const ViewDetails = () => {
 
           if (embeddedEvent && typeof embeddedEvent === "object") {
             eventData = embeddedEvent;
-            console.log("✅ Using embedded event details from event-details API response:", eventData);
+            // console.log("✅ Using embedded event details from event-details API response:", eventData);
           }
         }
 
@@ -1928,9 +1928,9 @@ const ViewDetails = () => {
           if (eventIdForDetails) {
             try {
               if (!hasTitle || !hasImage) {
-                console.log(`📦 Enriching event details for eventId: ${eventIdForDetails}`);
+                // console.log(`📦 Enriching event details for eventId: ${eventIdForDetails}`);
               } else {
-                console.log(`📦 Refreshing event details for eventId: ${eventIdForDetails} (override image/title if different)`);
+                // console.log(`📦 Refreshing event details for eventId: ${eventIdForDetails} (override image/title if different)`);
               }
               const enriched = await getEventDetails(eventIdForDetails);
               const embedded = eventData || {};
@@ -1946,7 +1946,7 @@ const ViewDetails = () => {
                 title: enriched?.title ?? embedded?.title,
                 eventTitle: enriched?.eventTitle ?? embedded?.eventTitle,
               };
-              console.log("✅ Event details enriched from /events/{id}:", eventData);
+              //console.log("✅ Event details enriched from /events/{id}:", eventData);
             } catch (eventError) {
               console.warn(`⚠️ Failed to enrich event details for eventId ${eventIdForDetails}:`, eventError.message);
             }
@@ -1956,9 +1956,9 @@ const ViewDetails = () => {
         // Fallback: Fetch event details by eventId if not embedded
         if (isEventOrder && !eventData && apiBookingData.eventId) {
           try {
-            console.log(`📦 Fetching event details for eventId: ${apiBookingData.eventId}`);
+            //console.log(`📦 Fetching event details for eventId: ${apiBookingData.eventId}`);
             eventData = await getEventDetails(apiBookingData.eventId);
-            console.log(`✅ Fetched event details for eventId ${apiBookingData.eventId}:`, eventData);
+            // console.log(`✅ Fetched event details for eventId ${apiBookingData.eventId}:`, eventData);
           } catch (eventError) {
             console.warn(`⚠️ Failed to fetch event details for eventId ${apiBookingData.eventId}:`, eventError.message);
             // Create a fallback eventData object from order fields
@@ -1979,7 +1979,7 @@ const ViewDetails = () => {
         if (!isEventOrder && apiBookingData.listingId) {
           try {
             listingData = await getListing(apiBookingData.listingId);
-            console.log(`✅ Fetched listing ${apiBookingData.listingId} for order details`);
+            // console.log(`✅ Fetched listing ${apiBookingData.listingId} for order details`);
           } catch (error) {
             console.warn(`⚠️ Failed to fetch listing data for order ${apiBookingData.orderId}:`, error.message);
             // Create a fallback listingData object from order fields
@@ -2020,7 +2020,7 @@ const ViewDetails = () => {
         if (resolvedStayId != null) {
           try {
             stayData = await getStayDetails(resolvedStayId);
-            console.log(`✅ Fetched stay ${resolvedStayId} for order details`);
+            // console.log(`✅ Fetched stay ${resolvedStayId} for order details`);
           } catch (error) {
             console.warn(`⚠️ Failed to fetch stay data for order ${apiBookingData.orderId}:`, error.message);
           }
@@ -2054,7 +2054,7 @@ const ViewDetails = () => {
         }
 
 
-        console.log("✅ Using data:", isEventOrder ? "eventData" : (listingData ? "listingData from API" : "listingData from order fields"));
+        // console.log("✅ Using data:", isEventOrder ? "eventData" : (listingData ? "listingData from API" : "listingData from order fields"));
 
         // Fetch user profile to ensure synced data
         let profile = null;
@@ -2063,7 +2063,7 @@ const ViewDetails = () => {
           if (profileData && profileData.customer) {
             profile = profileData.customer;
             setUserProfile(profile);
-            console.log("✅ Current user profile fetched for sync:", profile);
+            //console.log("✅ Current user profile fetched for sync:", profile);
           }
         } catch (profileErr) {
           console.warn("⚠️ Failed to fetch user profile for sync:", profileErr.message);
@@ -2093,9 +2093,9 @@ const ViewDetails = () => {
           }
 
           transformed = transformBookingData(mergedApiBookingData, listingData, eventData, stayData, reviewData, profile);
-          console.log("✅ Transformed booking data:", transformed);
-          console.log("✅ Original API booking data paymentMethod:", apiBookingData.paymentMethod);
-          console.log("✅ Transformed paymentMethod:", transformed.paymentMethod);
+          // console.log("✅ Transformed booking data:", transformed);
+          //  console.log("✅ Original API booking data paymentMethod:", apiBookingData.paymentMethod);
+          //  console.log("✅ Transformed paymentMethod:", transformed.paymentMethod);
 
           // Add slot time information from order data
           if (apiBookingData.timeSlotStartTime || apiBookingData.timeSlotEndTime) {
@@ -2113,12 +2113,12 @@ const ViewDetails = () => {
 
             if (apiBookingData.timeSlotStartTime) {
               transformed.startTime = formatSlotTime(apiBookingData.timeSlotStartTime);
-              console.log("✅ Set start time from order:", apiBookingData.timeSlotStartTime, "->", transformed.startTime);
+              //console.log("✅ Set start time from order:", apiBookingData.timeSlotStartTime, "->", transformed.startTime);
             }
 
             if (apiBookingData.timeSlotEndTime) {
               transformed.endTime = formatSlotTime(apiBookingData.timeSlotEndTime);
-              console.log("✅ Set end time from order:", apiBookingData.timeSlotEndTime, "->", transformed.endTime);
+              //console.log("✅ Set end time from order:", apiBookingData.timeSlotEndTime, "->", transformed.endTime);
             }
           }
 
@@ -2128,7 +2128,7 @@ const ViewDetails = () => {
           }
 
           setBooking(transformed);
-          console.log("✅ Booking set successfully");
+          // console.log("✅ Booking set successfully");
         } catch (transformErr) {
           console.error("❌ Error transforming booking data:", transformErr);
           setError(`Failed to process booking data: ${transformErr.message}`);
@@ -2475,13 +2475,13 @@ const ViewDetails = () => {
         }
       }
 
-      console.log("📤 Submitting review with data:", {
-        orderId: booking.orderId,
-        rating: reviewRating,
-        comment: reviewText,
-        listingId: listingId,
-        customerId: customerId,
-      });
+      //console.log("📤 Submitting review with data:", {
+      //  orderId: booking.orderId,
+      //  rating: reviewRating,
+      //  comment: reviewText,
+      // listingId: listingId,
+      //  customerId: customerId,
+      // });
 
       await submitOrderReview(booking.orderId, {
         rating: reviewRating,
@@ -2498,7 +2498,7 @@ const ViewDetails = () => {
       setReviewSubmitted(true);
       setReviewText("");
       setReviewRating(0);
-      console.log("✅ Review submitted successfully");
+      //console.log("✅ Review submitted successfully");
     } catch (err) {
       console.error("❌ Error submitting review:", err);
       const errorMessage = err.response?.data?.error ||
@@ -2742,7 +2742,7 @@ const ViewDetails = () => {
             src={booking.bannerImage.src}
             alt={booking.bannerImage.alt}
             onLoad={() => {
-              console.log("✅ Banner image loaded:", booking.bannerImage.src);
+              //console.log("✅ Banner image loaded:", booking.bannerImage.src);
             }}
             onError={(e) => {
               console.warn("⚠️ Banner image failed to load:", booking.bannerImage.src);
@@ -2850,12 +2850,12 @@ const ViewDetails = () => {
                     booking.originalData?.paymentMethod ||
                     booking.originalData?.payment_method
                   );
-                  console.log("✅ Displaying payment method:", {
-                    bookingPaymentMethod: booking.paymentMethod,
-                    originalPaymentMethod: booking.originalData?.paymentMethod,
-                    originalPayment_method: booking.originalData?.payment_method,
-                    final: paymentMethod
-                  });
+                  // console.log("✅ Displaying payment method:", {
+                  //   bookingPaymentMethod: booking.paymentMethod,
+                  //   originalPaymentMethod: booking.originalData?.paymentMethod,
+                  //   originalPayment_method: booking.originalData?.payment_method,
+                  //   final: paymentMethod
+                  // });
                   return paymentMethod || "Not specified";
                 })()}
               </div>
