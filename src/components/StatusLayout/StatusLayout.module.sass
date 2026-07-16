@@ -46,6 +46,10 @@
   gap: 12px
   margin-bottom: 24px
   justify-content: center
+  +m
+    flex-direction: column
+    width: 100%
+    padding: 0 16px
   width: 100%
   
 .buttonPrimary
@@ -61,6 +65,8 @@
   justify-content: center
   gap: 6px
   transition: all .2s
+  +m
+    width: 100%
   &:hover
     background: darken(#0097B2, 5%)
 
@@ -78,6 +84,8 @@
   gap: 6px
   border: 1px solid #E2E8F0
   transition: all .2s
+  +m
+    width: 100%
   +dark
     color: $n8
     border-color: $n3
