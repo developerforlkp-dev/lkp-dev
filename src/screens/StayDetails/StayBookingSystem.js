@@ -314,6 +314,50 @@ const distributeGuests = (selectedRooms, stayRoomsCatalog, adults, children) => 
   };
 };
 
+const getStoredStayGuests = (storedGuests) => {
+  if (!storedGuests || typeof storedGuests !== "object") return null;
+  const adults = Number(storedGuests.adults || 0) || 0;
+  const children = Number(storedGuests.children || 0) || 0;
+  if (adults + children <= 0) return null;
+  return { adults, children };
+};
+
+const getStayCatalogRoomIds = (stay) => {
+  const baseRooms = Array.isArray(stay?.rooms || stay?.roomTypes || stay?.room_types)
+    ? (stay?.rooms || stay?.roomTypes || stay?.room_types)
+    : [];
+  const bedRooms = Array.isArray(stay?.bedConfigs)
+    ? stay.bedConfigs
+    : [];
+
+  return new Set(
+    [...baseRooms, ...bedRooms]
+      .map((room) => room?.roomId ?? room?.id ?? room?.roomTypeId ?? room?.room_type_id ?? room?.bedConfigId)
+      .filter((roomId) => roomId !== undefined && roomId !== null)
+      .map((roomId) => String(roomId))
+  );
+};
+
+const getStoredStayRooms = (storedRooms, stay) => {
+  if (!Array.isArray(storedRooms) || storedRooms.length === 0) return [];
+  const validRoomIds = getStayCatalogRoomIds(stay);
+
+  return storedRooms
+    .map((room) => {
+      const roomId = room?.roomId ?? room?.id ?? room?.roomTypeId ?? room?.room_type_id ?? room?.bedConfigId;
+      if (roomId == null) return null;
+      const normalizedRoomId = String(roomId);
+      if (validRoomIds.size > 0 && !validRoomIds.has(normalizedRoomId)) return null;
+
+      return {
+        roomId: normalizedRoomId,
+        mealPlan: room?.mealPlan || room?.mealPlanCode || room?.meal_plan || "EP",
+        count: Math.max(1, Number(room?.count ?? room?.roomCount ?? room?.numberOfRooms ?? 1) || 1),
+      };
+    })
+    .filter(Boolean);
+};
+
 const StayBookingSystem = ({
   stay,
   checkInDate,
@@ -415,12 +459,24 @@ const StayBookingSystem = ({
         const isLoggedIn = !!token && token !== "undefined" && token !== "null";
 
         if (stored?.listingId === String(stay?.stayId || stay?.id) && stored?.type === "stay" && isLoggedIn) {
+          if (stored.checkInDate) {
+            const parsedCheckIn = moment(stored.checkInDate);
+            if (parsedCheckIn.isValid()) setCheckInDate(parsedCheckIn);
+          }
+          if (stored.checkOutDate) {
+            const parsedCheckOut = moment(stored.checkOutDate);
+            if (parsedCheckOut.isValid()) setCheckOutDate(parsedCheckOut);
+          }
+          const restoredGuests = getStoredStayGuests(stored.guests);
+          if (restoredGuests) setGuests(restoredGuests);
+          const restoredRooms = getStoredStayRooms(stored.selectedRooms, stay);
+          if (restoredRooms.length > 0) setSelectedRooms(restoredRooms);
           setShow(true);
           localStorage.removeItem("frontendPendingBookingState");
         }
       }
     } catch (e) {}
-  }, [stay?.stayId, stay?.id]);
+  }, [setCheckInDate, setCheckOutDate, setGuests, setSelectedRooms, stay, stay?.stayId, stay?.id]);
 
   useEffect(() => {
     if (show) {

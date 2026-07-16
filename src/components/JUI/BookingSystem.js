@@ -530,6 +530,44 @@ const normalizeBookingTime = (value) => {
   return `${hh}:${mm}:${ss}`;
 };
 
+const getStoredGuestSelection = (storedGuests) => {
+  if (!storedGuests || typeof storedGuests !== "object") return null;
+  const adults = Number(storedGuests.adults || 0) || 0;
+  const children = Number(storedGuests.children || 0) || 0;
+  const infants = Number(storedGuests.infants || 0) || 0;
+  if (adults + children + infants <= 0) return null;
+
+  return {
+    adults,
+    children,
+    infants,
+    childAges: Array.isArray(storedGuests.childAges) ? storedGuests.childAges : [],
+  };
+};
+
+const resolveStoredExperienceSlot = (slots = [], stored = {}) => {
+  if (!Array.isArray(slots) || slots.length === 0 || !stored || typeof stored !== "object") return null;
+
+  const storedSlotId = stored.selectedSlotId != null ? String(stored.selectedSlotId) : "";
+  const storedLabel = String(stored.selectedSlotLabel || stored.startTime || "").trim().toLowerCase();
+  const storedTime = normalizeBookingTime(stored.selectedTimeValue || stored.startTime || "");
+
+  return slots.find((slot) => {
+    const slotId = getSlotId(slot);
+    if (storedSlotId && slotId != null && String(slotId) === storedSlotId) return true;
+
+    const slotLabel = String(slot?.slotName || slot?.slot_name || "").trim().toLowerCase();
+    if (storedLabel && slotLabel && slotLabel === storedLabel) return true;
+
+    const slotTime = normalizeBookingTime(
+      slot?.startTime || slot?.start_time || slot?.slotStartTime || slot?.time || ""
+    );
+    if (storedTime && slotTime && storedTime === slotTime) return true;
+
+    return false;
+  }) || null;
+};
+
 /**
  * Robustly format a "HH:mm[:ss]" string into "h:mm AM/PM".
  * Returns the original string if it doesn't match the time format.
@@ -1724,9 +1762,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         if (pendingRestoreRef.current) {
           const stored = pendingRestoreRef.current;
           pendingRestoreRef.current = null;
-          if (stored.selectedEventSlotIds) setSelectedEventSlotIds(stored.selectedEventSlotIds);
+          if (Array.isArray(stored.selectedEventSlotIds) && stored.selectedEventSlotIds.length > 0) {
+            setSelectedEventSlotIds(stored.selectedEventSlotIds);
+          }
           if (stored.startTime !== undefined) setStartTime(stored.startTime);
-          if (stored.guests) setGuests(stored.guests);
+          const restoredGuests = getStoredGuestSelection(stored.guests);
+          if (restoredGuests) setGuests(restoredGuests);
           if (stored.privateBooking !== undefined) setPrivateBooking(stored.privateBooking);
         }
       })
@@ -1792,12 +1833,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           const stored = pendingRestoreRef.current;
           pendingRestoreRef.current = null;
 
-          if (stored.startTime) {
-            const targetSlot = normalized.find(s => s.slotName === stored.startTime || s.startTime === stored.startTime);
+          if (stored.startTime || stored.selectedSlotId || stored.selectedSlotLabel || stored.selectedTimeValue) {
+            const targetSlot = resolveStoredExperienceSlot(normalized, stored);
             let isValid = false;
 
             if (targetSlot && targetSlot.isAvailable !== false) {
-              const totalStoredGuests = (stored.guests?.adults || 0) + (stored.guests?.children || 0);
+              const restoredGuests = getStoredGuestSelection(stored.guests);
+              const totalStoredGuests = (restoredGuests?.adults || 0) + (restoredGuests?.children || 0);
               const limit = getSlotSeatLimit(targetSlot);
               if (limit === undefined || limit >= totalStoredGuests) {
                 isValid = true;
@@ -1805,8 +1847,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             }
 
             if (isValid) {
-              setStartTime(stored.startTime);
-              if (stored.guests) setGuests(stored.guests);
+              setStartTime(targetSlot.slotName || targetSlot.startTime || stored.selectedSlotLabel || stored.startTime);
+              const restoredGuests = getStoredGuestSelection(stored.guests);
+              if (restoredGuests) setGuests(restoredGuests);
               if (stored.privateBooking !== undefined) setPrivateBooking(stored.privateBooking);
             } else {
               setStartTime(null);
