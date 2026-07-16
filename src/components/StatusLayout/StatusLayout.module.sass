@@ -1,0 +1,122 @@
+@import ../../styles/helpers
+
+.section
+  padding: 30px 0 10px 0
+  display: flex
+  align-items: center
+  justify-content: center
+  background: transparent
+  +dark
+    background: transparent
+
+.content
+  text-align: center
+  max-width: 900px
+  margin: 0 auto
+  display: flex
+  flex-direction: column
+  align-items: center
+
+.graphicContainer
+  position: relative
+  width: 100%
+  display: flex
+  align-items: center
+  justify-content: center
+  margin-bottom: 24px
+
+.title
+  font-size: 24px
+  font-weight: 700
+  color: #0B253A
+  margin-bottom: 8px
+  +dark
+    color: $n8
+
+.text
+  font-size: 13px
+  color: #475569
+  line-height: 1.4
+  margin-bottom: 20px
+  +dark
+    color: $n4
+
+.mainActions
+  display: flex
+  gap: 12px
+  margin-bottom: 24px
+  justify-content: center
+  width: 100%
+  
+.buttonPrimary
+  min-width: 160px
+  height: 38px
+  padding: 0 16px
+  font-size: 13px
+  background: #00A3A6
+  color: $n8
+  display: flex
+  align-items: center
+  justify-content: center
+  &:hover
+    background: darken(#00A3A6, 5%)
+
+.buttonSecondary
+  min-width: 180px
+  height: 38px
+  padding: 0 16px
+  font-size: 13px
+  color: #0B253A
+  display: flex
+  align-items: center
+  justify-content: center
+  border-color: #E2E8F0
+  +dark
+    color: $n8
+    border-color: $n3
+
+.btnIcon
+  margin-right: 6px
+  fill: $n8
+  width: 14px
+  height: 14px
+
+.btnIconDark
+  margin-right: 6px
+  fill: currentColor
+  width: 14px
+  height: 14px
+
+.supportWrapper
+  width: 100%
+  max-width: 800px
+  margin-bottom: 20px
+
+.trustBadges
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 24px
+  border-top: 1px solid #E2E8F0
+  padding-top: 12px
+  width: 100%
+  
+  +m
+    flex-wrap: wrap
+    gap: 12px
+  
+  +dark
+    border-color: $n3
+
+.trustItem
+  display: flex
+  align-items: center
+  gap: 6px
+  color: #94A3B8
+  font-size: 11px
+  font-weight: 500
+  
+  svg
+    fill: #94A3B8
+    width: 12px
+    height: 12px

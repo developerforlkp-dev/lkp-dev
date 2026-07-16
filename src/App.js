@@ -24,6 +24,8 @@ import Listings from "./pages/listings";
 import Blog from "./pages/Blog";
 import BlogDetails from "./pages/BlogDetails";
 import ViewDetails from "./screens/ViewDetails";
+import PaymentFailed from "./screens/PaymentFailed";
+import NotFound from "./screens/NotFound";
 
 
 import StayProduct from "./screens/StayProduct";
@@ -318,6 +320,22 @@ function App() {
               render={() => (
                 <Page separatorHeader>
                   <BlogDetails />
+                </Page>
+              )}
+            />
+            <Route
+              exact
+              path="/payment/failed"
+              render={() => (
+                <Page separatorHeader>
+                  <PaymentFailed />
+                </Page>
+              )}
+            />
+            <Route
+              render={() => (
+                <Page>
+                  <NotFound />
                 </Page>
               )}
             />
