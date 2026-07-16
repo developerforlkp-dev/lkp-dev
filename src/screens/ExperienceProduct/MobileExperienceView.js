@@ -768,7 +768,7 @@ export default function MobileExperienceView({
 
               if (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) {
                 cancelItems.push({
-                  title: "Cancellation Policy",
+                  title: null,
                   desc: listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy
                 });
               }
