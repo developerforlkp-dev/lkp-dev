@@ -1839,9 +1839,22 @@ function PolicyCategoryItem({ category }) {
                     <span style={{ fontSize: "14px", fontWeight: 700, color: FG, display: "block", marginBottom: 6 }}>{item.title}</span>
                   )}
                   {item.body && (
-                    <p style={{ fontSize: 13, color: M, lineHeight: 1.6, whiteSpace: "pre-line", margin: 0 }}>
-                      {item.body}
-                    </p>
+                    <div style={{ fontSize: 13, color: M, lineHeight: 1.6, margin: 0 }}>
+                      {category.title?.toLowerCase().includes('cancellation') && item.body.split('. ').filter(s => s.trim().length > 0).length > 1 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                          {item.body.split('. ').filter(s => s.trim().length > 0).map((sentence, idx) => (
+                            <div key={idx} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                              <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
+                              <div style={{ flex: 1 }}>
+                                {sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, whiteSpace: "pre-line" }}>{item.body}</p>
+                      )}
+                    </div>
                   )}
                   {item.questions && item.questions.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
@@ -1985,9 +1998,9 @@ function PolicyCategoryItem({ category }) {
       stay?.cancellationPolicyText;
 
     if (summaryText && summaryText.trim().length > 5 && !summaryText.toLowerCase().includes("no cancellation policy summary")) {
-      cancelItems.push({ id: 'cancel-1', title: "Cancellation Terms", body: summaryText });
+      cancelItems.push({ id: 'cancel-1', title: null, body: summaryText });
     } else if (templateText && templateText.trim().length > 0 && !templateText.toLowerCase().includes("no cancellation policy rules")) {
-      cancelItems.push({ id: 'cancel-1', title: "Cancellation Terms", body: templateText });
+      cancelItems.push({ id: 'cancel-1', title: null, body: templateText });
     } else {
       const rawCancelRules = stay?.cancellationPolicyRules || stay?.cancellationPolicyRule || stay?.cancellationRules || findArrayWithKey(stay, 'policyRule');
       if (Array.isArray(rawCancelRules) && rawCancelRules.length > 0) {
