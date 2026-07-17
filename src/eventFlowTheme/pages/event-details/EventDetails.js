@@ -3739,6 +3739,8 @@ export default function EventDetails() {
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
           title="More Events You Might Like"
+          sectionStyle={isMobile ? { padding: "32px 20px" } : { padding: "32px 80px" }}
+          titleStyle={isMobile ? { fontSize: "clamp(1.6rem, 7vw, 2.2rem)", marginBottom: "16px" } : { fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
         />
         <Footer />
       </div>
