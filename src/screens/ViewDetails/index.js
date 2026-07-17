@@ -1113,12 +1113,12 @@ const ViewDetails = () => {
         value: formatReceiptMoney(subtotalAmount, currency),
       },
       ...(getReceiptNumericAmount(discountAmount) > 0 ? [{
-        label: `Discount${discountPercent ? ` (${discountPercent}%)` : ""}`,
+        label: `Discount`,
         value: `- ${formatReceiptMoney(discountAmount, currency)}`,
         isNegative: true,
       }] : []),
       ...(getReceiptNumericAmount(taxAmount) > 0 ? [{
-        label: `Taxes${taxPercent ? ` (${taxPercent}%)` : ""}`,
+        label: `Taxes`,
         value: formatReceiptMoney(taxAmount, currency),
       }] : []),
       {
