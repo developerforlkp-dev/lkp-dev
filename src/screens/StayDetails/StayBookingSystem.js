@@ -781,6 +781,87 @@ const StayBookingSystem = ({
     return Math.max(1, moment(checkOutDate).diff(moment(checkInDate), "days"));
   }, [checkInDate, checkOutDate]);
 
+  const modalHeaderPricing = useMemo(() => {
+    if (!stay) return { originalPerNight: 0, discountedPerNight: 0, hasDiscount: false };
+
+    const activeSeason = checkInDate ? (stay.seasonalPeriods || []).find(p =>
+      moment(checkInDate).isSameOrAfter(p.startDate, "day") &&
+      moment(checkInDate).isSameOrBefore(p.endDate, "day")
+    ) : null;
+    const seasonId = activeSeason?.tempId || activeSeason?.id || activeSeason?.seasonalPeriodId;
+
+    const isPropertyBased = isPropertyBasedBooking(stay);
+    let originalPerNight = 0;
+
+    if (isPropertyBased) {
+      originalPerNight = parseFloat(stay.fullPropertyB2cPrice || stay.b2cPrice || stay.startingPrice || stay.pricePerNight || stay.price || 0);
+
+      if (seasonId) {
+        const propSeasonData = (stay.propertySeasonalPricing || {})[seasonId] || stay[seasonId];
+        if (propSeasonData) {
+          originalPerNight = parseFloat(
+            propSeasonData.fullPropertyHikePrice ||
+            propSeasonData.hikePrice ||
+            propSeasonData.fullPropertyB2cPrice ||
+            propSeasonData.b2cPrice ||
+            originalPerNight
+          );
+        }
+      }
+    } else {
+      const selectedRoomBasePrices = resolvedSelectedRooms
+        .map((room) => Number(room.calculatedPrice || 0))
+        .filter((price) => Number.isFinite(price) && price > 0);
+
+      if (selectedRoomBasePrices.length > 0) {
+        originalPerNight = Math.min(...selectedRoomBasePrices);
+      } else {
+        originalPerNight = parseFloat(stay.startingPrice || stay.pricePerNight || stay.b2cPrice || stay.price || 0);
+      }
+    }
+
+    let longStayDiscountPercent = 0;
+    if (nightsCount > 0 && Array.isArray(stay.discountTiers)) {
+      const tier = stay.discountTiers.find(t => nightsCount >= (t.minimumDays || 0) && nightsCount <= (t.maximumDays || 999));
+      if (tier) longStayDiscountPercent = parseFloat(tier.discountPercentage || 0);
+    }
+
+    const billingConfigDiscountPercent = (() => {
+      const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || [];
+      if (!Array.isArray(discounts) || discounts.length === 0) return 0;
+      const totalRate = discounts.reduce((sum, discount) => {
+        const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+        return sum + (Number.isFinite(rate) ? rate : 0);
+      }, 0);
+      return Math.max(0, Math.min(100, totalRate));
+    })();
+
+    let earlyBirdDiscountPercent = 0;
+    const ebDiscounts = stay?.earlyBirdDiscounts || stay?.early_bird_discounts || [];
+    if (checkInDate && Array.isArray(ebDiscounts)) {
+      const today = moment().startOf("day");
+      const checkInDay = moment(checkInDate).startOf("day");
+      const daysDiff = checkInDay.diff(today, "days");
+      const eligibleTiers = ebDiscounts.filter(t => t.isActive && daysDiff >= t.daysInAdvance);
+      if (eligibleTiers.length > 0) {
+        eligibleTiers.sort((a, b) => parseFloat(b.percentage || 0) - parseFloat(a.percentage || 0));
+        earlyBirdDiscountPercent = parseFloat(eligibleTiers[0]?.percentage || 0);
+      }
+    }
+
+    const totalDiscountPercent = Math.max(
+      0,
+      Math.min(100, longStayDiscountPercent + billingConfigDiscountPercent + earlyBirdDiscountPercent)
+    );
+    const discountedPerNight = Math.max(0, originalPerNight * (1 - (totalDiscountPercent / 100)));
+
+    return {
+      originalPerNight,
+      discountedPerNight,
+      hasDiscount: totalDiscountPercent > 0
+    };
+  }, [stay, checkInDate, nightsCount, resolvedSelectedRooms]);
+
   // Price Calculation Logic
   const pricing = useMemo(() => {
     if (!stay) return { perNight: 0, subtotal: 0, discount: 0, warning: null, isOver: false };
@@ -2152,13 +2233,13 @@ const StayBookingSystem = ({
                     Reserve Your Stay
                   </h2>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    {!fetchingAvailability && pricing.discount > 0 && (
+                    {!fetchingAvailability && modalHeaderPricing.hasDiscount && (
                       <span style={{ fontSize: 13, fontWeight: 600, color: M, textDecoration: "line-through", opacity: 0.7 }}>
-                        {"\u20B9"}{formatPrice(pricing.headerOriginalPerNight || pricing.originalPerNight)}
+                        {"\u20B9"}{formatPrice(modalHeaderPricing.originalPerNight)}
                       </span>
                     )}
                     <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>
-                      {fetchingAvailability ? "..." : `${"\u20B9"}${formatPrice(pricing.headerPerNight || pricing.perNight)}`}
+                      {fetchingAvailability ? "..." : `${"\u20B9"}${formatPrice(modalHeaderPricing.discountedPerNight)}`}
                     </span>
                     <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>/ night</span>
                   </div>
