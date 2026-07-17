@@ -1140,9 +1140,6 @@ const ViewDetails = () => {
         : `Paid${booking.paymentMethod ? ` via ${booking.paymentMethod}` : ""}`,
       billTo: {
         name: booking.guest?.name || "Guest",
-        line1: propertySubtitle,
-        line2: [booking.location?.address, booking.location?.city].filter(Boolean).join(", ") || "Address unavailable",
-        line3: booking.location?.country || "",
         phone: booking.guest?.phone || "Phone unavailable",
         email: booking.guest?.email || "Email unavailable",
       },
