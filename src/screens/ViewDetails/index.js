@@ -1112,23 +1112,13 @@ const ViewDetails = () => {
         label: "Total",
         value: formatReceiptMoney(subtotalAmount, currency),
       },
-      ...(Array.isArray(booking.discounts) && booking.discounts.length > 0
-        ? booking.discounts.map(d => {
-            const numericD = getReceiptNumericAmount(d.amount);
-            const dPct = d.percentage ? ` (${d.percentage}%)` : (numericD && subtotalAmount ? ` (${Math.round((numericD / subtotalAmount) * 100)}%)` : "");
-            return {
-              label: `${d.name || "Discount"}${dPct}`,
-              value: `- ${formatReceiptMoney(d.amount || 0, currency)}`,
-              isNegative: true,
-            };
-          })
-        : getReceiptNumericAmount(discountAmount) > 0 ? [{
-          label: `Discount${discountPercent ? ` (${discountPercent}%)` : ""}`,
-          value: `- ${formatReceiptMoney(discountAmount, currency)}`,
-          isNegative: true,
-        }] : []),
+      ...(getReceiptNumericAmount(discountAmount) > 0 ? [{
+        label: `Discount`,
+        value: `- ${formatReceiptMoney(discountAmount, currency)}`,
+        isNegative: true,
+      }] : []),
       ...(getReceiptNumericAmount(taxAmount) > 0 ? [{
-        label: `Taxes${taxPercent ? ` (${taxPercent}%)` : ""}`,
+        label: `Taxes`,
         value: formatReceiptMoney(taxAmount, currency),
       }] : []),
       {
@@ -1150,9 +1140,6 @@ const ViewDetails = () => {
         : `Paid${booking.paymentMethod ? ` via ${booking.paymentMethod}` : ""}`,
       billTo: {
         name: booking.guest?.name || "Guest",
-        line1: propertySubtitle,
-        line2: [booking.location?.address, booking.location?.city].filter(Boolean).join(", ") || "Address unavailable",
-        line3: booking.location?.country || "",
         phone: booking.guest?.phone || "Phone unavailable",
         email: booking.guest?.email || "Email unavailable",
       },
