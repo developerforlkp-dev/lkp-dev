@@ -3010,8 +3010,7 @@ function MobilePlaceDetails({
       {/* Community Feedback */}
       <MobileCommunityFeedback />
 
-      {/* 8. Booking / CTA */}
-      <MobileCTA place={place} />
+      {/* 8. Booking / CTA Removed as requested */}
 
       {/* 9. Related Listings Strip */}
       <div style={{ padding: "0 16px" }}>
@@ -3020,6 +3019,7 @@ function MobilePlaceDetails({
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
           title="More Places To Explore"
+          titleStyle={{ fontSize: 24, marginBottom: 16 }}
         />
       </div>
 
