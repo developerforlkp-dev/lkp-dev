@@ -786,6 +786,7 @@ const StayBookingSystem = ({
     if (!stay) return { perNight: 0, subtotal: 0, discount: 0, warning: null, isOver: false };
     
     let totalOriginalPerNight = 0;
+    let headerOriginalPerNight = 0;
     let totalBaseAdultsLimit = 0;
     let totalBaseChildrenLimit = 0;
     let totalExtraAdultsLimit = 0;
@@ -828,6 +829,7 @@ const StayBookingSystem = ({
 
       finalExtraAP = extraAP;
       finalExtraCP = extraCP;
+      headerOriginalPerNight = basePrice;
 
       const exA = Math.max(0, (guests?.adults || 1) - totalBaseAdultsLimit);
       const exC = Math.max(0, (guests?.children || 0) - totalBaseChildrenLimit);
@@ -872,6 +874,13 @@ const StayBookingSystem = ({
         room._resolvedExtraAP = roomExtraAP;
         room._resolvedExtraCP = roomExtraCP;
       });
+
+      const selectedRoomBasePrices = resolvedSelectedRooms
+        .map((room) => Number(room.calculatedPrice || 0))
+        .filter((price) => Number.isFinite(price) && price > 0);
+      headerOriginalPerNight = selectedRoomBasePrices.length > 0
+        ? Math.min(...selectedRoomBasePrices)
+        : 0;
 
       // Use the exact distribution logic to count extra adults and children!
       const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults || 1, guests.children || 0);
@@ -1034,6 +1043,11 @@ const StayBookingSystem = ({
       + billingConfigDiscountAmount
       + earlyBirdDiscountAmount;
     const discountedPerNight = discountedBaseSubtotal / nights;
+    const totalDiscountRate = Math.max(
+      0,
+      Math.min(100, appliedDiscountPercent + billingConfigDiscountRate + earlyBirdDiscountPercent)
+    );
+    const headerPerNight = Math.max(0, headerOriginalPerNight * (1 - (totalDiscountRate / 100)));
 
     // Taxes from stay config; fallback to legacy 18% GST + 2% service charge
     const configuredTaxRate = Array.isArray(stay?.taxes)
@@ -1058,6 +1072,8 @@ const StayBookingSystem = ({
 
     return {
       perNight: discountedPerNight,
+      headerPerNight,
+      headerOriginalPerNight,
       originalPerNight: totalOriginalPerNight,
       subtotal: preTaxSubtotal,
       finalTotal: finalTotalWithTax,
@@ -2138,11 +2154,11 @@ const StayBookingSystem = ({
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                     {!fetchingAvailability && pricing.discount > 0 && (
                       <span style={{ fontSize: 13, fontWeight: 600, color: M, textDecoration: "line-through", opacity: 0.7 }}>
-                        {"\u20B9"}{formatPrice(pricing.originalPerNight)}
+                        {"\u20B9"}{formatPrice(pricing.headerOriginalPerNight || pricing.originalPerNight)}
                       </span>
                     )}
                     <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>
-                      {fetchingAvailability ? "..." : `${"\u20B9"}${formatPrice(pricing.perNight)}`}
+                      {fetchingAvailability ? "..." : `${"\u20B9"}${formatPrice(pricing.headerPerNight || pricing.perNight)}`}
                     </span>
                     <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>/ night</span>
                   </div>
