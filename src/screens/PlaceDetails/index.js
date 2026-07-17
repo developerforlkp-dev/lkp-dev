@@ -3010,16 +3010,17 @@ function MobilePlaceDetails({
       {/* Community Feedback */}
       <MobileCommunityFeedback />
 
-      {/* 8. Booking / CTA */}
-      <MobileCTA place={place} />
+      {/* 8. Booking / CTA Removed as requested */}
 
       {/* 9. Related Listings Strip */}
-      <div style={{ padding: "0 16px" }}>
+      <div>
         <RelatedListingsStrip
           businessInterestId={4}
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
           title="More Places To Explore"
+          sectionStyle={{ padding: "40px 16px" }}
+          titleStyle={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, marginBottom: "32px", fontFamily: "Poppins, sans-serif" }}
         />
       </div>
 
@@ -3248,6 +3249,8 @@ const PlaceDetails = () => {
         primaryCategoryId={primaryCategoryId}
         currentListingId={currentListingId}
         title="More Places To Explore"
+        sectionStyle={{ padding: "48px 80px" }}
+        titleStyle={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, marginBottom: "32px", fontFamily: "Poppins, sans-serif" }}
       />
 
       <Footer />
