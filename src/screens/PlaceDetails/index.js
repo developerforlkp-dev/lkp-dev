@@ -535,7 +535,7 @@ function PlaceHero({ place, galleryItems, id }) {
     return (
       <section style={{ position: "relative", width: "100%", background: W, paddingBottom: 24 }}>
         {/* Mobile Cover Image Wrapper */}
-        <div style={{ position: "relative", width: "100%", height: "55vh", overflow: "hidden" }}>
+        <div style={{ position: "relative", width: "100%", height: "40vh", overflow: "hidden" }}>
            <motion.img 
              key={activeIdx}
              src={baseItems[activeIdx]} 
