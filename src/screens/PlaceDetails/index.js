@@ -535,7 +535,7 @@ function PlaceHero({ place, galleryItems, id }) {
     return (
       <section style={{ position: "relative", width: "100%", background: W, paddingBottom: 24 }}>
         {/* Mobile Cover Image Wrapper */}
-        <div style={{ position: "relative", width: "100%", height: "55vh", overflow: "hidden" }}>
+        <div style={{ position: "relative", width: "100%", height: "40vh", overflow: "hidden" }}>
            <motion.img 
              key={activeIdx}
              src={baseItems[activeIdx]} 
@@ -2561,7 +2561,7 @@ function MobileItinerary({ place }) {
                   </div>
                 </div>
               )}
-              <h4 style={{ fontSize: 14, fontWeight: 700, color: FG, marginBottom: 6, margin: "0 0 6px 0" }}>{s.title || s.name}</h4>
+              <div style={{ fontSize: 14, fontWeight: 700, color: A, marginBottom: 6, margin: "0 0 6px 0", fontFamily: '"Inter", sans-serif' }}>{s.title || s.name}</div>
               <p style={{ fontSize: 11, color: M, lineHeight: 1.6, margin: 0 }}>{s.desc || s.description || s.briefDescription}</p>
             </div>
           </div>
