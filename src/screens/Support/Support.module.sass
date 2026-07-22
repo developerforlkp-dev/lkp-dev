@@ -405,8 +405,40 @@
   font-size: 14px
   line-height: 1.6
 
+.tabs
+  display: flex
+  flex-wrap: wrap
+  gap: 12px
+  margin-bottom: 24px
+
+.tabButton
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  min-height: 48px
+  padding: 0 22px
+  border-radius: 999px
+  border: 1px solid #cfe1e9
+  background: #f8fcfe
+  color: #4b6480
+  font-size: 13px
+  font-weight: 800
+  letter-spacing: 0.08em
+  text-transform: uppercase
+  transition: all .18s ease
+
+  &:hover
+    border-color: #8ed1dd
+    color: #046a7c
+
+.tabButtonActive
+  border-color: #0097b2
+  background: #eff8fb
+  color: #046a7c
+  box-shadow: 0 12px 24px rgba(0, 151, 178, 0.12)
+
 .ticketsSection
-  margin-top: 48px
+  margin-top: 8px
 
 .sectionHeader
   margin-bottom: 24px
@@ -596,6 +628,29 @@
   letter-spacing: 0.08em
   text-transform: uppercase
 
+.ticketContextRow
+  display: flex
+  flex-wrap: wrap
+  gap: 8px
+  margin-bottom: 10px
+
+  span
+    display: inline-flex
+    align-items: center
+    padding: 6px 10px
+    border-radius: 999px
+    background: #eff8fb
+    color: #046a7c
+    font-size: 11px
+    font-weight: 800
+    letter-spacing: 0.04em
+
+.ticketCreatedRow
+  margin-bottom: 12px
+  font-size: 14px
+  font-weight: 700
+  color: #35516d
+
 .ticketSummaryGrid
   display: grid
   grid-template-columns: repeat(2, minmax(0, 1fr))
@@ -665,6 +720,19 @@
   display: flex
   flex-direction: column
   gap: 16px
+  max-height: 520px
+  overflow-y: auto
+  padding-right: 8px
+
+  &::-webkit-scrollbar
+    width: 8px
+
+  &::-webkit-scrollbar-thumb
+    background: rgba(4, 106, 124, 0.24)
+    border-radius: 999px
+
+  &::-webkit-scrollbar-track
+    background: transparent
 
 .timelineItem
   display: grid
@@ -725,50 +793,55 @@
 
 .downloadRow
   display: flex
-  align-items: flex-start
+  align-items: center
   justify-content: space-between
-  gap: 14px
-  padding: 16px
-  border-radius: 18px
+  gap: 12px
+  padding: 12px 14px
+  border-radius: 16px
   border: 1px solid #dce8ef
   background: #fff
   +m
-    flex-direction: column
+    align-items: flex-start
 
 .downloadMeta
   display: flex
   flex-direction: column
-  gap: 5px
+  gap: 3px
   min-width: 0
+  flex: 1
 
   strong
-    font-size: 14px
+    font-size: 13px
     color: #0f2b43
-    word-break: break-word
+    line-height: 1.35
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
     +dark
       color: $n8
 
   span
-    font-size: 12px
-    line-height: 1.5
+    font-size: 11px
+    line-height: 1.4
     color: #62758b
 
 .downloadButton
   display: inline-flex
   align-items: center
   justify-content: center
-  gap: 8px
+  gap: 6px
   border: none
   border-radius: 999px
   background: #eaf8fb
   color: #046a7c
-  padding: 11px 16px
-  font-size: 12px
+  padding: 10px 14px
+  font-size: 11px
   font-weight: 800
   letter-spacing: 0.05em
   text-transform: uppercase
   cursor: pointer
   white-space: nowrap
+  flex-shrink: 0
 
   &:disabled
     opacity: 0.6

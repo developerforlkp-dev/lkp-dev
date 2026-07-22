@@ -57,11 +57,37 @@ const formatDateTime = (value) => {
   });
 };
 
+const formatDate = (value) => {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 const formatFileSize = (size) => {
   const numeric = Number(size || 0);
   if (!Number.isFinite(numeric) || numeric <= 0) return "0 KB";
   if (numeric >= 1024 * 1024) return `${(numeric / (1024 * 1024)).toFixed(1)} MB`;
   return `${Math.max(1, Math.round(numeric / 1024))} KB`;
+};
+
+const getCompactFileName = (fileName) => {
+  const raw = String(fileName || "Attachment").trim();
+  if (!raw) return "Attachment";
+
+  const lastDotIndex = raw.lastIndexOf(".");
+  const hasExtension = lastDotIndex > 0 && lastDotIndex < raw.length - 1;
+  const extension = hasExtension ? raw.slice(lastDotIndex) : "";
+  const baseName = hasExtension ? raw.slice(0, lastDotIndex) : raw;
+  const maxBaseLength = 16;
+
+  if (baseName.length <= maxBaseLength) return raw;
+
+  return `${baseName.slice(0, maxBaseLength).trim()}...${extension}`;
 };
 
 const getStatusTone = (status) => {
@@ -123,6 +149,7 @@ const Support = () => {
   const [ticketDetail, setTicketDetail] = useState(null);
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState(null);
   const [downloadError, setDownloadError] = useState("");
+  const [activeTab, setActiveTab] = useState("create");
 
   useEffect(() => {
     let mounted = true;
@@ -420,17 +447,38 @@ const Support = () => {
     ? [...ticketDetail.messages].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
     : [];
   const detailAttachments = Array.isArray(ticketDetail?.attachments) ? ticketDetail.attachments : [];
+  const showTicketsTab = isLoggedIn;
 
   return (
     <div className={styles.container}>
       <section className={styles.hero}>
         <div className={styles.heroBadge}>Customer Support</div>
-        <h1 className={styles.title}>Raise a support ticket</h1>
+        <h1 className={styles.title}>Support hub</h1>
         <p className={styles.subtitle}>
-          Tell us what went wrong, what you need help with, or what we should look into. Our team will review the ticket and get back to you as soon as possible.
+          Reach the support team, share supporting files, and track your requests from one place.
         </p>
       </section>
 
+      <div className={styles.tabs}>
+        <button
+          type="button"
+          className={`${styles.tabButton} ${activeTab === "create" ? styles.tabButtonActive : ""}`}
+          onClick={() => setActiveTab("create")}
+        >
+          Raise Ticket
+        </button>
+        {showTicketsTab ? (
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === "tickets" ? styles.tabButtonActive : ""}`}
+            onClick={() => setActiveTab("tickets")}
+          >
+            My Tickets
+          </button>
+        ) : null}
+      </div>
+
+      {activeTab === "create" ? (
       <div className={styles.layout}>
         <section className={styles.formCard}>
           <div className={styles.cardHeader}>
@@ -668,12 +716,12 @@ const Support = () => {
           </div>
         </aside>
       </div>
+      ) : null}
 
-      {isLoggedIn ? (
+      {showTicketsTab && activeTab === "tickets" ? (
         <section className={styles.ticketsSection}>
           <div className={styles.sectionHeader}>
             <div>
-              <div className={styles.sectionBadge}>My Tickets</div>
               <h2 className={styles.sectionTitle}>Track your existing support requests</h2>
               <p className={styles.sectionSubtitle}>
                 View ticket status, follow the support timeline, and download files shared for a ticket.
@@ -709,7 +757,7 @@ const Support = () => {
                       </div>
                       <div className={styles.ticketListMeta}>
                         <span><Ticket size={14} /> {ticket.ticketId}</span>
-                        <span><Clock3 size={14} /> Updated {formatDateTime(ticket.updatedAt)}</span>
+                        <span><Clock3 size={14} /> Created {formatDate(ticket.createdAt)}</span>
                       </div>
                       <div className={styles.ticketListCategory}>{ticket.issueCategory}</div>
                     </button>
@@ -736,16 +784,16 @@ const Support = () => {
                         <span className={`${styles.statusBadge} ${getStatusTone(detailTicket.status)}`}>{detailTicket.status}</span>
                       </div>
                       <h3>{detailTicket.subject}</h3>
+                      <div className={styles.ticketContextRow}>
+                        <span>{detailTicket.issueCategory || "—"}</span>
+                        {detailTicket.customIssueText ? <span>{detailTicket.customIssueText}</span> : null}
+                      </div>
+                      <div className={styles.ticketCreatedRow}>Created {formatDate(detailTicket.createdAt)}</div>
                       <p>{detailTicket.description}</p>
                     </div>
                   </div>
 
-                  <div className={styles.ticketSummaryGrid}>
-                    <div className={styles.summaryCard}>
-                      <span className={styles.summaryLabel}>Issue Category</span>
-                      <strong>{detailTicket.issueCategory || "—"}</strong>
-                      {detailTicket.customIssueText ? <span>{detailTicket.customIssueText}</span> : null}
-                    </div>
+<div className={styles.ticketSummaryGrid}>
                     <div className={styles.summaryCard}>
                       <span className={styles.summaryLabel}>Customer</span>
                       <strong>{detailTicket.customerName || "—"}</strong>
@@ -756,11 +804,6 @@ const Support = () => {
                       <span className={styles.summaryLabel}>Assigned To</span>
                       <strong>{detailTicket.assignedEmployeeName || "Not assigned yet"}</strong>
                       <span>{detailTicket.assignedEmployeeEmail || "The support team will pick this up soon."}</span>
-                    </div>
-                    <div className={styles.summaryCard}>
-                      <span className={styles.summaryLabel}>Dates</span>
-                      <strong>Created {formatDateTime(detailTicket.createdAt)}</strong>
-                      <span>Updated {formatDateTime(detailTicket.updatedAt)}</span>
                     </div>
                   </div>
 
@@ -805,9 +848,11 @@ const Support = () => {
                           {detailAttachments.map((attachment) => (
                             <div key={attachment.supportTicketAttachmentId} className={styles.downloadRow}>
                               <div className={styles.downloadMeta}>
-                                <strong>{attachment.fileName || "Attachment"}</strong>
-                                <span>{attachment.mimeType || "Unknown type"} • {formatFileSize(attachment.fileSize)}</span>
-                                <span>Added {formatDateTime(attachment.createdAt)}</span>
+                                <strong title={attachment.fileName || "Attachment"}>
+                                  {getCompactFileName(attachment.fileName)}
+                                </strong>
+                                <span>{formatFileSize(attachment.fileSize)} • {attachment.mimeType || "Unknown type"}</span>
+                                <span>{formatDateTime(attachment.createdAt)}</span>
                               </div>
                               <button
                                 type="button"
