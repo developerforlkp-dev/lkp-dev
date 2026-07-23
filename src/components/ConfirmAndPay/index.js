@@ -106,6 +106,14 @@ const ConfirmAndPay = ({
         </div>
       </div>
       
+      {guestDetails && setGuestDetails && (
+        <GuestDetailsForm
+          guestDetails={guestDetails}
+          setGuestDetails={setGuestDetails}
+          numberOfGuests={numberOfGuests || 1}
+        />
+      )}
+      
       {children}
 
       <div className={styles.list}>
@@ -207,14 +215,6 @@ const ConfirmAndPay = ({
             </div>
             
             {addonsSection}
-
-            {guestDetails && setGuestDetails && (
-              <GuestDetailsForm
-                guestDetails={guestDetails}
-                setGuestDetails={setGuestDetails}
-                numberOfGuests={numberOfGuests || 1}
-              />
-            )}
 
             <div className={styles.messageSection}>
               <div className={styles.category}>Message the host</div>
