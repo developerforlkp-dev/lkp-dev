@@ -2447,7 +2447,7 @@ function HostDetails({ event, hostName }) {
     event?.leadUserId ||
     event?.host?.leadUserId ||
     event?.hostId;
-  const hostDescription = host?.bio || host?.description || host?.about || host?.summary || event?.organizerDescription || "Curators of memorable experiences, thoughtful gatherings, and community-led moments.";
+  const hostDescription = host?.bio || host?.description || host?.about || host?.summary || "";
   const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
   const hostPhone = host?.phone || host?.phoneNumber || event?.host?.phone || event?.host?.phoneNumber || "";
   const hostEmail = host?.email || event?.host?.email || "";
@@ -2474,9 +2474,11 @@ function HostDetails({ event, hostName }) {
           </div>
           <h3 className="mob-host-name" style={{ color: FG }}>{displayHostName}</h3>
           <p className="mob-host-label" style={{ color: A }}>{hostSubtitle}</p>
-          <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center", maxWidth: "100%" }}>
-            {hostDescription && hostDescription.length > 150 ? hostDescription.substring(0, 150) + "..." : hostDescription}
-          </p>
+          {hostDescription ? (
+            <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center", maxWidth: "100%" }}>
+              {hostDescription.length > 150 ? hostDescription.substring(0, 150) + "..." : hostDescription}
+            </p>
+          ) : null}
 
 
 
@@ -2696,20 +2698,22 @@ function HostDetails({ event, hostName }) {
                   borderLeft: `3px solid ${A}`,
                   margin: "12px 20px"
                 }}>
-                  <p style={{
-                    fontSize: "12.5px",
-                    color: M,
-                    lineHeight: 1.55,
-                    margin: 0,
-                    fontWeight: 400,
-                    fontStyle: "italic",
-                    overflow: "hidden",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: "vertical"
-                  }}>
-                    "{hostDescription}"
-                  </p>
+                  {hostDescription ? (
+                    <p style={{
+                      fontSize: "12.5px",
+                      color: M,
+                      lineHeight: 1.55,
+                      margin: 0,
+                      fontWeight: 400,
+                      fontStyle: "italic",
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical"
+                    }}>
+                      "{hostDescription}"
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
