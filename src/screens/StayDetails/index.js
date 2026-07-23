@@ -18,6 +18,7 @@ import RoomCards from "./RoomCards";
 import roomStyles from "./RoomCards.module.sass";
 import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview } from "../../utils/api";
 import StayBookingSystem from "./StayBookingSystem";
+import StayItinerary from "./StayItinerary";
 import { useTheme, THEMES } from "../../components/JUI/Theme";
 import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
@@ -2807,6 +2808,7 @@ const StayDetails = () => {
         if (!id) return;
         setLoading(true);
         const data = await getStayDetails(id);
+        console.log("Stay API Data:", data);
         if (!mounted) return;
         if (isStayUnavailable(data)) {
           showUnavailablePopupAndRedirect();
@@ -3405,6 +3407,8 @@ const StayDetails = () => {
           </div>
         );
       })()}
+
+      <StayItinerary itinerary={stay?.itinerary} />
 
       <StayLocation stay={stay} />
 
