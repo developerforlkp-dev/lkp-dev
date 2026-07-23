@@ -946,7 +946,7 @@ function MobileHero({ event, heroRef }) {
         zIndex: 20
       }}>
         {/* Date Card */}
-        <div style={{ background: W, borderRadius: 20, padding: "12px 10px", display: "flex", gap: 10, alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}>
+        <div style={{ background: W, borderRadius: 20, padding: "12px 10px", display: "flex", gap: 10, alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", minWidth: 0 }}>
           <div style={{
             background: W,
             borderRadius: 12,
@@ -962,7 +962,7 @@ function MobileHero({ event, heroRef }) {
             <span style={{ fontSize: 9, fontWeight: 800, background: A, color: W, width: "100%", textAlign: "center", padding: "4px 0", letterSpacing: "0.1em" }}>{dateMonth}</span>
             <span style={{ fontSize: 16, fontWeight: 800, color: FG, marginTop: 2 }}>{dateDay}</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
             <span style={{ fontSize: 9, letterSpacing: "0.1em", fontWeight: 800, color: A }}>DATE</span>
             <span style={{ fontSize: 12, fontWeight: 800, color: FG, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{date}</span>
             <span style={{ fontSize: 10, color: M, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayTime}</span>
@@ -970,7 +970,7 @@ function MobileHero({ event, heroRef }) {
         </div>
 
         {/* Venue Card */}
-        <div style={{ background: W, borderRadius: 20, padding: "12px 10px", display: "flex", gap: 10, alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}>
+        <div style={{ background: W, borderRadius: 20, padding: "12px 10px", display: "flex", gap: 10, alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", minWidth: 0 }}>
           <div style={{
             background: `${A}15`,
             borderRadius: 12,
@@ -984,7 +984,7 @@ function MobileHero({ event, heroRef }) {
           }}>
             <MapPin size={22} strokeWidth={2.5} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
             <span style={{ fontSize: 9, letterSpacing: "0.1em", fontWeight: 800, color: A }}>VENUE</span>
             <span style={{ fontSize: 12, fontWeight: 800, color: FG, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{venueMain}</span>
             <span style={{ fontSize: 10, color: M, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{venueSub}</span>
