@@ -243,6 +243,30 @@ const Checkout = () => {
   const [pendingOrderDetails, setPendingOrderDetails] = useState(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [guestDetails, setGuestDetails] = useState({
+    title: "Mr",
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobileNumber: "",
+    countryCode: "+91",
+    additionalGuests: [],
+    gstDetails: { companyName: "", gstNumber: "" },
+  });
+  const [guestErrors, setGuestErrors] = useState({});
+
+  const handleGuestValidationFailed = (errors, firstErrorField) => {
+    setGuestErrors(errors || {});
+    if (firstErrorField) {
+      setTimeout(() => {
+        const el = document.getElementById(firstErrorField);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus({ preventScroll: true });
+        }
+      }, 100);
+    }
+  };
 
   // Edit functionality state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -950,17 +974,21 @@ const Checkout = () => {
             guests={!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate)}
             dateValue={items[0]?.title}
             timeValue={items[1]?.category === "Time slot" ? items[1]?.title : undefined}
-            guestValue={items[2]?.title || items[1]?.title} // fallback if there's no time slot
+            guestValue={items[2]?.title}
             onEditDate={() => setShowDatePicker(true)}
             onEditGuests={() => setShowGuestPicker(true)}
-            isStay={!!(bookingData?.isStay || bookingData?.checkInDate || bookingData?.checkOutDate)}
+            messageText={messageText}
+            setMessageText={setMessageText}
+            guestDetails={guestDetails}
+            setGuestDetails={setGuestDetails}
+            guestErrors={guestErrors}
+            numberOfGuests={(bookingData?.guests?.adults || 0) + (bookingData?.guests?.children || 0) || bookingData?.bookingSummary?.guestCount || bookingData?.guests?.guests || 1}
+            isStay={isStayBooking}
             checkInDate={bookingData?.checkInDate}
             checkOutDate={bookingData?.checkOutDate}
             roomType={bookingData?.roomType}
             mealPlan={bookingData?.mealPlan}
             childAges={bookingData?.childAges || []}
-            messageText={messageText}
-            setMessageText={setMessageText}
             addonDetails={selectedAddOns}
             addOns={selectedAddOns}
             currency={resolvedCurrency}
@@ -1007,6 +1035,9 @@ const Checkout = () => {
             paymentData={effectivePaymentData}
             messageText={messageText}
             bookingData={bookingData}
+            isStay={true}
+            guestDetails={guestDetails}
+            onGuestValidationFailed={handleGuestValidationFailed}
           />
         </div>
       </div>

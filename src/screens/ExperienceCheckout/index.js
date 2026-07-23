@@ -53,6 +53,30 @@ const Checkout = () => {
   const [addonDetails, setAddonDetails] = useState([]);
   const [reviewsData, setReviewsData] = useState({ rating: null, count: 0 });
   const [messageText, setMessageText] = useState("");
+  const [guestDetails, setGuestDetails] = useState({
+    title: "Mr",
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobileNumber: "",
+    countryCode: "+91",
+    additionalGuests: [],
+    gstDetails: { companyName: "", gstNumber: "" },
+  });
+  const [guestErrors, setGuestErrors] = useState({});
+
+  const handleGuestValidationFailed = (errors, firstErrorField) => {
+    setGuestErrors(errors || {});
+    if (firstErrorField) {
+      setTimeout(() => {
+        const el = document.getElementById(firstErrorField);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus({ preventScroll: true });
+        }
+      }, 100);
+    }
+  };
 
   // Initialize add-ons from location state
   useEffect(() => {
@@ -847,6 +871,10 @@ const Checkout = () => {
             guestValue={items[2]?.title || items[1]?.title}
             messageText={messageText}
             setMessageText={setMessageText}
+            guestDetails={guestDetails}
+            setGuestDetails={setGuestDetails}
+            guestErrors={guestErrors}
+            numberOfGuests={(bookingData?.guests?.adults || 0) + (bookingData?.guests?.children || 0) || bookingData?.bookingSummary?.guestCount || bookingData?.guests?.guests || 1}
             addonDetails={addonDetails}
             addOns={selectedAddOns}
             currency={resolvedCurrency}
@@ -879,6 +907,8 @@ const Checkout = () => {
             paymentData={paymentData}
             messageText={messageText}
             bookingData={bookingData}
+            guestDetails={guestDetails}
+            onGuestValidationFailed={handleGuestValidationFailed}
           />
         </div>
       </div>
