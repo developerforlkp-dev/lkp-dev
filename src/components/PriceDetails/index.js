@@ -31,6 +31,7 @@ const PriceDetails = ({
   messageText,
   bookingData,
   hideHeader,
+  guestDetails,
 }) => {
   const [discound, setDiscound] = useState("");
 
@@ -125,7 +126,14 @@ const PriceDetails = ({
 
         {/* ── Checkout Button ── */}
         <div className={styles.checkoutAction}>
-          <CreditCard buttonUrl={buttonUrl} hidePaymentFields paymentData={paymentData} messageText={messageText} bookingData={bookingData} />
+          <CreditCard 
+            buttonUrl={buttonUrl} 
+            hidePaymentFields 
+            paymentData={paymentData} 
+            messageText={messageText} 
+            bookingData={bookingData}
+            guestDetails={guestDetails}
+          />
         </div>
 
         {discoundCode && (

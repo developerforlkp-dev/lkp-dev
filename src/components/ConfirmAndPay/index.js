@@ -3,6 +3,7 @@ import cn from "classnames";
 import styles from "./ConfirmAndPay.module.sass";
 import Icon from "../Icon";
 import TextArea from "../TextArea";
+import GuestDetailsForm from "../GuestDetailsForm";
 
 const ConfirmAndPay = ({
   className,
@@ -30,6 +31,9 @@ const ConfirmAndPay = ({
   // Message state passed down
   messageText,
   setMessageText,
+  guestDetails,
+  setGuestDetails,
+  numberOfGuests,
 }) => {
   const parseNumericAmount = (value) => {
     if (value === null || value === undefined) return 0;
@@ -203,6 +207,14 @@ const ConfirmAndPay = ({
             </div>
             
             {addonsSection}
+
+            {guestDetails && setGuestDetails && (
+              <GuestDetailsForm
+                guestDetails={guestDetails}
+                setGuestDetails={setGuestDetails}
+                numberOfGuests={numberOfGuests || 1}
+              />
+            )}
 
             <div className={styles.messageSection}>
               <div className={styles.category}>Message the host</div>

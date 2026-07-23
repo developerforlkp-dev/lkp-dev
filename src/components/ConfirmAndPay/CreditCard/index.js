@@ -10,6 +10,7 @@ import {
   createStayOrder,
   normalizeOrderPaymentSession,
   sendOrderMessage,
+  saveGuestDetails,
 } from "../../../utils/api";
 import {
   clearPendingCheckoutState,
@@ -169,7 +170,7 @@ const ensureRazorpaySession = async ({ orderId, payment, bookingData }) => {
   return initialized?.persistedPayment || payment;
 };
 
-const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentData = null, messageText = "", bookingData: bookingDataProp = null }) => {
+const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentData = null, messageText = "", bookingData: bookingDataProp = null, guestDetails = null }) => {
   const [save, setSave] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const history = useHistory();
@@ -187,9 +188,32 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
 
   const handleConfirmClick = async () => {
     if (isProcessing) return;
-    setIsProcessing(true);
-
+    
     const bookingData = getStoredBookingData(bookingDataProp);
+    
+    // Calculate total guests for validation
+    const adults = Number(bookingData?.guests?.adults || bookingData?.pricing?.adultsCount || bookingData?.adultsCount || bookingData?.adultCount || 0);
+    const children = Number(bookingData?.guests?.children || bookingData?.pricing?.childrenCount || bookingData?.childrenCount || bookingData?.childCount || 0);
+    const guestsCount = Number(bookingData?.bookingSummary?.guestCount || bookingData?.guests?.guests || 0);
+    const totalGuestsNum = (adults > 0 || children > 0) ? (adults + children) : (guestsCount || 1);
+    
+    if (guestDetails) {
+      if (!guestDetails.firstName || !guestDetails.lastName || !guestDetails.email || !guestDetails.mobileNumber) {
+        alert("Please fill all mandatory Primary Guest Details (First Name, Last Name, Email, Mobile Number).");
+        return;
+      }
+      
+      const extraGuestsCount = Math.max(0, totalGuestsNum - 1);
+      for (let i = 0; i < extraGuestsCount; i++) {
+        const ag = guestDetails.additionalGuests?.[i];
+        if (!ag || !ag.firstName || !ag.lastName) {
+          alert(`Please fill First Name and Last Name for Guest ${i + 2}.`);
+          return;
+        }
+      }
+    }
+    
+    setIsProcessing(true);
     let payment = null;
     try {
       const raw = localStorage.getItem("pendingPayment");
@@ -248,10 +272,53 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
         });
         holdExpiresAt = activePayment?.holdExpiresAt || holdExpiresAt;
       }
+      
+      if (orderId && guestDetails) {
+        const extraGuestsCount = Math.max(0, totalGuestsNum - 1);
+        const processedAdditionalGuests = [];
+        for (let i = 0; i < extraGuestsCount; i++) {
+          processedAdditionalGuests.push(guestDetails.additionalGuests?.[i] || { title: "Mr", firstName: "", lastName: "" });
+        }
+        
+        const payload = {
+          numberOfGuests: totalGuestsNum,
+          guestDetails: {
+            title: guestDetails.title || "Mr",
+            firstName: guestDetails.firstName,
+            lastName: guestDetails.lastName,
+            email: guestDetails.email,
+            mobileNumber: guestDetails.mobileNumber,
+            countryCode: guestDetails.countryCode || "+91",
+            additionalGuests: processedAdditionalGuests,
+          }
+        };
+        
+        if (guestDetails.gstDetails?.companyName && guestDetails.gstDetails?.gstNumber) {
+          payload.guestDetails.gstDetails = {
+            companyName: guestDetails.gstDetails.companyName,
+            gstNumber: guestDetails.gstDetails.gstNumber
+          };
+        }
+        
+        await saveGuestDetails(orderId, payload);
+      }
     } catch (error) {
       console.error("Failed to create or initialize payment:", error);
       const hasOrderId = Boolean(orderId);
-      alert(hasOrderId ? getInitializePaymentErrorMessage(error) : getOrderCreationErrorMessage(error));
+      const respData = error?.response?.data;
+      let apiErrorMsg = respData?.message || respData?.details;
+      
+      // If there are specific field errors from the backend, append them
+      if (respData?.errors) {
+        const errorDetails = typeof respData.errors === 'string' 
+          ? respData.errors 
+          : JSON.stringify(respData.errors);
+        apiErrorMsg = `${apiErrorMsg}\nDetails: ${errorDetails}`;
+      } else if (respData && typeof respData === 'object' && !apiErrorMsg) {
+        apiErrorMsg = JSON.stringify(respData);
+      }
+      
+      alert(apiErrorMsg || (hasOrderId ? getInitializePaymentErrorMessage(error) : getOrderCreationErrorMessage(error)));
       setIsProcessing(false);
       return;
     }

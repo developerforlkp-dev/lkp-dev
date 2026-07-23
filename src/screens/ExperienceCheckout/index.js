@@ -53,6 +53,16 @@ const Checkout = () => {
   const [addonDetails, setAddonDetails] = useState([]);
   const [reviewsData, setReviewsData] = useState({ rating: null, count: 0 });
   const [messageText, setMessageText] = useState("");
+  const [guestDetails, setGuestDetails] = useState({
+    title: "Mr",
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobileNumber: "",
+    countryCode: "+91",
+    additionalGuests: [],
+    gstDetails: { companyName: "", gstNumber: "" },
+  });
 
   // Initialize add-ons from location state
   useEffect(() => {
@@ -847,6 +857,9 @@ const Checkout = () => {
             guestValue={items[2]?.title || items[1]?.title}
             messageText={messageText}
             setMessageText={setMessageText}
+            guestDetails={guestDetails}
+            setGuestDetails={setGuestDetails}
+            numberOfGuests={(bookingData?.guests?.adults || 0) + (bookingData?.guests?.children || 0) || bookingData?.bookingSummary?.guestCount || bookingData?.guests?.guests || 1}
             addonDetails={addonDetails}
             addOns={selectedAddOns}
             currency={resolvedCurrency}
@@ -879,6 +892,7 @@ const Checkout = () => {
             paymentData={paymentData}
             messageText={messageText}
             bookingData={bookingData}
+            guestDetails={guestDetails}
           />
         </div>
       </div>
