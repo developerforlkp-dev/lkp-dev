@@ -1306,7 +1306,7 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
   );
 }
 
-export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger, initialDate, initialGuests }) {
+export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests }) {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
   const isMountedRef = useRef(true);
@@ -3128,8 +3128,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       listingId: listingId,
       listingTitle: listing?.title || listing?.name || "Experience",
       listingImage: listing?.coverPhotoUrl || listing?.listingMedia?.[0]?.url || "",
-      hostName: listing?.host?.firstName ? `${listing?.host?.firstName} ${listing?.host?.lastName || ""}`.trim() : "Host",
-      hostAvatar: listing?.host?.profilePhotoUrl || "/images/content/avatar.jpg",
+      hostName: externalHostName || (listing?.host?.firstName ? `${listing?.host?.firstName} ${listing?.host?.lastName || ""}`.trim() : "Host"),
+      hostAvatar: externalHostAvatar || listing?.host?.profilePhotoUrl || "/images/content/avatar.jpg",
       selectedDate: dateStr,
       selectedTimeSlot: startTime,
       guests: guestsObj,
