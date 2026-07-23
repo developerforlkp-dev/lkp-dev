@@ -1397,6 +1397,41 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
 
   const isEventBooking = type === "event";
+  const eventScheduleType = String(
+    listing?.eventScheduleType ||
+    listing?.scheduleType ||
+    listing?.event_schedule_type ||
+    ""
+  ).trim().toLowerCase();
+  const lockedSingleEventDate = useMemo(() => {
+    if (!isEventBooking || eventScheduleType !== "single") return null;
+    const rawDate =
+      listing?.startDate ||
+      listing?.eventStartDate ||
+      listing?.bookingStartDate ||
+      listing?.eventDate ||
+      listing?.date;
+    if (!rawDate) return null;
+    const parsed = moment(rawDate);
+    return parsed.isValid() ? parsed : null;
+  }, [
+    eventScheduleType,
+    isEventBooking,
+    listing?.bookingStartDate,
+    listing?.date,
+    listing?.eventDate,
+    listing?.eventStartDate,
+    listing?.startDate,
+  ]);
+  const isSingleEventSchedule = Boolean(lockedSingleEventDate);
+
+  useEffect(() => {
+    if (!isSingleEventSchedule || !lockedSingleEventDate) return;
+    setStartDate((current) => {
+      if (current && moment(current).isSame(lockedSingleEventDate, "day")) return current;
+      return lockedSingleEventDate.clone();
+    });
+  }, [isSingleEventSchedule, lockedSingleEventDate]);
 
   const getBusinessInterestLabel = useCallback(() => {
     const normalizedType = String(type || "").trim().toLowerCase();
@@ -3843,7 +3878,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setStartDate(null);
+                                      if (!isSingleEventSchedule) {
+                                        setStartDate(null);
+                                      }
                                       setStartTime(null);
                                       setSelectedEventSlotIds([]);
                                       setSelectedTicketTypeId("");
@@ -3869,14 +3906,19 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               </div>
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                                 <div
-                                  onClick={() => setShowDatePicker(true)}
+                                  onClick={() => {
+                                    if (!isSingleEventSchedule) {
+                                      setShowDatePicker(true);
+                                    }
+                                  }}
                                   style={{
                                     padding: "10px 14px",
                                     background: BG,
                                     borderRadius: 16,
                                     border: `1px solid ${validationErrors.date ? E : B}`,
-                                    cursor: "pointer",
+                                    cursor: isSingleEventSchedule ? "default" : "pointer",
                                     transition: "0.2s",
+                                    opacity: isSingleEventSchedule ? 0.85 : 1,
                                   }}
                                 >
                                   <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>Date</p>
@@ -3923,7 +3965,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             </div>
 
                             <AnimatePresence>
-                              {showDatePicker && (
+                              {showDatePicker && !isSingleEventSchedule && (
                                 <motion.div
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
