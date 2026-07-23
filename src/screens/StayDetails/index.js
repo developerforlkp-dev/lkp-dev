@@ -3955,6 +3955,7 @@ function PropertyStayCard({ stay }) {
   const [showModal, setShowModal] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isImgHovered, setIsImgHovered] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   const toDateOnly = (value) => {
     if (!value) return null;
@@ -4175,9 +4176,17 @@ function PropertyStayCard({ stay }) {
 
             {/* Amenities Row */}
             <div style={{ display: "flex", flexWrap: isMobile ? "nowrap" : "wrap", gap: "8px", overflowX: isMobile ? "auto" : "visible", paddingBottom: isMobile ? "4px" : "0", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-              {amenities.map((amenity, idx) => (
+              {(showAllAmenities ? amenities : amenities.slice(0, 5)).map((amenity, idx) => (
                 <span key={idx} style={{ flexShrink: 0, fontSize: "11px", fontWeight: 700, color: A, background: "rgba(0, 151, 178, 0.06)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(0, 151, 178, 0.15)", whiteSpace: "nowrap" }}>{amenity}</span>
               ))}
+              {!showAllAmenities && amenities.length > 5 && (
+                <span 
+                  onClick={() => setShowAllAmenities(true)} 
+                  style={{ cursor: "pointer", flexShrink: 0, fontSize: "11px", fontWeight: 700, color: A, background: "rgba(0, 151, 178, 0.06)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(0, 151, 178, 0.15)", whiteSpace: "nowrap" }}
+                >
+                  +{amenities.length - 5} more
+                </span>
+              )}
             </div>
           </div>
         </div>
