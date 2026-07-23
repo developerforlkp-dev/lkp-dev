@@ -3,7 +3,7 @@ import cn from "classnames";
 import styles from "./GuestDetailsForm.module.sass";
 import TextInput from "../TextInput";
 
-const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDetails }) => {
+const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDetails, guestErrors = {} }) => {
   const handlePrimaryChange = (e) => {
     const { name, value } = e.target;
     setGuestDetails({ ...guestDetails, [name]: value });
@@ -51,20 +51,24 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
           </div>
           <div className={styles.colField}>
             <TextInput
+              id={`guest-field-ag-${i}-firstName`}
               label="First Name"
               name="firstName"
               value={ag.firstName}
               onChange={(e) => handleAdditionalGuestChange(i, e)}
               placeholder="First Name"
+              error={guestErrors[`ag-${i}-firstName`]}
             />
           </div>
           <div className={styles.colField}>
             <TextInput
+              id={`guest-field-ag-${i}-lastName`}
               label="Last Name"
               name="lastName"
               value={ag.lastName}
               onChange={(e) => handleAdditionalGuestChange(i, e)}
               placeholder="Last Name"
+              error={guestErrors[`ag-${i}-lastName`]}
             />
           </div>
         </div>
@@ -94,21 +98,25 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
           </div>
           <div className={styles.colField}>
             <TextInput
+              id="guest-field-firstName"
               label="First Name *"
               name="firstName"
               value={guestDetails.firstName || ""}
               onChange={handlePrimaryChange}
               placeholder="First Name"
+              error={guestErrors.firstName}
               required
             />
           </div>
           <div className={styles.colField}>
             <TextInput
+              id="guest-field-lastName"
               label="Last Name *"
               name="lastName"
               value={guestDetails.lastName || ""}
               onChange={handlePrimaryChange}
               placeholder="Last Name"
+              error={guestErrors.lastName}
               required
             />
           </div>
@@ -117,12 +125,14 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
         <div className={styles.row}>
           <div className={styles.colFieldHalf}>
             <TextInput
+              id="guest-field-email"
               label="Email Address *"
               name="email"
               type="email"
               value={guestDetails.email || ""}
               onChange={handlePrimaryChange}
               placeholder="Email Address"
+              error={guestErrors.email}
               required
             />
           </div>
@@ -138,12 +148,17 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
           </div>
           <div className={styles.colPhone}>
             <TextInput
+              id="guest-field-mobileNumber"
               label="Mobile Number *"
               name="mobileNumber"
               type="tel"
               value={guestDetails.mobileNumber || ""}
-              onChange={handlePrimaryChange}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '').substring(0, 10);
+                setGuestDetails({ ...guestDetails, mobileNumber: val });
+              }}
               placeholder="Mobile Number"
+              error={guestErrors.mobileNumber}
               required
             />
           </div>

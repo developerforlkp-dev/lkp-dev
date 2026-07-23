@@ -33,6 +33,7 @@ const ConfirmAndPay = ({
   setMessageText,
   guestDetails,
   setGuestDetails,
+  guestErrors = {},
   numberOfGuests,
 }) => {
   const parseNumericAmount = (value) => {
@@ -110,6 +111,7 @@ const ConfirmAndPay = ({
         <GuestDetailsForm
           guestDetails={guestDetails}
           setGuestDetails={setGuestDetails}
+          guestErrors={guestErrors}
           numberOfGuests={numberOfGuests || 1}
         />
       )}

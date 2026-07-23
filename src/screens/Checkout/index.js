@@ -253,6 +253,20 @@ const Checkout = () => {
     additionalGuests: [],
     gstDetails: { companyName: "", gstNumber: "" },
   });
+  const [guestErrors, setGuestErrors] = useState({});
+
+  const handleGuestValidationFailed = (errors, firstErrorField) => {
+    setGuestErrors(errors || {});
+    if (firstErrorField) {
+      setTimeout(() => {
+        const el = document.getElementById(firstErrorField);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus({ preventScroll: true });
+        }
+      }, 100);
+    }
+  };
 
   // Edit functionality state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -967,6 +981,7 @@ const Checkout = () => {
             setMessageText={setMessageText}
             guestDetails={guestDetails}
             setGuestDetails={setGuestDetails}
+            guestErrors={guestErrors}
             numberOfGuests={(bookingData?.guests?.adults || 0) + (bookingData?.guests?.children || 0) || bookingData?.bookingSummary?.guestCount || bookingData?.guests?.guests || 1}
             isStay={isStayBooking}
             checkInDate={bookingData?.checkInDate}
@@ -1020,7 +1035,9 @@ const Checkout = () => {
             paymentData={effectivePaymentData}
             messageText={messageText}
             bookingData={bookingData}
+            isStay={true}
             guestDetails={guestDetails}
+            onGuestValidationFailed={handleGuestValidationFailed}
           />
         </div>
       </div>

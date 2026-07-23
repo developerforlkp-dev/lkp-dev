@@ -170,7 +170,7 @@ const ensureRazorpaySession = async ({ orderId, payment, bookingData }) => {
   return initialized?.persistedPayment || payment;
 };
 
-const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentData = null, messageText = "", bookingData: bookingDataProp = null, guestDetails = null }) => {
+const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentData = null, messageText = "", bookingData: bookingDataProp = null, guestDetails = null, onGuestValidationFailed }) => {
   const [save, setSave] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const history = useHistory();
@@ -198,17 +198,54 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
     const totalGuestsNum = (adults > 0 || children > 0) ? (adults + children) : (guestsCount || 1);
     
     if (guestDetails) {
-      if (!guestDetails.firstName || !guestDetails.lastName || !guestDetails.email || !guestDetails.mobileNumber) {
-        alert("Please fill all mandatory Primary Guest Details (First Name, Last Name, Email, Mobile Number).");
-        return;
+      let errors = {};
+      let firstErrorField = null;
+
+      if (!guestDetails.firstName) {
+        errors.firstName = "First name is required";
+        if (!firstErrorField) firstErrorField = "guest-field-firstName";
+      }
+      if (!guestDetails.lastName) {
+        errors.lastName = "Last name is required";
+        if (!firstErrorField) firstErrorField = "guest-field-lastName";
+      }
+      if (!guestDetails.email) {
+        errors.email = "Email is required";
+        if (!firstErrorField) firstErrorField = "guest-field-email";
+      }
+      
+      const phoneDigits = guestDetails.mobileNumber?.replace(/\D/g, "") || "";
+      if (!guestDetails.mobileNumber) {
+        errors.mobileNumber = "Mobile number is required";
+        if (!firstErrorField) firstErrorField = "guest-field-mobileNumber";
+      } else if (phoneDigits.length !== 10) {
+        errors.mobileNumber = "Mobile number must be exactly 10 digits";
+        if (!firstErrorField) firstErrorField = "guest-field-mobileNumber";
       }
       
       const extraGuestsCount = Math.max(0, totalGuestsNum - 1);
       for (let i = 0; i < extraGuestsCount; i++) {
         const ag = guestDetails.additionalGuests?.[i];
-        if (!ag || !ag.firstName || !ag.lastName) {
-          alert(`Please fill First Name and Last Name for Guest ${i + 2}.`);
-          return;
+        if (!ag || !ag.firstName) {
+          errors[`ag-${i}-firstName`] = "First name is required";
+          if (!firstErrorField) firstErrorField = `guest-field-ag-${i}-firstName`;
+        }
+        if (!ag || !ag.lastName) {
+          errors[`ag-${i}-lastName`] = "Last name is required";
+          if (!firstErrorField) firstErrorField = `guest-field-ag-${i}-lastName`;
+        }
+      }
+
+      if (Object.keys(errors).length > 0) {
+        if (onGuestValidationFailed) {
+          onGuestValidationFailed(errors, firstErrorField);
+        } else {
+          alert("Please fill all mandatory Guest Details.");
+        }
+        return;
+      } else {
+        if (onGuestValidationFailed) {
+          onGuestValidationFailed({});
         }
       }
     }

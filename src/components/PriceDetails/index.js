@@ -32,6 +32,7 @@ const PriceDetails = ({
   bookingData,
   hideHeader,
   guestDetails,
+  onGuestValidationFailed,
 }) => {
   const [discound, setDiscound] = useState("");
 
@@ -133,6 +134,7 @@ const PriceDetails = ({
             messageText={messageText} 
             bookingData={bookingData}
             guestDetails={guestDetails}
+            onGuestValidationFailed={onGuestValidationFailed}
           />
         </div>
 
