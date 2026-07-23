@@ -130,14 +130,14 @@ const StayItinerary = ({ itinerary }) => {
                     
                     {/* Icon & Time */}
                     <div className="stay-itinerary-icon-row" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexDirection: isEven ? "row" : "row-reverse" }}>
-                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: `${tokens.A}15`, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A }}>
+                      <div className="stay-itinerary-icon-circle" style={{ width: 48, height: 48, borderRadius: "50%", background: `${tokens.A}15`, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A }}>
                         {getIcon(item.title, item.time)}
                       </div>
                       <span style={{ fontSize: 14, fontWeight: 700, color: tokens.A, fontFamily: '"Inter", sans-serif' }}>{item.time}</span>
                     </div>
 
                     {/* Title & Description */}
-                    <h3 style={{ fontSize: 24, fontWeight: 700, color: tokens.FG, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', margin: "0 0 12px 0", lineHeight: 1.2 }}>
+                    <h3 className="stay-itinerary-title" style={{ fontSize: 24, fontWeight: 700, color: tokens.FG, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', margin: "0 0 12px 0", lineHeight: 1.2 }}>
                       {item.title}
                     </h3>
                     <p style={{ fontSize: 15, color: tokens.M, fontFamily: '"Inter", sans-serif', lineHeight: 1.6, margin: 0, maxWidth: 320 }}>
@@ -175,13 +175,20 @@ const StayItinerary = ({ itinerary }) => {
 
         @media (max-width: 768px) {
           .stay-itinerary-item { 
-            flex-direction: column !important; 
-            margin-bottom: 48px !important; 
+            flex-direction: column-reverse !important; 
+            margin-bottom: 40px !important; 
+            padding-left: 32px !important;
+            border-left: 2px dashed ${tokens.A}66;
+            align-items: flex-start !important;
+          }
+          .stay-itinerary-item:last-child {
+            border-left-color: transparent;
           }
           .stay-itinerary-image-col { 
             padding: 0 !important; 
-            margin-bottom: 24px; 
-            justify-content: center !important; 
+            margin-top: 20px; 
+            margin-bottom: 12px;
+            justify-content: flex-start !important; 
             width: 100%;
           }
           .stay-itinerary-text-col { 
@@ -195,13 +202,25 @@ const StayItinerary = ({ itinerary }) => {
           }
           .stay-itinerary-icon-row { 
             flex-direction: row !important; 
+            position: absolute;
+            left: -25px;
+            top: -4px;
+            margin-bottom: 0 !important;
+          }
+          .stay-itinerary-icon-circle {
+            background: ${tokens.W} !important;
+            border: 2px solid ${tokens.A};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          }
+          .stay-itinerary-title {
+            margin-top: 44px !important;
           }
           .stay-itinerary-svg { 
             display: none; 
           }
           .stay-itinerary-image-col > div { 
             max-width: 100% !important;
-            height: 240px !important; 
+            height: 220px !important; 
           }
         }
       `}</style>
