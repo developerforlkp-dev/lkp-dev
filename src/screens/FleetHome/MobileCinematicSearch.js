@@ -1644,7 +1644,11 @@ export default function MobileCinematicSearch({
                     return (
                       <button
                         key={sec.id}
-                        onClick={() => onFilterClick?.(sec.id, true)}
+                        onClick={() => {
+                          if (isEnabledForListings) {
+                            onFilterClick?.(sec.id, true);
+                          }
+                        }}
                         disabled={!isEnabledForListings}
                         className={cn("mcsh-switcher-btn", { active: isActive })}
                         type="button"
