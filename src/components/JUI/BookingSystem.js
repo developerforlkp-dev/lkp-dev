@@ -2285,6 +2285,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       ?? listing?.pricing?.childPricePerChild
       ?? 0
     );
+  const eventChildPricingTiers = isEventBooking && selectedTicket
+    ? (selectedTicket.childPricingTiers || selectedTicket.child_pricing_tiers || [])
+    : [];
+  const eventHasExplicitChildPrice = isEventBooking && selectedTicket
+    ? Object.prototype.hasOwnProperty.call(selectedTicket, "childPrice") ||
+      Object.prototype.hasOwnProperty.call(selectedTicket, "child_price") ||
+      eventChildPricingTiers.length > 0
+    : false;
   const allowChildPricing = asBoolean(
     isEventBooking
       ? (listing?.allowChildPricing ?? listing?.childPricingAllowed)
@@ -2302,7 +2310,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   // Effective per-child price (after discount + tax), fallback to adult price if no child price set
   const effectiveChildPrice = childGuestPricing
     ? childGuestPricing.finalUnitPrice
-    : extractedPrice;
+    : (eventHasExplicitChildPrice ? Number(rawChildPrice || 0) : extractedPrice);
   const experienceChildPricingTiers = !isEventBooking
     ? (selectedSlotData?.childPricingTiers || selectedSlotData?.child_pricing_tiers || [])
     : [];
@@ -2328,7 +2336,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     for (let i = 0; i < guests.children; i++) {
       const age = guests.childAges?.[i] ?? 0;
       let matchedPrice = 0; // Default price is 0 if no tier matches
-      const tiers = selectedTicket.childPricingTiers || selectedTicket.child_pricing_tiers || [];
+      const tiers = eventChildPricingTiers;
       const tier = tiers.find(t => age >= (t.ageFrom ?? t.age_from ?? 0) && age <= (t.ageTo ?? t.age_to ?? 100));
       if (tier) {
         matchedPrice = Number(tier.pricePerChild ?? tier.price_per_child ?? tier.price ?? 0);
@@ -2382,9 +2390,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     }
   }
 
-  const isEventTieredChildPricing = isEventBooking && guests.children > 0 && eventChildPriceTotal > 0;
+  const isEventTieredChildPricing = isEventBooking && guests.children > 0 && eventChildPricingTiers.length > 0;
   const isExperienceTieredChildPricing = !isEventBooking && guests.children > 0 && experienceChildPricingTiers.length > 0;
-  const actualHasChildPricing = hasChildPricing || isEventTieredChildPricing || isExperienceTieredChildPricing;
+  const actualHasChildPricing = hasChildPricing || eventHasExplicitChildPrice || isEventTieredChildPricing || isExperienceTieredChildPricing;
 
   const baseChildPricePerChild = actualHasChildPricing
     ? (
@@ -2861,12 +2869,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             currency: previewCurrency,
             pricePerPerson: eventGuestPricing.finalUnitPrice,
             basePrice: eventBaseTotal,
-            allowChildPricing: hasChildPricing,
+            allowChildPricing: actualHasChildPricing,
             adultsCount: guests.adults,
             childrenCount: guests.children,
             basePricePerPerson: eventGuestPricing.baseUnitPrice,
             adultBasePricePerPerson: eventGuestPricing.baseUnitPrice,
-            childPricePerChild: hasChildPricing ? effectiveChildPrice : 0,
+            childPricePerChild: actualHasChildPricing
+              ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : effectiveChildPrice)
+              : 0,
             baseChildPricePerChild,
             discount: eventDiscountTotal,
             promoDiscount: eventPromoDiscountTotal,
@@ -2992,12 +3002,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             pricePerPerson: eventGuestPricing.finalUnitPrice,
             basePrice: eventBaseTotal,
             // Adult/child split for checkout page
-            allowChildPricing: hasChildPricing,
+            allowChildPricing: actualHasChildPricing,
             adultsCount: guests.adults,
             childrenCount: guests.children,
             basePricePerPerson: eventGuestPricing.baseUnitPrice,
             adultBasePricePerPerson: eventGuestPricing.baseUnitPrice,
-            childPricePerChild: hasChildPricing ? effectiveChildPrice : 0,
+            childPricePerChild: actualHasChildPricing
+              ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : effectiveChildPrice)
+              : 0,
             baseChildPricePerChild: baseChildPricePerChild,
             discount: eventDiscountTotal,
             promoDiscount: eventPromoDiscountTotal,

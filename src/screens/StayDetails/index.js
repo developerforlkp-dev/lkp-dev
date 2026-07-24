@@ -4054,6 +4054,8 @@ function PropertyStayCard({ stay }) {
   };
   const showSeasonal = seasonalB2CPrice != null;
   const propertyName = stay?.propertyName || stay?.title || stay?.name || "Property Stay";
+  const includedMaxAdults = Number(stay?.maxAdults ?? stay?.maxGuests ?? 0) || 0;
+  const includedMaxChildren = Number(stay?.maxChildren ?? 0) || 0;
 
   const list = stay?.amenities || stay?.propertyAmenities || stay?.stayAmenities || stay?.amenityList || [];
   const amenities = extractList(list);
@@ -4193,7 +4195,7 @@ function PropertyStayCard({ stay }) {
 
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", marginTop: isMobile ? "16px" : "24px", gap: isMobile ? "16px" : "0" }}>
           <p style={{ fontSize: "13px", color: M, margin: 0, flex: 1, paddingRight: isMobile ? "0" : "16px", lineHeight: 1.5 }}>
-            Entire-property booking with curated comfort and premium amenities.
+            This price is inclusive of up to {includedMaxAdults} adults and {includedMaxChildren} children.
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "flex-start" : "flex-end", flexShrink: 0 }}>
