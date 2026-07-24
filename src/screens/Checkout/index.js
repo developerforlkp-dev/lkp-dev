@@ -141,13 +141,19 @@ const getPropertyBaseNightlyPrice = (stayDetails, checkInDate) => {
     return stayDate >= start && stayDate <= end;
   });
 
+  const activeSeasonData = activeSeason
+    ? ((stayDetails?.propertySeasonalPricing || {})[activeSeason?.periodId || activeSeason?.id || activeSeason?.tempId] ||
+       (stayDetails?.seasonalPricing || {})[activeSeason?.periodId || activeSeason?.id || activeSeason?.tempId] ||
+       activeSeason)
+    : null;
+
   return (
-    asNumber(activeSeason?.fullPropertyHikePrice) ??
-    asNumber(activeSeason?.hikePrice) ??
-    asNumber(activeSeason?.fullPropertyB2cPrice) ??
-    asNumber(activeSeason?.fullPropertyb2cPrice) ??
-    asNumber(activeSeason?.full_property_b2c_price) ??
-    asNumber(activeSeason?.b2cPrice) ??
+    asNumber(activeSeasonData?.fullPropertyHikePrice) ??
+    asNumber(activeSeasonData?.hikePrice) ??
+    asNumber(activeSeasonData?.fullPropertyB2cPrice) ??
+    asNumber(activeSeasonData?.fullPropertyb2cPrice) ??
+    asNumber(activeSeasonData?.full_property_b2c_price) ??
+    asNumber(activeSeasonData?.b2cPrice) ??
     asNumber(stayDetails?.fullPropertyHikePrice) ??
     asNumber(stayDetails?.fullPropertyB2cPrice) ??
     asNumber(stayDetails?.fullPropertyb2cPrice) ??
@@ -654,9 +660,10 @@ const Checkout = () => {
             getPropertyBaseNightlyPrice(stayDetails, bookingData?.checkInDate) * nights
           )
         : 0;
-      let baseAmount = propertyBaseFromApi > 0
-        ? propertyBaseFromApi
-        : parseAmount(baseRow?.value);
+      const rawBaseFromReceipt = parseAmount(baseRow?.value);
+      let baseAmount = rawBaseFromReceipt > 0
+        ? rawBaseFromReceipt
+        : (propertyBaseFromApi > 0 ? propertyBaseFromApi : 0);
 
       const discountTiers = Array.isArray(stayDetails?.discountTiers) ? stayDetails.discountTiers : [];
       const activeTier = discountTiers.find((t) => {
@@ -677,7 +684,12 @@ const Checkout = () => {
         0
       ) || 0;
 
-      const extraRows = rows.filter((r) => /extra adult|extra child/i.test(String(r.title || "")));
+      const extraRows = rows.filter((r) => {
+        const title = String(r?.title || "");
+        const isExtraGuestRow = /extra adult|extra child/i.test(title);
+        const isAgeInfoOnlyRow = /\bages?\b/i.test(title) && !/\b(charge|price|fee)s?\b/i.test(title);
+        return isExtraGuestRow && !isAgeInfoOnlyRow;
+      });
       const extraAmount = extraRows.reduce((sum, r) => sum + parseAmount(r.value), 0);
       const addOnRows = rows.filter((r) => /add[\s-]?ons?/i.test(String(r.title || "")));
       const receiptAddOnsAmount = addOnRows.reduce((sum, r) => sum + parseAmount(r.value), 0);
@@ -721,7 +733,28 @@ const Checkout = () => {
         : 0;
 
       const taxRate = Array.isArray(stayDetails?.taxes)
-        ? stayDetails.taxes.reduce((sum, t) => sum + Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? 0), 0)
+        ? stayDetails.taxes.reduce((sum, t) => {
+            const payer = String(
+              t?.paidBy ??
+              t?.paid_by ??
+              t?.payer ??
+              t?.taxPayer ??
+              t?.tax_payer ??
+              t?.borneBy ??
+              t?.borne_by ??
+              t?.applicableTo ??
+              t?.applicable_to ??
+              t?.target ??
+              t?.type ??
+              t?.category ??
+              ""
+            ).toLowerCase().trim();
+            if (/host|vendor|owner|property/i.test(payer)) {
+              return sum;
+            }
+            const rate = Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? t?.percentage ?? 0);
+            return sum + (Number.isFinite(rate) ? rate : 0);
+          }, 0)
         : 0;
 
       // Keep base stay as pure room charge (no discount/tax mixed in)
