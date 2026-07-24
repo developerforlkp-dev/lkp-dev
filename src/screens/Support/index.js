@@ -665,32 +665,6 @@ const Support = () => {
 
         <aside className={styles.sidePanel}>
           <div className={styles.sideCard}>
-            <h3>Need direct support?</h3>
-            <p>Our team can also help through the support contacts below while your ticket is being reviewed.</p>
-            <div className={styles.contactList}>
-              {contacts.length > 0 ? contacts.map((contact) => (
-                <div key={contact.supportContactId || contact.email || contact.phoneNumber} className={styles.contactCard}>
-                  <strong>{contact.name || "Support Team"}</strong>
-                  {contact.email ? (
-                    <a href={`mailto:${contact.email}`}>
-                      <Mail size={14} />
-                      <span>{contact.email}</span>
-                    </a>
-                  ) : null}
-                  {contact.phoneNumber ? (
-                    <a href={`tel:${contact.phoneNumber}`}>
-                      <Phone size={14} />
-                      <span>{contact.phoneNumber}</span>
-                    </a>
-                  ) : null}
-                </div>
-              )) : (
-                <div className={styles.mutedBox}>Support contact details will appear here when available.</div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.sideCard}>
             <h3>Before you submit</h3>
             <ul className={styles.tipList}>
               <li>Include the booking, order, or listing reference if you have one.</li>
@@ -699,21 +673,7 @@ const Support = () => {
             </ul>
           </div>
 
-          <div className={styles.sideCard}>
-            <h3>Popular FAQ topics</h3>
-            {faqs.length > 0 ? (
-              <div className={styles.faqPreviewList}>
-                {faqs.slice(0, 3).map((faq) => (
-                  <div key={faq.supportFaqId} className={styles.faqPreviewItem}>
-                    <strong>{faq.question}</strong>
-                    <span>{faq.answer}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className={styles.mutedBox}>FAQ content is not available right now.</div>
-            )}
-          </div>
+
         </aside>
       </div>
       ) : null}
