@@ -225,9 +225,9 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
         if (!firstErrorField) firstErrorField = "guest-field-mobileNumber";
       }
       
-      const extraGuestsCount = Math.max(0, totalGuestsNum - 1);
-      for (let i = 0; i < extraGuestsCount; i++) {
-        const ag = guestDetails.additionalGuests?.[i];
+      const additionalGuests = guestDetails.additionalGuests || [];
+      for (let i = 0; i < additionalGuests.length; i++) {
+        const ag = additionalGuests[i];
         if (!ag || !ag.firstName) {
           errors[`ag-${i}-firstName`] = "First name is required";
           if (!firstErrorField) firstErrorField = `guest-field-ag-${i}-firstName`;
@@ -313,12 +313,6 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       }
       
       if (orderId && guestDetails) {
-        const extraGuestsCount = Math.max(0, totalGuestsNum - 1);
-        const processedAdditionalGuests = [];
-        for (let i = 0; i < extraGuestsCount; i++) {
-          processedAdditionalGuests.push(guestDetails.additionalGuests?.[i] || { title: "Mr", firstName: "", lastName: "" });
-        }
-        
         const payload = {
           numberOfGuests: totalGuestsNum,
           guestDetails: {
@@ -328,16 +322,9 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
             email: guestDetails.email,
             mobileNumber: guestDetails.mobileNumber,
             countryCode: guestDetails.countryCode || "+91",
-            additionalGuests: processedAdditionalGuests,
+            additionalGuests: guestDetails.additionalGuests || [],
           }
         };
-        
-        if (guestDetails.gstDetails?.companyName && guestDetails.gstDetails?.gstNumber) {
-          payload.guestDetails.gstDetails = {
-            companyName: guestDetails.gstDetails.companyName,
-            gstNumber: guestDetails.gstDetails.gstNumber
-          };
-        }
         
         await saveGuestDetails(orderId, payload);
       }
