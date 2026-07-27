@@ -27,14 +27,30 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
     setGuestDetails({ ...guestDetails, additionalGuests: updatedAdditional });
   };
 
-  // Ensure additional guests array matches the number of extra guests
-  const extraGuestsCount = Math.max(0, numberOfGuests - 1);
-  const additionalGuestsForm = [];
-  for (let i = 0; i < extraGuestsCount; i++) {
-    const ag = guestDetails.additionalGuests?.[i] || { title: "Mr", firstName: "", lastName: "" };
-    additionalGuestsForm.push(
+  const handleAddGuest = () => {
+    const updatedAdditional = [...(guestDetails.additionalGuests || [])];
+    updatedAdditional.push({ title: "Mr", firstName: "", lastName: "" });
+    setGuestDetails({ ...guestDetails, additionalGuests: updatedAdditional });
+  };
+
+  const handleRemoveGuest = (index) => {
+    const updatedAdditional = [...(guestDetails.additionalGuests || [])];
+    updatedAdditional.splice(index, 1);
+    setGuestDetails({ ...guestDetails, additionalGuests: updatedAdditional });
+  };
+
+  const additionalGuestsForm = (guestDetails.additionalGuests || []).map((ag, i) => (
       <div key={i} className={styles.additionalGuestGroup}>
-        <div className={styles.subtitle}>Guest {i + 2} Details</div>
+        <div className={styles.subtitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Guest {i + 2} Details</span>
+          <button 
+            type="button" 
+            onClick={() => handleRemoveGuest(i)}
+            style={{ color: '#E02E2E', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+          >
+            Remove
+          </button>
+        </div>
         <div className={styles.row}>
           <div className={styles.colTitle}>
             <div className={styles.label}>Title</div>
@@ -73,8 +89,7 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
           </div>
         </div>
       </div>
-    );
-  }
+  ));
 
   return (
     <div className={cn(className, styles.formWrapper)}>
@@ -165,35 +180,32 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
         </div>
       </div>
 
-      {extraGuestsCount > 0 && (
-        <div className={styles.group}>
-          {additionalGuestsForm}
-        </div>
-      )}
-
       <div className={styles.group}>
-        <div className={styles.subtitle}>GST Details (Optional)</div>
-        <div className={styles.row}>
-          <div className={styles.colFieldHalf}>
-            <TextInput
-              label="Company Name"
-              name="companyName"
-              value={guestDetails.gstDetails?.companyName || ""}
-              onChange={handleGstChange}
-              placeholder="Company Name"
-            />
+        {additionalGuestsForm}
+        
+        {numberOfGuests > 1 && (guestDetails.additionalGuests || []).length < (numberOfGuests - 1) && (
+          <div style={{ marginTop: '16px' }}>
+            <button 
+              type="button" 
+              onClick={handleAddGuest}
+              style={{
+                color: '#00A4C4',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <span style={{ fontSize: '20px' }}>+</span> Add Additional Guest (Optional)
+            </button>
           </div>
-          <div className={styles.colFieldHalf}>
-            <TextInput
-              label="GST Number"
-              name="gstNumber"
-              value={guestDetails.gstDetails?.gstNumber || ""}
-              onChange={handleGstChange}
-              placeholder="GST Number"
-            />
-          </div>
-        </div>
+        )}
       </div>
+
     </div>
   );
 };
