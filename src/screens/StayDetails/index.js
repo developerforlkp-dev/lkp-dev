@@ -4238,6 +4238,33 @@ function PropertyStayCard({ stay }) {
     </motion.div>
   );
 }
+const ExpandableReviewText = ({ text, vendorResponse, FG, A }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text && text.length > 120;
+  
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <p style={{ 
+        fontSize: 13, color: FG, lineHeight: 1.6, margin: 0, 
+        overflow: "hidden", 
+        display: expanded ? "block" : "-webkit-box", 
+        WebkitLineClamp: expanded ? "unset" : (vendorResponse ? 3 : 4), 
+        WebkitBoxOrient: "vertical", 
+        fontWeight: 400 
+      }}>
+        &ldquo;{text}&rdquo;
+      </p>
+      {isLong && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+          style={{ background: "transparent", border: "none", color: A, fontSize: 11, fontWeight: 700, padding: 0, marginTop: 4, cursor: "pointer", outline: "none", textDecoration: "underline" }}
+        >
+          {expanded ? "Read Less" : "Read More"}
+        </button>
+      )}
+    </div>
+  );
+};
 
 function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubmitted }) {
   const { isMobile } = useWindowSize();
@@ -4414,9 +4441,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                           />
                         ))}
                       </div>
-                      <p style={{ fontSize: 13, color: FG, lineHeight: 1.6, margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: vendorResponse ? 3 : 4, WebkitBoxOrient: "vertical", fontWeight: 400 }}>
-                        &ldquo;{text}&rdquo;
-                      </p>
+                      <ExpandableReviewText text={text} vendorResponse={vendorResponse} FG={FG} A={A} />
                       {vendorResponse && (
                         <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${B}`, opacity: 0.96 }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
