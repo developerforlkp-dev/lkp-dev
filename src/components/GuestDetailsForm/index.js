@@ -1,7 +1,9 @@
 import React from "react";
 import cn from "classnames";
 import styles from "./GuestDetailsForm.module.sass";
+import dropdownStyles from "../Dropdown/Dropdown.module.sass";
 import TextInput from "../TextInput";
+import Dropdown from "../Dropdown";
 
 const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDetails, guestErrors = {} }) => {
   const handlePrimaryChange = (e) => {
@@ -54,16 +56,12 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
         <div className={styles.row}>
           <div className={styles.colTitle}>
             <div className={styles.label}>Title</div>
-            <select
-              className={styles.select}
-              name="title"
-              value={ag.title}
-              onChange={(e) => handleAdditionalGuestChange(i, e)}
-            >
-              <option value="Mr">Mr</option>
-              <option value="Ms">Ms</option>
-              <option value="Mrs">Mrs</option>
-            </select>
+            <Dropdown
+              className={cn(styles.dropdown, dropdownStyles.minimalArrow)}
+              value={ag.title || "Mr"}
+              setValue={(value) => handleAdditionalGuestChange(i, { target: { name: "title", value } })}
+              options={["Mr", "Ms", "Mrs"]}
+            />
           </div>
           <div className={styles.colField}>
             <TextInput
@@ -100,16 +98,12 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
         <div className={styles.row}>
           <div className={styles.colTitle}>
             <div className={styles.label}>Title</div>
-            <select
-              className={styles.select}
-              name="title"
+            <Dropdown
+              className={cn(styles.dropdown, dropdownStyles.minimalArrow)}
               value={guestDetails.title || "Mr"}
-              onChange={handlePrimaryChange}
-            >
-              <option value="Mr">Mr</option>
-              <option value="Ms">Ms</option>
-              <option value="Mrs">Mrs</option>
-            </select>
+              setValue={(value) => handlePrimaryChange({ target: { name: "title", value } })}
+              options={["Mr", "Ms", "Mrs"]}
+            />
           </div>
           <div className={styles.colField}>
             <TextInput
