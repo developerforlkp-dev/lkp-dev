@@ -33,20 +33,32 @@ export const StayInlineCalendar = ({
 
   const isRange = checkInDate && checkOutDate;
 
-  const cells = [
-    ...Array.from({ length: firstDay }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, index) => {
-      const day = index + 1;
-      const mDate = moment([year, month, day]);
-      const key = mDate.format("YYYY-MM-DD");
-      const isPast = key < todayKey;
-      const isBlocked = isBlockedDay(mDate);
-      const isSelected = key === checkInKey || key === checkOutKey;
-      const isInRange = isRange && key > checkInKey && key < checkOutKey;
-      
-      return { day, key, mDate, isPast, isBlocked, isSelected, isInRange };
-    }),
-  ];
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const nextMonthDaysCount = 42 - (firstDay + daysInMonth);
+
+  const createCell = (y, m, d, isOverflow) => {
+    const mDate = moment(new Date(y, m, d));
+    const key = mDate.format("YYYY-MM-DD");
+    const isPast = key < todayKey;
+    const isBlocked = isBlockedDay(mDate);
+    const isSelected = key === checkInKey || key === checkOutKey;
+    const isInRange = isRange && key > checkInKey && key < checkOutKey;
+    return { day: d, key, mDate, isPast, isBlocked, isSelected, isInRange, isOverflow };
+  };
+
+  const prevMonthCells = Array.from({ length: firstDay }, (_, i) => 
+    createCell(year, month - 1, daysInPrevMonth - firstDay + i + 1, true)
+  );
+  
+  const currentMonthCells = Array.from({ length: daysInMonth }, (_, i) => 
+    createCell(year, month, i + 1, false)
+  );
+
+  const nextMonthCells = Array.from({ length: nextMonthDaysCount }, (_, i) => 
+    createCell(year, month + 1, i + 1, true)
+  );
+
+  const cells = [...prevMonthCells, ...currentMonthCells, ...nextMonthCells];
 
   return (
     <div style={{ background: S, borderRadius: 24, padding: "16px", border: `1px solid ${B}` }}>
@@ -75,7 +87,6 @@ export const StayInlineCalendar = ({
           <div key={d} style={{ textAlign: "center", fontSize: 10, fontWeight: 700, color: M, marginBottom: 8 }}>{d}</div>
         ))}
         {cells.map((cell, i) => {
-          if (!cell) return <div key={`empty-${i}`} />;
           const isRangeComplete = checkInDate && checkOutDate;
           let disabled = cell.isPast;
           if (!disabled) {
@@ -113,6 +124,7 @@ export const StayInlineCalendar = ({
                 borderRadius: cell.isSelected ? 10 : 6,
                 background: cell.isSelected ? A : cell.isInRange ? AL : "transparent",
                 color: textColor,
+                opacity: (cell.isOverflow && !cell.isSelected && !cell.isInRange) ? 0.8 : 1,
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: disabled ? "not-allowed" : "pointer",
@@ -2559,6 +2571,7 @@ const StayBookingSystem = ({
                 overflow: "hidden",
                 width: "95%",
                 maxWidth: 480,
+                minHeight: "min(650px, 85vh)",
                 maxHeight: "calc(100vh - 40px)",
                 border: `1px solid ${B}`,
                 boxShadow: `0 30px 60px rgba(0,0,0,0.5), 0 0 100px ${A}11`,
