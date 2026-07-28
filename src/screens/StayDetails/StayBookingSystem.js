@@ -742,15 +742,13 @@ const StayBookingSystem = ({
         if (checkOutDate && date.isSameOrAfter(checkOutDate, 'day')) {
           setCheckOutDate(null);
           setSelectionMode("check-out");
-          setShowCalendarModal(false);
         } else if (checkOutDate) {
           // If checkout is still valid after changing check-in, finalize again
           setSelectionMode("done");
           setShowCalendarModal(false);
         } else {
-          // STEP 2: Automatic switch to Check-out mode and close modal
+          // STEP 2: Automatic switch to Check-out mode
           setSelectionMode("check-out");
-          setShowCalendarModal(false);
         }
       }
     } else {
