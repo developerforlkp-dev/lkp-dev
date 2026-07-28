@@ -1079,7 +1079,10 @@ const normalizeExperienceSlots = (slots = [], dateKey = "") => (
       const privateBookingEnabled = availability?.privateBookingEnabled ?? availability?.private_booking_enabled ?? slot.privateBookingEnabled ?? slot.private_booking_enabled ?? false;
       const hasPrivateBooking = availability?.hasPrivateBooking ?? availability?.has_private_booking ?? slot.hasPrivateBooking ?? slot.has_private_booking ?? false;
       const explicitPrivateBookingAvailable = availability?.privateBookingAvailable ?? availability?.private_booking_available ?? slot.privateBookingAvailable ?? slot.private_booking_available;
-      const privateBookingAvailable = explicitPrivateBookingAvailable ?? Boolean(privateBookingEnabled && !hasPrivateBooking && isAvailable !== false);
+      
+      const bookedSeatsForDate = availability?.booked_seats ?? availability?.bookedSeats ?? 0;
+      const basePrivateAvailable = explicitPrivateBookingAvailable ?? Boolean(privateBookingEnabled && !hasPrivateBooking && isAvailable !== false);
+      const privateBookingAvailable = bookedSeatsForDate > 0 ? false : basePrivateAvailable;
 
       return {
         ...slot,
@@ -1389,6 +1392,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState("");
   const [privateBooking, setPrivateBooking] = useState(false);
+  const [hasAnyPrivateBookingAvailable, setHasAnyPrivateBookingAvailable] = useState(false);
+  const [allFetchedSlots, setAllFetchedSlots] = useState([]);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [showValidation, setShowValidation] = useState(false);
@@ -1833,8 +1838,38 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       addScheduleDateKeys(keys, listing, listing);
     }
 
+    if (privateBooking) {
+      const blockedDates = new Set();
+      if (Array.isArray(listing?.availability)) {
+        listing.availability.forEach((avail) => {
+          const booked = avail?.booked_seats ?? avail?.bookedSeats ?? 0;
+          if (booked > 0) {
+            const key = getDateKey(avail.date);
+            if (key) blockedDates.add(key);
+          }
+        });
+      }
+      const allSlots = [
+        ...(Array.isArray(listing?.slots) ? listing.slots : []),
+        ...(Array.isArray(baseTimeSlots) ? baseTimeSlots : []),
+        ...(Array.isArray(allFetchedSlots) ? allFetchedSlots : [])
+      ];
+      allSlots.forEach(slot => {
+        if (Array.isArray(slot?.availability)) {
+          slot.availability.forEach(avail => {
+            const booked = avail?.booked_seats ?? avail?.bookedSeats ?? 0;
+            if (booked > 0) {
+              const key = getDateKey(avail.date);
+              if (key) blockedDates.add(key);
+            }
+          });
+        }
+      });
+      blockedDates.forEach((key) => keys.delete(key));
+    }
+
     return keys;
-  }, [baseTimeSlots, dateFilteredSlots, isEventBooking, listing]);
+  }, [baseTimeSlots, dateFilteredSlots, isEventBooking, listing, privateBooking, allFetchedSlots]);
 
   const hasTodayValidSlots = useMemo(() => {
     const indiaNow = getIndiaNow();
@@ -2022,7 +2057,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
     if (!pendingRestoreRef.current) {
       setStartTime(null);
-      setPrivateBooking(false);
       setShowTimePicker(false);
     }
 
@@ -2202,31 +2236,28 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const experienceSupportsPrivateBooking = useMemo(() => {
     if (isEventBooking) return false;
 
-    const listingPrivateSetting =
-      asOptionalBoolean(listing?.privateBookingEnabled) ??
-      asOptionalBoolean(listing?.private_booking_enabled) ??
-      asOptionalBoolean(listing?.privateOptionAvailable) ??
-      asOptionalBoolean(listing?.private_option_available) ??
-      asOptionalBoolean(listing?.privateOptionEnabled) ??
-      asOptionalBoolean(listing?.private_option_enabled) ??
-      asOptionalBoolean(listing?.privateOption) ??
-      asOptionalBoolean(listing?.private_option);
-
-    if (listingPrivateSetting === false) return false;
-    if (listingPrivateSetting === true) return true;
+    if (hasAnyPrivateBookingAvailable) return true;
 
     const sourceSlots = [
       ...(Array.isArray(dateFilteredSlots) ? dateFilteredSlots : []),
       ...(Array.isArray(baseTimeSlots) ? baseTimeSlots : []),
     ];
 
-    return sourceSlots.some((slot) => (
+    const anySlotSupportsPrivate = sourceSlots.some((slot) => (
       asOptionalBoolean(slot?.privateBookingEnabled) === true ||
-      asOptionalBoolean(slot?.private_booking_enabled) === true ||
-      asOptionalBoolean(slot?.privateBookingAvailable) === true ||
-      asOptionalBoolean(slot?.private_booking_available) === true
+      asOptionalBoolean(slot?.private_booking_enabled) === true
     ));
-  }, [isEventBooking, listing, dateFilteredSlots, baseTimeSlots]);
+
+    if (anySlotSupportsPrivate) return true;
+
+    const listingPrivateSetting =
+      asOptionalBoolean(listing?.privateBookingEnabled) ??
+      asOptionalBoolean(listing?.private_booking_enabled) ??
+      asOptionalBoolean(listing?.privateOptionEnabled) ??
+      asOptionalBoolean(listing?.private_option_enabled);
+
+    return listingPrivateSetting === true;
+  }, [isEventBooking, listing, dateFilteredSlots, baseTimeSlots, hasAnyPrivateBookingAvailable]);
   const selectedSlotHasPrivateBooking = !isEventBooking && Boolean(startTime) && staleSelectedSlotData?.hasPrivateBooking === true;
   const dateHasPrivateBookingAvailable = !isEventBooking && Boolean(selectedDateKey) && dateFilteredSlotsLoaded && timeSlots.some((slot) => slot.privateBookingAvailable === true);
   const selectedSlotPrivateBookingAvailable = !isEventBooking && Boolean(startTime) && selectedSlotData?.privateBookingAvailable === true;
@@ -2249,13 +2280,21 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const bookingGuestLimit = isEventBooking
     ? (eventGuestLimits.length > 0 ? Math.min(...eventGuestLimits) : undefined)
     : guestSeatLimit;
-  const rawExperiencePrice = selectedSlotData?.pricePerPerson
+  const baseExperiencePrice = selectedSlotData?.pricePerPerson
     || listing?.timeSlots?.[0]?.pricePerPerson
     || listing?.pricing?.basePrice
     || listing?.basePrice
     || listing?.price
     || listing?.b2cPrice
     || "0";
+
+  const rawExperiencePrice = privateBooking
+    ? (selectedSlotData?.privateBookingPrice
+      ?? selectedSlotData?.private_booking_price
+      ?? listing?.timeSlots?.[0]?.privateBookingPrice
+      ?? listing?.timeSlots?.[0]?.private_booking_price
+      ?? baseExperiencePrice)
+    : baseExperiencePrice;
 
   // Group pricing: override rawExperiencePrice if guest count matches a tier
   const groupPricingRules = !isEventBooking
@@ -3318,7 +3357,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       addons,
       guestAnswers: [],
     };
-    if (privateBooking) orderData.privateBooking = true;
+    if (privateBooking) {
+      orderData.privateBooking = true;
+      orderData.isPrivateBooking = true;
+    }
 
     try {
       const previewBookingData = {
@@ -3473,6 +3515,19 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     setShow(true);
 
     if (isEventBooking || !listingId || !slotsLookupEndDate) return;
+
+    getListingSlots(listingId, getIndiaDateKey(), slotsLookupEndDate)
+      .then((payload) => {
+        const slots = unwrapSlotsPayload(payload);
+        setAllFetchedSlots(slots);
+        const hasPrivate = slots.some((slot) => {
+          if (asOptionalBoolean(slot?.privateBookingEnabled) === true || asOptionalBoolean(slot?.private_booking_enabled) === true) return true;
+          const avail = slot.availability || slot.availabilities || [];
+          return avail.some((a) => a.private_booking_available === true || a.privateBookingAvailable === true);
+        });
+        if (hasPrivate) setHasAnyPrivateBookingAvailable(true);
+      })
+      .catch((e) => console.error("[BookingSystem] Error fetching slots for private booking check", e));
   }, [isEventBooking, listingId, selectedDateKey, slotsLookupEndDate, triggerDisabled]);
 
   // Check if all experience dates/slots are in the past
@@ -3657,7 +3712,31 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       </div>
                     </div>
 
-                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
+                      {experienceSupportsPrivateBooking && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 8 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>Private Booking</span>
+                          <button
+                            type="button"
+                            onClick={() => setPrivateBooking((value) => !value)}
+                            style={{
+                              width: 36,
+                              height: 20,
+                              borderRadius: 999,
+                              background: privateBooking ? A : B,
+                              padding: 2,
+                              display: "flex",
+                              justifyContent: privateBooking ? "flex-end" : "flex-start",
+                              transition: "0.2s",
+                              cursor: "pointer",
+                              border: "none",
+                              alignItems: "center"
+                            }}
+                          >
+                            <span style={{ width: 16, height: 16, borderRadius: "50%", background: W, display: "block" }} />
+                          </button>
+                        </div>
+                      )}
                       <button type="button" onClick={closeBookingModal} style={{ background: S, border: `1px solid ${B}`, padding: 8, borderRadius: 100, cursor: "pointer", color: FG, display: "flex", alignItems: "center", justifyContent: "center", transition: "0.3s" }}>
                         <X size={18} />
                       </button>
@@ -4295,43 +4374,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                             <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
                                               {privateBookingMessage}
                                             </div>)}
-                                          {showPrivateBookingToggle && (
-                                            <button
-                                              type="button"
-                                              onClick={() => setPrivateBooking((value) => !value)}
-                                              style={{
-                                                marginTop: 12,
-                                                width: "100%",
-                                                padding: "14px 16px",
-                                                borderRadius: 16,
-                                                border: `1px solid ${privateBooking ? A : B}`,
-                                                background: privateBooking ? AL : BG,
-                                                color: privateBooking ? A : FG,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                cursor: "pointer",
-                                                fontSize: 13,
-                                                fontWeight: 800
-                                              }}
-                                            >
-                                              <span>Private booking</span>
-                                              <span
-                                                style={{
-                                                  width: 42,
-                                                  height: 24,
-                                                  borderRadius: 999,
-                                                  background: privateBooking ? A : B,
-                                                  padding: 3,
-                                                  display: "flex",
-                                                  justifyContent: privateBooking ? "flex-end" : "flex-start",
-                                                  transition: "0.2s"
-                                                }}
-                                              >
-                                                <span style={{ width: 18, height: 18, borderRadius: "50%", background: W, display: "block" }} />
-                                              </span>
-                                            </button>
-                                          )}
                                         </div>
                                       )}
                                     </div>
