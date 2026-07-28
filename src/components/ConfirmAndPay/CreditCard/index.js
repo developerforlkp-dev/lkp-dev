@@ -214,6 +214,9 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       if (!guestDetails.email) {
         errors.email = "Email is required";
         if (!firstErrorField) firstErrorField = "guest-field-email";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestDetails.email)) {
+        errors.email = "Please enter a valid email address";
+        if (!firstErrorField) firstErrorField = "guest-field-email";
       }
       
       const phoneDigits = guestDetails.mobileNumber?.replace(/\D/g, "") || "";
