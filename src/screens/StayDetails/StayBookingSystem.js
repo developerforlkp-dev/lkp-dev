@@ -3427,11 +3427,48 @@ const StayBookingSystem = ({
                 boxShadow: "0 20px 40px rgba(0,0,0,0.2)"
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: FG }}>
-                  {selectionMode === "check-in" ? "Select Check-in Date" : "Select Check-out Date"}
-                </h3>
-                <button onClick={() => setShowCalendarModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: M, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={selectionMode}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                  >
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: FG, display: "flex", alignItems: "center", gap: 8 }}>
+                      {selectionMode === "check-in" ? (
+                        <>Step 1: Check-in</>
+                      ) : (
+                        <>
+                          <span style={{ color: A }}>Step 2: Check-out</span>
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
+                            style={{ 
+                              background: A, 
+                              color: BG, 
+                              fontSize: 10, 
+                              padding: "2px 8px", 
+                              borderRadius: 100,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px"
+                            }}
+                          >
+                            Next
+                          </motion.div>
+                        </>
+                      )}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: 13, color: M, fontWeight: 600 }}>
+                      {selectionMode === "check-in" ? "When will you arrive?" : "When will you leave?"}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+
+                <button onClick={() => setShowCalendarModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: M, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 4 }}>
                   <X size={20} />
                 </button>
               </div>
