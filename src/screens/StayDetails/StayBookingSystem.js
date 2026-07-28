@@ -119,7 +119,7 @@ export const StayInlineCalendar = ({
               onClick={() => !disabled && onDateSelect(cell.mDate)}
               disabled={disabled}
               style={{
-                aspectRatio: "1/1",
+                height: 40,
                 border: "none",
                 borderRadius: cell.isSelected ? 10 : 6,
                 background: cell.isSelected ? A : cell.isInRange ? AL : "transparent",
@@ -3452,10 +3452,14 @@ const StayBookingSystem = ({
                   >
                     <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: FG, display: "flex", alignItems: "center", gap: 8 }}>
                       {selectionMode === "check-in" ? (
-                        <>Step 1: Check-in</>
+                        <span style={{ color: A }}>
+                          Step 1: Check-in
+                        </span>
                       ) : (
                         <>
-                          <span style={{ color: A }}>Step 2: Check-out</span>
+                          <span style={{ color: A }}>
+                            Step 2: Check-out
+                          </span>
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}

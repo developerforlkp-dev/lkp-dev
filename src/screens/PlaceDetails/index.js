@@ -1006,7 +1006,7 @@ function PlaceDescription({ place }) {
   const description = place?.description || "Experience the local heritage, vibrant culture, and breathtaking landscapes of this select destination.";
 
   const facts = [
-    { label: "Timings", val: place?.timings || place?.openingHours || "06:00 - 20:00", icon: Clock },
+    { label: "Timings", val: (place?.openingTime && place?.closingTime) ? `${place.openingTime} - ${place.closingTime}` : (place?.timings || place?.openingHours || "06:00 - 20:00"), icon: Clock },
     { label: "Entry Fee", val: place?.entryFee || "Free Entry", icon: Ticket },
     { label: "Best Time", val: place?.bestTimeToVisit || "Year Round", icon: Star },
     { label: "Rating", val: `${place?.rating || place?.averageRating || "4.8"} Rating`, icon: Check },
@@ -1742,7 +1742,7 @@ function VisitorInformation({ place }) {
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closing Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closeTime || "04:30 PM"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closingTime || place?.closeTime || "04:30 PM"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closed On</span>
