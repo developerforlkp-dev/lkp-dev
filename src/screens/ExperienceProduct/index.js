@@ -1497,11 +1497,11 @@ const ExperienceProduct = () => {
                         }}
                       >
                         {/* Left side: ONLY image */}
-                        <div style={{ width: "160px", height: "100%", flexShrink: 0, overflow: "hidden", background: W, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: "160px", flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
                           {addonImage ? (
                             <img
                               src={formatImageUrl(addonImage)}
-                              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
                               alt={addon.title}
                               onError={(e) => {
                                 e.target.onerror = null;
@@ -1509,7 +1509,7 @@ const ExperienceProduct = () => {
                               }}
                             />
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", background: AL }}>
+                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: AL }}>
                               <Plus size={24} color={A} />
                             </div>
                           )}
@@ -2006,48 +2006,7 @@ const ExperienceProduct = () => {
                           </div>
                         </div>
 
-                        {/* Redesigned Metrics Section - Only 2 Cards */}
-                        <div style={{
-                          display: "flex",
-                          gap: 6,
-                          alignItems: "center"
-                        }}>
-                          {/* Rating Pill */}
-                          <div style={{
-                            background: theme === "dark" ? "rgba(245, 158, 11, 0.08)" : "rgba(245, 158, 11, 0.05)",
-                            border: `1px solid ${theme === "dark" ? "rgba(245, 158, 11, 0.2)" : "rgba(245, 158, 11, 0.12)"}`,
-                            borderRadius: "10px",
-                            padding: "6px 10px",
-                            textAlign: "center",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            minWidth: 46
-                          }}>
-                            <span style={{ fontSize: "12px", fontWeight: 800, color: "#D97706", lineHeight: 1 }}>
-                              ★ {hostData?.statistics?.averageRating || "4.9"}
-                            </span>
-                            <span style={{ fontSize: "7px", color: "#B45309", textTransform: "uppercase", letterSpacing: "0.02em", fontWeight: 600, marginTop: 2 }}>Rating</span>
-                          </div>
 
-                          {/* Events Pill */}
-                          <div style={{
-                            background: theme === "dark" ? "rgba(0, 151, 178, 0.08)" : "rgba(0, 151, 178, 0.05)",
-                            border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.2)" : "rgba(0, 151, 178, 0.12)"}`,
-                            borderRadius: "10px",
-                            padding: "6px 10px",
-                            textAlign: "center",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            minWidth: 46
-                          }}>
-                            <span style={{ fontSize: "12px", fontWeight: 800, color: A, lineHeight: 1 }}>
-                              {hostData?.statistics?.totalEvents || hostData?.listings?.length || 8}
-                            </span>
-                            <span style={{ fontSize: "7px", color: A, textTransform: "uppercase", letterSpacing: "0.02em", fontWeight: 600, marginTop: 2 }}>Events</span>
-                          </div>
-                        </div>
                       </div>
 
                       {/* Bottom Section: Quote-styled Bio */}

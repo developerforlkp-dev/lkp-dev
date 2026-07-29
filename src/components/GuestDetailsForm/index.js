@@ -145,31 +145,68 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
               required
             />
           </div>
-          <div className={styles.colCode}>
-            <TextInput
-              label="Code *"
-              name="countryCode"
-              value={guestDetails.countryCode || "+91"}
-              onChange={handlePrimaryChange}
-              placeholder="+91"
-              required
-            />
-          </div>
-          <div className={styles.colPhone}>
-            <TextInput
-              id="guest-field-mobileNumber"
-              label="Mobile Number *"
-              name="mobileNumber"
-              type="tel"
-              value={guestDetails.mobileNumber || ""}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '').substring(0, 10);
-                setGuestDetails({ ...guestDetails, mobileNumber: val });
-              }}
-              placeholder="Mobile Number"
-              error={guestErrors.mobileNumber}
-              required
-            />
+          <div className={styles.colFieldHalf} style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className={styles.label}>Mobile Number *</div>
+            <div 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '48px', 
+                borderRadius: '12px', 
+                border: `2px solid ${guestErrors.mobileNumber ? '#FF4848' : '#E6E8EC'}`, 
+                overflow: 'hidden', 
+                transition: 'border-color 0.2s', 
+                background: 'transparent' 
+              }} 
+              onFocus={(e) => e.currentTarget.style.borderColor = '#B1B5C3'} 
+              onBlur={(e) => e.currentTarget.style.borderColor = guestErrors.mobileNumber ? '#FF4848' : '#E6E8EC'}
+            >
+              <input
+                name="countryCode"
+                value={guestDetails.countryCode || "+91"}
+                onChange={handlePrimaryChange}
+                placeholder="+91"
+                required
+                style={{
+                  width: '64px',
+                  height: '100%',
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '0 8px 0 14px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  fontFamily: 'Poppins, sans-serif',
+                  color: '#23262F',
+                  outline: 'none',
+                  borderRight: '1px solid #E6E8EC'
+                }}
+              />
+              <input
+                id="guest-field-mobileNumber"
+                name="mobileNumber"
+                type="tel"
+                value={guestDetails.mobileNumber || ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').substring(0, 10);
+                  setGuestDetails({ ...guestDetails, mobileNumber: val });
+                }}
+                placeholder="Mobile Number"
+                required
+                style={{
+                  flex: 1,
+                  height: '100%',
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '0 14px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  fontFamily: 'Poppins, sans-serif',
+                  color: '#23262F',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            {guestErrors.mobileNumber && <div style={{ marginTop: '8px', fontSize: '12px', color: '#FF4848', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>{guestErrors.mobileNumber}</div>}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { withRouter, useLocation } from "react-router-dom";
 import { clearAllBodyScrollLocks } from "body-scroll-lock";
 import { motion } from "framer-motion";
@@ -55,8 +55,17 @@ const Page = ({
   }, [pathname]);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handleScroll);
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 40);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -69,12 +78,13 @@ const Page = ({
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
+          const currentScrollY = Math.max(0, window.scrollY);
           const lastScrollY = lastScrollYRef.current;
           const diff = currentScrollY - lastScrollY;
 
           if (currentScrollY <= 50) {
             setHeaderVisible(true);
+            lastScrollYRef.current = currentScrollY;
           } else if (Math.abs(diff) > threshold) {
             if (diff > 0) {
               setHeaderVisible(false);
@@ -94,6 +104,8 @@ const Page = ({
   }, [autoHideEnabled]);
 
   const E = [0.22, 1, 0.36, 1];
+
+  const memoizedChildren = useMemo(() => children, [children]);
 
   return (
     <div className={styles.page}>
@@ -145,7 +157,7 @@ const Page = ({
       )}
       
       <div className={styles.inner}>
-        {children}
+        {memoizedChildren}
       </div>
 
       {!fooferHide && <Footer />}
