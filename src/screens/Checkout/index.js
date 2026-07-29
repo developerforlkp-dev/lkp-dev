@@ -1063,7 +1063,12 @@ const Checkout = () => {
             currency={resolvedCurrency}
             hostName={hostName}
             hostAvatar={hostAvatar}
-            cancellationPolicy={bookingData?.cancellationPolicySummary || stayDetails?.cancellationPolicySummary}
+            cancellationPolicy={(() => {
+              const policy = bookingData?.cancellationPolicySummary || stayDetails?.cancellationPolicySummary;
+              if (!policy) return policy;
+              return policy.split('.').map(s => s.trim()).filter(s => s).map(s => `• ${s}.`).join('\n');
+            })()}
+            hideCancellationIcon={true}
             buttonUrl="/checkout-complete"
             paymentData={effectivePaymentData}
             messageText={messageText}
