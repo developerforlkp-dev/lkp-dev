@@ -2352,9 +2352,6 @@ function Rules({ event }) {
     if (event?.dressCode && event.dressCode.trim() !== "") {
       evtItems.push({ title: "Dress Code", body: event.dressCode.trim() });
     }
-    if (event?.minimumAge != null && event.minimumAge !== "") {
-      evtItems.push({ title: "Minimum Age Requirement", body: `Minimum age for entry is ${event.minimumAge} years old.` });
-    }
     if (event?.idProofRequired) {
       evtItems.push({ title: "ID Proof Required", body: "Valid government-issued physical ID card required for verification at check-in." });
     }
