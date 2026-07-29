@@ -3784,6 +3784,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       background: ${S};
                       border: 1.5px solid ${B};
                       overflow: hidden;
+                      min-height: 72px;
                     }
                     .addon-card-item:hover {
                       transform: translateY(-2px);
@@ -3924,8 +3925,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                 data-selected={isSelected}
                               >
                                 {addonImage && (
-                                  <div className="addon-img-box">
-                                    <img src={addonImage} alt={addon.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  <div className="addon-img-box" style={{ position: "relative" }}>
+                                    <img src={addonImage} alt={addon.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                                   </div>
                                 )}
                                 <div className="addon-content">
