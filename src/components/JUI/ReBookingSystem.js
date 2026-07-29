@@ -1079,7 +1079,7 @@ const normalizeExperienceSlots = (slots = [], dateKey = "") => (
       const privateBookingEnabled = availability?.privateBookingEnabled ?? availability?.private_booking_enabled ?? slot.privateBookingEnabled ?? slot.private_booking_enabled ?? false;
       const hasPrivateBooking = availability?.hasPrivateBooking ?? availability?.has_private_booking ?? slot.hasPrivateBooking ?? slot.has_private_booking ?? false;
       const explicitPrivateBookingAvailable = availability?.privateBookingAvailable ?? availability?.private_booking_available ?? slot.privateBookingAvailable ?? slot.private_booking_available;
-      
+
       const bookedSeatsForDate = availability?.booked_seats ?? availability?.bookedSeats ?? 0;
       const basePrivateAvailable = explicitPrivateBookingAvailable ?? Boolean(privateBookingEnabled && !hasPrivateBooking && isAvailable !== false);
       const privateBookingAvailable = bookedSeatsForDate > 0 ? false : basePrivateAvailable;
@@ -2329,8 +2329,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     : [];
   const eventHasExplicitChildPrice = isEventBooking && selectedTicket
     ? Object.prototype.hasOwnProperty.call(selectedTicket, "childPrice") ||
-      Object.prototype.hasOwnProperty.call(selectedTicket, "child_price") ||
-      eventChildPricingTiers.length > 0
+    Object.prototype.hasOwnProperty.call(selectedTicket, "child_price") ||
+    eventChildPricingTiers.length > 0
     : false;
   const allowChildPricing = asBoolean(
     isEventBooking
@@ -2684,8 +2684,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
       if (cutoffMoment && getIndiaNow().isAfter(cutoffMoment)) {
         showErrorPopup(
-          `You can no longer reserve this slot because the slot start time has already passed in ${BOOKING_TIMEZONE}.`,
-          "Booking Closed"
+          "Sorry, bookings for this slot have closed.",
+          "Booking Closed",
+          {
+            reason: "Please select a different available slot to continue.",
+            ctaLabel: "Select Another Slot"
+          }
         );
         return;
       }
@@ -4839,7 +4843,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     </div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.14em", textTransform: "uppercase", color: E, marginBottom: 4 }}>
-                        Availability Notice
+                        Booking Update
                       </div>
                       <h3 style={{ margin: 0, fontSize: 22, lineHeight: 1.05, fontWeight: 900, color: FG }}>
                         {errorPopup.title}
