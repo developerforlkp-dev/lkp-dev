@@ -1853,8 +1853,8 @@ function Artists({ event }) {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: i * 0.07, ease: E }}
-                onHoverStart={() => setHov(a.id)}
-                onHoverEnd={() => setHov(null)}
+                onMouseEnter={() => setHov(a.id)}
+                onMouseLeave={() => setHov(null)}
                 onMouseMove={handleMouseMove}
                 whileHover={{ paddingLeft: 8, backgroundColor: AL }}
                 className="artist-row"
@@ -1862,7 +1862,15 @@ function Artists({ event }) {
                 <div>
                   <motion.p animate={{ color: hov === a.id ? A : B }} style={{ fontFamily: "monospace", fontSize: 10 }}>{String(i + 1).padStart(2, "0")}</motion.p>
                 </div>
-                <div onMouseEnter={() => setHov(null)} onMouseLeave={() => setHov(a.id)}>
+                <div 
+                  onMouseEnter={() => setHov(null)} 
+                  onMouseLeave={(e) => {
+                    // Only restore the image if we are not leaving the outer row entirely
+                    if (e.relatedTarget && e.currentTarget.parentNode.contains(e.relatedTarget)) {
+                      setHov(a.id);
+                    }
+                  }}
+                >
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
                     <motion.h3 animate={{ color: hov === a.id ? A : FG }} style={{ fontSize: "18px", fontWeight: 700, fontFamily: '"Inter", sans-serif', margin: "4px 0 0 0", lineHeight: 1 }}>{a.name}</motion.h3>
                   </div>
