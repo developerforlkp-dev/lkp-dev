@@ -700,9 +700,16 @@ const StayBookingSystem = ({
     }
 
     for (const item of autoAddCandidates) {
-      const { roomId, currentCount, maxLimit } = item;
+      const { roomId, currentCount, maxLimit, isBedConfig } = item;
 
       if (currentCount < maxLimit) {
+        if (!isBedConfig && !isPropertyBasedBooking(stay)) {
+          const nonBedCount = resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0);
+          if (nonBedCount >= (guests?.adults || 1)) {
+            setValidationError("You cannot book more rooms than the number of adults.");
+            return;
+          }
+        }
         handleRoomCountChangeWithReset(roomId, currentCount + 1);
         setValidationError("Another room has been added to accommodate extra guests.");
         return;
@@ -3023,7 +3030,7 @@ const StayBookingSystem = ({
                                       }
                                       setGuests(prev => ({...prev, adults: v}));
                                     }} 
-                                    min={1} 
+                                    min={!isPropertyBased ? Math.max(1, resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)) : 1} 
                                     max={absoluteMaxAdults}
                                   />
                                 </div>
@@ -3204,9 +3211,52 @@ const StayBookingSystem = ({
                                   <div style={{ width: 26, height: 26, borderRadius: 8, background: AL, display: "flex", alignItems: "center", justifyContent: "center", color: A }}>
                                     <Bed size={13} />
                                   </div>
-                                  <div>
-                                    <p style={{ fontSize: 13, fontWeight: 600, color: FG }}>{room.roomName || room.name}</p>
-                                    <p style={{ fontSize: 10, fontWeight: 500, color: M }}>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      <p style={{ fontSize: 13, fontWeight: 600, color: FG, margin: 0 }}>{room.roomName || room.name}</p>
+                                      {stayRoomsCatalog.length > 1 && (
+                                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                                          <select 
+                                            value={room.roomId || room.id}
+                                            onChange={(e) => {
+                                              const newRoomId = e.target.value;
+                                              setSelectedRooms(prev => prev.map(r => 
+                                                (r.roomId || r.id) === (room.roomId || room.id) ? { ...r, roomId: newRoomId } : r
+                                              ));
+                                            }}
+                                            style={{
+                                              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer'
+                                            }}
+                                          >
+                                            {stayRoomsCatalog.map(catalogRoom => {
+                                              const cId = String(catalogRoom.roomId ?? catalogRoom.id ?? catalogRoom.roomTypeId ?? catalogRoom.room_type_id);
+                                              return (
+                                                <option key={cId} value={cId}>
+                                                  {catalogRoom.roomName || catalogRoom.name || catalogRoom.bedType || "Accommodation"}
+                                                </option>
+                                              );
+                                            })}
+                                          </select>
+                                          <div style={{
+                                            fontSize: 10, 
+                                            fontWeight: 700, 
+                                            color: A, 
+                                            background: `${A}11`, 
+                                            border: `1px solid ${A}44`, 
+                                            borderRadius: 6,
+                                            padding: "2px 6px",
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 4,
+                                            pointerEvents: 'none',
+                                            boxShadow: `0 1px 2px ${B}44`,
+                                          }}>
+                                            Change <ChevronDown size={10} color={A} />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p style={{ fontSize: 10, fontWeight: 500, color: M, margin: 0 }}>
                                       {getMealPlanDisplayLabel(
                                         room.mealPlan || "EP",
                                         room.mealPlanPricing,
@@ -3225,7 +3275,7 @@ const StayBookingSystem = ({
                                     }
                                   }} 
                                   min={resolvedSelectedRooms.length > 1 ? 0 : 1} 
-                                  max={Number(room.units || room.totalRooms || room.availableRooms || 99)} 
+                                  max={room.isBedConfig ? Number(room.units || room.totalRooms || room.availableRooms || 99) : Math.min(Number(room.units || room.totalRooms || room.availableRooms || 99), room.count + Math.max(0, (guests?.adults || 1) - resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)))} 
                                 />
                               </div>
                             </div>

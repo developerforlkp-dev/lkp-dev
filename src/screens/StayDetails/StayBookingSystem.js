@@ -671,9 +671,16 @@ const StayBookingSystem = ({
     }
 
     for (const item of autoAddCandidates) {
-      const { roomId, currentCount, maxLimit } = item;
+      const { roomId, currentCount, maxLimit, isBedConfig } = item;
 
       if (currentCount < maxLimit) {
+        if (!isBedConfig && !isPropertyBasedBooking(stay)) {
+          const nonBedCount = resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0);
+          if (nonBedCount >= (guests?.adults || 1)) {
+            setValidationError("You cannot book more rooms than the number of adults.");
+            return;
+          }
+        }
         handleRoomCountChangeWithReset(roomId, currentCount + 1);
         setValidationError("Another room has been added to accommodate extra guests.");
         return;
@@ -2982,7 +2989,7 @@ const StayBookingSystem = ({
 
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {(!isEntirelyBedBased && !isHostelBooking(stay)) && (
+                            {(!isEntirelyBedBased) && (
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Adults</p>
@@ -2994,7 +3001,7 @@ const StayBookingSystem = ({
                                       }
                                       setGuests(prev => ({...prev, adults: v}));
                                     }} 
-                                    min={1} 
+                                    min={!isPropertyBased ? Math.max(1, resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)) : 1} 
                                     max={absoluteMaxAdults}
                                   />
                                 </div>
@@ -3196,7 +3203,7 @@ const StayBookingSystem = ({
                                     }
                                   }} 
                                   min={resolvedSelectedRooms.length > 1 ? 0 : 1} 
-                                  max={Number(room.units || room.totalRooms || room.availableRooms || 99)} 
+                                  max={room.isBedConfig ? Number(room.units || room.totalRooms || room.availableRooms || 99) : Math.min(Number(room.units || room.totalRooms || room.availableRooms || 99), room.count + Math.max(0, (guests?.adults || 1) - resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)))} 
                                 />
                               </div>
                             </div>
