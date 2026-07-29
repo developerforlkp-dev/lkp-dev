@@ -1497,11 +1497,11 @@ const ExperienceProduct = () => {
                         }}
                       >
                         {/* Left side: ONLY image */}
-                        <div style={{ width: "160px", height: "100%", flexShrink: 0, overflow: "hidden", background: W, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: "160px", flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
                           {addonImage ? (
                             <img
                               src={formatImageUrl(addonImage)}
-                              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
                               alt={addon.title}
                               onError={(e) => {
                                 e.target.onerror = null;
@@ -1509,7 +1509,7 @@ const ExperienceProduct = () => {
                               }}
                             />
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", background: AL }}>
+                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: AL }}>
                               <Plus size={24} color={A} />
                             </div>
                           )}
