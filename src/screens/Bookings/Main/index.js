@@ -10,8 +10,6 @@ import { getInitializePaymentErrorMessage, initializePendingOrderPayment, isExpi
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import Rating from "../../../components/Rating";
 import LoadingSkeleton from "../../../components/LoadingSkeleton";
-import { BookingSystem as ReBookingSystem } from "../../../components/JUI/ReBookingSystem";
-import StayReBookingSystem from "../../StayDetails/StayReBookingSystem";
 
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
@@ -1073,12 +1071,6 @@ const Main = ({
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState(null);
 
-  // Rebooking State
-  const [showRebookModal, setShowRebookModal] = useState(false);
-  const [rebookData, setRebookData] = useState(null);
-  const [rebookType, setRebookType] = useState(null);
-  const [isFetchingRebookData, setIsFetchingRebookData] = useState(false);
-
   const handleMessageHostClick = (booking) => {
     setBookingToMessage(booking);
     setHostMessageText("");
@@ -1101,58 +1093,6 @@ const Main = ({
       setTimeout(() => setMessageStatus(null), 3000);
     } finally {
       setIsSendingMessage(false);
-    }
-  };
-
-  const handleRebook = async (booking) => {
-    if (!booking) return;
-    setIsFetchingRebookData(true);
-    
-    try {
-      const businessInterestCode = String(booking?.bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
-      const isStayOrder = businessInterestCode === "STAYS" || booking?.bookingData?.stayId != null || Array.isArray(booking?.bookingData?.stayOrderRooms);
-      const isEventOrder = businessInterestCode === "EVENTS" || booking?.bookingData?.eventId != null;
-      
-      let data = null;
-      let type = "experience";
-
-      if (isStayOrder) {
-        const stayId = booking?.bookingData?.stayId || booking?.stayId || booking?.listingId || booking?.bookingData?.listingId;
-        if (stayId) {
-          const res = await getStayDetails(stayId);
-          data = res?.stay || res;
-        }
-        type = "stay";
-      } else if (isEventOrder) {
-        const eventId = booking?.bookingData?.eventId || booking?.eventId || booking?.listingId || booking?.bookingData?.listingId;
-        if (eventId) {
-          const res = await getEventDetails(eventId);
-          data = res?.event || res;
-        }
-        type = "event";
-      } else {
-        const listingId = booking?.bookingData?.listingId || booking?.listingId;
-        if (listingId) {
-          const res = await getListing(listingId);
-          data = res?.listing || res;
-        }
-        type = "experience";
-      }
-
-      if (data) {
-        setRebookData(data);
-        setRebookType(type);
-        setValidationModalVisible(false);
-        // Add a small timeout to ensure ValidationModal unmounts before RebookingSystem mounts
-        setTimeout(() => setShowRebookModal(true), 50);
-      } else {
-        alert("Failed to load details for rebooking. Data was empty.");
-      }
-    } catch (error) {
-      console.error("Failed to fetch rebook data", error);
-      alert("Failed to load details for rebooking. Please try again. " + (error?.message || ""));
-    } finally {
-      setIsFetchingRebookData(false);
     }
   };
 
@@ -1219,8 +1159,6 @@ const Main = ({
     }
   };
 
-
-
   const handleCheckAvailability = async (booking) => {
     const pendingRestore = buildPendingBookingRestoreState(booking);
     const redirectUrl = pendingRestore?.detailUrl || buildPendingBookingFallbackUrl(booking);
@@ -1234,45 +1172,22 @@ const Main = ({
     }
 
     if (redirectUrl) {
-      // Intentionally skipping redirect so that the modal can open on the current page
-      // history.push(redirectUrl, { ... });
+      history.push(redirectUrl, {
+        openReserveModal: true,
+        source: "check-availability",
+        orderId: booking?.orderId,
+      });
+      return;
     }
 
     if (isCheckingAvailability) return;
     setIsCheckingAvailability(true);
     setCheckingOrderId(booking.orderId);
-
-    const isPast = isPastStayCheckInTime(booking) || isPastExperienceStartTime(booking);
-    if (isPast) {
-      setValidationModalData({
-        title: "Availability check failed",
-        message: "This booking date is in the past.",
-        details: "Would you like to rebook for a new date?",
-        isSuccess: false,
-        isRebookPrompt: true,
-        bookingToRebook: booking
-      });
-      setValidatedBookingId(null);
-      setValidationModalVisible(true);
-      setIsCheckingAvailability(false);
-      setCheckingOrderId(null);
-      return;
-    }
-
     try {
       const response = await validateExperienceOrEventOrder(booking.orderId);
       if (response?.canProceed === true) {
-        setValidationModalData({
-          title: "Booking is available",
-          message: "Your selected slot is still available.",
-          details: "Would you like to proceed with payment or rebook for another date/time?",
-          isSuccess: true,
-          isRebookPrompt: true,
-          bookingToRebook: booking,
-          canContinue: true
-        });
-        setValidatedBookingId(booking.orderId);
-        setValidationModalVisible(true);
+        setSelectedBookingForPayment(booking);
+        setConfirmPayModalVisible(true);
         return;
       }
 
@@ -1281,21 +1196,13 @@ const Main = ({
         : null;
 
       if (firstFailure) {
-        const msgData = mapValidationFailureToFriendlyMessage(firstFailure);
-        setValidationModalData({
-          ...msgData,
-          details: "Would you like to rebook for a new date?",
-          isRebookPrompt: true,
-          bookingToRebook: booking
-        });
+        setValidationModalData(mapValidationFailureToFriendlyMessage(firstFailure));
       } else {
         setValidationModalData({
           title: "Availability check failed",
-          message: "Selected slot is no longer available.",
-          details: "Would you like to rebook for a new date?",
+          message: "Selected slot is no longer available",
+          details: "",
           isSuccess: false,
-          isRebookPrompt: true,
-          bookingToRebook: booking
         });
       }
       setValidatedBookingId(null);
@@ -1308,13 +1215,7 @@ const Main = ({
           ? responseData.failures[0]
           : null;
         if (firstFailure) {
-          const msgData = mapValidationFailureToFriendlyMessage(firstFailure);
-          setValidationModalData({
-            ...msgData,
-            details: "Would you like to rebook for a new date?",
-            isRebookPrompt: true,
-            bookingToRebook: booking
-          });
+          setValidationModalData(mapValidationFailureToFriendlyMessage(firstFailure));
           setValidatedBookingId(null);
           setValidationModalVisible(true);
           return;
@@ -1323,10 +1224,8 @@ const Main = ({
       setValidationModalData({
         title: "Unable to check availability",
         message: error?.message || "Failed to check availability.",
-        details: "Would you like to try rebooking instead?",
+        details: "",
         isSuccess: false,
-        isRebookPrompt: true,
-        bookingToRebook: booking
       });
       setValidatedBookingId(null);
       setValidationModalVisible(true);
@@ -2622,30 +2521,18 @@ const Main = ({
             >
               {validationModalData.isSuccess ? "Cancel" : "Close"}
             </button>
-            {validationModalData.isRebookPrompt && (
-              <button
-                type="button"
-                className={cn("button-stroke", styles.cancelModalBtn)}
-                style={{ marginLeft: '12px' }}
-                onClick={() => handleRebook(validationModalData.bookingToRebook)}
-                disabled={isFetchingRebookData}
-              >
-                {isFetchingRebookData ? "Loading..." : "Rebook Now"}
-              </button>
-            )}
-            {(validationModalData.isSuccess && validationModalData.canContinue) && (
-              <button
-                type="button"
-                className={cn("button", styles.cancelModalBtn)}
-                style={{ marginLeft: '12px' }}
-                onClick={() => {
-                  setValidationModalVisible(false);
-                  setSelectedBookingForPayment(validationModalData.bookingToRebook);
-                  setConfirmPayModalVisible(true);
+            {validationModalData.isSuccess && (
+              <Link
+                to={{
+                  pathname: "/viewdetails",
+                  search: `?id=${encodeURIComponent(validatedBookingId)}`,
+                  state: { sourceTab: displayedTab },
                 }}
+                className={cn("button", styles.cancelModalBtn)}
+                onClick={() => setValidationModalVisible(false)}
               >
                 Continue to Payment
-              </button>
+              </Link>
             )}
           </div>
         </div>
@@ -2661,9 +2548,10 @@ const Main = ({
       >
         <div className={styles.cancelModalContent} style={{ maxHeight: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div className={styles.cancelModalHeader} style={{ flexShrink: 0, padding: "32px 32px 16px" }}>
-            <h2 className={styles.cancelModalTitle}>Continue to Payment</h2>
-            <p className={styles.cancelModalDescription}>
-              Please select how you would like to pay for your booking.
+            <h2 className={styles.cancelModalTitle} style={{ color: "#0097B2" }}>Slot Available</h2>
+            <p className={styles.cancelModalDescription} style={{ marginBottom: 0 }}>
+              Your selected experience slot is currently available.
+              You can proceed with payment to confirm your booking.
             </p>
           </div>
 
@@ -2894,35 +2782,6 @@ const Main = ({
         }}>
           {messageStatus === 'success' ? "Message sent successfully!" : "Failed to send message. Please try again."}
         </div>
-      )}
-
-      {/* Rebook Modal */}
-      {showRebookModal && rebookData && (
-        rebookType === "stay" ? (
-          <StayReBookingSystem
-            stay={rebookData}
-            checkInDate={null}
-            checkOutDate={null}
-            guests={{ adults: 1, children: 0 }}
-            childAges={[]}
-            selectedRooms={[]}
-            onRoomsCountChange={() => {}}
-            selectedAddOns={[]}
-            addOnQuantities={{}}
-            onAddOnQuantityChange={() => {}}
-            onToggleAddOn={() => {}}
-            externalOpen={showRebookModal}
-            onExternalOpenChange={setShowRebookModal}
-          />
-        ) : (
-          <ReBookingSystem
-            listing={rebookData}
-            initialDate={null}
-            externalOpen={showRebookModal}
-            onExternalOpenChange={setShowRebookModal}
-            type={rebookType}
-          />
-        )
       )}
     </div>
   );
