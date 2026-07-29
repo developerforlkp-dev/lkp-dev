@@ -89,6 +89,9 @@ const getOrderCreationErrorMessage = (error) => {
   if (code.includes("HOLD") || /hold expired/i.test(message)) {
     return "Hold expired, recheck availability.";
   }
+  if (/status:\s*DISABLED/i.test(message)) {
+    return "Sorry, this experience is currently disabled and cannot be booked at the moment.\n\nPlease try another experience or contact support for help.";
+  }
   return message;
 };
 
@@ -562,8 +565,10 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
           </div>
-          <h3 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: "600" }}>Oops!</h3>
-          <p style={{ marginBottom: "24px", fontSize: "16px", color: "#4A4A4A", wordBreak: "break-word" }}>{errorModalMsg}</p>
+          <h3 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: "600" }}>
+            {typeof errorModalMsg === 'string' && errorModalMsg.includes("currently disabled") ? "Booking Unavailable" : "Oops!"}
+          </h3>
+          <p style={{ marginBottom: "24px", fontSize: "16px", color: "#4A4A4A", wordBreak: "break-word", whiteSpace: "pre-line" }}>{errorModalMsg}</p>
           <button className="button" onClick={() => setErrorModalMsg("")} style={{ width: "100%" }}>
             Okay
           </button>
