@@ -112,7 +112,7 @@ const Page = ({
       {/* Header Background Layer (Under the Hero) */}
       {!hideHeader && (
         <div 
-          className={cn("slim-header-bg", { "auto-hide": autoHideEnabled && !headerVisible, "is-detail-page": isDetailPage, "is-blog-page": isBlogPage })}
+          className={cn("slim-header-bg", { "auto-hide": autoHideEnabled && !headerVisible, "is-detail-page": isDetailPage, "is-blog-page": isBlogPage, "is-filter-page": isFilterPage })}
           style={{ 
             position: separatorHeader ? "sticky" : "fixed", top: 0, left: 0, right: 0, 
             height: (scrolled || separatorHeader) ? "70px" : "0px",
@@ -127,7 +127,7 @@ const Page = ({
       {/* Header Content Layer (Above the Hero) */}
       {!hideHeader && (
         <motion.div
-          className={cn("slim-header-wrapper", { "force-dark": !scrolled && !separatorHeader && theme === "light" && !isHomeRoute, "auto-hide": autoHideEnabled && !headerVisible && (!isHomeRoute || isDetailPage || isBlogPage), "is-detail-page": isDetailPage, "is-blog-page": isBlogPage })}
+          className={cn("slim-header-wrapper", { "force-dark": !scrolled && !separatorHeader && theme === "light" && !isHomeRoute, "auto-hide": autoHideEnabled && !headerVisible && (!isHomeRoute || isDetailPage || isBlogPage || isFilterPage), "is-detail-page": isDetailPage, "is-blog-page": isBlogPage, "is-filter-page": isFilterPage })}
           initial={{ y: -70, opacity: 0 }} 
           animate={{ y: 0, opacity: 1 }} 
           transition={{ duration: 0.85, ease: E }}
@@ -188,23 +188,23 @@ const Page = ({
         }
         
         @media (max-width: 768px) {
-          .slim-header-bg.is-detail-page, .slim-header-bg.is-blog-page {
+          .slim-header-bg.is-detail-page, .slim-header-bg.is-blog-page, .slim-header-bg.is-filter-page {
             height: 60px !important;
           }
-          .slim-header-wrapper.is-detail-page, .slim-header-wrapper.is-blog-page {
+          .slim-header-wrapper.is-detail-page, .slim-header-wrapper.is-blog-page, .slim-header-wrapper.is-filter-page {
             margin-top: ${separatorHeader ? "-60px" : "0"} !important;
           }
-          .slim-header-wrapper.is-detail-page > div, .slim-header-wrapper.is-blog-page > div {
+          .slim-header-wrapper.is-detail-page > div, .slim-header-wrapper.is-blog-page > div, .slim-header-wrapper.is-filter-page > div {
             padding: 12px 0 !important;
           }
-          .slim-header-wrapper.is-detail-page [class*="Header_container"], .slim-header-wrapper.is-blog-page [class*="Header_container"] {
+          .slim-header-wrapper.is-detail-page [class*="Header_container"], .slim-header-wrapper.is-blog-page [class*="Header_container"], .slim-header-wrapper.is-filter-page [class*="Header_container"] {
             padding: 0 16px !important;
           }
-          .slim-header-wrapper.is-detail-page img, .slim-header-wrapper.is-blog-page img {
+          .slim-header-wrapper.is-detail-page img, .slim-header-wrapper.is-blog-page img, .slim-header-wrapper.is-filter-page img {
             height: 44px !important;
             width: auto !important;
           }
-          .slim-header-wrapper.is-detail-page [class*="Header_burger"], .slim-header-wrapper.is-blog-page [class*="Header_burger"] {
+          .slim-header-wrapper.is-detail-page [class*="Header_burger"], .slim-header-wrapper.is-blog-page [class*="Header_burger"], .slim-header-wrapper.is-filter-page [class*="Header_burger"] {
              transform: none;
              margin-top: 0;
           }
