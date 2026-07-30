@@ -235,8 +235,6 @@ ListingsAPI.interceptors.request.use((config) => {
       config.headers = config.headers || {};
       config.headers["Authorization"] = `Bearer ${token}`;
       //console.log("🔑 JWT token attached to request:", config.url);
-    } else {
-      console.warn("⚠️ No JWT token found in localStorage for request:", config.url);
     }
   }
   return config;
@@ -289,8 +287,15 @@ ListingsAPI.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      const isEligibleBookings = url.includes('/reviews/eligible-bookings');
+      const isLeadsEndpoint = url.includes('/leads/');
+
       // Suppress expected validation errors for specific noisy endpoints
-      if ((status === 400 && isCancelPreviewEndpoint) || (status === 403 && isEventEndpoint)) {
+      if (
+        (status === 400 && isCancelPreviewEndpoint) || 
+        (status === 403 && isEventEndpoint) ||
+        (status === 401 && (isEligibleBookings || isLeadsEndpoint))
+      ) {
         error.isHandled = true;
         return Promise.reject(error);
       }
@@ -1726,6 +1731,9 @@ export const getMyReviews = async () => {
 // Get eligible bookings (completed orders without reviews)
 export const getEligibleBookings = async () => {
   try {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return [];
+
     const response = await ListingsAPI.get(`/reviews/eligible-bookings`);
     const payload = response.data;
     if (Array.isArray(payload)) return payload;
@@ -1735,7 +1743,9 @@ export const getEligibleBookings = async () => {
     }
     return [];
   } catch (error) {
-    console.error("❌ Error fetching eligible bookings:", error.response?.data || error.message);
+    if (error.response?.status !== 401) {
+      console.error("❌ Error fetching eligible bookings:", error.response?.data || error.message);
+    }
     throw error;
   }
 };
@@ -2300,6 +2310,9 @@ export const getPlaceDetails = async (placeId) => {
 // ✅ Get lead details (host details) from leads API
 export const getLeadDetails = async (leadId) => {
   try {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return null;
+
     if (!leadId) {
       throw new Error("leadId is required");
     }
@@ -2315,7 +2328,9 @@ export const getLeadDetails = async (leadId) => {
 
     return payload;
   } catch (error) {
-    console.error(`❌ Error fetching lead ${leadId}:`, error.response?.data || error.message);
+    if (error.response?.status !== 401) {
+      console.error(`❌ Error fetching lead ${leadId}:`, error.response?.data || error.message);
+    }
     throw error;
   }
 };

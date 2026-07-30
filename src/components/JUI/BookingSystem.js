@@ -2662,30 +2662,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const cutoffMoment = getSlotCutoffMoment(selectedDateKey, String(resolvedSlotStartTime), cutoffHours);
       const debugSlot = selectedSlotObj || baseSlotObj || null;
 
-      console.log("[BookingSystem cutoff debug]", {
-        selectedSlotId:
-          debugSlot?.id ??
-          debugSlot?.slotId ??
-          debugSlot?.slot_id ??
-          debugSlot?.eventSlotId ??
-          null,
-        selectedSlotStartTime:
-          debugSlot?.startTime ??
-          debugSlot?.start_time ??
-          debugSlot?.slotStartTime ??
-          debugSlot?.time ??
-          startTime ??
-          null,
-        resolvedSlotStartTime,
-        selectedDateKey,
-        configuredCutoffHours: cutoffHours,
-        parsedDateParts: { year: selectedDateKey?.slice(0, 4), month: selectedDateKey?.slice(5, 7), day: selectedDateKey?.slice(8, 10) },
-        computedCutoffMoment: cutoffMoment ? cutoffMoment.format() : null,
-        currentIndiaTime: getIndiaNow().format(),
-        timezone: BOOKING_TIMEZONE,
-        selectedSlotSnapshot: debugSlot,
-      });
-
       if (cutoffMoment && getIndiaNow().isAfter(cutoffMoment)) {
         showErrorPopup(
           "Sorry, bookings for this slot have closed.",
