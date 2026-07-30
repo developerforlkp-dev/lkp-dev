@@ -1368,7 +1368,10 @@ const ViewDetails = () => {
       const preview = await getOrderCancelPreview(booking.orderId);
       setCancelPreview(preview && typeof preview === "object" ? preview : null);
     } catch (err) {
-      console.warn("⚠️ Failed to fetch cancel preview:", err?.message || err);
+      // Only log unexpected errors
+      if (err?.response?.status !== 400) {
+        console.warn("⚠️ Failed to fetch cancel preview:", err?.message || err);
+      }
       setCancelPreview(null);
     } finally {
       setCancelPreviewLoading(false);
@@ -2398,7 +2401,10 @@ const ViewDetails = () => {
         const data = await getOrderCancelPreview(booking.orderId);
         setCancelPreview(data && typeof data === "object" ? data : null);
       } catch (err) {
-        console.warn("⚠️ Failed to fetch cancel preview:", err?.message || err);
+        // Only log unexpected errors
+        if (err?.response?.status !== 400) {
+          console.warn("⚠️ Failed to fetch cancel preview:", err?.message || err);
+        }
         setCancelPreview(null);
       }
     };

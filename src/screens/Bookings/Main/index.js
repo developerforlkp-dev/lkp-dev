@@ -1838,7 +1838,10 @@ const Main = ({
           booking,
         });*/
       } catch (e) {
-        console.warn("⚠️ Failed to fetch cancel preview:", e?.response?.data || e?.message || e);
+        // Only log unexpected errors
+        if (e?.response?.status !== 400) {
+          console.warn("⚠️ Failed to fetch cancel preview:", e?.response?.data || e?.message || e);
+        }
       } finally {
         setCancelPreviewLoading(false);
       }
