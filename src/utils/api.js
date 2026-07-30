@@ -275,14 +275,23 @@ ListingsAPI.interceptors.response.use(
       const message = error.response.data?.message || error.message;
 
       // Check if this is a non-critical endpoint that can fail silently
-      const isNonCriticalEndpoint = error.config?.url?.includes('/orders/complete-expired');
+      const url = error.config?.url || '';
+      const isCompleteExpiredEndpoint = url.includes('/orders/complete-expired');
+      const isCancelPreviewEndpoint = url.includes('/cancel-preview');
+      const isEventEndpoint = url.includes('/events/');
 
       // Suppress error logging for non-critical endpoints (500 errors)
       // These endpoints are handled gracefully by the calling code
-      if (status === 500 && isNonCriticalEndpoint) {
+      if (status === 500 && isCompleteExpiredEndpoint) {
         error.isHandled = true;
         // Don't log as error - silently handle it
         // The calling function (getCompleteExpiredOrders) will handle it gracefully
+        return Promise.reject(error);
+      }
+
+      // Suppress expected validation errors for specific noisy endpoints
+      if ((status === 400 && isCancelPreviewEndpoint) || (status === 403 && isEventEndpoint)) {
+        error.isHandled = true;
         return Promise.reject(error);
       }
 
@@ -572,7 +581,10 @@ export const getOrderCancelPreview = async (orderId) => {
     const response = await ListingsAPI.get(`/orders/${orderIdStr}/cancel-preview`);
     return response.data;
   } catch (error) {
-    console.error("❌ Error fetching cancel preview:", error.response?.data || error.message);
+    // Only log unexpected errors (not 400 validation errors which are handled silently by interceptor)
+    if (error.response?.status !== 400) {
+      console.error("❌ Error fetching cancel preview:", error.response?.data || error.message);
+    }
     throw error;
   }
 };
