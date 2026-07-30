@@ -287,8 +287,15 @@ ListingsAPI.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      const isEligibleBookings = url.includes('/reviews/eligible-bookings');
+      const isLeadsEndpoint = url.includes('/leads/');
+
       // Suppress expected validation errors for specific noisy endpoints
-      if ((status === 400 && isCancelPreviewEndpoint) || (status === 403 && isEventEndpoint)) {
+      if (
+        (status === 400 && isCancelPreviewEndpoint) || 
+        (status === 403 && isEventEndpoint) ||
+        (status === 401 && (isEligibleBookings || isLeadsEndpoint))
+      ) {
         error.isHandled = true;
         return Promise.reject(error);
       }
@@ -1736,7 +1743,9 @@ export const getEligibleBookings = async () => {
     }
     return [];
   } catch (error) {
-    console.error("❌ Error fetching eligible bookings:", error.response?.data || error.message);
+    if (error.response?.status !== 401) {
+      console.error("❌ Error fetching eligible bookings:", error.response?.data || error.message);
+    }
     throw error;
   }
 };
@@ -2319,7 +2328,9 @@ export const getLeadDetails = async (leadId) => {
 
     return payload;
   } catch (error) {
-    console.error(`❌ Error fetching lead ${leadId}:`, error.response?.data || error.message);
+    if (error.response?.status !== 401) {
+      console.error(`❌ Error fetching lead ${leadId}:`, error.response?.data || error.message);
+    }
     throw error;
   }
 };

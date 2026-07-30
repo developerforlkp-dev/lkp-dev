@@ -510,11 +510,17 @@ const ExperienceProduct = () => {
               const forThisListing = resp.filter(b => String(b.listingId) === String(id));
               setEligibleBookings(forThisListing);
             }
-          }).catch(e => console.warn("Failed to fetch eligible bookings:", e));
+          }).catch(e => {
+            if (e?.response?.status !== 401) {
+              console.warn("Failed to fetch eligible bookings:", e);
+            }
+          });
 
           const leadId = data.leadId || data.lead_id || data.host?.leadId || data.leadUserId;
           if (leadId) {
-            getLeadDetails(leadId).then(resp => mounted && setLeadData(resp)).catch(e => console.warn(e));
+            getLeadDetails(leadId).then(resp => mounted && setLeadData(resp)).catch(e => {
+              if (e?.response?.status !== 401) console.warn(e);
+            });
           }
 
         }
