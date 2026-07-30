@@ -235,8 +235,6 @@ ListingsAPI.interceptors.request.use((config) => {
       config.headers = config.headers || {};
       config.headers["Authorization"] = `Bearer ${token}`;
       //console.log("🔑 JWT token attached to request:", config.url);
-    } else {
-      console.warn("⚠️ No JWT token found in localStorage for request:", config.url);
     }
   }
   return config;
@@ -1726,6 +1724,9 @@ export const getMyReviews = async () => {
 // Get eligible bookings (completed orders without reviews)
 export const getEligibleBookings = async () => {
   try {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return [];
+
     const response = await ListingsAPI.get(`/reviews/eligible-bookings`);
     const payload = response.data;
     if (Array.isArray(payload)) return payload;
@@ -2300,6 +2301,9 @@ export const getPlaceDetails = async (placeId) => {
 // ✅ Get lead details (host details) from leads API
 export const getLeadDetails = async (leadId) => {
   try {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return null;
+
     if (!leadId) {
       throw new Error("leadId is required");
     }
