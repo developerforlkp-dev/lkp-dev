@@ -2283,7 +2283,9 @@ const ViewDetails = () => {
             } else if (resolvedStayId) {
               reviewData = await getStayReviews(resolvedStayId);
             }
-            if (reviewData) console.log("✅ Review summary fetched for Details:", reviewData);
+            if (reviewData) {
+              // review data fetched
+            }
           } catch (reviewErr) {
             console.warn("⚠️ Failed to fetch review summary for Details:", reviewErr);
           }
@@ -2393,6 +2395,12 @@ const ViewDetails = () => {
   useEffect(() => {
     const loadCancelPreview = async () => {
       if (!booking?.orderId) {
+        setCancelPreview(null);
+        return;
+      }
+
+      const statusTone = String(booking?.statusTone || booking?.status || "").toLowerCase();
+      if (statusTone === "completed" || statusTone === "cancelled" || statusTone === "canceled") {
         setCancelPreview(null);
         return;
       }
