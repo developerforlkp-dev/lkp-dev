@@ -9,12 +9,12 @@ import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/p
 import Counter from "../../components/Counter";
 import LoginPromptModal from "../../components/LoginPromptModal";
 
-export const StayInlineCalendar = ({ 
-  checkInDate, 
-  checkOutDate, 
-  onDateSelect, 
-  isBlockedDay, 
-  tokens, 
+export const StayInlineCalendar = ({
+  checkInDate,
+  checkOutDate,
+  onDateSelect,
+  isBlockedDay,
+  tokens,
   selectionMode,
   nextBlockedDate
 }) => {
@@ -46,15 +46,15 @@ export const StayInlineCalendar = ({
     return { day: d, key, mDate, isPast, isBlocked, isSelected, isInRange, isOverflow };
   };
 
-  const prevMonthCells = Array.from({ length: firstDay }, (_, i) => 
+  const prevMonthCells = Array.from({ length: firstDay }, (_, i) =>
     createCell(year, month - 1, daysInPrevMonth - firstDay + i + 1, true)
   );
-  
-  const currentMonthCells = Array.from({ length: daysInMonth }, (_, i) => 
+
+  const currentMonthCells = Array.from({ length: daysInMonth }, (_, i) =>
     createCell(year, month, i + 1, false)
   );
 
-  const nextMonthCells = Array.from({ length: nextMonthDaysCount }, (_, i) => 
+  const nextMonthCells = Array.from({ length: nextMonthDaysCount }, (_, i) =>
     createCell(year, month + 1, i + 1, true)
   );
 
@@ -106,10 +106,10 @@ export const StayInlineCalendar = ({
           }
 
           // Determine color: highlight selected and range, fade out visually disabled
-          const textColor = cell.isSelected 
-            ? "#FFF" 
-            : (disabled && !cell.isInRange) 
-              ? `${M}44` 
+          const textColor = cell.isSelected
+            ? "#FFF"
+            : (disabled && !cell.isInRange)
+              ? `${M}44`
               : FG;
 
           return (
@@ -748,7 +748,7 @@ const StayBookingSystem = ({
           localStorage.removeItem("frontendPendingBookingState");
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }, [setCheckInDate, setCheckOutDate, setGuests, setChildAges, setSelectedRooms, stay, stay?.stayId, stay?.id]);
 
   useEffect(() => {
@@ -775,11 +775,11 @@ const StayBookingSystem = ({
 
   const handleDateSelect = (date) => {
     const isBlocked = isBlockedDay(date);
-    
+
     if (selectionMode === "check-in") {
       // 1. Check-in Selection / Editing
       if (isBlocked) return;
-      
+
       const isSameAsCheckIn = checkInDate && date.isSame(checkInDate, "day");
       if (isSameAsCheckIn) {
         setCheckInDate(null);
@@ -821,7 +821,7 @@ const StayBookingSystem = ({
           setCheckOutDate(date);
           setSelectionMode("done");
           setShowCalendarModal(false);
-          
+
           // Visually highlight the next section to guide user
           setTimeout(() => {
             const guestsSection = document.getElementById("booking-guests-section");
@@ -865,7 +865,7 @@ const StayBookingSystem = ({
           roomAmenities: b.amenities || [],
           isBedConfig: true
         }));
-        
+
         if (stay?.inventorySetupType === "Bed-Based" && (!stay?.rooms || stay.rooms.length === 0)) {
           rooms = bedRooms;
         } else {
@@ -880,14 +880,14 @@ const StayBookingSystem = ({
   // Dynamic Guest Age Labels based on Child Age Policy
   const guestAgeLabels = useMemo(() => {
     const policies = stay?.childAgePolicy || stay?.child_age_policy;
-    const childRate = Array.isArray(policies) 
+    const childRate = Array.isArray(policies)
       ? policies.find(p => p.policyType === "child_rate" || p.policy_type === "child_rate")
       : null;
 
     if (childRate) {
       const fromAge = childRate.fromAge ?? childRate.from_age;
       const toAge = childRate.toAge ?? childRate.to_age;
-      
+
       if (fromAge !== undefined && toAge !== undefined) {
         return {
           adults: `Age ${Number(toAge) + 1}+`,
@@ -895,7 +895,7 @@ const StayBookingSystem = ({
         };
       }
     }
-    
+
     // Fallback defaults
     return {
       adults: "Age 13+",
@@ -947,7 +947,7 @@ const StayBookingSystem = ({
 
   const resolvedSelectedRooms = useMemo(() => {
     if (!stay || !Array.isArray(selectedRooms)) return [];
-    
+
     const rawRoomsSource = (availabilityData?.roomAvailability || availabilityData?.rooms || stayRoomsCatalog || []);
     const catalogById = new Map(
       stayRoomsCatalog.map((r) => [
@@ -970,7 +970,7 @@ const StayBookingSystem = ({
 
     // Find active season based on check-in date (room.seasonalPeriods first, then stay.seasonalPeriods)
     const checkInStr = checkInDate ? (typeof checkInDate === 'string' ? checkInDate : checkInDate.format('YYYY-MM-DD')) : null;
-    
+
     return selectedRooms.map(sel => {
       let room = roomsSource.find(r => String(r.roomId || r.id) === String(sel.roomId));
       if (!room) {
@@ -990,7 +990,7 @@ const StayBookingSystem = ({
       const mealSeasonData = activeSeasonObj
         ? resolveSeasonalNode((room.mealPlanSeasonalPricing || {})[mealPlan], activeSeasonObj)
         : null;
-      
+
       let roomBasePrice = 0;
 
       // In-season: use mealPlanSeasonalPricing b2cPrice
@@ -1141,7 +1141,7 @@ const StayBookingSystem = ({
   // Price Calculation Logic
   const pricing = useMemo(() => {
     if (!stay) return { perNight: 0, subtotal: 0, discount: 0, warning: null, isOver: false };
-    
+
     let totalOriginalPerNight = 0;
     let headerOriginalPerNight = 0;
     let totalBaseAdultsLimit = 0;
@@ -1151,7 +1151,7 @@ const StayBookingSystem = ({
     let totalExtraAdultsAllocated = 0;
     let totalExtraChildrenAllocated = 0;
 
-    const activeSeason = checkInDate ? (stay.seasonalPeriods || []).find(p => 
+    const activeSeason = checkInDate ? (stay.seasonalPeriods || []).find(p =>
       moment(checkInDate).isSameOrAfter(p.startDate, 'day') &&
       moment(checkInDate).isSameOrBefore(p.endDate, 'day')
     ) : null;
@@ -1168,7 +1168,7 @@ const StayBookingSystem = ({
       totalBaseChildrenLimit = stay.maxChildren || 0;
       totalExtraAdultsLimit = stay.maxExtraAdults || stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
       totalExtraChildrenLimit = stay.maxExtraChildren || stay.maxExtraChildrenAllowed || 0;
-      
+
       let basePrice = parseFloat(stay.fullPropertyB2cPrice || stay.b2cPrice || stay.price || 0);
       let extraAP = parseFloat(stay.fullPropertyExtraAdultPrice || stay.extraAdultPrice || 0);
       let extraCP = parseFloat(stay.fullPropertyExtraChildPrice || stay.extraChildPrice || 0);
@@ -1251,7 +1251,7 @@ const StayBookingSystem = ({
           const room = resolvedSelectedRooms.find(r => String(r.roomId || r.id) === String(alloc.roomId));
           const extraAP = room?._resolvedExtraAP || 0;
           const extraCP = room?._resolvedExtraCP || 0;
-          
+
           extraAdultsChargePerNight += alloc.extraAdults * extraAP;
           extraChildrenChargePerNight += alloc.extraChildren * extraCP;
           totalExtraAdultsAllocated += alloc.extraAdults;
@@ -1295,7 +1295,7 @@ const StayBookingSystem = ({
     // Occupancy & Stay Warnings
     let warning = null;
     let isOver = false;
-    
+
     const currentAdults = guests?.adults || 1;
     const currentChildren = guests?.children || 0;
 
@@ -1305,7 +1305,7 @@ const StayBookingSystem = ({
       isOver = true;
       warning = `Maximum stay allowed is ${maxNights} nights.`;
     }
-    
+
     // 2. Check Capacity
     const isEntirelyBedBased = resolvedSelectedRooms.length > 0 && resolvedSelectedRooms.every(r => r.isBedConfig);
     if (!isOver && !isEntirelyBedBased) {
@@ -1359,9 +1359,9 @@ const StayBookingSystem = ({
       const today = moment().startOf('day');
       const checkInDay = moment(checkInDate).startOf('day');
       const daysDiff = checkInDay.diff(today, 'days');
-      
+
       const eligibleTiers = ebDiscounts.filter(t => t.isActive && daysDiff >= t.daysInAdvance);
-        
+
       if (eligibleTiers.length > 0) {
         eligibleTiers.sort((a, b) => parseFloat(b.percentage || 0) - parseFloat(a.percentage || 0));
         appliedEarlyBirdDiscountTier = eligibleTiers[0];
@@ -1375,13 +1375,13 @@ const StayBookingSystem = ({
     const useChildAgeSelector = shouldUseChildAgeSelector(stay);
     const childAgePricing = useChildAgeSelector
       ? buildChildAgePricing(
-          stay,
-          childAges,
-          totalBaseChildrenLimit,
-          computedExtraChildrenCount,
-          finalExtraCP,
-          finalExtraAP
-        )
+        stay,
+        childAges,
+        totalBaseChildrenLimit,
+        computedExtraChildrenCount,
+        finalExtraCP,
+        finalExtraAP
+      )
       : { breakdown: [], matchedCount: 0, totalPerNight: computedExtraChildrenCount * finalExtraCP };
     const computedChildChargePerNight = computedExtraChildrenCount > 0
       ? childAgePricing.totalPerNight
@@ -1431,27 +1431,27 @@ const StayBookingSystem = ({
     // Taxes from stay config; fallback to legacy 18% GST + 2% service charge
     const configuredTaxRate = Array.isArray(stay?.taxes)
       ? stay.taxes.reduce((sum, t) => {
-          const payer = String(
-            t?.paidBy ??
-            t?.paid_by ??
-            t?.payer ??
-            t?.taxPayer ??
-            t?.tax_payer ??
-            t?.borneBy ??
-            t?.borne_by ??
-            t?.applicableTo ??
-            t?.applicable_to ??
-            t?.target ??
-            t?.type ??
-            t?.category ??
-            ""
-          ).toLowerCase().trim();
-          if (/host|vendor|owner|property/i.test(payer)) {
-            return sum;
-          }
-          const rate = Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? t?.percentage ?? 0);
-          return sum + (Number.isFinite(rate) ? rate : 0);
-        }, 0)
+        const payer = String(
+          t?.paidBy ??
+          t?.paid_by ??
+          t?.payer ??
+          t?.taxPayer ??
+          t?.tax_payer ??
+          t?.borneBy ??
+          t?.borne_by ??
+          t?.applicableTo ??
+          t?.applicable_to ??
+          t?.target ??
+          t?.type ??
+          t?.category ??
+          ""
+        ).toLowerCase().trim();
+        if (/host|vendor|owner|property/i.test(payer)) {
+          return sum;
+        }
+        const rate = Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? t?.percentage ?? 0);
+        return sum + (Number.isFinite(rate) ? rate : 0);
+      }, 0)
       : 0;
     const effectiveTaxRate = configuredTaxRate > 0 ? configuredTaxRate : 20;
 
@@ -1520,7 +1520,7 @@ const StayBookingSystem = ({
 
     const isPropertyBased = isPropertyBasedBooking(stay);
     const isHostel = isHostelBooking(stay);
-    
+
     let totalBaseAdultsLimit = 0;
     let totalBaseChildrenLimit = 0;
     let totalExtraAdultsLimit = 0;
@@ -1722,7 +1722,7 @@ const StayBookingSystem = ({
         };
         try {
           localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
-        } catch (e) {}
+        } catch (e) { }
       }
 
       setShowLoginPrompt(true);
@@ -1778,16 +1778,16 @@ const StayBookingSystem = ({
       const customerPhone = userInfo.customerPhone || (userInfo.phone ? (userInfo.countryCode || "+91") + userInfo.phone : "") || userInfo.phoneNumber || "";
       const backendAddOns = Array.isArray(selectedAddOns)
         ? selectedAddOns.map((selectedAddOnId) => {
-            const addonData = Array.isArray(stay?.addons)
-              ? stay.addons.find((addon) => String(addon.addonId || addon.assignmentId || addon.id) === String(selectedAddOnId))
-              : null;
-            if (!addonData) return null;
+          const addonData = Array.isArray(stay?.addons)
+            ? stay.addons.find((addon) => String(addon.addonId || addon.assignmentId || addon.id) === String(selectedAddOnId))
+            : null;
+          if (!addonData) return null;
 
-            return {
-              addonId: Number(addonData.addonId || addonData.assignmentId || addonData.id),
-              quantity: Number(addOnQuantities?.[selectedAddOnId] || 1),
-            };
-          }).filter(Boolean)
+          return {
+            addonId: Number(addonData.addonId || addonData.assignmentId || addonData.id),
+            quantity: Number(addOnQuantities?.[selectedAddOnId] || 1),
+          };
+        }).filter(Boolean)
         : [];
       const normalizedChildAges = syncChildAges(childAges, guests.children || 0)
         .filter((age) => age !== "" && age !== null && age !== undefined)
@@ -1811,80 +1811,80 @@ const StayBookingSystem = ({
 
       const payload = isPropertyBased
         ? {
-            ...payloadBase,
-            extraAdults: extraAdultsCount,
-            extraChildren: extraChildrenCount,
-            childAges: normalizedChildAges,
-          }
+          ...payloadBase,
+          extraAdults: extraAdultsCount,
+          extraChildren: extraChildrenCount,
+          childAges: normalizedChildAges,
+        }
         : (() => {
-            const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults || 1, guests.children || 0);
-            const roomChildAges = mapChildAgesToRoomAllocations(distribution.allocations, normalizedChildAges);
-            const grouped = {};
-            if (distribution.success) {
-              distribution.allocations.forEach(alloc => {
-                if (!grouped[alloc.roomId]) {
-                  grouped[alloc.roomId] = {
-                    roomId: alloc.roomId,
-                    roomsBooked: 0,
-                    adults: 0,
-                    children: 0,
-                    extraAdults: 0,
-                    extraChildren: 0
-                  };
-                }
-                const g = grouped[alloc.roomId];
-                g.roomsBooked += 1;
-                g.adults += alloc.adults;
-                g.children += alloc.children;
-                g.extraAdults += alloc.extraAdults;
-                g.extraChildren += alloc.extraChildren;
+          const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults || 1, guests.children || 0);
+          const roomChildAges = mapChildAgesToRoomAllocations(distribution.allocations, normalizedChildAges);
+          const grouped = {};
+          if (distribution.success) {
+            distribution.allocations.forEach(alloc => {
+              if (!grouped[alloc.roomId]) {
+                grouped[alloc.roomId] = {
+                  roomId: alloc.roomId,
+                  roomsBooked: 0,
+                  adults: 0,
+                  children: 0,
+                  extraAdults: 0,
+                  extraChildren: 0
+                };
+              }
+              const g = grouped[alloc.roomId];
+              g.roomsBooked += 1;
+              g.adults += alloc.adults;
+              g.children += alloc.children;
+              g.extraAdults += alloc.extraAdults;
+              g.extraChildren += alloc.extraChildren;
+            });
+          }
+
+          const roomsPayload = [];
+          const bedConfigsPayload = [];
+
+          resolvedSelectedRooms.forEach(r => {
+            const grp = grouped[r.roomId || r.id] || {
+              roomsBooked: r.count,
+              adults: r.count * (r.maxAdults || 1),
+              children: 0,
+              extraAdults: 0,
+              extraChildren: 0
+            };
+
+            const isBed = r.isBedConfig;
+            const rawId = Number(String(r.bedConfigId || r.roomId || r.id).replace('bed-', ''));
+            const validId = rawId > 0 ? rawId : 1;
+
+            if (isBed) {
+              bedConfigsPayload.push({
+                bedConfigId: validId,
+                name: r.roomName || r.name || "Bed",
+                bedsBooked: r.count,
+                mealPlanCode: r.mealPlan || "EP"
+              });
+            } else {
+              roomsPayload.push({
+                roomId: validId,
+                roomsBooked: r.count,
+                adults: grp.adults,
+                children: grp.children,
+                childAges: roomChildAges[String(r.roomId || r.id)] || [],
+                mealPlanCode: r.mealPlan || "EP",
+                extraBeds: Number(r.extraBeds || 0),
+                extraAdults: isHostel ? 0 : grp.extraAdults,
+                extraChildren: grp.extraChildren,
               });
             }
-            
-            const roomsPayload = [];
-            const bedConfigsPayload = [];
-            
-            resolvedSelectedRooms.forEach(r => {
-              const grp = grouped[r.roomId || r.id] || {
-                roomsBooked: r.count,
-                adults: r.count * (r.maxAdults || 1),
-                children: 0,
-                extraAdults: 0,
-                extraChildren: 0
-              };
-              
-              const isBed = r.isBedConfig;
-              const rawId = Number(String(r.bedConfigId || r.roomId || r.id).replace('bed-', ''));
-              const validId = rawId > 0 ? rawId : 1; 
-              
-              if (isBed) {
-                bedConfigsPayload.push({
-                  bedConfigId: validId,
-                  name: r.roomName || r.name || "Bed",
-                  bedsBooked: r.count,
-                  mealPlanCode: r.mealPlan || "EP"
-                });
-              } else {
-                roomsPayload.push({
-                  roomId: validId,
-                  roomsBooked: r.count,
-                  adults: grp.adults,
-                  children: grp.children,
-                  childAges: roomChildAges[String(r.roomId || r.id)] || [],
-                  mealPlanCode: r.mealPlan || "EP",
-                  extraBeds: Number(r.extraBeds || 0),
-                  extraAdults: isHostel ? 0 : grp.extraAdults,
-                  extraChildren: grp.extraChildren,
-                });
-              }
-            });
+          });
 
-            return {
-              ...payloadBase,
-              rooms: roomsPayload,
-              ...(bedConfigsPayload.length > 0 ? { bedConfigs: bedConfigsPayload } : {})
-            };
-          })();
+          return {
+            ...payloadBase,
+            rooms: roomsPayload,
+            ...(bedConfigsPayload.length > 0 ? { bedConfigs: bedConfigsPayload } : {})
+          };
+        })();
 
       const previewSelectedAddOnsData = selectedAddOns.map(id => {
         const addonData = Array.isArray(stay?.addons) ? stay.addons.find(a => (a.addonId || a.assignmentId || a.id) === id) : null;
@@ -1999,7 +1999,7 @@ const StayBookingSystem = ({
       const paymentResponse = response?.payment || response?.data?.payment || response;
       const orderResponse = response?.order || response?.data?.order || response;
       const pricingResponse = response?.guestPricing || response?.pricing || response?.priceBreakdown || response?.data?.guestPricing || {};
-      
+
       const extractRazorpayCredentials = (res) => {
         let orderId = null;
         let keyId = null;
@@ -2041,11 +2041,11 @@ const StayBookingSystem = ({
       };
 
       const extractedRZP = extractRazorpayCredentials(response);
-      
-      const razorpayOrderId = 
-        paymentResponse.razorpayOrderId || 
+
+      const razorpayOrderId =
+        paymentResponse.razorpayOrderId ||
         paymentResponse.razorpayorderid ||
-        paymentResponse.razorpay_order_id || 
+        paymentResponse.razorpay_order_id ||
         orderResponse?.razorpayOrderId ||
         orderResponse?.razorpayorderid ||
         orderResponse?.razorpay_order_id ||
@@ -2054,14 +2054,14 @@ const StayBookingSystem = ({
         response?.razorpay_order_id ||
         getFieldByAliases(response, ["razorpayOrderId", "razorpay_order_id", "razorpayorderid"]) ||
         extractedRZP.razorpayOrderId;
-        
-      const razorpayKeyId = 
-        paymentResponse.razorpayKeyId || 
-        paymentResponse.razorpaykeyid || 
-        paymentResponse.razorpay_key_id || 
+
+      const razorpayKeyId =
+        paymentResponse.razorpayKeyId ||
+        paymentResponse.razorpaykeyid ||
+        paymentResponse.razorpay_key_id ||
         paymentResponse.razorpayKey ||
         paymentResponse.razorpaykey ||
-        paymentResponse.keyId || 
+        paymentResponse.keyId ||
         paymentResponse.keyid ||
         orderResponse?.razorpayKeyId ||
         orderResponse?.razorpaykeyid ||
@@ -2085,7 +2085,7 @@ const StayBookingSystem = ({
 
       if (!razorpayOrderId) {
         const appOrderId = orderResponse?.orderId || response?.orderId || response?.data?.orderId || null;
-        console.log("ℹ️ Razorpay Order ID missing from response for stay order:", {
+        console.log("#", {
           appOrderId,
           razorpayKeyId,
         });
@@ -2118,12 +2118,12 @@ const StayBookingSystem = ({
       const selectedAddOnsData = selectedAddOns.map(id => {
         const addonData = Array.isArray(stay?.addons) ? stay.addons.find(a => (a.addonId || a.assignmentId || a.id) === id) : null;
         if (!addonData) return null;
-        
+
         const isIndividual = addonData.pricingType === "Individual";
         const quantity = isIndividual ? (addOnQuantities[id] || 1) : 1;
         const unitPrice = parseFloat(addonData.price || 0);
         const priceValue = unitPrice * quantity;
-        
+
         return {
           id: addonData.addonId || addonData.assignmentId || addonData.id,
           title: addonData.title || addonData.name || "Addon",
@@ -2166,7 +2166,7 @@ const StayBookingSystem = ({
         amount: amountInPaise,
         currency: paymentResponse.currency || response?.currency || "INR"
       }));
-      
+
       if (razorpayKeyId) {
         localStorage.setItem("lastRazorpayKeyId", razorpayKeyId);
       }
@@ -2212,20 +2212,20 @@ const StayBookingSystem = ({
         : null;
       const propertyBaseNightly = isPropertyBased
         ? firstNumber(
-            propertySeasonData?.fullPropertyHikePrice,
-            propertySeasonData?.hikePrice,
-            propertySeasonData?.fullPropertyB2cPrice,
-            propertySeasonData?.fullPropertyb2cPrice,
-            propertySeasonData?.full_property_b2c_price,
-            propertySeasonData?.b2cPrice,
-            stay?.fullPropertyHikePrice,
-            stay?.fullPropertyB2cPrice,
-            stay?.fullPropertyb2cPrice,
-            stay?.full_property_b2c_price,
-            stay?.b2cPrice,
-            stay?.pricePerNight,
-            stay?.price
-          )
+          propertySeasonData?.fullPropertyHikePrice,
+          propertySeasonData?.hikePrice,
+          propertySeasonData?.fullPropertyB2cPrice,
+          propertySeasonData?.fullPropertyb2cPrice,
+          propertySeasonData?.full_property_b2c_price,
+          propertySeasonData?.b2cPrice,
+          stay?.fullPropertyHikePrice,
+          stay?.fullPropertyB2cPrice,
+          stay?.fullPropertyb2cPrice,
+          stay?.full_property_b2c_price,
+          stay?.b2cPrice,
+          stay?.pricePerNight,
+          stay?.price
+        )
         : null;
       const nightlyFromOrder = isPropertyBased
         ? (firstNumber(propertyBaseNightly, orderResponse?.pricePerNight, pricing.originalPerNight) || 0)
@@ -2259,27 +2259,27 @@ const StayBookingSystem = ({
       }
       const taxRate = Array.isArray(stay?.taxes)
         ? stay.taxes.reduce((sum, t) => {
-            const payer = String(
-              t?.paidBy ??
-              t?.paid_by ??
-              t?.payer ??
-              t?.taxPayer ??
-              t?.tax_payer ??
-              t?.borneBy ??
-              t?.borne_by ??
-              t?.applicableTo ??
-              t?.applicable_to ??
-              t?.target ??
-              t?.type ??
-              t?.category ??
-              ""
-            ).toLowerCase().trim();
-            if (/host|vendor|owner|property/i.test(payer)) {
-              return sum;
-            }
-            const rate = Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? t?.percentage ?? 0);
-            return sum + (Number.isFinite(rate) ? rate : 0);
-          }, 0)
+          const payer = String(
+            t?.paidBy ??
+            t?.paid_by ??
+            t?.payer ??
+            t?.taxPayer ??
+            t?.tax_payer ??
+            t?.borneBy ??
+            t?.borne_by ??
+            t?.applicableTo ??
+            t?.applicable_to ??
+            t?.target ??
+            t?.type ??
+            t?.category ??
+            ""
+          ).toLowerCase().trim();
+          if (/host|vendor|owner|property/i.test(payer)) {
+            return sum;
+          }
+          const rate = Number(t?.currentRate ?? t?.appliedPercentage ?? t?.rate ?? t?.percentage ?? 0);
+          return sum + (Number.isFinite(rate) ? rate : 0);
+        }, 0)
         : 0;
 
       // Display calculation should use gross stay total = base + extra adults + extra children
@@ -2399,7 +2399,7 @@ const StayBookingSystem = ({
           };
           try {
             localStorage.setItem("frontendPendingBookingState", JSON.stringify(stateToStore));
-          } catch (e) {}
+          } catch (e) { }
         }
 
         localStorage.removeItem("jwtToken");
@@ -2585,15 +2585,15 @@ const StayBookingSystem = ({
       <AnimatePresence>
         {show && (
           <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", padding: window.innerWidth <= 768 ? 0 : 20, overflowY: "auto", overflowX: "hidden" }}>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               onClick={closeBookingModal}
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} 
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
             />
-            
+
             <motion.div
               className="booking-modal-container"
               initial={{ opacity: 0 }}
@@ -2899,7 +2899,7 @@ const StayBookingSystem = ({
                           01. Booking Details
                         </div>
                         {(checkInDate || checkOutDate) && (
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               setCheckInDate(null);
@@ -2907,16 +2907,16 @@ const StayBookingSystem = ({
                               setSelectionMode("check-in");
                               setValidationError("");
                             }}
-                            style={{ 
-                              background: AL, 
-                              border: `1px solid ${A}33`, 
-                              color: A, 
-                              fontSize: 9, 
-                              fontWeight: 800, 
+                            style={{
+                              background: AL,
+                              border: `1px solid ${A}33`,
+                              color: A,
+                              fontSize: 9,
+                              fontWeight: 800,
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              cursor: "pointer", 
-                              padding: "4px 10px", 
+                              cursor: "pointer",
+                              padding: "4px 10px",
                               borderRadius: 100,
                               transition: "0.3s"
                             }}
@@ -2925,18 +2925,18 @@ const StayBookingSystem = ({
                           </button>
                         )}
                       </div>
-                      
+
                       {/* Check-in / Check-out Cards */}
                       <div style={{ marginBottom: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                        <div 
+                        <div
                           onClick={() => {
                             setSelectionMode("check-in");
                             setShowCalendarModal(true);
                           }}
-                          style={{ 
-                            padding: "10px 14px", 
-                            background: BG, 
-                            borderRadius: 16, 
+                          style={{
+                            padding: "10px 14px",
+                            background: BG,
+                            borderRadius: 16,
                             border: `1px solid ${selectionMode === 'check-in' ? A : B}`,
                             cursor: "pointer",
                             transition: "0.2s",
@@ -2946,7 +2946,7 @@ const StayBookingSystem = ({
                           <p style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>Check-in</p>
                           <p style={{ fontSize: 13, fontWeight: 700, color: checkInDate ? FG : M }}>{checkInDate ? checkInDate.format("DD MMM, YYYY") : "Select date"}</p>
                         </div>
-                        <div 
+                        <div
                           title={!checkInDate ? "Select Check-in date first" : undefined}
                           onClick={() => {
                             if (checkInDate) {
@@ -2954,10 +2954,10 @@ const StayBookingSystem = ({
                               setShowCalendarModal(true);
                             }
                           }}
-                          style={{ 
-                            padding: "10px 14px", 
-                            background: BG, 
-                            borderRadius: 16, 
+                          style={{
+                            padding: "10px 14px",
+                            background: BG,
+                            borderRadius: 16,
                             border: `1px solid ${selectionMode === 'check-out' ? A : B}`,
                             cursor: checkInDate ? "pointer" : "not-allowed",
                             transition: "0.2s",
@@ -2976,18 +2976,18 @@ const StayBookingSystem = ({
                       <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", lineHeight: "1.2" }}>
                         {isHostelBooking(stay) ? "02. Accommodations" : "02. Guests & Accommodations"}
                       </div>
-                      
+
                       {(() => {
                         const allowedAdults = (pricing.baseAdultsLimit || 0) + (pricing.extraAdultsLimit || 0);
                         const allowedChildren = (pricing.baseChildrenLimit || 0) + (pricing.extraChildrenLimit || 0);
                         const isHostel = isHostelBooking(stay);
                         const isPropertyBased = isPropertyBasedBooking(stay);
                         const shouldShowBedCounter = isHostel && isEntirelyBedBased;
-                        
+
                         let absoluteMaxAdults = allowedAdults;
                         let absoluteMaxChildren = allowedChildren;
                         let absoluteMaxBeds = totalSelectedBeds;
-                        
+
                         if (!isPropertyBased && selectedRooms.length > 0) {
                           absoluteMaxAdults = 0;
                           absoluteMaxChildren = 0;
@@ -3022,30 +3022,30 @@ const StayBookingSystem = ({
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Adults</p>
-                                  <Counter 
-                                    value={guests.adults} 
+                                  <Counter
+                                    value={guests.adults}
                                     setValue={(v) => {
                                       if (!isPropertyBased && v > allowedAdults) {
                                         handleAddAnotherRoom();
                                       }
-                                      setGuests(prev => ({...prev, adults: v}));
-                                    }} 
-                                    min={!isPropertyBased ? Math.max(1, resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)) : 1} 
+                                      setGuests(prev => ({ ...prev, adults: v }));
+                                    }}
+                                    min={!isPropertyBased ? Math.max(1, resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)) : 1}
                                     max={absoluteMaxAdults}
                                   />
                                 </div>
 
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Children</p>
-                                  <Counter 
-                                    value={guests.children} 
+                                  <Counter
+                                    value={guests.children}
                                     setValue={(v) => {
                                       if (!isPropertyBased && v > allowedChildren) {
                                         handleAddAnotherRoom();
                                       }
-                                      setGuests(prev => ({...prev, children: v}));
-                                    }} 
-                                    min={0} 
+                                      setGuests(prev => ({ ...prev, children: v }));
+                                    }}
+                                    min={0}
                                     max={absoluteMaxChildren}
                                   />
                                 </div>
@@ -3128,18 +3128,17 @@ const StayBookingSystem = ({
                           marginTop: 8,
                           padding: "8px 12px",
                           borderRadius: 12,
-                          background: capacityFeedback.type === "success" 
-                            ? `${A}0c` 
+                          background: capacityFeedback.type === "success"
+                            ? `${A}0c`
                             : capacityFeedback.type === "warning" || capacityFeedback.type === "error"
                               ? `${E}0c`
                               : `${M}0c`,
-                          border: `1px solid ${
-                            capacityFeedback.type === "success" 
-                              ? `${A}22` 
+                          border: `1px solid ${capacityFeedback.type === "success"
+                              ? `${A}22`
                               : capacityFeedback.type === "warning" || capacityFeedback.type === "error"
                                 ? `${E}22`
                                 : `${B}`
-                          }`,
+                            }`,
                           display: "flex",
                           alignItems: "center",
                           gap: 6
@@ -3154,8 +3153,8 @@ const StayBookingSystem = ({
                           <span style={{
                             fontSize: 11,
                             fontWeight: 650,
-                            color: capacityFeedback.type === "success" 
-                              ? FG 
+                            color: capacityFeedback.type === "success"
+                              ? FG
                               : capacityFeedback.type === "warning" || capacityFeedback.type === "error"
                                 ? E
                                 : M
@@ -3216,11 +3215,11 @@ const StayBookingSystem = ({
                                       <p style={{ fontSize: 13, fontWeight: 600, color: FG, margin: 0 }}>{room.roomName || room.name}</p>
                                       {stayRoomsCatalog.length > 1 && (
                                         <div style={{ position: 'relative', display: 'inline-block' }}>
-                                          <select 
+                                          <select
                                             value={room.roomId || room.id}
                                             onChange={(e) => {
                                               const newRoomId = e.target.value;
-                                              setSelectedRooms(prev => prev.map(r => 
+                                              setSelectedRooms(prev => prev.map(r =>
                                                 (r.roomId || r.id) === (room.roomId || room.id) ? { ...r, roomId: newRoomId } : r
                                               ));
                                             }}
@@ -3238,11 +3237,11 @@ const StayBookingSystem = ({
                                             })}
                                           </select>
                                           <div style={{
-                                            fontSize: 10, 
-                                            fontWeight: 700, 
-                                            color: A, 
-                                            background: `${A}11`, 
-                                            border: `1px solid ${A}44`, 
+                                            fontSize: 10,
+                                            fontWeight: 700,
+                                            color: A,
+                                            background: `${A}11`,
+                                            border: `1px solid ${A}44`,
                                             borderRadius: 6,
                                             padding: "2px 6px",
                                             display: 'flex',
@@ -3265,17 +3264,17 @@ const StayBookingSystem = ({
                                     </p>
                                   </div>
                                 </div>
-                                <Counter 
-                                  value={room.count} 
+                                <Counter
+                                  value={room.count}
                                   setValue={(v) => {
                                     if (v === 0) {
                                       setSelectedRooms(prev => prev.filter(r => (r.roomId || r.id) !== (room.roomId || room.id)));
                                     } else {
                                       handleRoomCountChangeWithReset(room.roomId || room.id, v);
                                     }
-                                  }} 
-                                  min={resolvedSelectedRooms.length > 1 ? 0 : 1} 
-                                  max={room.isBedConfig ? Number(room.units || room.totalRooms || room.availableRooms || 99) : Math.min(Number(room.units || room.totalRooms || room.availableRooms || 99), room.count + Math.max(0, (guests?.adults || 1) - resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)))} 
+                                  }}
+                                  min={resolvedSelectedRooms.length > 1 ? 0 : 1}
+                                  max={room.isBedConfig ? Number(room.units || room.totalRooms || room.availableRooms || 99) : Math.min(Number(room.units || room.totalRooms || room.availableRooms || 99), room.count + Math.max(0, (guests?.adults || 1) - resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)))}
                                 />
                               </div>
                             </div>
@@ -3288,9 +3287,9 @@ const StayBookingSystem = ({
 
                     {/* Warnings */}
                     {pricing.warning && (
-                      <div style={{ 
-                        padding: "8px 12px", borderRadius: 12, 
-                        background: pricing.isOver ? EL : AL, 
+                      <div style={{
+                        padding: "8px 12px", borderRadius: 12,
+                        background: pricing.isOver ? EL : AL,
                         border: `1px solid ${pricing.isOver ? E + '33' : A + '33'}`,
                         display: "flex", gap: 10, alignItems: "center"
                       }}>
@@ -3300,7 +3299,7 @@ const StayBookingSystem = ({
                         </p>
                       </div>
                     )}
-                    
+
 
                   </div>
                 </div>
@@ -3374,7 +3373,7 @@ const StayBookingSystem = ({
                   })()}
                 </div>
               </div>
-              
+
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
                 <ShieldCheck size={12} />
                 <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
@@ -3406,8 +3405,8 @@ const StayBookingSystem = ({
                 color: FG,
                 borderRadius: bookingErrorPopup.isSameDay ? 28 : 22,
                 border: bookingErrorPopup.isSameDay ? `1px solid ${A}44` : `1px solid ${E}44`,
-                boxShadow: bookingErrorPopup.isSameDay 
-                  ? `0 30px 70px rgba(0,0,0,0.35), 0 0 50px ${A}15` 
+                boxShadow: bookingErrorPopup.isSameDay
+                  ? `0 30px 70px rgba(0,0,0,0.35), 0 0 50px ${A}15`
                   : "0 24px 64px rgba(0,0,0,0.35)",
                 padding: bookingErrorPopup.isSameDay ? "32px 32px 24px" : "22px 22px 18px",
                 zIndex: 1,
@@ -3425,33 +3424,33 @@ const StayBookingSystem = ({
                 }} />
               )}
               <div style={{ display: "flex", alignItems: "flex-start", gap: bookingErrorPopup.isSameDay ? 18 : 12 }}>
-                <div style={{ 
-                  width: bookingErrorPopup.isSameDay ? 46 : 34, 
-                  height: bookingErrorPopup.isSameDay ? 46 : 34, 
-                  borderRadius: bookingErrorPopup.isSameDay ? 14 : 10, 
-                  background: bookingErrorPopup.isSameDay ? AL : EL, 
-                  border: bookingErrorPopup.isSameDay ? `1px solid ${A}33` : `1px solid ${E}33`, 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: "center", 
-                  color: bookingErrorPopup.isSameDay ? A : E, 
-                  flexShrink: 0 
+                <div style={{
+                  width: bookingErrorPopup.isSameDay ? 46 : 34,
+                  height: bookingErrorPopup.isSameDay ? 46 : 34,
+                  borderRadius: bookingErrorPopup.isSameDay ? 14 : 10,
+                  background: bookingErrorPopup.isSameDay ? AL : EL,
+                  border: bookingErrorPopup.isSameDay ? `1px solid ${A}33` : `1px solid ${E}33`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: bookingErrorPopup.isSameDay ? A : E,
+                  flexShrink: 0
                 }}>
                   {bookingErrorPopup.isSameDay ? <Calendar size={22} /> : <AlertCircle size={18} />}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: bookingErrorPopup.isSameDay ? 19 : 17, 
-                    fontWeight: 800, 
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: bookingErrorPopup.isSameDay ? 19 : 17,
+                    fontWeight: 800,
                     color: FG,
                     lineHeight: 1.3
                   }}>{bookingErrorPopup.title}</h3>
-                  <p style={{ 
-                    margin: "10px 0 0", 
-                    fontSize: bookingErrorPopup.isSameDay ? 14 : 13, 
-                    lineHeight: 1.6, 
-                    color: M 
+                  <p style={{
+                    margin: "10px 0 0",
+                    fontSize: bookingErrorPopup.isSameDay ? 14 : 13,
+                    lineHeight: 1.6,
+                    color: M
                   }}>{bookingErrorPopup.message}</p>
                 </div>
               </div>
@@ -3543,11 +3542,11 @@ const StayBookingSystem = ({
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
-                            style={{ 
-                              background: A, 
-                              color: BG, 
-                              fontSize: 10, 
-                              padding: "2px 8px", 
+                            style={{
+                              background: A,
+                              color: BG,
+                              fontSize: 10,
+                              padding: "2px 8px",
                               borderRadius: 100,
                               textTransform: "uppercase",
                               letterSpacing: "0.5px"
@@ -3568,7 +3567,7 @@ const StayBookingSystem = ({
                   <X size={20} />
                 </button>
               </div>
-              
+
               {selectionMode === "check-out" && nextBlockedDate && (
                 <div style={{ marginBottom: 16, padding: "8px 12px", background: AL, borderRadius: 12, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${A}22` }}>
                   <Info size={14} color={A} />
@@ -3578,7 +3577,7 @@ const StayBookingSystem = ({
                 </div>
               )}
 
-              <StayInlineCalendar 
+              <StayInlineCalendar
                 checkInDate={checkInDate}
                 checkOutDate={checkOutDate}
                 onDateSelect={handleDateSelect}

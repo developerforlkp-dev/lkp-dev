@@ -2808,7 +2808,7 @@ const StayDetails = () => {
         if (!id) return;
         setLoading(true);
         const data = await getStayDetails(id);
-        console.log("Stay API Data:", data);
+
         if (!mounted) return;
         if (isStayUnavailable(data)) {
           showUnavailablePopupAndRedirect();
@@ -4182,8 +4182,8 @@ function PropertyStayCard({ stay }) {
                 <span key={idx} style={{ flexShrink: 0, fontSize: "11px", fontWeight: 700, color: A, background: "rgba(0, 151, 178, 0.06)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(0, 151, 178, 0.15)", whiteSpace: "nowrap" }}>{amenity}</span>
               ))}
               {!showAllAmenities && amenities.length > 5 && (
-                <span 
-                  onClick={() => setShowAllAmenities(true)} 
+                <span
+                  onClick={() => setShowAllAmenities(true)}
                   style={{ cursor: "pointer", flexShrink: 0, fontSize: "11px", fontWeight: 700, color: A, background: "rgba(0, 151, 178, 0.06)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(0, 151, 178, 0.15)", whiteSpace: "nowrap" }}
                 >
                   +{amenities.length - 5} more
@@ -4241,21 +4241,21 @@ function PropertyStayCard({ stay }) {
 const ExpandableReviewText = ({ text, vendorResponse, FG, A }) => {
   const [expanded, setExpanded] = useState(false);
   const isLong = text && text.length > 120;
-  
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      <p style={{ 
-        fontSize: 13, color: FG, lineHeight: 1.6, margin: 0, 
-        overflow: "hidden", 
-        display: expanded ? "block" : "-webkit-box", 
-        WebkitLineClamp: expanded ? "unset" : (vendorResponse ? 3 : 4), 
-        WebkitBoxOrient: "vertical", 
-        fontWeight: 400 
+      <p style={{
+        fontSize: 13, color: FG, lineHeight: 1.6, margin: 0,
+        overflow: "hidden",
+        display: expanded ? "block" : "-webkit-box",
+        WebkitLineClamp: expanded ? "unset" : (vendorResponse ? 3 : 4),
+        WebkitBoxOrient: "vertical",
+        fontWeight: 400
       }}>
         &ldquo;{text}&rdquo;
       </p>
       {isLong && (
-        <button 
+        <button
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
           style={{ background: "transparent", border: "none", color: A, fontSize: 11, fontWeight: 700, padding: 0, marginTop: 4, cursor: "pointer", outline: "none", textDecoration: "underline" }}
         >
