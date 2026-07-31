@@ -48,57 +48,57 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
   };
 
   const additionalGuestsForm = (guestDetails.additionalGuests || []).map((ag, i) => (
-      <div key={i} className={styles.additionalGuestGroup}>
-        <div className={styles.subtitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Guest {i + 2} Details</span>
-          <button 
-            type="button" 
-            onClick={() => handleRemoveGuest(i)}
-            style={{ color: '#E02E2E', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
-          >
-            Remove
-          </button>
+    <div key={i} className={styles.additionalGuestGroup}>
+      <div className={styles.subtitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Guest {i + 2} Details</span>
+        <button
+          type="button"
+          onClick={() => handleRemoveGuest(i)}
+          style={{ color: '#E02E2E', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+        >
+          Remove
+        </button>
+      </div>
+      <div className={styles.row}>
+        <div className={styles.colTitle}>
+          <div className={styles.label}>Title</div>
+          <Dropdown
+            className={cn(styles.dropdown, dropdownStyles.minimalArrow)}
+            value={ag.title || "Mr"}
+            setValue={(value) => handleAdditionalGuestChange(i, { target: { name: "title", value } })}
+            options={["Mr", "Ms", "Mrs"]}
+          />
         </div>
-        <div className={styles.row}>
-          <div className={styles.colTitle}>
-            <div className={styles.label}>Title</div>
-            <Dropdown
-              className={cn(styles.dropdown, dropdownStyles.minimalArrow)}
-              value={ag.title || "Mr"}
-              setValue={(value) => handleAdditionalGuestChange(i, { target: { name: "title", value } })}
-              options={["Mr", "Ms", "Mrs"]}
-            />
-          </div>
-          <div className={styles.colField}>
-            <TextInput
-              id={`guest-field-ag-${i}-firstName`}
-              label="First Name"
-              name="firstName"
-              value={ag.firstName}
-              onChange={(e) => handleAdditionalGuestChange(i, e)}
-              placeholder="First Name"
-              error={guestErrors[`ag-${i}-firstName`]}
-            />
-          </div>
-          <div className={styles.colField}>
-            <TextInput
-              id={`guest-field-ag-${i}-lastName`}
-              label="Last Name"
-              name="lastName"
-              value={ag.lastName}
-              onChange={(e) => handleAdditionalGuestChange(i, e)}
-              placeholder="Last Name"
-              error={guestErrors[`ag-${i}-lastName`]}
-            />
-          </div>
+        <div className={styles.colField}>
+          <TextInput
+            id={`guest-field-ag-${i}-firstName`}
+            label="First Name"
+            name="firstName"
+            value={ag.firstName}
+            onChange={(e) => handleAdditionalGuestChange(i, e)}
+            placeholder="First Name"
+            error={guestErrors[`ag-${i}-firstName`]}
+          />
+        </div>
+        <div className={styles.colField}>
+          <TextInput
+            id={`guest-field-ag-${i}-lastName`}
+            label="Last Name"
+            name="lastName"
+            value={ag.lastName}
+            onChange={(e) => handleAdditionalGuestChange(i, e)}
+            placeholder="Last Name"
+            error={guestErrors[`ag-${i}-lastName`]}
+          />
         </div>
       </div>
+    </div>
   ));
 
   return (
     <div className={cn(className, styles.formWrapper)}>
       <div className={styles.sectionTitle}>Guest Details</div>
-      
+
       <div className={styles.group}>
         <div className={styles.subtitle}>Primary Guest</div>
         <div className={styles.row}>
@@ -136,7 +136,7 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
             />
           </div>
         </div>
-        
+
         <div className={styles.row}>
           <div className={styles.colFieldHalf}>
             <TextInput
@@ -153,18 +153,18 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
           </div>
           <div className={styles.colFieldHalf} style={{ display: 'flex', flexDirection: 'column' }}>
             <div className={styles.label}>Mobile Number *</div>
-            <div 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                height: '48px', 
-                borderRadius: '12px', 
-                border: `2px solid ${guestErrors.mobileNumber ? '#FF4848' : '#E6E8EC'}`, 
-                overflow: 'hidden', 
-                transition: 'border-color 0.2s', 
-                background: 'transparent' 
-              }} 
-              onFocus={(e) => e.currentTarget.style.borderColor = '#B1B5C3'} 
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '48px',
+                borderRadius: '12px',
+                border: `2px solid ${guestErrors.mobileNumber ? '#FF4848' : '#E6E8EC'}`,
+                overflow: 'hidden',
+                transition: 'border-color 0.2s',
+                background: 'transparent'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#B1B5C3'}
               onBlur={(e) => e.currentTarget.style.borderColor = guestErrors.mobileNumber ? '#FF4848' : '#E6E8EC'}
             >
               <input
@@ -219,11 +219,11 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
 
       <div className={styles.group}>
         {additionalGuestsForm}
-        
+
         {numberOfGuests > 1 && (guestDetails.additionalGuests || []).length < (numberOfGuests - 1) && (
           <div style={{ marginTop: '16px' }}>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={handleAddGuest}
               style={{
                 color: '#00A4C4',
