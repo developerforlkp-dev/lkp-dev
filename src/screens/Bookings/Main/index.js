@@ -2501,9 +2501,10 @@ const Main = ({
                 </div>
               </>
             ) : (
-              <p style={{ margin: 0, fontSize: "14px", color: "#E65100", fontWeight: 500 }}>
-                Cancellation preview is unavailable right now. You can go back and try again.
-              </p>
+              <div style={{ margin: 0, fontSize: "14px", color: "#E65100", fontWeight: 500 }}>
+                <p style={{ fontWeight: 600, marginBottom: "4px", fontSize: "16px" }}>Cancellation Not Available</p>
+                <p style={{ margin: 0 }}>Sorry, cancellation is not available for this booking.</p>
+              </div>
             )}
           </div>
           <div className={styles.cancelModalFooter}>
