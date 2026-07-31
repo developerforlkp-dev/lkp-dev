@@ -9,6 +9,7 @@
         padding-top: 0
         padding-bottom: 8px
         margin-bottom: 0
+        overflow-x: hidden
 
 .heroSection
     position: relative
@@ -887,8 +888,8 @@
     margin-top: -10px
     margin-bottom: -10px
     +m
-        width: 120px
-        min-width: 120px
+        width: clamp(110px, 32vw, 140px)
+        min-width: clamp(110px, 32vw, 140px)
         padding: 8px 0
         margin-top: -8px
         margin-bottom: -8px
@@ -916,8 +917,8 @@
                 &:before
                     padding-bottom: 60% !important
     +m
-        width: 240px
-        min-width: 240px
+        width: clamp(200px, 70vw, 260px)
+        min-width: clamp(200px, 70vw, 260px)
         border-radius: 12px !important
         :global
             div[class*="preview"]
@@ -964,8 +965,8 @@
                 &:before
                     padding-bottom: 58% !important
     +m
-        width: 300px
-        min-width: 300px
+        width: clamp(240px, 80vw, 320px)
+        min-width: clamp(240px, 80vw, 320px)
         :global
             div[class*="preview"]
                 &:before
@@ -1015,8 +1016,8 @@
 .mobileCategoryCard
     position: relative
     flex: 0 0 auto
-    width: 84px
-    height: 84px
+    width: clamp(70px, 20vw, 90px)
+    height: clamp(70px, 20vw, 90px)
     border-radius: 14px
     overflow: hidden
     cursor: pointer

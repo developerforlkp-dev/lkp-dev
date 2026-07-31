@@ -7,7 +7,10 @@ import Dropdown from "../Dropdown";
 
 const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDetails, guestErrors = {} }) => {
   const handlePrimaryChange = (e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    if (name === "firstName" || name === "lastName") {
+      value = value.replace(/[^a-zA-Z\s]/g, "").substring(0, 50);
+    }
     setGuestDetails({ ...guestDetails, [name]: value });
   };
 
@@ -20,7 +23,10 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
   };
 
   const handleAdditionalGuestChange = (index, e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    if (name === "firstName" || name === "lastName") {
+      value = value.replace(/[^a-zA-Z\s]/g, "").substring(0, 50);
+    }
     const updatedAdditional = [...(guestDetails.additionalGuests || [])];
     if (!updatedAdditional[index]) {
       updatedAdditional[index] = { title: "Mr", firstName: "", lastName: "" };
