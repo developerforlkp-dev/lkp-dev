@@ -2466,7 +2466,7 @@ function HostDetails({ event, hostName }) {
         <div className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
           <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
             <img
-              src={host?.profileImageUrl || event?.host?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+              src={host?.profilePhotoUrl || host?.profileImageUrl || event?.host?.profilePhotoUrl || event?.host?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
               alt={displayHostName}
               style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
               onError={(e) => { e.target.onerror = null; e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`; }}
@@ -2576,7 +2576,7 @@ function HostDetails({ event, hostName }) {
                         padding: "1px"
                       }}>
                         <img
-                          src={formatImageUrl(hostProfile?.profileImageUrl || hostProfile?.host?.profileImageUrl || host?.profileImageUrl || host?.avatar || host?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+                          src={formatImageUrl(hostProfile?.profilePhotoUrl || hostProfile?.profileImageUrl || hostProfile?.host?.profilePhotoUrl || hostProfile?.host?.profileImageUrl || host?.profilePhotoUrl || host?.profileImageUrl || host?.avatar || host?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
                           style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
                           alt={displayHostName}
                           onError={(e) => {
