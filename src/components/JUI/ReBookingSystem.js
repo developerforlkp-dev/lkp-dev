@@ -2469,7 +2469,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   const taxableSubtotal = Math.max(0, discountableAmount - totalDiscountAmount);
   const totalTaxAmount = taxableSubtotal * (appliedTaxRate / 100);
-  const finalTotal = taxableSubtotal + totalTaxAmount;
+  const finalTotal = Math.floor((taxableSubtotal + totalTaxAmount) * 100) / 100;
 
   useEffect(() => {
     if (!show || isEventBooking) return;
