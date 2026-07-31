@@ -344,7 +344,7 @@ const Checkout = () => {
         0
       );
 
-      const newFinalTotal = newBaseTotal + addOnsTotal;
+      const newFinalTotal = Math.floor((newBaseTotal + addOnsTotal) * 100) / 100;
 
       if (newBookingData.priceDetails) {
         newBookingData.priceDetails.totalPrice = newFinalTotal;
