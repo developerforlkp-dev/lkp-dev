@@ -3173,11 +3173,11 @@ const StayDetails = () => {
                           }}
                         >
                           {/* Left side: Image */}
-                          <div style={{ width: isMobile ? "64px" : "160px", height: isMobile ? "64px" : "100%", margin: isMobile ? "16px 0 16px 16px" : 0, borderRadius: isMobile ? "8px" : 0, flexShrink: 0, overflow: "hidden", background: W, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ width: isMobile ? "64px" : "160px", margin: isMobile ? "16px 0 16px 16px" : 0, borderRadius: isMobile ? "8px" : 0, flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
                             {addonImage ? (
                               <img
                                 src={addonImage}
-                                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
                                 alt={addon.title || addon.name}
                                 onError={(e) => {
                                   e.target.onerror = null;
@@ -3185,7 +3185,7 @@ const StayDetails = () => {
                                 }}
                               />
                             ) : (
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", background: `${A}08` }}>
+                              <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: `${A}08` }}>
                                 <Plus size={24} color={A} />
                               </div>
                             )}
