@@ -332,18 +332,15 @@ const ExperienceProduct = () => {
   const hostLeadUserId = hostData?.host?.leadUserId || hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
   const leadIdForProfile = leadData?.leadId || leadData?.id || listing?.leadId || listing?.lead_id || listing?.host?.leadId || null;
   const displayHostName =
-    [leadData?.firstName, leadData?.lastName].filter(Boolean).join(" ").trim() ||
     [hostData?.host?.firstName, hostData?.host?.lastName].filter(Boolean).join(" ").trim() ||
     [hostData?.firstName, hostData?.lastName].filter(Boolean).join(" ").trim() ||
     hostData?.host?.displayName ||
     hostData?.displayName ||
     hostData?.host?.name ||
     hostData?.name ||
+    [leadData?.firstName, leadData?.lastName].filter(Boolean).join(" ").trim() ||
     "Host";
   const hostPhone =
-    leadData?.phoneNumber ||
-    leadData?.contactNumber ||
-    leadData?.altPhoneNumber ||
     hostData?.host?.phoneNumber ||
     hostData?.phoneNumber ||
     hostData?.host?.phone ||
@@ -354,15 +351,18 @@ const ExperienceProduct = () => {
     listing?.host?.phone ||
     listing?.host?.mobile ||
     listing?.host?.contactNumber ||
+    leadData?.phoneNumber ||
+    leadData?.contactNumber ||
+    leadData?.altPhoneNumber ||
     "";
   const hostEmail =
-    leadData?.email ||
-    leadData?.altEmail ||
     hostData?.host?.email ||
     hostData?.email ||
     hostData?.emailAddress ||
     listing?.host?.email ||
     listing?.host?.emailAddress ||
+    leadData?.email ||
+    leadData?.altEmail ||
     "";
 
   const isListingUnavailable = (payload) => {
