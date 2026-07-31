@@ -1943,7 +1943,7 @@ const ExperienceProduct = () => {
                               padding: "1px"
                             }}>
                               <img
-                                src={formatImageUrl(leadData?.profileImageUrl || hostData?.profileImageUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+                                src={formatImageUrl(leadData?.profilePhotoUrl || leadData?.profileImageUrl || hostData?.profilePhotoUrl || hostData?.profileImageUrl || hostData?.host?.profilePhotoUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
                                 style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
                                 alt={displayHostName}
                                 onError={(e) => {
