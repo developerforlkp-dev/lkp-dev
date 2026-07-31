@@ -582,9 +582,17 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
             </svg>
           </div>
           <h3 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: "600" }}>
-            {typeof errorModalMsg === 'string' && errorModalMsg.includes("currently disabled") ? "Booking Unavailable" : "Oops!"}
+            {typeof errorModalMsg === 'string' && errorModalMsg.toLowerCase().includes("already booked")
+              ? "Dates Unavailable"
+              : typeof errorModalMsg === 'string' && errorModalMsg.includes("currently disabled") 
+                ? "Booking Unavailable" 
+                : "Oops!"}
           </h3>
-          <p style={{ marginBottom: "24px", fontSize: "16px", color: "#4A4A4A", wordBreak: "break-word", whiteSpace: "pre-line" }}>{errorModalMsg}</p>
+          <p style={{ marginBottom: "24px", fontSize: "16px", color: "#4A4A4A", wordBreak: "break-word", whiteSpace: "pre-line" }}>
+            {typeof errorModalMsg === 'string' && errorModalMsg.toLowerCase().includes("already booked")
+              ? "This property is already booked for the selected dates. Please try selecting different dates or explore other properties."
+              : errorModalMsg}
+          </p>
           <button className="button" onClick={() => setErrorModalMsg("")} style={{ width: "100%" }}>
             Okay
           </button>
