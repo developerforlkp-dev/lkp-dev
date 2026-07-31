@@ -1223,6 +1223,20 @@ export const initializePayment = async (orderId) => {
     throw error;
   }
 };
+
+export const finalizeFreeEvent = async (orderId) => {
+  try {
+    const response = await ListingsAPI.post(`/orders/${orderId}/finalize-free-event`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error finalizing free event:", {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    throw error;
+  }
+};
 //test
 export const createEventOrder = async (orderData) => {
   try {
