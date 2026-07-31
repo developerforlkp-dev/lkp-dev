@@ -1486,10 +1486,10 @@ export const getEventDetails = async (eventId) => {
     const eventIdNum = Number(eventId);
     const eventIdStr = (!isNaN(eventIdNum) && eventIdNum > 0) ? String(eventIdNum) : String(eventId);
 
-    // Prefer Swagger "public event details" route: GET /api/events/{id}
-    // Keep fallback to legacy public suffix route for compatibility.
-    const primaryUrl = `/events/${eventIdStr}`;
-    const fallbackUrl = `/events/${eventIdStr}/public`;
+    // Prefer the public route first to avoid 403 Forbidden console errors for non-admins
+    // Keep fallback to the base route for compatibility if needed.
+    const primaryUrl = `/events/${eventIdStr}/public`;
+    const fallbackUrl = `/events/${eventIdStr}`;
 
     let response;
     try {
