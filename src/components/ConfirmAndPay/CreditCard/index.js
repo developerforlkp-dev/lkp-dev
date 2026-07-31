@@ -12,6 +12,7 @@ import {
   normalizeOrderPaymentSession,
   sendOrderMessage,
   saveGuestDetails,
+  finalizeFreeEvent,
 } from "../../../utils/api";
 import {
   clearPendingCheckoutState,
@@ -180,6 +181,15 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
   const [errorModalMsg, setErrorModalMsg] = useState("");
   const history = useHistory();
 
+  const isFreeBookingView = Number(
+    paymentData?.amount ?? 
+    (Number(
+      bookingDataProp?.finalTotal ?? 
+      bookingDataProp?.totalAmount ?? 
+      bookingDataProp?.pricing?.total ?? 0
+    ) > 0 ? 1 : 0)
+  ) <= 0;
+
   const ensureRazorpayScript = () =>
     new Promise((resolve, reject) => {
       if (window.Razorpay) return resolve(true);
@@ -309,7 +319,10 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
         }
       }
 
-      if (orderId) {
+      const activeAmount = activePayment?.amount ?? (Number(bookingData?.finalTotal ?? bookingData?.totalAmount ?? bookingData?.pricing?.total ?? 0) > 0 ? 1 : 0);
+      const isActuallyFree = Number(activeAmount) <= 0;
+
+      if (orderId && !isActuallyFree) {
         activePayment = await ensureRazorpaySession({
           orderId,
           payment: activePayment,
@@ -373,7 +386,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
     const razorpayKeyId = activePayment?.razorpayKeyId;
     const amount = activePayment?.amount;
     const currency = activePayment?.currency || "INR";
-    const isFreeBooking = Number(amount || 0) <= 0;
+    const isFreeBooking = Number(amount ?? (Number(bookingData?.finalTotal ?? bookingData?.totalAmount ?? bookingData?.pricing?.total ?? 0) > 0 ? 1 : 0)) <= 0;
 
     if (!razorpayOrderId && !isFreeBooking) {
       setErrorModalMsg("Could not initialize payment. Please try booking again.");
@@ -389,10 +402,13 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
 
     if (isFreeBooking) {
       try {
+        const freeEventResponse = await finalizeFreeEvent(orderId);
+        // We use the new API, but we simulate razorpay success for the CheckoutComplete page to work out of the box
         const freePaymentSuccess = {
           razorpay_payment_id: `FREE_${orderId || Date.now()}`,
           razorpay_order_id: `FREE_ORDER_${orderId || Date.now()}`,
           razorpay_signature: "FREE_SIG",
+          finalizationMode: freeEventResponse?.finalization?.mode || "AUTO_CONFIRMED",
         };
         localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(freePaymentSuccess));
         localStorage.setItem("actualPaidAmount", JSON.stringify({
@@ -553,7 +569,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
           disabled={isProcessing}
           style={{ opacity: isProcessing ? 0.7 : 1, cursor: isProcessing ? "not-allowed" : "pointer" }}
         >
-          {isProcessing ? "Processing..." : "Confirm and pay"}
+          {isProcessing ? (isFreeBookingView ? "Confirming..." : "Processing...") : (isFreeBookingView ? "Confirm Booking" : "Confirm and pay")}
         </button>
       </div>
       <Modal visible={!!errorModalMsg} onClose={() => setErrorModalMsg("")}>
