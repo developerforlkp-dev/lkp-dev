@@ -800,6 +800,35 @@ export const verifyPhoneOTP = async (phone, otp, countryCode = "+91", firstName 
   }
 };
 
+// Send OTP to reverify phone number
+export const sendReverifyPhoneOTP = async (phone, countryCode = "+91") => {
+  try {
+    const response = await ListingsAPI.post("/customers/auth/phone/reverify/send-otp", {
+      phone,
+      countryCode,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error sending reverify OTP:", error);
+    throw error;
+  }
+};
+
+// Verify OTP for reverify phone number
+export const verifyReverifyPhoneOTP = async (phone, otp, countryCode = "+91") => {
+  try {
+    const response = await ListingsAPI.post("/customers/auth/phone/reverify/verify-otp", {
+      phone,
+      otp,
+      countryCode,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error verifying reverify OTP:", error);
+    throw error;
+  }
+};
+
 // Request Hosting OTP
 export const requestHostingOtp = async (hostingData) => {
   try {

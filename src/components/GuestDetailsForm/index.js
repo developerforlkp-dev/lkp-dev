@@ -4,6 +4,7 @@ import styles from "./GuestDetailsForm.module.sass";
 import dropdownStyles from "../Dropdown/Dropdown.module.sass";
 import TextInput from "../TextInput";
 import Dropdown from "../Dropdown";
+import Modal from "../Modal";
 
 const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDetails, guestErrors = {} }) => {
   const handlePrimaryChange = (e) => {
@@ -95,6 +96,83 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
     </div>
   ));
 
+  const [showOtpModal, setShowOtpModal] = React.useState(false);
+  const [otp, setOtp] = React.useState(["", "", "", "", "", ""]);
+  const [otpError, setOtpError] = React.useState("");
+  const [isVerifying, setIsVerifying] = React.useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = React.useState(false);
+  const [phoneToVerify, setPhoneToVerify] = React.useState("");
+  
+  const otpFocusTimeoutRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (showOtpModal) {
+      otpFocusTimeoutRef.current = setTimeout(() => {
+        const firstInput = document.getElementById("reverify-otp-0");
+        if (firstInput) firstInput.focus();
+      }, 100);
+    }
+    return () => clearTimeout(otpFocusTimeoutRef.current);
+  }, [showOtpModal]);
+
+  const handleSendOtp = async () => {
+    try {
+      setIsVerifying(true);
+      setOtpError("");
+      const { sendReverifyPhoneOTP } = await import("../../utils/api");
+      await sendReverifyPhoneOTP(guestDetails.mobileNumber, guestDetails.countryCode || "+91");
+      setPhoneToVerify(guestDetails.mobileNumber);
+      setShowOtpModal(true);
+    } catch (error) {
+      alert("Failed to send OTP. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const otpString = otp.join("");
+    if (otpString.length !== 6) {
+      setOtpError("Please enter the complete 6-digit OTP");
+      return;
+    }
+    try {
+      setIsVerifying(true);
+      setOtpError("");
+      const { verifyReverifyPhoneOTP } = await import("../../utils/api");
+      await verifyReverifyPhoneOTP(phoneToVerify, otpString, guestDetails.countryCode || "+91");
+      setIsPhoneVerified(true);
+      setShowOtpModal(false);
+      setOtp(["", "", "", "", "", ""]);
+    } catch (error) {
+      setOtpError("Invalid OTP. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleOtpChange = (index, value) => {
+    const newOtp = [...otp];
+    newOtp[index] = value.replace(/\D/g, "");
+    setOtp(newOtp);
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`reverify-otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`reverify-otp-${index - 1}`);
+      if (prevInput) {
+        prevInput.focus();
+        const newOtp = [...otp];
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
+      }
+    }
+  };
+
   return (
     <div className={cn(className, styles.formWrapper)}>
       <div className={styles.sectionTitle}>Guest Details</div>
@@ -152,7 +230,22 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
             />
           </div>
           <div className={styles.colFieldHalf} style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className={styles.label}>Mobile Number *</div>
+            <div className={styles.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Mobile Number *</span>
+              {guestDetails.mobileNumber && guestDetails.mobileNumber.length === 10 && !isPhoneVerified && (
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isVerifying}
+                  style={{ color: '#00A4C4', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                >
+                  {isVerifying && !showOtpModal ? "Sending..." : "Verify"}
+                </button>
+              )}
+              {isPhoneVerified && guestDetails.mobileNumber === phoneToVerify && (
+                <span style={{ color: '#4CAF50', fontSize: '12px', fontWeight: '600' }}>Verified ✓</span>
+              )}
+            </div>
             <div
               style={{
                 display: 'flex',
@@ -195,6 +288,7 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '').substring(0, 10);
                   setGuestDetails({ ...guestDetails, mobileNumber: val });
+                  if (val !== phoneToVerify) setIsPhoneVerified(false);
                 }}
                 placeholder="Mobile Number"
                 required
@@ -243,6 +337,59 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
         )}
       </div>
 
+      <Modal visible={showOtpModal} onClose={() => setShowOtpModal(false)}>
+        <div style={{ padding: '24px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Verify Mobile Number</h2>
+          <p style={{ color: '#777E90', marginBottom: '24px' }}>
+            Enter the 6-digit OTP sent to {guestDetails.countryCode} {phoneToVerify}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                id={`reverify-otp-${index}`}
+                type="text"
+                maxLength="1"
+                value={digit}
+                onChange={(e) => handleOtpChange(index, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  border: '2px solid #E6E8EC',
+                  textAlign: 'center',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#00A4C4'}
+                onBlur={(e) => e.target.style.borderColor = '#E6E8EC'}
+              />
+            ))}
+          </div>
+          {otpError && <div style={{ color: '#FF4848', marginBottom: '16px', fontSize: '14px', fontWeight: '500' }}>{otpError}</div>}
+          <button
+            onClick={handleVerifyOtp}
+            disabled={isVerifying}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '24px',
+              background: '#00A4C4',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              border: 'none',
+              cursor: 'pointer',
+              opacity: isVerifying ? 0.7 : 1
+            }}
+          >
+            {isVerifying ? "Verifying..." : "Verify OTP"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
