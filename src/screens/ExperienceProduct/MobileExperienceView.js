@@ -688,7 +688,7 @@ export default function MobileExperienceView({
             borderTop: `1px solid ${B}`,
             borderBottom: `1px solid ${B}`
           }}>
-            <div className="mob-marquee-track" style={{ "--marquee-duration": `${Math.max(displayCats.length * 4, 15)}s` }}>
+            <div className="mob-marquee-track" style={{ "--marquee-duration": `${Math.max(displayCats.length * 12, 35)}s` }}>
               {repeatedCats.map((cat, i) => (
                 <div key={i} className="mob-marquee-item">
                   <span className="mob-marquee-text" style={{ fontWeight: i % 2 === 0 ? 700 : 300, color: i % 2 === 0 ? FG : M, opacity: i % 2 === 0 ? 1 : 0.75 }}>

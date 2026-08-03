@@ -3717,6 +3717,89 @@ export default function EventDetails() {
         <Artists event={event} />
         
         {/* ADDONS SECTION */}
+        {isMobile ? (
+          <div className="mob-section" style={{ background: BG }}>
+            <span className="mob-section-eyebrow" style={{ color: A }}>Enhance Your Experience</span>
+            <h2 className="mob-section-title" style={{ color: FG }}>Make it Yours</h2>
+            <p className="mob-section-desc" style={{ color: M, marginBottom: 20 }}>
+              Curated add-ons to make your experience even more special.
+            </p>
+
+            <div className="mob-addons-list">
+              {(event?.addons || []).map((item, i) => {
+                const addon = item.addon || item;
+                const addonId = addon.addonId || addon.id;
+                const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
+                const addonImg = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+                const isSelected = selectedAddOns.find(a => (a.addonId || a.id) === addonId);
+                const price = addon.price || addon.addonPrice || addon.amount || 0;
+                const addonName = addon.title || addon.name || addon.addonName || `Add-on ${i + 1}`;
+                const isGroupAddon = pricingType === "Group";
+
+                return (
+                  <div key={i} className="mob-addon-card" style={{ borderColor: isSelected ? A : B, background: theme === 'dark' ? "#111" : W }}>
+                    {addonImg && (
+                      <img
+                        className="mob-addon-img"
+                        src={formatImageUrl(addonImg)}
+                        alt={addonName}
+                        loading="lazy"
+                      />
+                    )}
+                    <div className="mob-addon-info">
+                      <p className="mob-addon-name" style={{ color: FG }}>{addonName}</p>
+                      <p className="mob-addon-price" style={{ color: A }}>
+                        ₹{Number(price).toLocaleString()}
+                        <span className="mob-addon-unit" style={{ color: M }}>
+                          /{isGroupAddon ? "group" : "person"}
+                        </span>
+                      </p>
+                    </div>
+                    {isSelected ? (
+                      isGroupAddon ? (
+                        <button className="mob-addon-btn" onClick={() => handleUpdateAddonQuantity(addon, -1)}
+                          style={{ borderColor: "#E53935", background: "transparent", color: "#E53935", minWidth: 72 }}>
+                          Remove
+                        </button>
+                      ) : (
+                        <div className="mob-addon-counter">
+                          <button onClick={() => handleUpdateAddonQuantity(addon, -1)}
+                            style={{ borderColor: A, background: "transparent", color: A }}>−</button>
+                          <span style={{ color: FG }}>{isSelected.quantity || 1}</span>
+                          <button onClick={() => handleUpdateAddonQuantity(addon, 1)}
+                            style={{ borderColor: A, background: "transparent", color: A }}>+</button>
+                        </div>
+                      )
+                    ) : (
+                      <button className="mob-addon-btn"
+                        onClick={() => handleUpdateAddonQuantity(addon, 1)}
+                        style={{ borderColor: A, background: "transparent", color: A, minWidth: 72 }}>
+                        Add
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedAddOns.length > 0 && (
+              <div style={{ marginTop: 16, padding: "14px 16px", background: AL, borderRadius: 12, border: `1px solid ${A}30`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: A, fontWeight: 600, marginBottom: 2 }}>Add-ons Summary</p>
+                  <p style={{ fontSize: 12, color: M, fontWeight: 500, margin: 0 }}>{selectedAddOns.reduce((s, a) => s + (a.quantity || 1), 0)} items selected</p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: M, fontWeight: 600, marginBottom: 2 }}>Subtotal</p>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: A, margin: 0 }}>₹{selectedAddOns.reduce((s, a) => {
+                    const addonData = a.addon || a;
+                    const aPrice = addonData.price || addonData.addonPrice || addonData.amount || 0;
+                    return s + ((parseFloat(aPrice) || 0) * (a.quantity || 1));
+                  }, 0).toFixed(2)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
         <section className="addons-section" style={{ background: BG, padding: "64px 0" }}>
           <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
@@ -3971,6 +4054,7 @@ export default function EventDetails() {
             )}
           </div>
         </section>
+        )}
 
         <Venue event={event} hostName={hostName} />
         <Rules event={event} />
