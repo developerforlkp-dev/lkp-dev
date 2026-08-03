@@ -2106,7 +2106,10 @@ const Main = ({
               <button
                 type="button"
                 key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
+                onClick={(e) => {
+                  handleTabChange(tab.id);
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }}
                 className={cn(styles.tab, {
                   [styles.tabActive]: tab.id === activeTab,
                 })}
