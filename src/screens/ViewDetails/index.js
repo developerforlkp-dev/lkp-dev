@@ -2935,7 +2935,7 @@ const ViewDetails = () => {
         <header className={styles.header}>
           <Link
             to={sourceTab ? `/bookings/${sourceTab}` : "/bookings"}
-            className={cn("button-stroke", "button-small")}
+            className={cn("button-stroke", "button-small", styles.backButton)}
             style={{ marginBottom: "24px", display: "inline-flex", alignItems: "center", gap: "8px" }}
           >
             <Icon name="arrow-prev" size="14" />
