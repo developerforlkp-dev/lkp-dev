@@ -9,8 +9,12 @@
 
 .head
     display: flex
+    flex-direction: column
+    align-items: flex-start
     margin-bottom: 32px
     +m
+        align-items: center
+        text-align: center
         margin-bottom: 24px
     .button
         flex-shrink: 0
@@ -71,6 +75,11 @@
 
 .avatarDetails
     flex-grow: 1
+    +m
+        display: flex
+        flex-direction: column
+        align-items: center
+        text-align: center
 
 .note
     +caption-2
@@ -82,6 +91,8 @@
     display: flex
     align-items: center
     margin-top: 12px
+    +m
+        justify-content: center
     .button
         &:hover
             background: $n2 !important
@@ -147,7 +158,7 @@
 .phoneRow
     display: flex
     gap: 12px
-    align-items: flex-end
+    align-items: flex-start
     +m
         flex-direction: column
         align-items: stretch
