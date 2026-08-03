@@ -2477,11 +2477,6 @@ const Main = ({
         <div className={styles.confirmCancelModalContent}>
           <div className={styles.cancelModalHeader}>
             <h2 className={styles.cancelModalTitle}>Confirm Cancellation</h2>
-            <p className={styles.cancelModalDescription}>
-              {bookingToCancel
-                ? `Cancel "${bookingToCancel.title}" and apply the previewed cancellation policy?`
-                : "Confirm this cancellation?"}
-            </p>
           </div>
           <div className={styles.confirmCancelSummary}>
             {cancelPreviewLoading ? (
