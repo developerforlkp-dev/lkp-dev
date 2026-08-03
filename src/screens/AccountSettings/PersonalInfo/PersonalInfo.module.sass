@@ -1,16 +1,17 @@
 @import ../../../styles/helpers
 
 .section
-    max-width: 896px
+    width: 100%
+    max-width: 1120px
     margin: 0 auto
     +t
         max-width: 100%
 
 .head
     display: flex
-    margin-bottom: 64px
+    margin-bottom: 32px
     +m
-        margin-bottom: 32px
+        margin-bottom: 24px
     .button
         flex-shrink: 0
         margin-left: 16px
@@ -26,14 +27,31 @@
     &:not(:last-child)
         margin-bottom: 48px
 
+.card
+    background: $n8
+    border: 1px solid $n6
+    border-radius: 24px
+    padding: 32px
+    margin-bottom: 32px
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02)
+    +m
+        padding: 24px 16px
+        border-radius: 16px
+    +dark
+        background: $n1
+        border-color: $n3
+
 .category
     margin-bottom: 32px
     +body-bold-2
+    border-bottom: 1px solid $n6
+    padding-bottom: 16px
+    +dark
+        border-color: $n3
 
 .avatarSection
     display: flex
     align-items: center
-    margin-bottom: 48px
     +m
         flex-direction: column
 
