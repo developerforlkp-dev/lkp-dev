@@ -713,7 +713,7 @@ export default function MobileExperienceView({
           <div className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
             <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
               <img
-                src={fmt(leadData?.profileImageUrl || hostData?.profileImageUrl || hostData?.host?.profileImageUrl) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+                src={fmt(leadData?.profilePhotoUrl || leadData?.profileImageUrl || hostData?.profilePhotoUrl || hostData?.profileImageUrl || hostData?.host?.profilePhotoUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
                 alt={displayHostName}
                 style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
                 onError={(e) => { e.target.onerror = null; e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`; }}

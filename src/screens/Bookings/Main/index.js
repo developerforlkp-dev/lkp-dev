@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
 import cn from "classnames";
 import styles from "./Main.module.sass";
 import Icon from "../../../components/Icon";
@@ -1022,8 +1022,23 @@ const Main = ({
   setCompletedOrders = null
 }) => {
   const history = useHistory();
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const [displayedTab, setDisplayedTab] = useState(tabs[0].id);
+  const { tab } = useParams();
+
+  const isValidTab = tabs.some(t => t.id === tab);
+  const initialTab = isValidTab ? tab : tabs[0].id;
+
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [displayedTab, setDisplayedTab] = useState(initialTab);
+
+  // Sync tab state if the URL changes (e.g. user uses back/forward browser buttons)
+  useEffect(() => {
+    if (tab && isValidTab && tab !== activeTab) {
+      setInitialTabSet(true);
+      setActiveTab(tab);
+      setPendingTab(tab);
+      setTransitionPhase("fadingOut");
+    }
+  }, [tab]);
   const [transitionPhase, setTransitionPhase] = useState("idle");
   const [pendingTab, setPendingTab] = useState(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
@@ -1541,10 +1556,10 @@ const Main = ({
           setRawCompletedBookings([]);
         }
 
-        // Always open on the Upcoming tab on initial load
+        // Always open on the correct tab on initial load
         if (!initialTabSet) {
-          setActiveTab("upcoming");
-          setDisplayedTab("upcoming");
+          setActiveTab(initialTab);
+          setDisplayedTab(initialTab);
           setInitialTabSet(true);
         }
       } catch (error) {
@@ -1745,6 +1760,9 @@ const Main = ({
     // Immediately mark that user has manually selected a tab to prevent auto-switching
     // This prevents the useEffect from resetting the tab when propCompletedOrders changes
     setInitialTabSet(true);
+
+    // Update the URL without reloading the page
+    history.replace(`/bookings/${nextTab}`);
 
     // Set the tab immediately so user sees the change
     setActiveTab(nextTab);
@@ -2477,11 +2495,6 @@ const Main = ({
         <div className={styles.confirmCancelModalContent}>
           <div className={styles.cancelModalHeader}>
             <h2 className={styles.cancelModalTitle}>Confirm Cancellation</h2>
-            <p className={styles.cancelModalDescription}>
-              {bookingToCancel
-                ? `Cancel "${bookingToCancel.title}" and apply the previewed cancellation policy?`
-                : "Confirm this cancellation?"}
-            </p>
           </div>
           <div className={styles.confirmCancelSummary}>
             {cancelPreviewLoading ? (
