@@ -625,15 +625,16 @@
         color: $n5
     +m
         flex: 0 0 auto
-        padding: 10px 18px
-        border-radius: 18px
-        background: $n7
-        margin-right: 8px
+        padding: 8px 16px 8px 0
+        background: none
+        margin-right: 16px
+        font-size: 16px
+        +body-bold-2
         &:after
             display: none
         +dark
-            background: $n2
-            color: $n6
+            background: none
+            color: $n5
 
 .notesTabActive
     color: $n2
@@ -642,9 +643,10 @@
     +dark
         color: $n8
     +m
-        background: $p4
-        color: $n8
-        margin-right: 8px
+        background: none
+        color: $n2
+        +dark
+            color: $n8
 
 .notesContent
     display: flex
