@@ -2934,7 +2934,7 @@ const ViewDetails = () => {
       <div className={cn("container", styles.container)}>
         <header className={styles.header}>
           <Link
-            to="/bookings"
+            to={sourceTab ? `/bookings/${sourceTab}` : "/bookings"}
             className={cn("button-stroke", "button-small")}
             style={{ marginBottom: "24px", display: "inline-flex", alignItems: "center", gap: "8px" }}
           >
