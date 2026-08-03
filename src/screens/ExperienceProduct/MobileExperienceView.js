@@ -761,9 +761,13 @@ export default function MobileExperienceView({
               }
 
               if (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) {
+                let rawPolicy = listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy;
+                if (rawPolicy && typeof rawPolicy === "string" && rawPolicy.toLowerCase().includes("no refunds are available for cancellations")) {
+                  rawPolicy = "No cancellation policy is available for this experience.";
+                }
                 cancelItems.push({
                   title: null,
-                  desc: listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy
+                  desc: rawPolicy
                 });
               }
 
