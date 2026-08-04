@@ -2494,7 +2494,7 @@ const ViewDetails = () => {
     };
 
     loadCancelPreview();
-  }, [booking?.orderId]);
+  }, [booking?.orderId, booking?.status, booking?.statusTone]);
 
   useEffect(() => {
     const fetchReasons = async () => {
@@ -2712,7 +2712,6 @@ const ViewDetails = () => {
     return firstText ? firstText.trim() : "";
   };
 
-  const cancelPreviewRows = getCancelPreviewRows(cancelPreview);
 
   const getInitialTab = () => {
     return "host";
