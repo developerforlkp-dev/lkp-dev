@@ -9,7 +9,7 @@ import { Rev, Chars } from "./UI";
 import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import Dropdown from "../Dropdown";
-import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder } from "../../utils/api";
+import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder, finalizeFreeEvent } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
@@ -2955,11 +2955,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         clearPendingCheckoutState();
         persistPendingCheckout({ bookingData: previewBookingData });
         localStorage.removeItem("frontendPendingBookingState");
-        history.replace("/experience-checkout", {
-          bookingData: previewBookingData,
-          addOns: selectedAddOns.map(item => ({ ...(item.addon || item), quantity: item.quantity || 1 }))
-        });
-        return;
+        
+        if (finalTotal > 0) {
+          history.replace("/experience-checkout", {
+            bookingData: previewBookingData,
+            addOns: selectedAddOns.map(item => ({ ...(item.addon || item), quantity: item.quantity || 1 }))
+          });
+          return;
+        }
 
         const res = await createEventOrder(payload);
         const order = res?.order || res;
@@ -3103,10 +3106,19 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
         if (isFreeBooking) {
           // For free bookings, we can go straight to completion
+          let finalizationMode = "AUTO_CONFIRMED";
+          try {
+            const freeEventResponse = await finalizeFreeEvent(orderId);
+            finalizationMode = freeEventResponse?.finalization?.mode || "AUTO_CONFIRMED";
+          } catch(e) {
+            console.error("Failed to finalize free event:", e);
+          }
+
           const freePaymentSuccess = {
             razorpay_payment_id: "FREE_" + (orderId || Date.now()),
             razorpay_order_id: "FREE_ORDER_" + (orderId || Date.now()),
-            razorpay_signature: "FREE_SIG"
+            razorpay_signature: "FREE_SIG",
+            finalizationMode
           };
           localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(freePaymentSuccess));
           localStorage.setItem("checkoutBooking", JSON.stringify(bookingData));
