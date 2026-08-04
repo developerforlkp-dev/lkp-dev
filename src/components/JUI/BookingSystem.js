@@ -2712,9 +2712,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       setShowValidation(true);
-      // Scroll to the top of the modal content to see the errors
-      const modalContent = document.querySelector(".booking-modal-content");
-      if (modalContent) modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      if (errors.children && childrenDetailsRef.current) {
+        childrenDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        // Scroll to the top of the modal content to see the errors
+        const modalContent = document.querySelector(".booking-modal-content");
+        if (modalContent) modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
