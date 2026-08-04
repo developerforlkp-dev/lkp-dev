@@ -9,6 +9,7 @@ import { Rev, Chars } from "./UI";
 import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import Dropdown from "../Dropdown";
+import ChildAgeSelect from "../ChildAgeSelect";
 import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder, finalizeFreeEvent } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
@@ -1343,6 +1344,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   // Sync external open state
   const externalOpenHandledRef = useRef(false);
+  const childrenDetailsRef = useRef(null);
   useEffect(() => {
     if (externalOpen === true && !show && !externalOpenHandledRef.current) {
       externalOpenHandledRef.current = true;
@@ -4586,7 +4588,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Children</span>
                                   <Counter
                                     value={guests.children}
-                                    setValue={(v) => updateGuestsWithinSeatLimit(p => ({ ...p, children: v }))}
+                                    setValue={(v) => {
+                                      const prevV = guests.children;
+                                      updateGuestsWithinSeatLimit(p => ({ ...p, children: v }));
+                                      if (v > prevV && v > 0) {
+                                        setTimeout(() => {
+                                          childrenDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }, 50);
+                                      }
+                                    }}
                                     min={0}
                                     max={childMax}
                                   />
@@ -4594,7 +4604,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               )}
 
                               {childrenAllowed && guests.children > 0 && (
-                                <div style={{ flex: "1 1 100%", padding: "12px 16px", background: "transparent", border: `1px solid ${B}55`, borderRadius: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+                                <div ref={childrenDetailsRef} style={{ flex: "1 1 100%", padding: "12px 16px", background: "transparent", border: `1px solid ${B}55`, borderRadius: 12, display: "flex", flexDirection: "column", gap: 12 }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{ color: A }}>
                                       <Baby size={20} color={A} />
@@ -4620,10 +4630,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                             <span style={{ fontSize: 13, fontWeight: 500, color: FG, whiteSpace: "nowrap" }}>Child {i + 1}</span>
                                           </div>
                                           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                                            <span style={{ fontSize: 11, color: M, fontWeight: 500, whiteSpace: "nowrap" }}>
-                                              {(guests.childAges?.[i] ?? 0) === 1 ? 'Year' : 'Years'}
-                                            </span>
-                                            <select
+                                            <div style={{ display: "flex", alignItems: "center", gap: 4, background: AL, padding: "4px 8px", borderRadius: 100, border: `1px solid ${A}44` }}>
+                                              <span style={{ fontSize: 11, color: A, fontWeight: 700, whiteSpace: "nowrap", letterSpacing: 0.5 }}>AGE</span>
+                                            </div>
+                                            <ChildAgeSelect
                                               value={guests.childAges?.[i] ?? 0}
                                               onChange={(e) => {
                                                 const v = e.target.value;
@@ -4642,6 +4652,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                                   return next;
                                                 });
                                               }}
+                                              options={Array.from({ length: 18 }).map((_, age) => ({ value: age, label: age }))}
                                               style={{
                                                 border: `1px solid ${B}44`,
                                                 borderRadius: '6px',
@@ -4650,15 +4661,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                                 fontWeight: '500',
                                                 color: FG,
                                                 backgroundColor: 'transparent',
-                                                outline: 'none',
-                                                cursor: 'pointer',
                                                 width: '60px'
                                               }}
-                                            >
-                                              {Array.from({ length: 18 }).map((_, age) => (
-                                                <option key={age} value={age}>{age}</option>
-                                              ))}
-                                            </select>
+                                            />
                                           </div>
                                         </div>
                                         {childAgeWarnings[i] === 'adult' && (
