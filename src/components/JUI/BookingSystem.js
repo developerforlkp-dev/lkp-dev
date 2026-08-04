@@ -3703,13 +3703,19 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           const discountedDisplayPrice = gp ? gp.priceAfterDiscount : Number(data.price || 0);
                           return (
                             <>
-                              {hasDiscount && baseDisplayPrice != null && (
+                              {hasDiscount && baseDisplayPrice != null && baseDisplayPrice > 0 && (
                                 <span style={{ fontSize: 13, fontWeight: 600, color: M, textDecoration: "line-through", opacity: 0.7 }}>
                                   ₹{Number(baseDisplayPrice).toFixed(2)}
                                 </span>
                               )}
-                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(discountedDisplayPrice || 0).toFixed(2)}</span>
-                              <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>per {data.unit}</span>
+                              {Number(discountedDisplayPrice || 0) === 0 ? (
+                                <span style={{ fontSize: 22, fontWeight: 800, color: A }}>Free Event</span>
+                              ) : (
+                                <>
+                                  <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(discountedDisplayPrice || 0).toFixed(2)}</span>
+                                  <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>per {data.unit}</span>
+                                </>
+                              )}
                             </>
                           );
                         })()}
@@ -4788,8 +4794,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                   <div className="booking-modal-footer" style={{ flexShrink: 0, padding: "16px 28px", background: BG, borderTop: `1px solid ${B}`, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 -4px 20px rgba(0,0,0,0.06)` }}>
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Total amount</span>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(finalTotal || 0).toFixed(2)}</span>
-                      <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
+                      {Number(finalTotal || 0) === 0 ? (
+                        <span style={{ fontSize: 22, fontWeight: 800, color: A }}>Free Event</span>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(finalTotal || 0).toFixed(2)}</span>
+                          <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
+                        </>
+                      )}
                     </div>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
