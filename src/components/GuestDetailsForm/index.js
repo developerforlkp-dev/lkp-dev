@@ -248,6 +248,7 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
               onBlur={(e) => e.currentTarget.style.borderColor = guestErrors.mobileNumber ? '#FF4848' : '#E6E8EC'}
             >
               <div
+                className={styles.mobileInputText}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -259,7 +260,6 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Poppins, sans-serif',
-                  color: '#23262F',
                   outline: 'none',
                   borderRight: '1px solid #E6E8EC',
                   boxSizing: 'border-box'
@@ -279,6 +279,7 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
                 }}
                 placeholder="Mobile Number"
                 required
+                className={styles.mobileInputText}
                 style={{
                   flex: 1,
                   height: '100%',
@@ -288,7 +289,6 @@ const GuestDetailsForm = ({ className, numberOfGuests, guestDetails, setGuestDet
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Poppins, sans-serif',
-                  color: '#23262F',
                   outline: 'none'
                 }}
               />
