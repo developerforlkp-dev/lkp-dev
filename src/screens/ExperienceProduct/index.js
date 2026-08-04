@@ -3310,10 +3310,14 @@ function ExperiencePolicies({ listing }) {
     }
 
     if (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) {
+      let rawPolicy = listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy;
+      if (rawPolicy && typeof rawPolicy === "string" && rawPolicy.toLowerCase().includes("no refunds are available for cancellations")) {
+        rawPolicy = "No cancellation policy is available for this experience.";
+      }
       cancelItems.push({
         id: 'cancel',
         title: null,
-        body: listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy
+        body: rawPolicy
       });
     }
 
