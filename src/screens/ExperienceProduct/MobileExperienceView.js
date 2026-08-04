@@ -637,7 +637,7 @@ export default function MobileExperienceView({
               </div>
               <div>
                 <p className="mob-detail-label" style={{ color: A }}>Instructions</p>
-                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingInstructions}</p>
+                <ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} />
               </div>
             </div>
           )}
@@ -996,6 +996,43 @@ const ExpandableReviewText = ({ text, vendorResponse, FG, A }) => {
         <button 
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
           style={{ background: "transparent", border: "none", color: A, fontSize: 11, fontWeight: 700, padding: 0, marginTop: 4, cursor: "pointer", outline: "none", textDecoration: "underline" }}
+        >
+          {expanded ? "Read Less" : "Read More"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+export const ExpandableInstructionText = ({ text, FG, A }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text && text.length > 120;
+  
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <div 
+        style={{ 
+          display: "grid", 
+          gridTemplateRows: expanded ? "1fr" : "0fr", 
+          transition: "grid-template-rows 0.3s ease",
+          width: "100%"
+        }}
+      >
+        <div style={{ overflow: "hidden" }}>
+          <p className="mob-detail-value" style={{ 
+            color: FG, margin: 0,
+            display: "-webkit-box", 
+            WebkitLineClamp: expanded ? "unset" : 3, 
+            WebkitBoxOrient: "vertical",
+          }}>
+            {text}
+          </p>
+        </div>
+      </div>
+      {isLong && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+          style={{ background: "transparent", border: "none", color: A, fontSize: 11, fontWeight: 700, padding: 0, marginTop: 4, cursor: "pointer", outline: "none", textDecoration: "underline", transition: "color 0.2s" }}
         >
           {expanded ? "Read Less" : "Read More"}
         </button>
