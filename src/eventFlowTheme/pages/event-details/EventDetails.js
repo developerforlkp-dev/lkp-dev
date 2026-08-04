@@ -757,7 +757,26 @@ const SpecCard = ({ label, value, sub, index, A, B, FG, M, W, theme, isCount }) 
         transition: "color 0.3s",
         margin: "0 0 4px 0"
       }}>
-        {isCount ? <Count to={value} /> : value}
+        {isCount ? <Count to={value} /> : (typeof value === 'string' && value.toLowerCase() === 'free' ? (
+          <span style={{
+            color: A,
+            textShadow: `0 0 12px ${A}80, 0 0 24px ${A}40`,
+            position: "relative",
+            display: "inline-block"
+          }}>
+            {value}
+            <span style={{
+              position: "absolute",
+              top: "-50%",
+              left: "-50%",
+              right: "-50%",
+              bottom: "-50%",
+              background: `radial-gradient(circle, ${A}30 0%, transparent 70%)`,
+              zIndex: -1,
+              pointerEvents: "none"
+            }} />
+          </span>
+        ) : value)}
       </p>
       <p style={{
         fontSize: "11px",
@@ -1557,7 +1576,28 @@ function About({ event }) {
           {statsList.map((s, i) => (
             <div key={s.l} style={{ padding: 12, borderRadius: 16, border: `1px solid ${B}`, background: isDark ? "#111" : "#FAFAFA" }}>
               <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: A, display: "block", marginBottom: 4, fontWeight: 700 }}>{s.l}</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: FG }}>{s.value}</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: FG }}>
+                {typeof s.value === 'string' && s.value.toLowerCase() === 'free' ? (
+                  <span style={{
+                    color: A,
+                    textShadow: `0 0 12px ${A}80, 0 0 24px ${A}40`,
+                    position: "relative",
+                    display: "inline-block"
+                  }}>
+                    {s.value}
+                    <span style={{
+                      position: "absolute",
+                      top: "-50%",
+                      left: "-50%",
+                      right: "-50%",
+                      bottom: "-50%",
+                      background: `radial-gradient(circle, ${A}30 0%, transparent 70%)`,
+                      zIndex: -1,
+                      pointerEvents: "none"
+                    }} />
+                  </span>
+                ) : s.value}
+              </span>
             </div>
           ))}
         </div>
