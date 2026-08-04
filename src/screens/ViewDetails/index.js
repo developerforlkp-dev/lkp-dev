@@ -2899,13 +2899,7 @@ const ViewDetails = () => {
       : "";
 
     if (originalStatus === "PENDING" || status === "pending") {
-      const actions = [];
-      if (sourceTab !== "cancelled") {
-        if (!isPastStayCheckInTime()) {
-          actions.push({ label: "Cancel Booking", variant: "secondary", onClick: handleCancelBookingClick });
-        }
-      }
-      return actions;
+      return [];
     }
 
     if (status === "upcoming" || status === "confirmed") {
@@ -3518,7 +3512,7 @@ const ViewDetails = () => {
           </div>
         )}
 
-        {(getActionButtons().length > 0 || isPastStayCheckInTime()) && (
+        {bookingStatusLower !== "pending" && (getActionButtons().length > 0 || isPastStayCheckInTime()) && (
           <div className={cn(styles.card, styles.actionCard)}>
             <h3 className={styles.actionTitle}>Actions</h3>
             {isPastStayCheckInTime() && (
