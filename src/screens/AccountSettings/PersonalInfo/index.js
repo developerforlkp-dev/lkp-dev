@@ -482,6 +482,7 @@ const PersonalInfo = () => {
                   onChange={handleChange}
                   type="email"
                   placeholder="Email"
+                  disabled={profile.isEmailVerified}
                 />
               </div>
             </div>
