@@ -568,13 +568,15 @@ const PersonalInfo = () => {
         onClose={() => setShowOtpModal(false)}
       >
         <div className={styles.otpModal}>
-          <div className={cn("h3", styles.title)} style={{ marginBottom: "16px" }}>Enter Verification Code</div>
-          <div style={{ marginBottom: "24px", color: "var(--n4)" }}>
+          <div className={styles.otpModalTitle}>
+            Enter Verification <span>Code</span>
+          </div>
+          <div className={styles.otpModalText}>
             We sent a code to {profile.countryCode} {profile.phone}
           </div>
-          <div className={styles.code} style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+          <div className={styles.code}>
             {otp.map((digit, index) => (
-              <div key={index} className={styles.number} style={{ width: '48px', height: '56px' }}>
+              <div key={index} className={styles.number}>
                 <input
                   id={`otp-reverify-${index}`}
                   type="tel"
@@ -586,21 +588,11 @@ const PersonalInfo = () => {
                   disabled={verifyingOtp}
                   autoFocus={index === 0}
                   required
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    textAlign: 'center',
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    border: '1px solid var(--n6)',
-                    borderRadius: '8px',
-                    background: 'transparent'
-                  }}
                 />
               </div>
             ))}
           </div>
-          {otpError && <div className={styles.error} style={{ color: "#FF6161", marginTop: "16px", textAlign: 'center' }}>{otpError}</div>}
+          {otpError && <div className={styles.otpError}>{otpError}</div>}
           <div className={styles.btns} style={{ marginTop: "32px", padding: 0 }}>
             <button
               type="button"
