@@ -138,7 +138,7 @@ const PersonalInfo = () => {
     if (val.length > maxLen) {
       val = val.slice(0, maxLen);
     }
-    setProfile(prev => ({ ...prev, phone: val }));
+    setProfile(prev => ({ ...prev, phone: val, isPhoneVerified: false }));
   };
 
   const handleCountryCodeChange = (label) => {
@@ -148,7 +148,8 @@ const PersonalInfo = () => {
       setProfile(prev => ({ 
         ...prev, 
         countryCode: option.value,
-        phone: prev.phone.slice(0, getPhoneLength(option.value)) 
+        phone: prev.phone.slice(0, getPhoneLength(option.value)),
+        isPhoneVerified: false
       }));
     }
   };
@@ -232,6 +233,12 @@ const PersonalInfo = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (profile.phone && !profile.isPhoneVerified) {
+      alert("Please verify your new phone number before saving.");
+      return;
+    }
+
     try {
       setUpdating(true);
       setAvatarSuccess(false);
@@ -540,7 +547,7 @@ const PersonalInfo = () => {
           <button
             type="submit"
             className={cn("button", styles.button)}
-            disabled={updating || !profile.firstName || !profile.lastName || !profile.email}
+            disabled={updating || !profile.firstName || !profile.lastName || !profile.email || (Boolean(profile.phone) && !profile.isPhoneVerified)}
           >
             {updating ? "Saving..." : "Save changes"}
           </button>
