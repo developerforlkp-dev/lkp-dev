@@ -3003,8 +3003,8 @@ const ViewDetails = () => {
       <div className={cn("container", styles.container)}>
         <header className={styles.header}>
           <Link
-            to="/bookings"
-            className={cn("button-stroke", "button-small")}
+            to={sourceTab ? `/bookings/${sourceTab}` : "/bookings"}
+            className={cn("button-stroke", "button-small", styles.backButton)}
             style={{ marginBottom: "24px", display: "inline-flex", alignItems: "center", gap: "8px" }}
           >
             <Icon name="arrow-prev" size="14" />
@@ -3956,9 +3956,6 @@ const ViewDetails = () => {
         <div className={styles.confirmCancelModalContent || styles.cancelModalContent}>
           <div className={styles.cancelModalHeader}>
             <h2 className={styles.cancelModalTitle}>Confirm Cancellation</h2>
-            <p className={styles.cancelModalDescription}>
-              {booking ? `Cancel "${booking.title}" and apply the previewed cancellation policy?` : "Confirm this cancellation?"}
-            </p>
           </div>
           <div className={styles.confirmCancelSummary}>
             {cancelPreviewLoading ? (

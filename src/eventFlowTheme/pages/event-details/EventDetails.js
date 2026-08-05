@@ -757,7 +757,26 @@ const SpecCard = ({ label, value, sub, index, A, B, FG, M, W, theme, isCount }) 
         transition: "color 0.3s",
         margin: "0 0 4px 0"
       }}>
-        {isCount ? <Count to={value} /> : value}
+        {isCount ? <Count to={value} /> : (typeof value === 'string' && value.toLowerCase() === 'free' ? (
+          <span style={{
+            color: A,
+            textShadow: `0 0 12px ${A}80, 0 0 24px ${A}40`,
+            position: "relative",
+            display: "inline-block"
+          }}>
+            {value}
+            <span style={{
+              position: "absolute",
+              top: "-50%",
+              left: "-50%",
+              right: "-50%",
+              bottom: "-50%",
+              background: `radial-gradient(circle, ${A}30 0%, transparent 70%)`,
+              zIndex: -1,
+              pointerEvents: "none"
+            }} />
+          </span>
+        ) : value)}
       </p>
       <p style={{
         fontSize: "11px",
@@ -1557,7 +1576,28 @@ function About({ event }) {
           {statsList.map((s, i) => (
             <div key={s.l} style={{ padding: 12, borderRadius: 16, border: `1px solid ${B}`, background: isDark ? "#111" : "#FAFAFA" }}>
               <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: A, display: "block", marginBottom: 4, fontWeight: 700 }}>{s.l}</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: FG }}>{s.value}</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: FG }}>
+                {typeof s.value === 'string' && s.value.toLowerCase() === 'free' ? (
+                  <span style={{
+                    color: A,
+                    textShadow: `0 0 12px ${A}80, 0 0 24px ${A}40`,
+                    position: "relative",
+                    display: "inline-block"
+                  }}>
+                    {s.value}
+                    <span style={{
+                      position: "absolute",
+                      top: "-50%",
+                      left: "-50%",
+                      right: "-50%",
+                      bottom: "-50%",
+                      background: `radial-gradient(circle, ${A}30 0%, transparent 70%)`,
+                      zIndex: -1,
+                      pointerEvents: "none"
+                    }} />
+                  </span>
+                ) : s.value}
+              </span>
             </div>
           ))}
         </div>
@@ -2466,7 +2506,7 @@ function HostDetails({ event, hostName }) {
         <div className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
           <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
             <img
-              src={host?.profilePhotoUrl || host?.profileImageUrl || event?.host?.profilePhotoUrl || event?.host?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+              src={formatImageUrl(hostProfile?.profilePhotoUrl || hostProfile?.profileImageUrl || hostProfile?.host?.profilePhotoUrl || hostProfile?.host?.profileImageUrl || host?.profilePhotoUrl || host?.profileImageUrl || host?.avatar || host?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
               alt={displayHostName}
               style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
               onError={(e) => { e.target.onerror = null; e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`; }}
