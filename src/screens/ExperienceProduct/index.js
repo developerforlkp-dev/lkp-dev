@@ -3297,6 +3297,31 @@ function ExperiencePolicies({ listing }) {
     const expItems = [];
     const guestItems = [];
     const cancelItems = [];
+    const experienceRuleItems = [];
+
+    // Parse experienceRules from the API
+    if (listing?.experienceRules) {
+      const rules = listing.experienceRules;
+      if (Array.isArray(rules)) {
+        rules.forEach((rule, i) => {
+          if (typeof rule === "string") {
+            experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: rule });
+          } else if (rule && typeof rule === "object") {
+            experienceRuleItems.push({
+              id: `exp-rule-${i}`,
+              title: rule.title || rule.name || rule.label || null,
+              body: rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null)
+            });
+          }
+        });
+      } else if (typeof rules === "string" && rules.trim()) {
+        // If it's a single string, split by newlines or treat as one item
+        const lines = rules.split('\n').map(l => l.trim()).filter(Boolean);
+        lines.forEach((line, i) => {
+          experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: line });
+        });
+      }
+    }
 
     if (Array.isArray(listing?.guestRequirements)) {
       listing.guestRequirements.forEach((req, i) => {
@@ -3325,7 +3350,9 @@ function ExperiencePolicies({ listing }) {
     }
 
     const categories = [];
-    if (expItems.length > 0) {
+    if (experienceRuleItems.length > 0) {
+      categories.push({ id: 'cat-exp-rules', title: "Experience Rules", items: experienceRuleItems });
+    } else if (expItems.length > 0) {
       categories.push({ id: 'cat-exp', title: "Experience Rules", items: expItems });
     }
     if (guestItems.length > 0) {

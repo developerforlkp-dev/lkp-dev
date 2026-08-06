@@ -2407,6 +2407,30 @@ function Rules({ event }) {
     const evtItems = [];
     const guestItems = [];
     const cancelItems = [];
+    const experienceRuleItems = [];
+
+    // Parse experienceRules or eventRules from the API
+    const rules = event?.experienceRules || event?.eventRules;
+    if (rules) {
+      if (Array.isArray(rules)) {
+        rules.forEach((rule, i) => {
+          if (typeof rule === "string") {
+            experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: rule });
+          } else if (rule && typeof rule === "object") {
+            experienceRuleItems.push({
+              id: `exp-rule-${i}`,
+              title: rule.title || rule.name || rule.label || null,
+              body: rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null)
+            });
+          }
+        });
+      } else if (typeof rules === "string" && rules.trim()) {
+        const lines = rules.split('\n').map(l => l.trim()).filter(Boolean);
+        lines.forEach((line, i) => {
+          experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: line });
+        });
+      }
+    }
 
     if (checkInInstructions) {
       evtItems.push({ title: "Check-in Instructions", body: checkInInstructions });
@@ -2435,7 +2459,17 @@ function Rules({ event }) {
     }
 
     const categories = [];
-    if (evtItems.length > 0) categories.push({ id: 'cat-evt', title: "Event Rules", items: evtItems });
+    if (experienceRuleItems.length > 0) {
+      categories.push({ id: 'cat-exp-rules', title: "Event Rules", items: experienceRuleItems });
+    } else if (evtItems.length > 0) {
+      categories.push({ id: 'cat-evt', title: "Event Rules", items: evtItems });
+    }
+    
+    // Fallback: If we added experienceRuleItems as 'Event Rules', but still have evtItems (check-in, dress code), put them somewhere
+    if (experienceRuleItems.length > 0 && evtItems.length > 0) {
+      categories.push({ id: 'cat-evt-details', title: "Event Details", items: evtItems });
+    }
+
     if (guestItems.length > 0) categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     if (cancelItems.length > 0) categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
 
@@ -3713,7 +3747,7 @@ export default function EventDetails() {
       try {
         setLoading(true);
         const data = await getEventDetails(eventId);
-        //console.log("DEBUG: Event Details Data:", data);
+        console.log("Event Detail Page Data:", data);
         let eventAddons = [];
         try {
           eventAddons = await getEventAddons(eventId);
