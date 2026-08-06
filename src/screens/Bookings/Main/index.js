@@ -1838,6 +1838,13 @@ const Main = ({
   };
 
   const handleCancelBookingClick = async (booking) => {
+    let bookingTypeName = "experience";
+    if (booking?.category === "EVENTS" || booking?.bookingData?.eventId != null || booking?.isEventOrder) {
+      bookingTypeName = "event";
+    } else if (booking?.category === "STAYS" || booking?.bookingData?.stayId != null) {
+      bookingTypeName = "stay";
+    }
+
     setBookingToCancel(booking);
     setCancelReason("");
     setSelectedReason("");
@@ -1850,16 +1857,28 @@ const Main = ({
       try {
         const preview = await getOrderCancelPreview(booking.orderId);
         setCancelPreview(preview);
-        /*console.log("🧾 Event cancel preview:", {
-          orderId: booking.orderId,
-          preview,
-          booking,
-        });*/
-      } catch (e) {
-        // Only log unexpected errors
-        if (e?.response?.status !== 400) {
-          console.warn("⚠️ Failed to fetch cancel preview:", e?.response?.data || e?.message || e);
+        
+        if (preview && preview.canCancel === false) {
+          setValidationModalData({
+            title: "Cancellation Not Available",
+            message: `Sorry, this booking cannot be cancelled because cancellation is not available for this ${bookingTypeName}.`,
+            isSuccess: false,
+            canContinue: false
+          });
+          setValidationModalVisible(true);
+          setCancelPreviewLoading(false);
+          return;
         }
+      } catch (e) {
+        setValidationModalData({
+          title: "Cancellation Not Available",
+          message: `Sorry, this booking cannot be cancelled because cancellation is not available for this ${bookingTypeName}.`,
+          isSuccess: false,
+          canContinue: false
+        });
+        setValidationModalVisible(true);
+        setCancelPreviewLoading(false);
+        return;
       } finally {
         setCancelPreviewLoading(false);
       }
