@@ -2460,13 +2460,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   };
 
   // Compute totals with child pricing split
-  const adultSubtotal = parseFloat(extractedPrice || 0) * guests.adults;
-  const childSubtotal = isEventBooking
-    ? eventChildPriceTotal
-    : experienceChildPriceTotal;
+  // Private experience bookings have a flat price — not multiplied by guest/child count
+  const adultSubtotal = (privateBooking && !isEventBooking)
+    ? parseFloat(extractedPrice || 0)
+    : parseFloat(extractedPrice || 0) * guests.adults;
+  const childSubtotal = (privateBooking && !isEventBooking)
+    ? 0
+    : (isEventBooking ? eventChildPriceTotal : experienceChildPriceTotal);
   const baseTotal = adultSubtotal + childSubtotal;
   const rawBaseTotal = !isEventBooking
-    ? (baseAdultPricePerPerson * guests.adults) + experienceChildPriceTotal
+    ? (privateBooking
+        ? parseFloat(effectiveRawPrice || 0)  // flat private price
+        : (baseAdultPricePerPerson * guests.adults) + experienceChildPriceTotal)
     : ((eventGuestPricing.baseUnitPrice * guests.adults) + eventChildPriceTotal);
   const activeGuestPricing = isEventBooking ? eventGuestPricing : experienceGuestPricing;
   const appliedDiscountRate = activeGuestPricing?.discountRate ?? 0;
