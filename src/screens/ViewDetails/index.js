@@ -1611,10 +1611,22 @@ const ViewDetails = () => {
   };
 
   const handlePrintReceipt = () => {
-    const element = document.getElementById("receipt-ticket-pdf");
-    if (!element) return;
+    const originalElement = document.getElementById("receipt-ticket-pdf");
+    if (!originalElement) return;
 
-    element.classList.add(styles.receiptPdfMode);
+    // Clone the element to prevent visual distortion during capture
+    const clone = originalElement.cloneNode(true);
+    clone.classList.add(styles.receiptPdfMode);
+
+    // Create an off-screen container
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.top = "-9999px";
+    container.style.left = "-9999px";
+    container.style.width = "1000px"; // Provide enough width for desktop layout rendering
+    
+    container.appendChild(clone);
+    document.body.appendChild(container);
 
     const opt = {
       margin: [8, 8, 8, 8],
@@ -1626,11 +1638,13 @@ const ViewDetails = () => {
     };
 
     html2pdf()
-      .from(element)
+      .from(clone)
       .set(opt)
       .save()
       .finally(() => {
-        element.classList.remove(styles.receiptPdfMode);
+        if (document.body.contains(container)) {
+          document.body.removeChild(container);
+        }
       });
   };
 
