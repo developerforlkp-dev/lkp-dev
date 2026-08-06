@@ -4910,16 +4910,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                   </p>
                 </div>
 
-                {errorPopup.reason && (
-                  <div style={{ marginTop: 12, padding: "14px 16px", borderRadius: 18, background: `${A}10`, border: `1px solid ${A}22` }}>
-                    <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase", color: A, marginBottom: 6 }}>
-                      Why This Happened
-                    </div>
-                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: FG, fontWeight: 600 }}>
-                      {errorPopup.reason}
-                    </p>
-                  </div>
-                )}
+
+
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 18 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: M }}>
