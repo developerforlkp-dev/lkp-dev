@@ -664,18 +664,18 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
             fontSize: 11,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: "#FFFFFF",
+            color: isDark ? "#FFFFFF" : "#000000",
             fontWeight: 700,
             whiteSpace: "nowrap",
             display: "block"
           }}
         >
           <span style={{ opacity: 0.7 }}>Book</span>{" "}
-          <span style={{ color: "#38BDF8", fontWeight: 800 }}>
+          <span style={{ color: isDark ? "#38BDF8" : "#0284C7", fontWeight: 800 }}>
             {discounts[index].daysInAdvance} Days
           </span>{" "}
           <span style={{ opacity: 0.7 }}>Advance:</span>{" "}
-          <span style={{ color: "#4ADE80", fontWeight: 800 }}>
+          <span style={{ color: isDark ? "#4ADE80" : "#16A34A", fontWeight: 800 }}>
             {discounts[index].percentage}% OFF
           </span>
         </motion.span>
@@ -943,6 +943,29 @@ function MobileHero({ event, heroRef }) {
         </div>
       </div>
 
+      {/* Early Bird Badge (Mobile) */}
+      {event?.earlyBirdDiscounts?.some(d => d.isActive) && (
+        <div style={{
+          position: "relative",
+          zIndex: 10,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          background: theme === "dark" ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 255, 255, 0.9)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          padding: "6px 14px",
+          borderRadius: "100px",
+          border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.2)" : `1px solid ${B}`,
+          marginBottom: 12,
+          alignSelf: "flex-start",
+          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0,0,0,0.1)"
+        }}>
+          <Sparkles size={12} color="#F59E0B" fill="#F59E0B" style={{ flexShrink: 0 }} />
+          <EarlyBirdTicker discounts={event.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={FG} isDark={theme === "dark"} />
+        </div>
+      )}
+
       {/* Title */}
       <div style={{ position: "relative", zIndex: 10, marginBottom: 16 }}>
         <h1 style={{ fontSize: 38, fontWeight: 700, color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1.1, margin: 0 }}>
@@ -1137,14 +1160,13 @@ function Hero({ event, heroRef }) {
           display: "flex",
           alignItems: "center",
           gap: 8,
-          background: "rgba(15, 23, 42, 0.9)",
+          background: theme === "dark" ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.9)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           padding: "10px 20px",
           borderRadius: "100px",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
-          color: "#FFFFFF",
+          border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.15)" : `1px solid ${B}`,
+          boxShadow: theme === "dark" ? "0 10px 30px rgba(0, 0, 0, 0.3)" : "0 10px 30px rgba(0, 0, 0, 0.08)",
           zIndex: 200
         }}>
           <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ flexShrink: 0 }} />
@@ -2385,6 +2407,30 @@ function Rules({ event }) {
     const evtItems = [];
     const guestItems = [];
     const cancelItems = [];
+    const experienceRuleItems = [];
+
+    // Parse experienceRules or eventRules from the API
+    const rules = event?.experienceRules || event?.eventRules;
+    if (rules) {
+      if (Array.isArray(rules)) {
+        rules.forEach((rule, i) => {
+          if (typeof rule === "string") {
+            experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: rule });
+          } else if (rule && typeof rule === "object") {
+            experienceRuleItems.push({
+              id: `exp-rule-${i}`,
+              title: rule.title || rule.name || rule.label || null,
+              body: rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null)
+            });
+          }
+        });
+      } else if (typeof rules === "string" && rules.trim()) {
+        const lines = rules.split('\n').map(l => l.trim()).filter(Boolean);
+        lines.forEach((line, i) => {
+          experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: line });
+        });
+      }
+    }
 
     if (checkInInstructions) {
       evtItems.push({ title: "Check-in Instructions", body: checkInInstructions });
@@ -2413,7 +2459,17 @@ function Rules({ event }) {
     }
 
     const categories = [];
-    if (evtItems.length > 0) categories.push({ id: 'cat-evt', title: "Event Rules", items: evtItems });
+    if (experienceRuleItems.length > 0) {
+      categories.push({ id: 'cat-exp-rules', title: "Event Rules", items: experienceRuleItems });
+    } else if (evtItems.length > 0) {
+      categories.push({ id: 'cat-evt', title: "Event Rules", items: evtItems });
+    }
+    
+    // Fallback: If we added experienceRuleItems as 'Event Rules', but still have evtItems (check-in, dress code), put them somewhere
+    if (experienceRuleItems.length > 0 && evtItems.length > 0) {
+      categories.push({ id: 'cat-evt-details', title: "Event Details", items: evtItems });
+    }
+
     if (guestItems.length > 0) categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     if (cancelItems.length > 0) categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
 
@@ -3691,7 +3747,7 @@ export default function EventDetails() {
       try {
         setLoading(true);
         const data = await getEventDetails(eventId);
-        //console.log("DEBUG: Event Details Data:", data);
+        console.log("Event Detail Page Data:", data);
         let eventAddons = [];
         try {
           eventAddons = await getEventAddons(eventId);

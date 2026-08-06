@@ -1034,38 +1034,41 @@ const ExperienceProduct = () => {
                       ? listing.languagesOffered
                       : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]);
 
-                    const displayStr = list.slice(0, 2).join(", ");
-                    const hasMore = list.length > 2;
+                    const displayLanguage = list[0];
+                    const remainingCount = list.length - 1;
+                    const hasMore = remainingCount > 0;
 
                     return (
                       <>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-start", width: "100%", marginBottom: 6 }}>
                           <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {displayStr}
+                            {displayLanguage}
                           </span>
                           {hasMore && (
                             <div style={{ position: "relative", display: "inline-flex" }}>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setLangPopoverOpen(!langPopoverOpen); }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = `${A}33`; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = `${A}1A`; }}
                                 style={{
-                                  background: W,
+                                  background: `${A}1A`,
                                   color: A,
-                                  border: `1px solid ${A}`,
-                                  borderRadius: "50%",
-                                  width: "18px",
-                                  height: "18px",
+                                  border: "none",
+                                  borderRadius: "100px",
+                                  padding: "2px 8px",
                                   display: "inline-flex",
                                   alignItems: "center",
+                                  gap: "4px",
                                   justifyContent: "center",
                                   fontSize: "12px",
                                   fontWeight: 700,
                                   cursor: "pointer",
-                                  padding: 0,
                                   flexShrink: 0,
-                                  outline: "none"
+                                  outline: "none",
+                                  transition: "background 0.2s ease"
                                 }}
                               >
-                                +
+                                +{remainingCount} <ChevronDown size={14} style={{ strokeWidth: 2.5 }} />
                               </button>
                               {langPopoverOpen && (
                                 <div style={{
@@ -3294,6 +3297,31 @@ function ExperiencePolicies({ listing }) {
     const expItems = [];
     const guestItems = [];
     const cancelItems = [];
+    const experienceRuleItems = [];
+
+    // Parse experienceRules from the API
+    if (listing?.experienceRules) {
+      const rules = listing.experienceRules;
+      if (Array.isArray(rules)) {
+        rules.forEach((rule, i) => {
+          if (typeof rule === "string") {
+            experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: rule });
+          } else if (rule && typeof rule === "object") {
+            experienceRuleItems.push({
+              id: `exp-rule-${i}`,
+              title: rule.title || rule.name || rule.label || null,
+              body: rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null)
+            });
+          }
+        });
+      } else if (typeof rules === "string" && rules.trim()) {
+        // If it's a single string, split by newlines or treat as one item
+        const lines = rules.split('\n').map(l => l.trim()).filter(Boolean);
+        lines.forEach((line, i) => {
+          experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: line });
+        });
+      }
+    }
 
     if (Array.isArray(listing?.guestRequirements)) {
       listing.guestRequirements.forEach((req, i) => {
@@ -3322,7 +3350,9 @@ function ExperiencePolicies({ listing }) {
     }
 
     const categories = [];
-    if (expItems.length > 0) {
+    if (experienceRuleItems.length > 0) {
+      categories.push({ id: 'cat-exp-rules', title: "Experience Rules", items: experienceRuleItems });
+    } else if (expItems.length > 0) {
       categories.push({ id: 'cat-exp', title: "Experience Rules", items: expItems });
     }
     if (guestItems.length > 0) {
