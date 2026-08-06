@@ -664,18 +664,18 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
             fontSize: 11,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: "#FFFFFF",
+            color: isDark ? "#FFFFFF" : "#000000",
             fontWeight: 700,
             whiteSpace: "nowrap",
             display: "block"
           }}
         >
           <span style={{ opacity: 0.7 }}>Book</span>{" "}
-          <span style={{ color: "#38BDF8", fontWeight: 800 }}>
+          <span style={{ color: isDark ? "#38BDF8" : "#0284C7", fontWeight: 800 }}>
             {discounts[index].daysInAdvance} Days
           </span>{" "}
           <span style={{ opacity: 0.7 }}>Advance:</span>{" "}
-          <span style={{ color: "#4ADE80", fontWeight: 800 }}>
+          <span style={{ color: isDark ? "#4ADE80" : "#16A34A", fontWeight: 800 }}>
             {discounts[index].percentage}% OFF
           </span>
         </motion.span>
@@ -1137,14 +1137,13 @@ function Hero({ event, heroRef }) {
           display: "flex",
           alignItems: "center",
           gap: 8,
-          background: "rgba(15, 23, 42, 0.9)",
+          background: theme === "dark" ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.9)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           padding: "10px 20px",
           borderRadius: "100px",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
-          color: "#FFFFFF",
+          border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.15)" : `1px solid ${B}`,
+          boxShadow: theme === "dark" ? "0 10px 30px rgba(0, 0, 0, 0.3)" : "0 10px 30px rgba(0, 0, 0, 0.08)",
           zIndex: 200
         }}>
           <Sparkles size={14} color="#F59E0B" fill="#F59E0B" style={{ flexShrink: 0 }} />
