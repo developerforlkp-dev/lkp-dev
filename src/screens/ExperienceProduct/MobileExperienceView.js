@@ -341,7 +341,7 @@ export default function MobileExperienceView({
           { icon: <User size={15} color={A} />, label: `Min Age: ${listing?.minimumAge || "12"}` },
           { icon: <Zap size={15} color={A} />, label: listing?.difficultyLevel || "Moderate" },
           { icon: <Baby size={15} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
-          { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : ["English"]; return l.slice(0, 2).join(", "); })() },
+          { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]); return l.join(", "); })() },
           { icon: <ShieldCheck size={15} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
         ].map((fact, i) => (
           <div key={i} className="mob-fact-pill" style={{ background: isDark ? "#1A1A1A" : "#F5F7FA", color: FG, border: `1px solid ${B}` }}>
