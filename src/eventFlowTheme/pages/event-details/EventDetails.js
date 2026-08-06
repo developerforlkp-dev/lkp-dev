@@ -2868,7 +2868,7 @@ function HostDetails({ event, hostName }) {
                             <LaurelSVG style={{ transform: "scaleX(-1)" }} />
 
                             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                              <span style={{ fontSize: 48, fontWeight: 700, color: FG, letterSpacing: "-0.02em", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1 }}>
+                              <span style={{ fontSize: 48, fontWeight: 700, color: FG, letterSpacing: "-0.02em", fontFamily: '"Playfair Display", serif', lineHeight: 1 }}>
                                 {displayScore.toFixed(1)}
                               </span>
                               <span style={{ fontSize: 10, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.15em" }}>
