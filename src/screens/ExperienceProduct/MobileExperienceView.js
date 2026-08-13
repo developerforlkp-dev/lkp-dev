@@ -720,7 +720,7 @@ export default function MobileExperienceView({
               />
             </div>
             <h3 className="mob-host-name" style={{ color: FG }}>{displayHostName}</h3>
-            <p className="mob-host-label" style={{ color: A }}>Experience Host</p>
+            <p className="mob-host-label" style={{ color: A }}>Host</p>
 
 
 

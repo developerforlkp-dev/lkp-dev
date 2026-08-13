@@ -2563,7 +2563,7 @@ function HostDetails({ event, hostName }) {
     event?.host?.leadUserId ||
     event?.hostId;
   const hostDescription = host?.bio || host?.description || host?.about || host?.summary || "";
-  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
+  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Host";
   const hostPhone = host?.phone || host?.phoneNumber || event?.host?.phone || event?.host?.phoneNumber || "";
   const hostEmail = host?.email || event?.host?.email || "";
 
@@ -2588,7 +2588,7 @@ function HostDetails({ event, hostName }) {
             />
           </div>
           <h3 className="mob-host-name" style={{ color: FG }}>{displayHostName}</h3>
-          <p className="mob-host-label" style={{ color: A }}>{hostSubtitle}</p>
+          <p className="mob-host-label" style={{ color: A }}>Host</p>
           {hostDescription ? (
             <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center", maxWidth: "100%" }}>
               {hostDescription.length > 150 ? hostDescription.substring(0, 150) + "..." : hostDescription}
@@ -2755,7 +2755,7 @@ function HostDetails({ event, hostName }) {
                         display: "inline-flex",
                         alignItems: "center"
                       }}>
-                        Superhost
+                        Host
                       </span>
                     </div>
                   </div>

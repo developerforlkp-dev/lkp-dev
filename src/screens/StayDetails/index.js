@@ -2223,7 +2223,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                         display: "inline-flex",
                         alignItems: "center"
                       }}>
-                        Superhost
+                        Host
                       </span>
                     </div>
                   </div>

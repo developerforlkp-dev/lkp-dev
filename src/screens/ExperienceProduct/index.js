@@ -2010,7 +2010,7 @@ const ExperienceProduct = () => {
                               display: "inline-flex",
                               alignItems: "center"
                             }}>
-                              Superhost
+                              Host
                             </span>
                           </div>
                         </div>
