@@ -2473,6 +2473,25 @@ function Rules({ event }) {
     if (guestItems.length > 0) categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     if (cancelItems.length > 0) categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
 
+    const foreignerItems = [];
+    if (event?.foreignersAllowed !== undefined && event?.foreignersAllowed !== null) {
+      foreignerItems.push({
+        id: 'foreigners-allowed',
+        title: "Foreigners Allowed",
+        body: event.foreignersAllowed ? "Yes" : "No"
+      });
+    }
+    if (event?.ticketPriceApplicableToForeigners !== undefined && event?.ticketPriceApplicableToForeigners !== null) {
+      foreignerItems.push({
+        id: 'ticket-price-foreigners',
+        title: "Ticket Pricing for Foreigners",
+        body: event.ticketPriceApplicableToForeigners ? "Applicable" : "Not Applicable"
+      });
+    }
+    if (foreignerItems.length > 0) {
+      categories.push({ id: 'cat-foreigner', title: "Foreigner Guidelines", items: foreignerItems });
+    }
+
     return categories;
   }, [event, guestRequirements, checkInInstructions, cancellationPolicy]);
 

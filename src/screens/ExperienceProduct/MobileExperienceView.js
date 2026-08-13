@@ -771,6 +771,20 @@ export default function MobileExperienceView({
                 });
               }
 
+              const foreignerItems = [];
+              if (listing?.foreignersAllowed !== undefined && listing?.foreignersAllowed !== null) {
+                foreignerItems.push({
+                  title: "Foreigners Allowed",
+                  desc: listing.foreignersAllowed ? "Yes" : "No"
+                });
+              }
+              if (listing?.ticketPriceApplicableToForeigners !== undefined && listing?.ticketPriceApplicableToForeigners !== null) {
+                foreignerItems.push({
+                  title: "Ticket Pricing for Foreigners",
+                  desc: listing.ticketPriceApplicableToForeigners ? "Applicable" : "Not Applicable"
+                });
+              }
+
               const renderAccordion = (catTitle, items, icon) => {
                 if (!items || items.length === 0) return null;
                 return (
@@ -823,6 +837,7 @@ export default function MobileExperienceView({
                   {renderAccordion("Experience Rules", expItems, <ShieldCheck size={16} color={A} />)}
                   {renderAccordion("Guest Requirements", guestItems, <Users size={16} color={A} />)}
                   {renderAccordion("Cancellation Policy", cancelItems, <Clock size={16} color={A} />)}
+                  {renderAccordion("Foreigner Guidelines", foreignerItems, <Info size={16} color={A} />)}
                 </>
               );
             })()}

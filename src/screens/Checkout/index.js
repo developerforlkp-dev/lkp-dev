@@ -47,9 +47,11 @@ const getHostName = (...sources) => {
       source?.primaryContactName,
       source?.contactInformation?.primaryContactName,
       source?.primaryContact?.name,
+      source?.hostName,
       source?.host?.displayName,
       source?.host?.name,
       source?.host?.businessName,
+      source?.host?.hostName,
       combinedName,
     ];
 
@@ -75,12 +77,14 @@ const getHostAvatar = (...sources) => {
       source?.profileImageUrl,
       source?.profilePhoto,
       source?.image,
+      source?.hostAvatar,
       source?.host?.picture,
       source?.host?.avatar,
       source?.host?.profileImage,
       source?.host?.profileImageUrl,
       source?.host?.profilePhoto,
       source?.host?.image,
+      source?.host?.hostAvatar,
     ];
 
     for (const candidate of candidates) {
