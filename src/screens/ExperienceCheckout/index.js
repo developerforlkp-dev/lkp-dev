@@ -30,6 +30,70 @@ const formatImageUrl = (url) => {
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${encodedPath}${queryPart ? `?${queryPart}` : ""}`;
 };
 
+const getHostName = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+    const firstName = source?.firstName || source?.host?.firstName || "";
+    const lastName = source?.lastName || source?.host?.lastName || "";
+    const combinedName = `${firstName} ${lastName}`.trim();
+
+    const candidates = [
+      source?.displayName,
+      source?.name,
+      source?.businessName,
+      source?.primaryContactName,
+      source?.contactInformation?.primaryContactName,
+      source?.primaryContact?.name,
+      source?.hostName,
+      source?.host?.displayName,
+      source?.host?.name,
+      source?.host?.businessName,
+      source?.host?.hostName,
+      combinedName,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+  }
+
+  return "Host";
+};
+
+const getHostAvatar = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+    const candidates = [
+      source?.profilePhotoUrl,
+      source?.host?.profilePhotoUrl,
+      source?.picture,
+      source?.avatar,
+      source?.profileImage,
+      source?.profileImageUrl,
+      source?.profilePhoto,
+      source?.image,
+      source?.hostAvatar,
+      source?.host?.picture,
+      source?.host?.avatar,
+      source?.host?.profileImage,
+      source?.host?.profileImageUrl,
+      source?.host?.profilePhoto,
+      source?.host?.image,
+      source?.host?.hostAvatar,
+    ];
+
+    for (const candidate of candidates) {
+      const formatted = formatImageUrl(candidate);
+      if (formatted) return formatted;
+    }
+  }
+
+  return null;
+};
+
+
 const formatMoneyLabel = (currency, amount) => `${currency} ${Number(amount || 0).toFixed(2)}`;
 const toPositiveNumber = (...values) => {
   for (const value of values) {
@@ -912,8 +976,14 @@ const Checkout = () => {
     return "/images/content/photo-1.1.jpg";
   };
   const listingImage = getListingImage();
-  const hostName = bookingData?.hostName || "Host";
-  const hostAvatar = bookingData?.hostAvatar || "/images/content/avatar.jpg";
+
+  const hostSources = [
+    bookingData,
+    bookingData?.listing?.host,
+    bookingData?.host,
+  ];
+  const hostName = getHostName(...hostSources);
+  const hostAvatar = getHostAvatar(...hostSources) || "/images/content/avatar.jpg";
 
 
   return (

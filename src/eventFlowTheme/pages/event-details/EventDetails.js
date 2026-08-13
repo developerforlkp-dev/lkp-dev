@@ -2473,6 +2473,25 @@ function Rules({ event }) {
     if (guestItems.length > 0) categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     if (cancelItems.length > 0) categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
 
+    const foreignerItems = [];
+    if (event?.foreignersAllowed !== undefined && event?.foreignersAllowed !== null) {
+      foreignerItems.push({
+        id: 'foreigners-allowed',
+        title: "Foreigners Allowed",
+        body: event.foreignersAllowed ? "Yes" : "No"
+      });
+    }
+    if (event?.ticketPriceApplicableToForeigners !== undefined && event?.ticketPriceApplicableToForeigners !== null) {
+      foreignerItems.push({
+        id: 'ticket-price-foreigners',
+        title: "Ticket Pricing for Foreigners",
+        body: event.ticketPriceApplicableToForeigners ? "Applicable" : "Not Applicable"
+      });
+    }
+    if (foreignerItems.length > 0) {
+      categories.push({ id: 'cat-foreigner', title: "Foreigner Guidelines", items: foreignerItems });
+    }
+
     return categories;
   }, [event, guestRequirements, checkInInstructions, cancellationPolicy]);
 
@@ -2544,7 +2563,7 @@ function HostDetails({ event, hostName }) {
     event?.host?.leadUserId ||
     event?.hostId;
   const hostDescription = host?.bio || host?.description || host?.about || host?.summary || "";
-  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Event host";
+  const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Host";
   const hostPhone = host?.phone || host?.phoneNumber || event?.host?.phone || event?.host?.phoneNumber || "";
   const hostEmail = host?.email || event?.host?.email || "";
 
@@ -2569,7 +2588,7 @@ function HostDetails({ event, hostName }) {
             />
           </div>
           <h3 className="mob-host-name" style={{ color: FG }}>{displayHostName}</h3>
-          <p className="mob-host-label" style={{ color: A }}>{hostSubtitle}</p>
+          <p className="mob-host-label" style={{ color: A }}>Host</p>
           {hostDescription ? (
             <p style={{ color: M, fontSize: 13, marginTop: 12, textAlign: "center", maxWidth: "100%" }}>
               {hostDescription.length > 150 ? hostDescription.substring(0, 150) + "..." : hostDescription}
@@ -2736,7 +2755,7 @@ function HostDetails({ event, hostName }) {
                         display: "inline-flex",
                         alignItems: "center"
                       }}>
-                        Superhost
+                        Host
                       </span>
                     </div>
                   </div>

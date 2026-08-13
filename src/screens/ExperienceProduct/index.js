@@ -2010,7 +2010,7 @@ const ExperienceProduct = () => {
                               display: "inline-flex",
                               alignItems: "center"
                             }}>
-                              Superhost
+                              Host
                             </span>
                           </div>
                         </div>
@@ -3379,6 +3379,25 @@ function ExperiencePolicies({ listing }) {
     }
     if (cancelItems.length > 0) {
       categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
+    }
+
+    const foreignerItems = [];
+    if (listing?.foreignersAllowed !== undefined && listing?.foreignersAllowed !== null) {
+      foreignerItems.push({
+        id: 'foreigners-allowed',
+        title: "Foreigners Allowed",
+        body: listing.foreignersAllowed ? "Yes" : "No"
+      });
+    }
+    if (listing?.ticketPriceApplicableToForeigners !== undefined && listing?.ticketPriceApplicableToForeigners !== null) {
+      foreignerItems.push({
+        id: 'ticket-price-foreigners',
+        title: "Ticket Pricing for Foreigners",
+        body: listing.ticketPriceApplicableToForeigners ? "Applicable" : "Not Applicable"
+      });
+    }
+    if (foreignerItems.length > 0) {
+      categories.push({ id: 'cat-foreigner', title: "Foreigner Guidelines", items: foreignerItems });
     }
 
     return categories;
