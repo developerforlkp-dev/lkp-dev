@@ -928,9 +928,9 @@ const Checkout = () => {
         .filter((r) => /discount/i.test(String(r.title || "")))
         .reduce((sum, r) => sum + Math.abs(parseAmount(r.value)), 0);
       const correctedFinalAmount = Math.max(0, discountableAmount - totalDiscountAmount + correctedTax);
-      const authoritativeFinalAmount = storedFinalTotal != null
-        ? storedFinalTotal
-        : correctedFinalAmount;
+      const authoritativeFinalAmount = correctedFinalAmount > 0
+        ? correctedFinalAmount
+        : (storedFinalTotal != null ? storedFinalTotal : correctedFinalAmount);
       rows.push({
         title: "Final Guest Price",
         value: formatInr(authoritativeFinalAmount),
