@@ -2748,10 +2748,29 @@ const StayDetails = () => {
 
   const handleRoomCountChange = useCallback((roomId, count) => {
     const rid = String(roomId);
-    setSelectedRooms(prev => prev.map(r =>
-      r.roomId === rid ? { ...r, count: Math.max(1, count) } : r
-    ));
+    setSelectedRooms(prev => {
+      const next = prev.map(r =>
+        r.roomId === rid ? { ...r, count: Math.max(1, count) } : r
+      );
+      const totalRooms = next.reduce((sum, r) => sum + Number(r.count || 0), 0);
+      setGuests(g => ({
+        ...g,
+        adults: Math.max(g?.adults || 0, totalRooms)
+      }));
+      return next;
+    });
   }, []);
+
+  // When booking multiple rooms (e.g. 2 rooms), minimum 1 adult per room is required
+  useEffect(() => {
+    const totalRooms = selectedRooms.reduce((sum, r) => sum + Number(r.count || 0), 0);
+    if (totalRooms > 0 && (guests?.adults || 0) < totalRooms) {
+      setGuests(prev => ({
+        ...prev,
+        adults: Math.max(prev?.adults || 0, totalRooms)
+      }));
+    }
+  }, [selectedRooms]);
 
   // Rehydrate booking selection state if returning from successful authentication redirect
   useEffect(() => {

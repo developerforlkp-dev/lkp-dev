@@ -357,6 +357,12 @@ const BookingSidebar = ({
   const [activeDateField, setActiveDateField] = useState("checkin");
 
   const isPropertyBased = stay?.bookingScope === "Property-Based" || stay?.bookingScope === "Property Based";
+  const isRoomBased = !isPropertyBased && (
+    stay?.rooms?.length > 0 ||
+    stay?.roomTypes?.length > 0 ||
+    availableRooms?.length > 0
+  );
+  const minAdultsRequired = isRoomBased ? Math.max(1, roomsCount || 1) : 1;
 
   const capacityInfo = useMemo(() => {
     const isPropertyBased = stay?.bookingScope === "Property-Based" || stay?.bookingScope === "Property Based";
@@ -400,11 +406,6 @@ const BookingSidebar = ({
     return roomCapacityMessage;
   }, [isAdultExceeded, isChildExceeded, roomCapacityMessage]);
 
-  const isRoomBased = !isPropertyBased && (
-    stay?.rooms?.length > 0 ||
-    stay?.roomTypes?.length > 0 ||
-    availableRooms?.length > 0
-  );
   const stayDisabledDateKeys = useMemo(() => {
     if (!stay) return [];
 
@@ -851,8 +852,8 @@ const BookingSidebar = ({
                   </div>
                   <div className={styles.counter}>
                     <button
-                      onClick={() => setGuests(g => ({ ...g, adults: Math.max(1, (g.adults || 0) - 1) }))}
-                      disabled={(guests?.adults || 0) <= 1}
+                      onClick={() => setGuests(g => ({ ...g, adults: Math.max(minAdultsRequired, (g.adults || 0) - 1) }))}
+                      disabled={(guests?.adults || 0) <= minAdultsRequired}
                     >-</button>
                     <span>{guests?.adults || 0}</span>
                     <button
@@ -1014,7 +1015,14 @@ const BookingSidebar = ({
                     >-</button>
                     <span>{roomsCount}</span>
                     <button
-                      onClick={() => setRoomsCount(Math.min(Number(selectedRoom.units || 99), roomsCount + 1))}
+                      onClick={() => {
+                        const newCount = Math.min(Number(selectedRoom.units || 99), roomsCount + 1);
+                        setRoomsCount(newCount);
+                        setGuests(g => ({
+                          ...g,
+                          adults: Math.max(g?.adults || 0, newCount)
+                        }));
+                      }}
                       disabled={roomsCount >= Number(selectedRoom.units || 99)}
                       aria-label="Increase room count"
                     >+</button>
@@ -1185,6 +1193,7 @@ const RoomCard = ({
   onSelect,
   discountPercentage,
   guests,
+  setGuests,
   stay,
   checkInDate,
   selectedRoom,
@@ -1351,7 +1360,14 @@ const RoomCard = ({
                 >-</button>
                 <span>{roomsCount}</span>
                 <button
-                  onClick={() => setRoomsCount(Math.min(Number(room.units || 99), roomsCount + 1))}
+                  onClick={() => {
+                    const newCount = Math.min(Number(room.units || 99), roomsCount + 1);
+                    setRoomsCount(newCount);
+                    setGuests(g => ({
+                      ...g,
+                      adults: Math.max(g?.adults || 0, newCount)
+                    }));
+                  }}
                   disabled={roomsCount >= Number(room.units || 99)}
                 >+</button>
               </div>
@@ -1376,6 +1392,7 @@ const AvailableRooms = ({
   selectedRoom,
   discountPercentage,
   guests,
+  setGuests,
   stay,
   checkInDate,
   roomsCount,
@@ -1421,6 +1438,7 @@ const AvailableRooms = ({
             onSelect={onSelectRoom}
             discountPercentage={discountPercentage}
             guests={guests}
+            setGuests={setGuests}
             stay={stay}
             checkInDate={checkInDate}
             selectedRoom={selectedRoom}
@@ -1639,6 +1657,16 @@ const StayProduct = () => {
 
   const isPropertyBased = stay?.bookingScope === "Property-Based" || stay?.bookingScope === "Property Based";
   const isRoomBased = !isPropertyBased && (stay?.rooms?.length > 0 || stay?.roomTypes?.length > 0);
+
+  // When booking multiple rooms (e.g. 2 rooms), minimum 1 adult per room is required
+  useEffect(() => {
+    if (isRoomBased && (guests?.adults || 0) < roomsCount) {
+      setGuests(prev => ({
+        ...prev,
+        adults: Math.max(prev?.adults || 0, roomsCount)
+      }));
+    }
+  }, [roomsCount, isRoomBased]);
   const roomCatalog = useMemo(() => (stay?.rooms || stay?.roomTypes || stay?.room_types || []), [stay]);
 
   const enrichRoomsWithCatalog = useCallback((rooms = []) => {
@@ -2691,6 +2719,7 @@ const StayProduct = () => {
                 onSelectRoom={handleSelectRoom}
                 discountPercentage={discountPercentage}
                 guests={guests}
+                setGuests={setGuests}
                 stay={stay}
                 checkInDate={checkInDate}
                 selectedRoom={selectedRoom}

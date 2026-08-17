@@ -597,12 +597,37 @@ const StayBookingSystem = ({
 
   const onRoomsCountChange = (roomId, count) => {
     setSelectedRooms(prev => {
-      if (count === 0) return prev.filter(r => String(r.roomId) !== String(roomId));
-      const existing = prev.find(r => String(r.roomId) === String(roomId));
-      if (existing) return prev.map(r => String(r.roomId) === String(roomId) ? { ...r, count } : r);
-      return [...prev, { roomId: String(roomId), mealPlan: "EP", count }];
+      let next;
+      if (count === 0) {
+        next = prev.filter(r => String(r.roomId) !== String(roomId));
+      } else {
+        const existing = prev.find(r => String(r.roomId) === String(roomId));
+        if (existing) {
+          next = prev.map(r => String(r.roomId) === String(roomId) ? { ...r, count } : r);
+        } else {
+          next = [...prev, { roomId: String(roomId), mealPlan: "EP", count }];
+        }
+      }
+      const totalRooms = next.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0);
+      if (totalRooms > 0) {
+        setGuests(g => ({
+          ...g,
+          adults: Math.max(g?.adults || 0, totalRooms)
+        }));
+      }
+      return next;
     });
   };
+
+  useEffect(() => {
+    const totalRooms = selectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0);
+    if (totalRooms > 0 && (guests?.adults || 0) < totalRooms) {
+      setGuests(prev => ({
+        ...prev,
+        adults: Math.max(prev?.adults || 0, totalRooms)
+      }));
+    }
+  }, [selectedRooms]);
 
   const onToggleAddOn = (addon) => {
     setSelectedAddOns(prev => {
