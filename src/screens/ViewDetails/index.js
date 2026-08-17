@@ -4166,9 +4166,11 @@ const ViewDetails = () => {
       >
         <div className={styles.receiptModalContent}>
           <div className={styles.receiptModalHeader}>
-            <h2 className={styles.receiptModalTitle}>Booking Receipt</h2>
+            <h2 className={styles.receiptModalTitle}>
+              Booking <span style={{ color: "#0097B2", fontStyle: "italic" }}>Receipt</span>
+            </h2>
             <button
-              className={cn("button-small", styles.downloadPdfButton)}
+              className={cn("button-stroke", styles.downloadPdfButton)}
               onClick={handlePrintReceipt}
             >
               <Icon name="download" size="18" />
