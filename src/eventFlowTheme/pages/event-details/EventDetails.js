@@ -1913,7 +1913,7 @@ function Artists({ event }) {
                 className="artist-row"
               >
                 <div>
-                  <p style={{ color: B, fontFamily: "monospace", fontSize: 10 }}>{String(i + 1).padStart(2, "0")}</p>
+                  <p style={{ color: M, fontFamily: "monospace", fontSize: 16 }}>{String(i + 1).padStart(2, "0")}</p>
                 </div>
                 <div>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
