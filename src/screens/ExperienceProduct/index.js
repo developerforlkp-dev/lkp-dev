@@ -1385,6 +1385,7 @@ const ExperienceProduct = () => {
 
 
         {/* ADDONS SECTION */}
+        {(listing?.addons && listing.addons.length > 0) && (
         <section className="addons-section" style={{ background: BG, padding: "64px 0" }}>
           <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
@@ -1639,6 +1640,7 @@ const ExperienceProduct = () => {
             )}
           </div>
         </section>
+        )}
         {/* PREPARATION SECTION */}
         <section className="prep-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
           <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>

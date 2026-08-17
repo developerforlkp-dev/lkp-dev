@@ -3851,7 +3851,8 @@ export default function EventDetails() {
         <Artists event={event} />
         
         {/* ADDONS SECTION */}
-        {isMobile ? (
+        {(event?.addons && event.addons.length > 0) && (
+          isMobile ? (
           <div className="mob-section" style={{ background: BG }}>
             <span className="mob-section-eyebrow" style={{ color: A }}>Enhance Your Experience</span>
             <h2 className="mob-section-title" style={{ color: FG }}>Make it Yours</h2>
@@ -4188,7 +4189,7 @@ export default function EventDetails() {
             )}
           </div>
         </section>
-        )}
+        ))}
 
         <Venue event={event} hostName={hostName} />
         <Rules event={event} />
