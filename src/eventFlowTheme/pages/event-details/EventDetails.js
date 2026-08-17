@@ -1555,6 +1555,7 @@ function About({ event }) {
 
   if (isMobile) {
     return (
+      <>
       <div className="mob-section" style={{ background: isDark ? BG : W, paddingTop: 64 }}>
         <span className="mob-section-eyebrow" style={{ color: A }}>The Event</span>
         <h2 className="mob-section-title" style={{ color: FG }}>
@@ -1624,6 +1625,8 @@ function About({ event }) {
           ))}
         </div>
       </div>
+      <PremiumMarquee items={mqItems} />
+      </>
     );
   }
 
