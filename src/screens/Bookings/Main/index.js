@@ -2640,7 +2640,7 @@ const Main = ({
         outerClassName={styles.cancelModalOuter}
       >
         <div className={styles.cancelModalContent} style={{ borderRadius: '20px', overflow: 'hidden' }}>
-          <div className={styles.cancelModalHeader} style={{ padding: '24px 32px', borderBottom: '1px solid #E6E8EC' }}>
+          <div className={styles.cancelModalHeader} style={{ padding: '24px 32px', borderBottom: '1px solid rgba(128, 128, 128, 0.2)' }}>
             <h2 className={styles.cancelModalTitle} style={{ fontSize: '24px', marginBottom: '8px' }}>
               {validationModalData.title}
             </h2>
@@ -2653,7 +2653,7 @@ const Main = ({
               </p>
             )}
           </div>
-          <div className={styles.cancelModalFooter} style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#F4F5F6' }}>
+          <div className={styles.cancelModalFooter} style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {(validationModalData.isSuccess && validationModalData.canContinue) && (
               <button
                 type="button"
@@ -2682,7 +2682,7 @@ const Main = ({
             <button
               type="button"
               className={cn("button-stroke")}
-              style={{ width: '100%', borderRadius: "24px", height: "48px", margin: 0 }}
+              style={{ width: '100%', borderRadius: "24px", height: "48px", margin: 0, border: 'none', background: 'transparent', boxShadow: 'none' }}
               onClick={() => setValidationModalVisible(false)}
             >
               {validationModalData.isSuccess ? "Cancel" : "Close"}
