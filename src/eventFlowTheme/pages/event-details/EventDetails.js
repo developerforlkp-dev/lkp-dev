@@ -133,9 +133,9 @@ const ScopedStyles = () => (
     
     .gallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: start; height: 850px; overflow: hidden; border-radius: 40px; }
     .artist-row { display: grid; grid-template-columns: 80px 1fr 240px; gap: 12px; padding: 12px 24px 12px 0; border-bottom: 1px solid var(--B); align-items: center; cursor: default; transition: padding 0.3s, background 0.3s; }
-    .artist-image-tile { width: 240px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--S); border: 1px solid var(--B); transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
-    .artist-image-tile img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(0.3); transition: filter 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
-    .artist-row:hover .artist-image-tile img { filter: grayscale(0); transform: scale(1.05); }
+    .artist-image-tile { width: 240px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--S); border: 1px solid var(--B); }
+    .artist-image-tile img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(0.3); transition: filter 0.3s ease; }
+    .artist-row:hover .artist-image-tile img { filter: grayscale(0); }
     
     .hero-ring-wrapper {
       position: absolute;
@@ -1845,8 +1845,6 @@ function Artists({ event }) {
   const { theme, tokens: { A, AL, FG, M, B, W, BG } } = useTheme();
   const isMobile = useMobileView();
   const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
-  const [hov, setHov] = useState(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Use actual artists from backend if available
   const eventArtists = Array.isArray(event?.artists) ? event.artists :
@@ -1861,10 +1859,6 @@ function Artists({ event }) {
     bio: a.bio || a.description || "Performing live at Solstice.",
     image: formatImageUrl(a.photoUrl || a.imageUrl || a.profileImage || a.avatar || a.photo || a.artistImage) || ""
   }));
-
-  const handleMouseMove = (e) => {
-    setMousePos({ x: e.clientX, y: e.clientY });
-  };
 
   if (isMobile) {
     return (
@@ -1915,26 +1909,15 @@ function Artists({ event }) {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: i * 0.07, ease: E }}
-                onMouseEnter={() => setHov(a.id)}
-                onMouseLeave={() => setHov(null)}
-                onMouseMove={handleMouseMove}
                 whileHover={{ paddingLeft: 8, backgroundColor: AL }}
                 className="artist-row"
               >
                 <div>
-                  <motion.p animate={{ color: hov === a.id ? A : B }} style={{ fontFamily: "monospace", fontSize: 10 }}>{String(i + 1).padStart(2, "0")}</motion.p>
+                  <p style={{ color: B, fontFamily: "monospace", fontSize: 10 }}>{String(i + 1).padStart(2, "0")}</p>
                 </div>
-                <div 
-                  onMouseEnter={() => setHov(null)} 
-                  onMouseLeave={(e) => {
-                    // Only restore the image if we are not leaving the outer row entirely
-                    if (e.relatedTarget && e.currentTarget.parentNode.contains(e.relatedTarget)) {
-                      setHov(a.id);
-                    }
-                  }}
-                >
+                <div>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
-                    <motion.h3 animate={{ color: hov === a.id ? A : FG }} style={{ fontSize: "18px", fontWeight: 700, fontFamily: '"Inter", sans-serif', margin: "4px 0 0 0", lineHeight: 1 }}>{a.name}</motion.h3>
+                    <h3 style={{ color: FG, fontSize: "18px", fontWeight: 700, fontFamily: '"Inter", sans-serif', margin: "4px 0 0 0", lineHeight: 1 }}>{a.name}</h3>
                   </div>
                   <p style={{ fontSize: "12px", color: M, lineHeight: "1.5", fontFamily: '"Inter", sans-serif', maxWidth: 480, margin: 0 }}>{a.bio}</p>
                 </div>
@@ -1951,37 +1934,6 @@ function Artists({ event }) {
             ))}
           </div>
         </div>
-
-        {/* Floating Photo Preview */}
-        <AnimatePresence>
-          {hov !== null && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              style={{
-                position: "fixed",
-                top: mousePos.y - 120,
-                left: mousePos.x + 30,
-                width: 320,
-                height: 180,
-                borderRadius: 20,
-                overflow: "hidden",
-                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
-                border: `1px solid ${B}`,
-                zIndex: 99999,
-                pointerEvents: "none"
-              }}
-            >
-              <img
-                src={ARTISTS.find(a => a.id === hov)?.image}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                alt="Artist Preview"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </section>
     </>
   );
