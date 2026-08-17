@@ -1536,6 +1536,8 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
   const websiteUrl = food?.website;
   const instaHandle = food?.instagramHandle || food?.instagram || food?.host?.instagram;
 
+  const realAvatar = hostData?.host?.profilePhotoUrl || food?.host?.profilePhotoUrl || hostData?.profilePhotoUrl || food?.profilePhotoUrl || hostAvatar;
+
   return (
     <section id="reservation-inquiries" className="reservation-section-wrapper" style={{ background: tokens.BG, padding: isMobile ? "32px 24px" : "32px 80px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -1560,7 +1562,7 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
                   flexShrink: 0
                 }}>
                   <img
-                    src={hostAvatar || "https://picsum.photos/seed/host/200/200"}
+                    src={realAvatar || "https://picsum.photos/seed/host/200/200"}
                     alt={chefName}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
@@ -1659,36 +1661,6 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
                       }}
                     >
                       <Globe size={15} /> Website
-                    </motion.a>
-                  )}
-
-                  {instaHandle && instaHandle !== "@culinary_craft" && (
-                    <motion.a
-                      whileHover={{ scale: 1.02, backgroundColor: A, color: "#fff", borderColor: A }}
-                      whileTap={{ scale: 0.98 }}
-                      href={`https://instagram.com/${instaHandle.replace("@", "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        padding: "12px",
-                        borderRadius: 12,
-                        border: `1.5px solid ${A}`,
-                        color: A,
-                        textDecoration: "none",
-                        fontSize: 11,
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.1em",
-                        textAlign: "center",
-                        transition: "all 0.25s ease"
-                      }}
-                    >
-                      <Instagram size={15} /> Instagram
                     </motion.a>
                   )}
                 </div>
