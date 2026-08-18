@@ -945,6 +945,16 @@ function MobileHero({ event, heroRef }) {
         </div>
       </div>
 
+      {/* Title */}
+      <div style={{ position: "relative", zIndex: 10, marginBottom: 16 }}>
+        <h1 style={{ fontSize: 38, fontWeight: 700, color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1.1, margin: 0 }}>
+          {words.join(' ')}{' '}
+          <span style={{ fontStyle: "italic", color: A, WebkitTextFillColor: A }}>
+            {lastWord}
+          </span>
+        </h1>
+      </div>
+
       {/* Early Bird Badge (Mobile) */}
       {event?.earlyBirdDiscounts?.some(d => d.isActive) && (
         <div style={{
@@ -959,7 +969,7 @@ function MobileHero({ event, heroRef }) {
           padding: "6px 14px",
           borderRadius: "100px",
           border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.2)" : `1px solid ${B}`,
-          marginBottom: 12,
+          marginBottom: 16,
           alignSelf: "flex-start",
           boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0,0,0,0.1)"
         }}>
@@ -967,16 +977,6 @@ function MobileHero({ event, heroRef }) {
           <EarlyBirdTicker discounts={event.earlyBirdDiscounts.filter(d => d.isActive).sort((a, b) => b.percentage - a.percentage)} A={A} FG={FG} isDark={theme === "dark"} />
         </div>
       )}
-
-      {/* Title */}
-      <div style={{ position: "relative", zIndex: 10, marginBottom: 16 }}>
-        <h1 style={{ fontSize: 38, fontWeight: 700, color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1.1, margin: 0 }}>
-          {words.join(' ')}{' '}
-          <span style={{ fontStyle: "italic", color: A, WebkitTextFillColor: A }}>
-            {lastWord}
-          </span>
-        </h1>
-      </div>
 
       {/* Floating Cards Container */}
       <div style={{
