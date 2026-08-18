@@ -1179,8 +1179,8 @@ function Hero({ event, heroRef }) {
               position: "absolute",
               inset: 0,
               background: theme === "dark" 
-                ? "linear-gradient(to right, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.6) 70%, rgba(15,23,42,0.9) 100%)" 
-                : "linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.6) 70%, rgba(255,255,255,0.9) 100%)"
+                ? "linear-gradient(to right, rgba(15,23,42,0.05) 0%, rgba(15,23,42,0.2) 70%, rgba(15,23,42,0.4) 100%)" 
+                : "linear-gradient(to right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.2) 70%, rgba(255,255,255,0.4) 100%)"
             }} />
           </motion.div>
         )}
@@ -1191,7 +1191,7 @@ function Hero({ event, heroRef }) {
         <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.25, 0.4, 0.25] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "-15%", left: "30%", width: 900, height: 900, borderRadius: "50%", background: `radial-gradient(circle, ${A}15 0%, transparent 60%)` }} />
         <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.35, 0.2] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }} style={{ position: "absolute", bottom: "-10%", right: "10%", width: 700, height: 700, borderRadius: "50%", background: `radial-gradient(circle, ${A}10 0%, transparent 60%)` }} />
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}06 1px, transparent 1px), linear-gradient(90deg, ${A}06 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
-        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 30%, ${W} 100%)` }} />
+        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 60%, ${W}99 100%)` }} />
       </motion.div>
 
       {/* Controls: Back & Share */}
