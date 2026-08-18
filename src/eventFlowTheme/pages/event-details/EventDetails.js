@@ -532,7 +532,7 @@ function SpinBadge({ event }) {
 
 
 
-function ImageRing({ event }) {
+function ImageRing({ event, onImageHover }) {
   const { tokens: { B } } = useTheme();
 
   // Use actual event media for the ring
@@ -557,6 +557,8 @@ function ImageRing({ event }) {
             <div
               key={i}
               style={{ position: "absolute", top: "50%", left: "50%", transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`, zIndex: 5 }}
+              onMouseEnter={() => onImageHover && onImageHover(finalSrc)}
+              onMouseLeave={() => onImageHover && onImageHover(null)}
             >
               <div className="counter-rotating-card">
                 <motion.div
@@ -1041,6 +1043,26 @@ function Hero({ event, heroRef }) {
   const { theme, tokens: { A, W, M, FG, B, S, AL } } = useTheme();
   const history = useHistory();
   const isMobile = useMobileView();
+  const [hoveredImage, setHoveredImage] = useState(null);
+
+  const getImageUrl = (item) => {
+    const candidates = [
+      item?.coverPhotoUrl,
+      item?.coverImageUrl,
+      item?.coverPhoto,
+      item?.thumbnailUrl,
+      item?.imageUrl,
+      item?.listingMedia?.[0]?.url,
+      item?.listingMedia?.[0]?.fileUrl,
+      item?.media?.[0]?.url,
+      item?.images?.[0]?.url,
+      item?.images?.[0],
+    ];
+    const found = candidates.find((v) => v != null && String(v).trim());
+    return found || "";
+  };
+  const bgImage = formatImageUrl(getImageUrl(event));
+  const currentBgImage = hoveredImage || bgImage;
 
   if (isMobile) {
     return <MobileHero event={event} heroRef={heroRef} />;
@@ -1134,8 +1156,38 @@ function Hero({ event, heroRef }) {
       background: W,
       boxShadow: "0 10px 40px rgba(0,0,0,0.03)"
     }}>
+      {/* Dynamic Background Image Overlay */}
+      <AnimatePresence>
+        {currentBgImage && (
+          <motion.div
+            key={currentBgImage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${currentBgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              zIndex: 0,
+              pointerEvents: "none"
+            }}
+          >
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: theme === "dark" 
+                ? "linear-gradient(to right, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.6) 70%, rgba(15,23,42,0.9) 100%)" 
+                : "linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.6) 70%, rgba(255,255,255,0.9) 100%)"
+            }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Background Orbs & Grid */}
-      <motion.div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      <motion.div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }}>
         <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.25, 0.4, 0.25] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "-15%", left: "30%", width: 900, height: 900, borderRadius: "50%", background: `radial-gradient(circle, ${A}15 0%, transparent 60%)` }} />
         <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.35, 0.2] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }} style={{ position: "absolute", bottom: "-10%", right: "10%", width: 700, height: 700, borderRadius: "50%", background: `radial-gradient(circle, ${A}10 0%, transparent 60%)` }} />
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}06 1px, transparent 1px), linear-gradient(90deg, ${A}06 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
@@ -1428,7 +1480,7 @@ function Hero({ event, heroRef }) {
             <div style={{ position: "absolute", width: 320, height: 320, borderRadius: "50%", background: `${A}10`, filter: "blur(50px)", zIndex: 0 }} />
 
             <div style={{ position: "relative", zIndex: 1 }} className="float-anim">
-              <ImageRing event={event} />
+              <ImageRing event={event} onImageHover={setHoveredImage} />
             </div>
           </div>
 
