@@ -698,7 +698,7 @@ const HighlightCard = ({ children, A, B, FG, M, W, theme }) => {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       style={{
         background: hovered
-          ? (theme === "dark" ? "rgba(255,255,255,0.1)" : "#FFFFFF")
+          ? (theme === "dark" ? "linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(30,41,59,0.9) 100%)" : "#FFFFFF")
           : (theme === "dark" ? "linear-gradient(135deg, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0.8) 100%)" : "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.9) 100%)"),
         border: theme === "dark" ? `1px solid ${hovered ? A : 'rgba(255,255,255,0.15)'}` : `1px solid ${hovered ? A : B}`,
         borderRadius: "24px",
