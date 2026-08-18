@@ -885,11 +885,9 @@ function PlaceHero({ place, galleryItems, id }) {
             style={{
               display: "flex",
               flexDirection: "row",
-              gap: 16,
               height: "100%",
               width: "100%",
               overflowX: "auto",
-              scrollBehavior: "smooth",
               padding: "0 8px"
             }}
           >
@@ -903,22 +901,28 @@ function PlaceHero({ place, galleryItems, id }) {
                   key={uniqueKey}
                   onMouseEnter={() => setHoveredImage(uniqueKey)}
                   onMouseLeave={() => setHoveredImage(null)}
-                  onClick={() => openLightbox(i % baseItems.length)}
                   style={{
-                    position: "relative",
-                    height: "100%",
-                    width: isHovered ? 480 : 160,
-                    borderRadius: 24,
-                    overflow: "hidden",
-                    border: `1px solid ${B}`,
-                    boxShadow: isHovered
-                      ? "0 40px 80px -20px rgba(0,0,0,0.2)"
-                      : "0 20px 40px -15px rgba(0,0,0,0.05)",
-                    cursor: "pointer",
                     flexShrink: 0,
-                    transition: "width 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
+                    paddingRight: 16,
+                    height: "100%",
                   }}
                 >
+                  <div
+                    onClick={() => openLightbox(i % baseItems.length)}
+                    style={{
+                      position: "relative",
+                      height: "100%",
+                      width: isHovered ? 480 : 160,
+                      borderRadius: 24,
+                      overflow: "hidden",
+                      border: `1px solid ${B}`,
+                      boxShadow: isHovered
+                        ? "0 40px 80px -20px rgba(0,0,0,0.2)"
+                        : "0 20px 40px -15px rgba(0,0,0,0.05)",
+                      cursor: "pointer",
+                      transition: "width 0.5s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
+                    }}
+                  >
                   <motion.img
                     src={img}
                     animate={{
@@ -942,6 +946,7 @@ function PlaceHero({ place, galleryItems, id }) {
                     transition: "opacity 0.4s",
                     pointerEvents: "none"
                   }} />
+                  </div>
                 </div>
               );
             })}
