@@ -2328,23 +2328,30 @@ function Rules({ event }) {
     // Parse experienceRules or eventRules from the API
     const rules = event?.experienceRules || event?.eventRules;
     if (rules) {
+      const questionsList = [];
       if (Array.isArray(rules)) {
-        rules.forEach((rule, i) => {
+        rules.forEach((rule) => {
           if (typeof rule === "string") {
-            experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: rule });
+            questionsList.push({ title: rule });
           } else if (rule && typeof rule === "object") {
-            experienceRuleItems.push({
-              id: `exp-rule-${i}`,
-              title: rule.title || rule.name || rule.label || null,
-              body: rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null)
-            });
+            const title = rule.title || rule.name || rule.label || null;
+            const body = rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null);
+            if (title && title !== body) {
+              questionsList.push({ title, valueText: body });
+            } else {
+              questionsList.push({ title: title || body });
+            }
           }
         });
       } else if (typeof rules === "string" && rules.trim()) {
         const lines = rules.split('\n').map(l => l.trim()).filter(Boolean);
-        lines.forEach((line, i) => {
-          experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: line });
+        lines.forEach((line) => {
+          questionsList.push({ title: line });
         });
+      }
+
+      if (questionsList.length > 0) {
+        experienceRuleItems.push({ id: 'exp-all', title: null, questions: questionsList });
       }
     }
 
@@ -2945,11 +2952,9 @@ function EventReviews({ reviews = [] }) {
   }, [reviews]);
 
   const hasReviews = normalizedReviews.length > 0;
-  const displayReviews = hasReviews ? normalizedReviews : [
-    { customerName: "Aarav Sharma", comment: "An absolutely incredible experience. The host was warm, accommodating, and the attention to detail was unmatched.", rating: 5 },
-    { customerName: "Priya Patel", comment: "Highly curated trails, breathtaking views, and wonderful local insights. Can't wait to book this again!", rating: 5 },
-    { customerName: "Vikram Malhotra", comment: "Top tier service! The scheduling was seamless and the guides were exceptionally knowledgeable.", rating: 5 }
-  ];
+  const displayReviews = normalizedReviews;
+
+  if (displayReviews.length === 0) return null;
 
   if (isMobile && displayReviews.length > 0) {
     return (

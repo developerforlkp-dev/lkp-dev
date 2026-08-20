@@ -3334,24 +3334,30 @@ function ExperiencePolicies({ listing }) {
     // Parse experienceRules from the API
     if (listing?.experienceRules) {
       const rules = listing.experienceRules;
+      const questionsList = [];
       if (Array.isArray(rules)) {
-        rules.forEach((rule, i) => {
+        rules.forEach((rule) => {
           if (typeof rule === "string") {
-            experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: rule });
+            questionsList.push({ title: rule });
           } else if (rule && typeof rule === "object") {
-            experienceRuleItems.push({
-              id: `exp-rule-${i}`,
-              title: rule.title || rule.name || rule.label || null,
-              body: rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null)
-            });
+            const title = rule.title || rule.name || rule.label || null;
+            const body = rule.description || rule.body || rule.text || rule.value || rule.rule || (typeof rule === "string" ? rule : null);
+            if (title && title !== body) {
+              questionsList.push({ title, valueText: body });
+            } else {
+              questionsList.push({ title: title || body });
+            }
           }
         });
       } else if (typeof rules === "string" && rules.trim()) {
-        // If it's a single string, split by newlines or treat as one item
         const lines = rules.split('\n').map(l => l.trim()).filter(Boolean);
-        lines.forEach((line, i) => {
-          experienceRuleItems.push({ id: `exp-rule-${i}`, title: null, body: line });
+        lines.forEach((line) => {
+          questionsList.push({ title: line });
         });
+      }
+
+      if (questionsList.length > 0) {
+        experienceRuleItems.push({ id: 'exp-all', title: null, questions: questionsList });
       }
     }
 

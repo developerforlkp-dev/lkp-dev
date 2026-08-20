@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles, ChevronLeft, ChevronRight, Tag } from "lucide-react";
+import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles, ChevronLeft, ChevronRight, Tag, Baby } from "lucide-react";
 import moment from "moment";
 import { useTheme } from "../../components/JUI/Theme";
 import { createStayOrder, getStayRoomAvailability } from "../../utils/api";
@@ -3062,52 +3062,64 @@ const StayBookingSystem = ({
                             )}
 
                             {canUseChildAgeSelector && extraChildAgeIndexes.length > 0 && (
-                              <div style={{ marginTop: 6, padding: "12px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                  <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Extra child age</p>
-                                  <p style={{ fontSize: 11, fontWeight: 500, color: M, margin: 0, lineHeight: 1.45 }}>
-                                    {extraChildPolicyBounds
-                                      ? `${guestAgeLabels.children} use extra child rate. Ages below ${extraChildPolicyBounds.minAge} are free.`
-                                      : "Select the age for each extra child."}
-                                  </p>
+                              <div style={{ marginTop: 6, padding: "16px", background: BG, border: `1px solid ${B}`, borderRadius: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <div style={{ color: A }}>
+                                    <Baby size={20} color={A} />
+                                  </div>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Extra child age</span>
+                                    <span style={{ fontSize: 11, fontWeight: 400, color: M }}>
+                                      {extraChildPolicyBounds
+                                        ? `${guestAgeLabels.children} use extra child rate. Ages below ${extraChildPolicyBounds.minAge} are free.`
+                                        : "Select the age for each extra child."}
+                                    </span>
+                                  </div>
                                 </div>
 
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: extraChildAgeIndexes.length === 1 ? "1fr" : "1fr 1fr", gap: 12, marginTop: 12 }}>
                                   {extraChildAgeIndexes.map((childIndex, extraIndex) => (
-                                    <label key={`extra-child-age-${childIndex}`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                                      <span style={{ fontSize: 11, fontWeight: 700, color: FG }}>
-                                        Extra Child {extraIndex + 1}
-                                      </span>
-                                      <ChildAgeSelect
-                                        value={childAges?.[childIndex] ?? ""}
-                                        onChange={(event) => {
-                                          const { value } = event.target;
-                                          setChildAges((prev) => {
-                                            const next = syncChildAges(prev, guests?.children || 0);
-                                            next[childIndex] = value;
-                                            return next;
-                                          });
-                                          setValidationError("");
-                                        }}
-                                        options={[
-                                          { value: "", label: "Select age" },
-                                          ...selectableChildAges.map((age) => ({
-                                            value: age,
-                                            label: `${age} year${age === 1 ? "" : "s"}`
-                                          }))
-                                        ]}
-                                        style={{
-                                          width: "100%",
-                                          padding: "10px 12px",
-                                          borderRadius: 12,
-                                          border: `1px solid ${B}`,
-                                          background: S,
-                                          color: FG,
-                                          fontSize: 12,
-                                          fontWeight: 600,
-                                        }}
-                                      />
-                                    </label>
+                                    <div key={`extra-child-age-${childIndex}`} style={{ display: "flex", flexDirection: "column" }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", gap: 4, background: `${B}22`, border: `1px solid ${B}66`, borderRadius: 12 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: A, flexShrink: 0 }}></div>
+                                          <span style={{ fontSize: 13, fontWeight: 500, color: FG, whiteSpace: "nowrap" }}>Child {extraIndex + 1}</span>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                                          <div style={{ display: "flex", alignItems: "center", gap: 4, background: AL, padding: "4px 8px", borderRadius: 100, border: `1px solid ${A}44` }}>
+                                            <span style={{ fontSize: 11, color: A, fontWeight: 700, whiteSpace: "nowrap", letterSpacing: 0.5 }}>AGE</span>
+                                          </div>
+                                          <ChildAgeSelect
+                                            value={childAges?.[childIndex] !== "" && childAges?.[childIndex] != null ? childAges[childIndex] : (selectableChildAges[0] ?? 0)}
+                                            onChange={(event) => {
+                                              const { value } = event.target;
+                                              setChildAges((prev) => {
+                                                const next = syncChildAges(prev, guests?.children || 0);
+                                                next[childIndex] = value;
+                                                return next;
+                                              });
+                                              setValidationError("");
+                                            }}
+                                            options={[
+                                              ...selectableChildAges.map((age) => ({
+                                                value: age,
+                                                label: `${age}`
+                                              }))
+                                            ]}
+                                            style={{
+                                              border: `1px solid ${B}44`,
+                                              borderRadius: '6px',
+                                              padding: '4px 8px',
+                                              fontSize: '13px',
+                                              fontWeight: '500',
+                                              color: FG,
+                                              backgroundColor: 'transparent',
+                                              width: '74px'
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
                                   ))}
                                 </div>
                               </div>
