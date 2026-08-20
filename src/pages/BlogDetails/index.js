@@ -54,8 +54,48 @@ export default function BlogDetails() {
 
   if (loading) {
     return (
-      <div className="blog-page-root min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-brand)]"></div>
+      <div className="blog-page-root min-h-screen pt-[0px] mt-[0px] md:mt-[-40px] pb-[80px]" style={{ fontFamily: '"Inter", sans-serif', backgroundColor: '#FAFAFA' }}>
+        <div className="max-w-[1100px] mx-auto px-6 box-border animate-pulse pt-20 md:pt-32">
+          <div className="flex flex-col items-center mb-[60px]">
+             <div className="bg-gray-200 h-4 w-24 mb-5 rounded"></div>
+             <div className="bg-gray-200 h-[40px] md:h-[60px] w-3/4 max-w-[800px] mb-4 rounded"></div>
+             <div className="bg-gray-200 h-[40px] md:h-[60px] w-1/2 max-w-[600px] mb-8 rounded"></div>
+             <div className="flex items-center gap-4 mb-10">
+               <div className="bg-gray-200 h-4 w-24 rounded"></div>
+               <div className="bg-gray-200 h-4 w-24 rounded"></div>
+             </div>
+          </div>
+          
+          <div className="w-full aspect-video md:aspect-[16/9] bg-gray-200 rounded-[24px] mb-[60px]"></div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-[60px]">
+             <div>
+                <div className="bg-gray-200 h-5 w-full mb-4 rounded"></div>
+                <div className="bg-gray-200 h-5 w-full mb-4 rounded"></div>
+                <div className="bg-gray-200 h-5 w-3/4 mb-10 rounded"></div>
+                
+                <div className="bg-gray-200 h-8 w-1/2 mb-6 rounded mt-10"></div>
+                <div className="bg-gray-200 h-4 w-full mb-3 rounded"></div>
+                <div className="bg-gray-200 h-4 w-full mb-3 rounded"></div>
+                <div className="bg-gray-200 h-4 w-5/6 mb-8 rounded"></div>
+
+                <div className="bg-gray-200 h-8 w-1/3 mb-6 rounded mt-10"></div>
+                <div className="bg-gray-200 h-4 w-full mb-3 rounded"></div>
+                <div className="bg-gray-200 h-4 w-3/4 mb-3 rounded"></div>
+             </div>
+             <div className="hidden lg:block">
+                <div className="bg-white rounded-[16px] p-[30px] border border-gray-100 shadow-sm h-64 w-full mb-8">
+                  <div className="bg-gray-200 h-5 w-24 mb-6 rounded"></div>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="bg-gray-200 h-8 w-20 rounded-full"></div>
+                    <div className="bg-gray-200 h-8 w-24 rounded-full"></div>
+                    <div className="bg-gray-200 h-8 w-16 rounded-full"></div>
+                    <div className="bg-gray-200 h-8 w-28 rounded-full"></div>
+                  </div>
+                </div>
+             </div>
+          </div>
+        </div>
       </div>
     );
   }
