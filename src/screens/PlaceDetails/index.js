@@ -1377,7 +1377,7 @@ function Itinerary({ place }) {
 
   const heroStep = steps[0];
   const restSteps = steps.slice(1);
-  const INITIAL_VISIBLE = 5;
+  const INITIAL_VISIBLE = 6;
   const hasMore = restSteps.length > INITIAL_VISIBLE;
   const visibleRest = showAll ? restSteps : restSteps.slice(0, INITIAL_VISIBLE);
 
