@@ -3,7 +3,7 @@ import useDarkMode from "use-dark-mode";
 import { useLocation, Link, useHistory } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
-  MapPin, Clock, Ticket, Star, Calendar, ArrowDown, ExternalLink, Map, Navigation,
+  MapPin, Clock, Ticket, Star, Sparkles, Calendar, ArrowDown, ExternalLink, Map, Navigation,
   Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart, X
 } from "lucide-react";
 import cn from "classnames";
@@ -2469,7 +2469,7 @@ function MobileHero({ place, galleryItems, id }) {
             style={{
               flexShrink: 0,
               width: "calc(100vw - 64px)", // leaves space on left/right for peeking next/prev images
-              height: "70vh",
+              height: "45vh",
               borderRadius: 28,
               overflow: "hidden",
               border: `1.5px solid ${B}`,
@@ -3232,7 +3232,7 @@ function PremiumMarquee({ items, isMobile, fallbackItems }) {
         {loopedTags.map((tag, idx) => {
           const isEven = idx % 2 === 0;
           return (
-            <div key={idx} style={{ display: "flex", alignItems: "center", gap: 40, marginRight: 40 }}>
+            <div key={idx} style={{ display: "flex", alignItems: "center", gap: 24, marginRight: 32, whiteSpace: "nowrap" }}>
               <span
                 style={{
                   fontFamily: '"Inter", sans-serif',
@@ -3246,7 +3246,7 @@ function PremiumMarquee({ items, isMobile, fallbackItems }) {
               >
                 {tag}
               </span>
-              <Star size={14} color={A || "#0097B2"} fill={A || "#0097B2"} style={{ opacity: 0.6 }} />
+              <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
             </div>
           );
         })}
