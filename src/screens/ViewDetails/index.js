@@ -410,8 +410,18 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
   // already passed, show the booking in Completed instead for consistency with Bookings list.
   // Note: "Pending" bookings remain Pending even after expiry so they don't incorrectly show as Completed.
   if (status === "Confirmed") {
+    const stayRooms = Array.isArray(apiBooking?.stayOrderRooms) ? apiBooking.stayOrderRooms : [];
+    const roomCheckOutDates = stayRooms
+      .map((room) => room?.checkOutDate || room?.checkoutDate || room?.check_out_date)
+      .filter(Boolean);
+    const roomCheckOutTimes = stayRooms
+      .map((room) => room?.checkOutTime || room?.checkoutTime || room?.check_out_time)
+      .filter(Boolean);
+
     const bookingDateStr =
+      roomCheckOutDates[0] ||
       apiBooking.checkOutDate ||
+      apiBooking.checkoutDate ||
       apiBooking.checkInDate ||
       apiBooking.bookingDate ||
       apiBooking.eventDate ||
@@ -420,7 +430,13 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
 
     if (bookingDateStr) {
       const deadline = new Date(bookingDateStr);
-      const endTimeStr = apiBooking.timeSlotEndTime || apiBooking.checkOutTime || apiBooking.endTime || apiBooking.bookingTime;
+      const endTimeStr = 
+        roomCheckOutTimes[0] || 
+        apiBooking.timeSlotEndTime || 
+        apiBooking.checkOutTime || 
+        apiBooking.checkoutTime || 
+        apiBooking.endTime || 
+        apiBooking.bookingTime;
 
       if (endTimeStr && typeof endTimeStr === 'string' && endTimeStr.includes(':')) {
         const parts = endTimeStr.split(':').map(Number);
@@ -1333,7 +1349,16 @@ const ViewDetails = () => {
 
     if (!isStayOrder) return true; // If not a stay, we don't restrict by stay rules
 
+    const stayRooms = Array.isArray(booking?.originalData?.stayOrderRooms) ? booking.originalData.stayOrderRooms : [];
+    const roomCheckOutDates = stayRooms
+      .map((room) => room?.checkOutDate || room?.checkoutDate || room?.check_out_date)
+      .filter(Boolean);
+    const roomCheckOutTimes = stayRooms
+      .map((room) => room?.checkOutTime || room?.checkoutTime || room?.check_out_time)
+      .filter(Boolean);
+
     const checkOutDateStr =
+      roomCheckOutDates[0] ||
       booking?.originalData?.checkOutDate ||
       booking?.originalData?.endDate ||
       booking?.stayData?.checkOutDate;
@@ -1343,6 +1368,7 @@ const ViewDetails = () => {
     const checkOutDatetime = new Date(checkOutDateStr);
 
     const checkOutTimeStr =
+      roomCheckOutTimes[0] ||
       booking?.originalData?.checkOutTime ||
       booking?.originalData?.endTime ||
       booking?.stayData?.checkOutTime ||
