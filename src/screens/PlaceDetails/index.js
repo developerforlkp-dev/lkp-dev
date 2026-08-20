@@ -1236,21 +1236,35 @@ function Logistics({ place, hostData }) {
   );
 }
 
-const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImages, setSelectedImages, setPhotoIndex, setPhotoVisible }) => {
+const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImages, setSelectedImages, setPhotoIndex, setPhotoVisible, isHero }) => {
   const [expanded, setExpanded] = useState(false);
   const text = s.desc || s.description || s.briefDescription || "";
-  const isLong = text.length > 120;
-  const displayText = expanded ? text : (isLong ? text.slice(0, 120) + "..." : text);
+  const charLimit = isHero ? 200 : 100;
+  const isLong = text.length > charLimit;
+  const displayText = expanded ? text : (isLong ? text.slice(0, charLimit) + "..." : text);
+  const imgUrl = getItineraryImageUrl(s);
 
-  return (
-    <div style={{ flex: "0 0 calc(33.333% - 21.33px)", minWidth: 300, scrollSnapAlign: "start", height: "auto", display: "flex" }}>
-      <Soul delay={i * 0.15} y={80} r={i % 2 === 0 ? 3 : -3} style={{ width: "100%", height: "100%", display: "flex" }}>
-        <motion.div whileHover={{ y: -8 }} transition={{ duration: 0.4 }} style={{ background: W, border: `1px solid ${B}`, borderRadius: 32, padding: "32px 32px 48px", width: "100%", height: "100%", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          <span className="font-display" style={{ position: "absolute", top: -10, right: 10, fontSize: "clamp(5rem, 8vw, 10rem)", fontWeight: 800, color: A, opacity: 0.04, pointerEvents: "none" }}>{i + 1}</span>
-          {getItineraryImageUrl(s) && (
-            <div 
+  if (isHero) {
+    return (
+      <Soul delay={0.1} y={60} style={{ width: "100%" }}>
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            display: "flex",
+            background: W,
+            border: `1px solid ${B}`,
+            borderRadius: 28,
+            overflow: "hidden",
+            position: "relative",
+            minHeight: 340,
+          }}
+        >
+          {/* Hero image left */}
+          {imgUrl && (
+            <div
               className="itinerary-image-wrapper"
-              style={{ margin: "-32px -32px 24px -32px", height: 200, overflow: "hidden", cursor: "pointer", position: "relative", flexShrink: 0 }}
+              style={{ flex: "0 0 50%", position: "relative", cursor: "pointer", overflow: "hidden" }}
               onClick={() => {
                 const imgs = getItineraryImages(s);
                 setSelectedImages(imgs);
@@ -1258,28 +1272,92 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
                 setPhotoVisible(true);
               }}
             >
-              <img className="itinerary-img" src={getItineraryImageUrl(s)} alt={s.title || s.name} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }} />
-              <div className="gallery-pill" style={{ position: "absolute", bottom: 12, right: 12, background: "rgba(0,0,0,0.6)", padding: "4px 8px", borderRadius: 8, color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, backdropFilter: "blur(10px)", opacity: 0, transition: "opacity 0.3s ease" }}>
-                <Camera size={12} /> GALLERY
+              <img className="itinerary-img" src={imgUrl} alt={s.title || s.name} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, transparent 60%, rgba(0,0,0,0.03))" }} />
+              <div className="gallery-pill" style={{ position: "absolute", bottom: 16, right: 16, background: "rgba(0,0,0,0.55)", padding: "6px 12px", borderRadius: 10, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, backdropFilter: "blur(12px)", opacity: 0, transition: "opacity 0.3s ease" }}>
+                <Camera size={13} /> GALLERY
               </div>
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24, marginTop: getItineraryImageUrl(s) ? 0 : 24, flexShrink: 0 }}>
-            <div style={{ width: 8, height: 8, background: A }} />
-            <p style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Step {i + 1}</p>
+          {/* Hero content right */}
+          <div style={{ flex: 1, padding: "40px 44px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
+            <span className="font-display" style={{ position: "absolute", top: -20, right: 16, fontSize: "10rem", fontWeight: 900, color: A, opacity: 0.04, pointerEvents: "none", lineHeight: 1 }}>1</span>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: A, color: W, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800 }}>1</div>
+              <span style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Start Here</span>
+            </div>
+            <h3 className="font-display" style={{ fontSize: "clamp(1.6rem, 2.2vw, 2rem)", fontWeight: 800, color: FG, marginBottom: 16, lineHeight: 1.2 }}>{s.title || s.name}</h3>
+            <p style={{ fontSize: 14, color: M, lineHeight: 1.85, margin: 0, whiteSpace: "pre-line" }}>
+              {displayText}
+              {isLong && (
+                <span onClick={() => setExpanded(!expanded)} style={{ color: A, cursor: "pointer", fontWeight: 600, marginLeft: 8 }}>
+                  {expanded ? "Read Less" : "Read More"}
+                </span>
+              )}
+            </p>
           </div>
-          <h3 className="font-display" style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 20, flexShrink: 0 }}>{s.title || s.name}</h3>
-          <p style={{ fontSize: 14, color: M, lineHeight: 1.85, flexGrow: 1, margin: 0, whiteSpace: "pre-line" }}>
-            {displayText}
-            {isLong && (
-              <span 
-                onClick={() => setExpanded(!expanded)} 
-                style={{ color: A, cursor: "pointer", fontWeight: 600, marginLeft: 8 }}
-              >
-                {expanded ? "Read Less" : "Read More"}
-              </span>
-            )}
-          </p>
+        </motion.div>
+      </Soul>
+    );
+  }
+
+  // Regular grid card
+  return (
+    <div style={{ flex: "0 0 calc(33.333% - 22px)", minWidth: 280, display: "flex" }}>
+      <Soul delay={i * 0.12} y={60} r={i % 2 === 0 ? 2 : -2} style={{ width: "100%", display: "flex" }}>
+        <motion.div
+          whileHover={{ y: -8, boxShadow: `0 20px 40px rgba(0,0,0,0.06)` }}
+          transition={{ duration: 0.35 }}
+          style={{
+            background: W,
+            border: `1px solid ${B}`,
+            borderRadius: 24,
+            width: "100%",
+            position: "relative",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Step number circle on top-left corner */}
+          <div style={{ position: "absolute", top: imgUrl ? 16 : 20, left: 20, zIndex: 3, width: 32, height: 32, borderRadius: "50%", background: imgUrl ? "rgba(255,255,255,0.92)" : `rgba(${A === "#0097B2" ? "0,151,178" : "17,17,17"}, 0.08)`, backdropFilter: imgUrl ? "blur(8px)" : "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: A, boxShadow: imgUrl ? "0 2px 8px rgba(0,0,0,0.1)" : "none" }}>
+            {i + 1}
+          </div>
+          {/* Image */}
+          {imgUrl && (
+            <div
+              className="itinerary-image-wrapper"
+              style={{ height: 180, overflow: "hidden", cursor: "pointer", position: "relative", flexShrink: 0 }}
+              onClick={() => {
+                const imgs = getItineraryImages(s);
+                setSelectedImages(imgs);
+                setPhotoIndex(0);
+                setPhotoVisible(true);
+              }}
+            >
+              <img className="itinerary-img" src={imgUrl} alt={s.title || s.name} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.04))" }} />
+              <div className="gallery-pill" style={{ position: "absolute", bottom: 10, right: 10, background: "rgba(0,0,0,0.55)", padding: "4px 8px", borderRadius: 8, color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, backdropFilter: "blur(10px)", opacity: 0, transition: "opacity 0.3s ease" }}>
+                <Camera size={11} /> GALLERY
+              </div>
+            </div>
+          )}
+          {/* Content */}
+          <div style={{ padding: imgUrl ? "20px 24px 28px" : "52px 24px 28px", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: A }} />
+              <p style={{ fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 700, margin: 0 }}>Step {i + 1}</p>
+            </div>
+            <h4 className="font-display" style={{ fontSize: "clamp(1.1rem, 1.8vw, 1.4rem)", fontWeight: 700, color: FG, marginBottom: 12, lineHeight: 1.25 }}>{s.title || s.name}</h4>
+            <p style={{ fontSize: 13, color: M, lineHeight: 1.8, margin: 0, flexGrow: 1, whiteSpace: "pre-line" }}>
+              {displayText}
+              {isLong && (
+                <span onClick={() => setExpanded(!expanded)} style={{ color: A, cursor: "pointer", fontWeight: 600, marginLeft: 6, fontSize: 12 }}>
+                  {expanded ? "Read Less" : "Read More"}
+                </span>
+              )}
+            </p>
+          </div>
         </motion.div>
       </Soul>
     </div>
@@ -1288,73 +1366,100 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
 
 function Itinerary({ place }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
+  const { isMobile } = useWindowSize();
   const [photoVisible, setPhotoVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const scrollRef = useRef(null);
+  const [showAll, setShowAll] = useState(false);
 
   const steps = place?.itinerary || [];
   if (steps.length === 0) return null;
 
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -400, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 400, behavior: 'smooth' });
-    }
-  };
+  const heroStep = steps[0];
+  const restSteps = steps.slice(1);
+  const INITIAL_VISIBLE = 5;
+  const hasMore = restSteps.length > INITIAL_VISIBLE;
+  const visibleRest = showAll ? restSteps : restSteps.slice(0, INITIAL_VISIBLE);
 
   return (
-    <section style={{ background: S, padding: "48px 80px" }}>
+    <section style={{ background: S, padding: isMobile ? "40px 16px" : "64px 80px", position: "relative" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-          <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Curated Experience Plan</h3>
-          {steps.length > 3 && (
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={scrollLeft} style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid ${B}`, background: W, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: FG }}>
-                <ChevronLeft size={20} />
-              </button>
-              <button onClick={scrollRight} style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid ${B}`, background: W, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: FG }}>
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          )}
+        {/* Section header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
+          <div style={{ width: 4, height: 32, borderRadius: 2, background: A }} />
+          <span style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Your Journey</span>
         </div>
-        <div style={{ position: "relative", margin: "0 -80px", padding: "0 80px" }}>
-          <div 
-            ref={scrollRef}
-            className="hide-scrollbar"
-            style={{ 
-              display: "flex", 
-              gap: 32, 
-              overflowX: "auto", 
-              scrollSnapType: "x mandatory",
-              scrollBehavior: "smooth"
-            }}
-          >
-            {steps.map((s, i) => (
-              <StepCard 
-                key={i} 
-                s={s} 
-                i={i} 
-                A={A} 
-                W={W} 
-                B={B} 
-                FG={FG} 
-                M={M} 
-                getItineraryImageUrl={getItineraryImageUrl} 
-                getItineraryImages={getItineraryImages} 
-                setSelectedImages={setSelectedImages} 
-                setPhotoIndex={setPhotoIndex} 
-                setPhotoVisible={setPhotoVisible} 
+        <h3 style={{ fontSize: "clamp(1.8rem, 2.8vw, 2.4rem)", fontWeight: 800, color: FG, margin: "0 0 8px 0", fontFamily: "Poppins, sans-serif" }}>Curated Experience Plan</h3>
+        <p style={{ fontSize: 14, color: M, marginBottom: 40, maxWidth: 520 }}>{steps.length} carefully crafted steps to make the most of your visit</p>
+
+        {/* Hero first step — full width */}
+        <StepCard
+          s={heroStep} i={0} A={A} W={W} B={B} FG={FG} M={M}
+          getItineraryImageUrl={getItineraryImageUrl}
+          getItineraryImages={getItineraryImages}
+          setSelectedImages={setSelectedImages}
+          setPhotoIndex={setPhotoIndex}
+          setPhotoVisible={setPhotoVisible}
+          isHero={true}
+        />
+
+        {/* Vertical connector line */}
+        {restSteps.length > 0 && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
+            <div style={{ width: 2, height: 40, background: `linear-gradient(to bottom, ${A}, ${B})`, borderRadius: 1 }} />
+          </div>
+        )}
+
+        {/* Remaining steps in a 3-col grid */}
+        {visibleRest.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 28, justifyContent: visibleRest.length < 3 ? "center" : "flex-start" }}>
+            {visibleRest.map((s, i) => (
+              <StepCard
+                key={i + 1}
+                s={s}
+                i={i + 1}
+                A={A} W={W} B={B} FG={FG} M={M}
+                getItineraryImageUrl={getItineraryImageUrl}
+                getItineraryImages={getItineraryImages}
+                setSelectedImages={setSelectedImages}
+                setPhotoIndex={setPhotoIndex}
+                setPhotoVisible={setPhotoVisible}
+                isHero={false}
               />
             ))}
           </div>
-        </div>
+        )}
+
+        {/* Show More / Show Less button */}
+        {hasMore && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: `0 8px 24px rgba(0,0,0,0.08)` }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowAll(!showAll)}
+              style={{
+                background: showAll ? W : A,
+                color: showAll ? A : W,
+                border: `1.5px solid ${A}`,
+                borderRadius: 50,
+                padding: "12px 32px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                letterSpacing: "0.02em",
+                transition: "all 0.3s ease",
+              }}
+            >
+              {showAll ? "Show Less" : `Show All ${restSteps.length - INITIAL_VISIBLE} More Steps`}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </motion.button>
+          </div>
+        )}
       </div>
       <AnimatePresence>
         {photoVisible && (
