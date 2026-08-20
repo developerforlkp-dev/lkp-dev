@@ -36,7 +36,16 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0"
+          "value": "s-maxage=0, no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=0, no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0"
         }
       ]
     },
