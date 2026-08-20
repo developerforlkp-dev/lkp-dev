@@ -1375,12 +1375,22 @@ function VisitorInformation({ place }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
   const { isMobile } = useWindowSize();
 
-  const townName = place?.nearestTowns?.[0]?.name || place?.nearestTown;
-  const formattedTown = townName ? townName.split('/')[0]?.trim() : "MUNNAR";
-  const airportName = place?.nearestAirports?.[0]?.name || place?.nearestAirport;
-  const formattedAirport = airportName ? airportName.split('(')[0].replace("International Airport", "").trim().toUpperCase() : "COCHIN";
-  const railwayName = place?.nearestRailwayStations?.[0]?.name || place?.nearestRailway;
-  const formattedRailway = railwayName ? railwayName.split('(')[0].replace("Railway Station", "").trim() : "ALUVA";
+  const formatList = (arr, singleStr, fallback, formatter) => {
+    if (Array.isArray(arr) && arr.length > 0) {
+      return arr.map(item => {
+        const name = typeof item === 'string' ? item : item?.name || "";
+        return formatter ? formatter(name) : name;
+      }).filter(Boolean).join(', ');
+    }
+    if (typeof singleStr === 'string' && singleStr.trim()) {
+      return formatter ? formatter(singleStr) : singleStr;
+    }
+    return fallback;
+  };
+
+  const formattedTowns = formatList(place?.nearestTowns, place?.nearestTown, "MUNNAR", (name) => name.split('/')[0]?.trim());
+  const formattedAirports = formatList(place?.nearestAirports, place?.nearestAirport, "COCHIN", (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase());
+  const formattedRailways = formatList(place?.nearestRailwayStations, place?.nearestRailway, "ALUVA", (name) => name.split('(')[0].replace(/Railway Station/i, "").trim());
 
   const suitabilityTags = useMemo(() => {
     const raw = place?.suitableFor;
@@ -1579,7 +1589,7 @@ function VisitorInformation({ place }) {
                       </div>
                       <div>
                         <span style={{ fontSize: 9, color: M, display: "block" }}>Nearest Town</span>
-                        <span style={{ fontWeight: 700, color: FG, fontSize: 13 }}>{formattedTown}</span>
+                        <span style={{ fontWeight: 700, color: FG, fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{formattedTowns}</span>
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
@@ -1588,7 +1598,7 @@ function VisitorInformation({ place }) {
                       </div>
                       <div>
                         <span style={{ fontSize: 9, color: M, display: "block" }}>Railway Terminal</span>
-                        <span style={{ fontWeight: 700, color: FG, fontSize: 13 }}>{formattedRailway} Station</span>
+                        <span style={{ fontWeight: 700, color: FG, fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{formattedRailways}</span>
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
@@ -1597,7 +1607,7 @@ function VisitorInformation({ place }) {
                       </div>
                       <div>
                         <span style={{ fontSize: 9, color: M, display: "block" }}>Airport Terminal</span>
-                        <span style={{ fontWeight: 700, color: FG, fontSize: 13 }}>{formattedAirport}</span>
+                        <span style={{ fontWeight: 700, color: FG, fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{formattedAirports}</span>
                       </div>
                     </div>
                   </div>
