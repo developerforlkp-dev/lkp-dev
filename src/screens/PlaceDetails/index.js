@@ -1463,8 +1463,10 @@ function VisitorInformation({ place }) {
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                     </div>
                     <div>
-                      <span style={{ fontSize: 8, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Pass Category</span>
-                      <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>Permit & Admin</h4>
+                      <span style={{ fontSize: 8, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Permit Category</span>
+                      <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>
+                        {place?.entryType ? `${place.entryType} Entry` : "Free Entry"}
+                      </h4>
                     </div>
                   </div>
 
@@ -1609,7 +1611,22 @@ function VisitorInformation({ place }) {
               <div style={{ padding: "20px 28px 28px 28px", height: "30%", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "space-between", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.02)` }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={{ fontSize: 9, color: M, display: "block" }}>Vehicle Access</span>
-                  <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.accessByVehicle || "All Vehicles"}</span>
+                  {Array.isArray(place?.accessVehicleTypes) && place.accessVehicleTypes.length > 0 ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2, maxWidth: 180 }}>
+                      {place.accessVehicleTypes.slice(0, 3).map((v, i) => (
+                        <span key={i} style={{ padding: "2px 6px", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, borderRadius: 4, fontSize: 10, fontWeight: 700, color: A, whiteSpace: "nowrap" }}>
+                          {typeof v === 'string' ? v : v.name || v}
+                        </span>
+                      ))}
+                      {place.accessVehicleTypes.length > 3 && (
+                        <span style={{ padding: "2px 6px", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, borderRadius: 4, fontSize: 10, fontWeight: 700, color: A, whiteSpace: "nowrap" }}>
+                          +{place.accessVehicleTypes.length - 3} More
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>All Vehicles</span>
+                  )}
                 </div>
 
                 {/* Stamp Clipart */}
@@ -1856,8 +1873,16 @@ function GoodToKnow({ place }) {
   const warningText = A === "#0097B2" ? "#b91c1c" : "#fca5a5";
   const warningHeader = A === "#0097B2" ? "#991b1b" : "#f87171";
 
-  const carryItems = ["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"];
-  const avoidItems = ["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"];
+  const carryItems = Array.isArray(place?.whatToCarry) && place.whatToCarry.length > 0 
+    ? place.whatToCarry.map(i => typeof i === 'string' ? i : i.name || i)
+    : (typeof place?.whatToCarry === 'string' && place.whatToCarry.trim() !== '' 
+        ? place.whatToCarry.split(',').map(i => i.trim()) 
+        : ["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"]);
+  const avoidItems = Array.isArray(place?.thingsToAvoid) && place.thingsToAvoid.length > 0
+    ? place.thingsToAvoid.map(i => typeof i === 'string' ? i : i.name || i)
+    : (typeof place?.thingsToAvoid === 'string' && place.thingsToAvoid.trim() !== ''
+        ? place.thingsToAvoid.split(',').map(i => i.trim())
+        : ["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"]);
 
   const feedbackBg = A === "#0097B2" ? "#f8f8f8" : S;
 
@@ -2999,6 +3024,64 @@ function MobileCTA({ place }) {
   );
 }
 
+function VisitingNotes({ place }) {
+  const { tokens: { A, B, FG, M, W, S, AL }, theme } = useTheme();
+  const { isMobile } = useWindowSize();
+  const [expanded, setExpanded] = useState(false);
+  
+  if (!place?.visitingNotes) return null;
+  
+  const rawText = place.visitingNotes || "";
+  const isLong = rawText.length > 250;
+  const displayText = expanded ? rawText : (isLong ? rawText.substring(0, 250) + "..." : rawText);
+
+  return (
+    <section style={{ background: W, padding: isMobile ? "32px 16px" : "48px 80px" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+        <Soul y={30}>
+          <div style={{
+            background: AL,
+            border: `1px solid ${A}33`,
+            borderRadius: 24,
+            padding: isMobile ? "24px" : "40px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            position: "relative",
+            overflow: "hidden"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+               <div style={{ background: A, padding: 8, borderRadius: 12 }}>
+                  <Info size={20} color="#FFFFFF" />
+               </div>
+               <h3 style={{ fontSize: "clamp(1.4rem, 2vw, 1.8rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Visiting Notes</h3>
+            </div>
+            <p style={{
+              fontSize: 16,
+              lineHeight: 1.8,
+              color: FG,
+              margin: 0,
+              fontFamily: "Poppins, sans-serif",
+              fontWeight: 400,
+              whiteSpace: "pre-line"
+            }}>
+              {displayText}
+              {isLong && (
+                <span 
+                  onClick={() => setExpanded(!expanded)} 
+                  style={{ color: A, cursor: "pointer", fontWeight: 600, marginLeft: 8 }}
+                >
+                  {expanded ? "Read Less" : "Read More"}
+                </span>
+              )}
+            </p>
+          </div>
+        </Soul>
+      </div>
+    </section>
+  );
+}
+
 function PremiumMarquee({ items, isMobile, fallbackItems }) {
   const { theme, tokens } = useTheme();
   const { A, B, BG, FG, M } = tokens;
@@ -3086,6 +3169,8 @@ function MobilePlaceDetails({
       {/* Visitor Information */}
       <VisitorInformation place={place} />
 
+      <VisitingNotes place={place} />
+
       {/* 6. Good to Know */}
       <MobileGoodToKnow place={place} />
 
@@ -3172,6 +3257,7 @@ const PlaceDetails = () => {
         if (!id) return;
         setLoading(true);
         const data = await getPlaceDetails(id);
+        console.log("Place Details from Backend:", data);
         if (!mounted) return;
         if (isPlaceUnavailable(data)) {
           showUnavailablePopupAndRedirect();
@@ -3322,6 +3408,8 @@ const PlaceDetails = () => {
       <Itinerary place={place} />
 
       <VisitorInformation place={place} />
+
+      <VisitingNotes place={place} />
 
       <GoodToKnow place={place} />
 
