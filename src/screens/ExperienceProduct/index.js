@@ -603,6 +603,14 @@ const ExperienceProduct = () => {
     ? listing.specialLabels.map((s) => (typeof s === "string" ? s : s?.name || s?.label || s?.value)).filter(Boolean)
     : [];
 
+  const rawSlotsForMax = listing?.eventSlots || listing?.slots || listing?.timeSlots || [];
+  const maxSeatsFromSlots = (Array.isArray(rawSlotsForMax) && rawSlotsForMax.length > 0)
+    ? rawSlotsForMax.reduce((sum, slot) => sum + (Number(slot.maxSeats) || Number(slot.max_seats) || 0), 0)
+    : 0;
+  const displayMaxGuests = maxSeatsFromSlots > 0
+    ? maxSeatsFromSlots
+    : (listing?.maxGroupSize || listing?.maxGuests || listing?.capacity?.maxSeats || 15);
+
   const displayTags = listing?.tags || [];
   const navigateToHostProfile = () => {
     const profileId = leadIdForProfile || hostLeadUserId;
@@ -1140,7 +1148,7 @@ const ExperienceProduct = () => {
                     <>
                       <Users size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
                       <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
-                        {listing?.maxGroupSize ? `Max ${listing.maxGroupSize}` : "Max 15"}
+                        {`Max ${displayMaxGuests}`}
                       </p>
                       <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Max Guests</p>
                     </>
