@@ -1944,10 +1944,10 @@ const StayBookingSystem = ({
         });
       }
       if (Number(pricing.earlyBirdDiscountAmount || 0) > 0) {
-        previewReceipt.push({ title: `Early Bird Discount (${Number(pricing.earlyBirdDiscountPercent || 0).toFixed(2)}%)`, content: `- ${previewCurrency} ${Number(pricing.earlyBirdDiscountAmount).toFixed(2)}` });
+        previewReceipt.push({ title: `Early Bird Discount (${Math.round(Number(pricing.earlyBirdDiscountPercent || 0))}%)`, content: `- ${previewCurrency} ${Number(pricing.earlyBirdDiscountAmount).toFixed(2)}` });
       }
       if (Number(pricing.longStayDiscountAmount || 0) > 0) {
-        previewReceipt.push({ title: `Long Stay Discount (${Number(pricing.discountPercent || 0).toFixed(2)}%)`, content: `- ${previewCurrency} ${Number(pricing.longStayDiscountAmount).toFixed(2)}` });
+        previewReceipt.push({ title: `Long Stay Discount (${Math.round(Number(pricing.discountPercent || 0))}%)`, content: `- ${previewCurrency} ${Number(pricing.longStayDiscountAmount).toFixed(2)}` });
       }
       if (previewAddOnsTotalRupees > 0) {
         previewReceipt.push({ title: "Add-ons Total", content: `+ ${previewCurrency} ${Number(previewAddOnsTotalRupees).toFixed(2)}` });
@@ -2317,11 +2317,11 @@ const StayBookingSystem = ({
       if (discountToShow > 0) {
         let remainingDiscount = discountToShow;
         if (pricing.earlyBirdDiscountAmount > 0) {
-          frontendReceipt.push({ title: `Early Bird Discount (${pricing.earlyBirdDiscountPercent}%)`, content: `- ${currency} ${Number(pricing.earlyBirdDiscountAmount).toFixed(2)}` });
+          frontendReceipt.push({ title: `Early Bird Discount (${Math.round(pricing.earlyBirdDiscountPercent)}%)`, content: `- ${currency} ${Number(pricing.earlyBirdDiscountAmount).toFixed(2)}` });
           remainingDiscount -= pricing.earlyBirdDiscountAmount;
         }
         if (pricing.longStayDiscountAmount > 0 && remainingDiscount >= pricing.longStayDiscountAmount - 0.01) {
-          frontendReceipt.push({ title: `Long Stay Discount (${pricing.discountPercent}%)`, content: `- ${currency} ${Number(pricing.longStayDiscountAmount).toFixed(2)}` });
+          frontendReceipt.push({ title: `Long Stay Discount (${Math.round(pricing.discountPercent)}%)`, content: `- ${currency} ${Number(pricing.longStayDiscountAmount).toFixed(2)}` });
           remainingDiscount -= pricing.longStayDiscountAmount;
         }
         if (remainingDiscount > 0.01) {

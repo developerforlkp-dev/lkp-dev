@@ -878,7 +878,7 @@ const Checkout = () => {
       // Total Discount should represent only additional pricing discount (not long-stay)
       if (additionalDiscountAmount > 0) {
         rows.splice(nextInsertIndex, 0, {
-          title: `Discount (${pricingDiscountPercent.toFixed(2)}%)`,
+          title: `Discount (${Math.round(pricingDiscountPercent)}%)`,
           value: `- INR ${additionalDiscountAmount.toFixed(2)}`,
         });
         nextInsertIndex += 1;
@@ -886,7 +886,7 @@ const Checkout = () => {
 
       if (earlyBirdDiscountAmount > 0) {
         rows.splice(nextInsertIndex, 0, {
-          title: `Early Bird Discount (${earlyBirdDiscountPercent.toFixed(2)}%)`,
+          title: `Early Bird Discount (${Math.round(earlyBirdDiscountPercent)}%)`,
           value: `- INR ${earlyBirdDiscountAmount.toFixed(2)}`,
         });
         nextInsertIndex += 1;
@@ -895,7 +895,7 @@ const Checkout = () => {
       // Show long-stay discount as a separate line item
       if (longStayDiscountAmount > 0) {
         rows.splice(nextInsertIndex, 0, {
-          title: `Long-stay Discount (${tierDiscountPercent.toFixed(2)}%)`,
+          title: `Long-stay Discount (${Math.round(tierDiscountPercent)}%)`,
           value: `- INR ${longStayDiscountAmount.toFixed(2)}`,
         });
       }
