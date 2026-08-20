@@ -2952,11 +2952,9 @@ function EventReviews({ reviews = [] }) {
   }, [reviews]);
 
   const hasReviews = normalizedReviews.length > 0;
-  const displayReviews = hasReviews ? normalizedReviews : [
-    { customerName: "Aarav Sharma", comment: "An absolutely incredible experience. The host was warm, accommodating, and the attention to detail was unmatched.", rating: 5 },
-    { customerName: "Priya Patel", comment: "Highly curated trails, breathtaking views, and wonderful local insights. Can't wait to book this again!", rating: 5 },
-    { customerName: "Vikram Malhotra", comment: "Top tier service! The scheduling was seamless and the guides were exceptionally knowledgeable.", rating: 5 }
-  ];
+  const displayReviews = normalizedReviews;
+
+  if (displayReviews.length === 0) return null;
 
   if (isMobile && displayReviews.length > 0) {
     return (
