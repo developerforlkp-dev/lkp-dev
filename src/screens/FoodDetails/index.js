@@ -1280,12 +1280,16 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
   const { isMobile } = useWindowSize();
   const { tokens } = useTheme();
   const { A, FG, M, BG, S, B, AL } = tokens;
+  const [isChefStoryExpanded, setIsChefStoryExpanded] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const chefName = hostData?.host?.firstName 
     ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() 
     : (hostData?.host?.displayName || hostData?.displayName || food?.host?.displayName || "Master Chef");
 
   const chefStory = food?.chefOwnerStory || hostData?.host?.bio || hostData?.bio || food?.chefStory || food?.ownerStory || food?.story || food?.host?.about || "Our culinary philosophy is rooted in heritage and innovation.";
+  
+  const detailedDescription = food?.detailedDescription || food?.description || "Experience the perfect harmony of seasonal ingredients, local spices, and refined culinary design.";
 
   return (
     <section className="narrative-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px", borderTop: `1px solid ${B}` }}>
@@ -1330,13 +1334,24 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
                 cursor: "pointer",
                 transition: "border-color 0.3s ease, box-shadow 0.3s ease"
               }}
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
             >
               <div>
                 <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 800 }}>The Alchemy</span>
                 <h4 className="font-display" style={{ fontSize: 22, color: FG, marginTop: 12, marginBottom: 20 }}>Detailed Description</h4>
                 <p style={{ fontSize: 14.5, color: FG, lineHeight: 1.85, margin: 0, opacity: 0.9 }}>
-                  {food?.detailedDescription || food?.description || "Experience the perfect harmony of seasonal ingredients, local spices, and refined culinary design."}
+                  {detailedDescription.length > 250 && !isDescriptionExpanded 
+                    ? `${detailedDescription.substring(0, 250)}...` 
+                    : detailedDescription}
                 </p>
+                {detailedDescription.length > 250 && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsDescriptionExpanded(!isDescriptionExpanded); }}
+                    style={{ background: "transparent", border: "none", padding: 0, color: A, fontSize: 11, fontWeight: 800, marginTop: 12, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}
+                  >
+                    {isDescriptionExpanded ? "Read Less" : "Read More"}
+                  </button>
+                )}
               </div>
               <Sparkles size={20} color={A} style={{ opacity: 0.3, marginTop: 24 }} />
             </motion.div>
@@ -1364,14 +1379,25 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
                 cursor: "pointer",
                 transition: "border-color 0.3s ease, box-shadow 0.3s ease"
               }}
+              onClick={() => setIsChefStoryExpanded(!isChefStoryExpanded)}
             >
               <div style={{ position: "absolute", top: 16, right: 32, fontSize: 80, color: A, opacity: 0.12, fontFamily: "serif" }}>&ldquo;</div>
               <div>
                 <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 800 }}>The Creator</span>
                 <h4 className="font-display" style={{ fontSize: 22, color: FG, marginTop: 12, marginBottom: 20 }}>Chef's Story</h4>
                 <p style={{ fontSize: 13.5, color: M, lineHeight: 1.75, fontStyle: "italic", margin: 0 }}>
-                  {chefStory}
+                  {chefStory.length > 250 && !isChefStoryExpanded 
+                    ? `${chefStory.substring(0, 250)}...` 
+                    : chefStory}
                 </p>
+                {chefStory.length > 250 && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsChefStoryExpanded(!isChefStoryExpanded); }}
+                    style={{ background: "transparent", border: "none", padding: 0, color: A, fontSize: 11, fontWeight: 800, marginTop: 12, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}
+                  >
+                    {isChefStoryExpanded ? "Read Less" : "Read More"}
+                  </button>
+                )}
               </div>
               <div style={{ marginTop: 24, borderTop: `1px solid ${B}`, paddingTop: 20, display: "flex", gap: 12, alignItems: "center" }}>
                 {hostAvatar && (
