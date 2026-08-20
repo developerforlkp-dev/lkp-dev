@@ -817,30 +817,31 @@ function PlaceHero({ place, galleryItems, id }) {
             {showArrows && (
               <motion.button
                 key="left-arrow"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                whileHover={{ scale: 1.05, backgroundColor: A, borderColor: A, color: "#FFF", boxShadow: `0 8px 24px ${A}40` }}
                 onClick={() => scrollSlider("left")}
                 style={{
                   position: "absolute",
-                  left: 16,
+                  left: 20,
                   zIndex: 20,
-                  background: "rgba(255, 255, 255, 0.75)",
-                  backdropFilter: "blur(8px)",
-                  border: `1px solid ${B}`,
-                  width: 44,
-                  height: 44,
+                  background: theme === "dark" ? "rgba(20, 20, 20, 0.6)" : "rgba(255, 255, 255, 0.85)",
+                  backdropFilter: "blur(12px)",
+                  border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)"}`,
+                  width: 52,
+                  height: 52,
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: FG,
                   cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                  transition: "background-color 0.2s"
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                  transition: "all 0.3s ease"
                 }}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={24} />
               </motion.button>
             )}
           </AnimatePresence>
@@ -850,30 +851,31 @@ function PlaceHero({ place, galleryItems, id }) {
             {showArrows && (
               <motion.button
                 key="right-arrow"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                whileHover={{ scale: 1.05, backgroundColor: A, borderColor: A, color: "#FFF", boxShadow: `0 8px 24px ${A}40` }}
                 onClick={() => scrollSlider("right")}
                 style={{
                   position: "absolute",
-                  right: 16,
+                  right: 20,
                   zIndex: 20,
-                  background: "rgba(255, 255, 255, 0.75)",
-                  backdropFilter: "blur(8px)",
-                  border: `1px solid ${B}`,
-                  width: 44,
-                  height: 44,
+                  background: theme === "dark" ? "rgba(20, 20, 20, 0.6)" : "rgba(255, 255, 255, 0.85)",
+                  backdropFilter: "blur(12px)",
+                  border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)"}`,
+                  width: 52,
+                  height: 52,
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: FG,
                   cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                  transition: "background-color 0.2s"
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                  transition: "all 0.3s ease"
                 }}
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={24} />
               </motion.button>
             )}
           </AnimatePresence>
