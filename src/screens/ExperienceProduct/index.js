@@ -642,6 +642,7 @@ const ExperienceProduct = () => {
           description={description}
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
+          displayMaxGuests={displayMaxGuests}
           fallbackLocationValues={fallbackLocationValues}
           fallbackTagValues={fallbackTagValues}
           fallbackSpecialLabelValues={fallbackSpecialLabelValues}

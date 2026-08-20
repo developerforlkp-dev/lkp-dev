@@ -115,7 +115,7 @@ export default function MobileExperienceView({
   fallbackLocationValues, fallbackTagValues, fallbackSpecialLabelValues,
   displayHostName, hostPhone, hostEmail,
   displayTags, navigateToHostProfile,
-  normalizedReviews,
+  normalizedReviews, displayMaxGuests
 }) {
   const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
   const isDark = theme === "dark";
@@ -343,6 +343,7 @@ export default function MobileExperienceView({
           { icon: <Baby size={15} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
           { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
           { icon: <ShieldCheck size={15} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
+          { icon: <Users size={15} color={A} />, label: `Max ${displayMaxGuests || 15} Guests` },
         ].map((fact, i) => (
           <div key={i} className="mob-fact-pill" style={{ background: isDark ? "#1A1A1A" : "#F5F7FA", color: FG, border: `1px solid ${B}` }}>
             {fact.icon}
