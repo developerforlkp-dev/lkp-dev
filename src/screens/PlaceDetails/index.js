@@ -3374,7 +3374,6 @@ const PlaceDetails = () => {
         if (!id) return;
         setLoading(true);
         const data = await getPlaceDetails(id);
-        console.log("Place Details from Backend:", data);
         if (!mounted) return;
         if (isPlaceUnavailable(data)) {
           showUnavailablePopupAndRedirect();
