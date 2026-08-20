@@ -603,6 +603,14 @@ const ExperienceProduct = () => {
     ? listing.specialLabels.map((s) => (typeof s === "string" ? s : s?.name || s?.label || s?.value)).filter(Boolean)
     : [];
 
+  const rawSlotsForMax = listing?.eventSlots || listing?.slots || listing?.timeSlots || [];
+  const maxSeatsFromSlots = (Array.isArray(rawSlotsForMax) && rawSlotsForMax.length > 0)
+    ? rawSlotsForMax.reduce((sum, slot) => sum + (Number(slot.maxSeats) || Number(slot.max_seats) || 0), 0)
+    : 0;
+  const displayMaxGuests = maxSeatsFromSlots > 0
+    ? maxSeatsFromSlots
+    : (listing?.maxGroupSize || listing?.maxGuests || listing?.capacity?.maxSeats || 15);
+
   const displayTags = listing?.tags || [];
   const navigateToHostProfile = () => {
     const profileId = leadIdForProfile || hostLeadUserId;
@@ -634,6 +642,7 @@ const ExperienceProduct = () => {
           description={description}
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
+          displayMaxGuests={displayMaxGuests}
           fallbackLocationValues={fallbackLocationValues}
           fallbackTagValues={fallbackTagValues}
           fallbackSpecialLabelValues={fallbackSpecialLabelValues}
@@ -1008,8 +1017,10 @@ const ExperienceProduct = () => {
                 {/* Fact 2: Min Age */}
                 <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF', height: "100%", boxSizing: "border-box" }}>
                   <User size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "12"}</p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: listing?.minimumAge ? 6 : 0, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "All Ages Welcome"}</p>
+                  {listing?.minimumAge && (
+                    <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
+                  )}
                 </div>
 
                 {/* Fact 3: Difficulty */}
@@ -1032,7 +1043,7 @@ const ExperienceProduct = () => {
                   {(() => {
                     const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
                       ? listing.languagesOffered
-                      : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]);
+                      : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : ["Flexible"]);
 
                     const displayLanguage = list[0];
                     const remainingCount = list.length - 1;
@@ -1140,7 +1151,7 @@ const ExperienceProduct = () => {
                     <>
                       <Users size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
                       <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>
-                        {listing?.maxGroupSize ? `Max ${listing.maxGroupSize}` : "Max 15"}
+                        {`Max ${displayMaxGuests}`}
                       </p>
                       <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Max Guests</p>
                     </>
