@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 // Force HMR re-render
 import { useParams, useHistory } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { mapApiBlogToComponentFormat } from "../../utils/blogData";
 import { getBlogBySlug } from "../../utils/api";
 import {
@@ -121,9 +122,66 @@ export default function BlogDetails() {
   //console.log("Currently rendering Blog Layout Variant:", variant);
 
   return (
-    <div className="blog-page-root">
+    <div className="blog-page-root relative">
+      <div className="blog-back-btn-wrapper">
+         <button 
+           onClick={() => history.push('/blog')} 
+           className="blog-back-btn"
+         >
+            <ArrowLeft size={18} className="blog-back-icon" />
+            <span className="blog-back-text">Back to Blog</span>
+         </button>
+      </div>
+
       <LayoutComponent post={post} />
       <style>{`
+        .blog-back-btn-wrapper {
+          position: fixed;
+          top: 100px;
+          left: 40px;
+          z-index: 9999;
+          display: flex;
+        }
+        @media (max-width: 1023px) {
+          .blog-back-btn-wrapper {
+            display: none !important;
+          }
+        }
+        @media (min-width: 1440px) {
+          .blog-back-btn-wrapper {
+            left: 80px;
+          }
+        }
+        .blog-back-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0 20px;
+          height: 48px;
+          border-radius: 24px;
+          background-color: var(--blog-bg, #ffffff);
+          color: var(--color-brand, #00A4C4);
+          border: 2px solid var(--color-brand, #00A4C4);
+          box-shadow: 0 6px 16px rgba(0, 164, 196, 0.15);
+          backdrop-filter: blur(8px);
+          cursor: pointer;
+          font-weight: 700;
+          font-size: 14px;
+          transition: all 0.3s ease;
+        }
+        .blog-back-btn:hover {
+          background-color: var(--color-brand, #00A4C4);
+          color: #ffffff;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 164, 196, 0.3);
+        }
+        .blog-back-icon {
+          transition: transform 0.3s ease;
+        }
+        .blog-back-btn:hover .blog-back-icon {
+          transform: translateX(-4px);
+        }
+
         .blog-page-root {
           overflow-x: clip;
           --color-brand: #00A4C4;
@@ -132,22 +190,34 @@ export default function BlogDetails() {
           --blog-desc-color: #4b5563;
           --blog-bg: #ffffff;
           --blog-card-bg: #ffffff;
-          --blog-border-color: #f0f0f0;
+          --blog-border-color: #e5e7eb;
           --blog-body-color: #6b7280;
           --blog-muted-color: #9ca3af;
         }
         .blog-page-root *, .blog-page-root ::before, .blog-page-root ::after {
           box-sizing: border-box;
         }
+        
+        .blog-back-btn {
+          background-color: var(--blog-bg);
+          color: var(--blog-title-color);
+          border: 1px solid var(--blog-border-color);
+        }
+        .blog-back-btn:hover {
+          background-color: var(--color-brand);
+          color: #ffffff;
+          border-color: var(--color-brand);
+        }
+
         html.dark .blog-page-root,
         body.dark .blog-page-root,
         [data-theme="dark"] .blog-page-root,
         .dark-mode .blog-page-root {
           --blog-title-color: #ffffff;
           --blog-desc-color: #d1d5db;
-          --blog-bg: #0a0a0a;
+          --blog-bg: #111111;
           --blog-card-bg: #1a1a1a;
-          --blog-border-color: #2a2a2a;
+          --blog-border-color: #333333;
           --blog-body-color: #a0a0a0;
           --blog-muted-color: #666666;
         }
