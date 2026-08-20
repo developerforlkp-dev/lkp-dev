@@ -129,7 +129,7 @@ export default function BlogDetails() {
            className="blog-back-btn"
          >
             <ArrowLeft size={18} className="blog-back-icon" />
-            <span className="blog-back-text">Back to Blog</span>
+            <span className="blog-back-text">Back</span>
          </button>
       </div>
 
@@ -160,23 +160,32 @@ export default function BlogDetails() {
           height: 48px;
           border-radius: 24px;
           background-color: var(--blog-bg, #ffffff);
-          color: var(--color-brand, #00A4C4);
-          border: 2px solid var(--color-brand, #00A4C4);
-          box-shadow: 0 6px 16px rgba(0, 164, 196, 0.15);
+          color: #00A4C4 !important;
+          border: 1px solid var(--blog-border-color, #e5e7eb);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
           backdrop-filter: blur(8px);
           cursor: pointer;
           font-weight: 700;
           font-size: 14px;
           transition: all 0.3s ease;
         }
+        .blog-back-text {
+          color: #00A4C4 !important;
+          transition: color 0.3s ease;
+        }
         .blog-back-btn:hover {
           background-color: var(--color-brand, #00A4C4);
-          color: #ffffff;
+          color: #ffffff !important;
+          border-color: var(--color-brand, #00A4C4);
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0, 164, 196, 0.3);
         }
+        .blog-back-btn:hover .blog-back-text,
+        .blog-back-btn:hover .blog-back-icon {
+          color: #ffffff !important;
+        }
         .blog-back-icon {
-          transition: transform 0.3s ease;
+          transition: transform 0.3s ease, color 0.3s ease;
         }
         .blog-back-btn:hover .blog-back-icon {
           transform: translateX(-4px);
