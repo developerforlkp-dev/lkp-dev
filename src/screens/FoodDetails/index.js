@@ -1285,7 +1285,7 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
     ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() 
     : (hostData?.host?.displayName || hostData?.displayName || food?.host?.displayName || "Master Chef");
 
-  const chefStory = hostData?.host?.bio || hostData?.bio || food?.chefOwnerStory || food?.chefStory || food?.ownerStory || food?.story || food?.host?.about || "Our culinary philosophy is rooted in heritage and innovation.";
+  const chefStory = food?.chefOwnerStory || hostData?.host?.bio || hostData?.bio || food?.chefStory || food?.ownerStory || food?.story || food?.host?.about || "Our culinary philosophy is rooted in heritage and innovation.";
 
   return (
     <section className="narrative-section" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px", borderTop: `1px solid ${B}` }}>
