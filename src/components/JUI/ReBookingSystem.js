@@ -4650,7 +4650,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               )}
 
                               {childrenAllowed && guests.children > 0 && (
-                                <div ref={childrenDetailsRef} style={{ flex: "1 1 100%", padding: "12px 16px", background: "transparent", border: `1px solid ${B}55`, borderRadius: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+                                <div ref={childrenDetailsRef} style={{ flex: "1 1 100%", padding: "16px", background: BG, border: `1px solid ${B}`, borderRadius: 16, display: "flex", flexDirection: "column", gap: 12 }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{ color: A }}>
                                       <Baby size={20} color={A} />
@@ -4667,7 +4667,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                     </div>
                                   )}
 
-                                  <div className="child-age-grid">
+                                  <div className="child-age-grid" style={{ display: "flex", flexDirection: "column", gap: 0, marginTop: 4 }}>
                                     {Array.from({ length: guests.children }).map((_, i) => (
                                       <div key={i} style={{ display: "flex", flexDirection: "column" }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", gap: 4, borderBottom: i < guests.children - 1 ? `1px solid ${B}44` : 'none' }}>
