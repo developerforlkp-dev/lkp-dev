@@ -945,6 +945,7 @@ const FleetHome = () => {
                       onClose={() => setShowGuestPicker(false)}
                       onGuestChange={handleGuestChange}
                       initialGuests={guests}
+                      infantsAllowed={false}
                       className={styles.guestPicker}
                     />
                   </div>

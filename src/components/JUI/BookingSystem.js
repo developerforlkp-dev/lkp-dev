@@ -2470,8 +2470,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const baseTotal = adultSubtotal + childSubtotal;
   const rawBaseTotal = !isEventBooking
     ? (privateBooking
-        ? parseFloat(effectiveRawPrice || 0)  // flat private price
-        : (baseAdultPricePerPerson * guests.adults) + experienceChildPriceTotal)
+      ? parseFloat(effectiveRawPrice || 0)  // flat private price
+      : (baseAdultPricePerPerson * guests.adults) + experienceChildPriceTotal)
     : ((eventGuestPricing.baseUnitPrice * guests.adults) + eventChildPriceTotal);
   const activeGuestPricing = isEventBooking ? eventGuestPricing : experienceGuestPricing;
   const appliedDiscountRate = activeGuestPricing?.discountRate ?? 0;
@@ -2717,7 +2717,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       setShowValidation(true);
-      
+
       if (errors.children && childrenDetailsRef.current) {
         childrenDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
@@ -2983,7 +2983,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         clearPendingCheckoutState();
         persistPendingCheckout({ bookingData: previewBookingData });
         localStorage.removeItem("frontendPendingBookingState");
-        
+
         if (finalTotal > 0) {
           history.replace("/experience-checkout", {
             bookingData: previewBookingData,
@@ -3138,7 +3138,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           try {
             const freeEventResponse = await finalizeFreeEvent(orderId);
             finalizationMode = freeEventResponse?.finalization?.mode || "AUTO_CONFIRMED";
-          } catch(e) {
+          } catch (e) {
             console.error("Failed to finalize free event:", e);
           }
 
@@ -3249,7 +3249,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       if (cpp > 0 && actualHasChildPricing) {
         chargeableChildren = Math.max(0, Math.min(guests.children, Math.round(childLineTotal / cpp)));
       }
-      
+
       if (childLineTotal > 0 || actualHasChildPricing) {
         receipt.push({
           title: `₹${Number(cpp).toFixed(2)} × ${chargeableChildren} child${chargeableChildren > 1 ? 'ren' : ''}`,
