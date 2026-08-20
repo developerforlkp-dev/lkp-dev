@@ -1016,8 +1016,10 @@ const ExperienceProduct = () => {
                 {/* Fact 2: Min Age */}
                 <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF', height: "100%", boxSizing: "border-box" }}>
                   <User size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "12"}</p>
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: FG, marginBottom: listing?.minimumAge ? 6 : 0, fontFamily: '"Inter", sans-serif' }}>{listing?.minimumAge || "All Ages Welcome"}</p>
+                  {listing?.minimumAge && (
+                    <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Min Age</p>
+                  )}
                 </div>
 
                 {/* Fact 3: Difficulty */}
@@ -1040,7 +1042,7 @@ const ExperienceProduct = () => {
                   {(() => {
                     const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
                       ? listing.languagesOffered
-                      : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]);
+                      : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : ["Flexible"]);
 
                     const displayLanguage = list[0];
                     const remainingCount = list.length - 1;

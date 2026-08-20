@@ -338,10 +338,10 @@ export default function MobileExperienceView({
       <div className="mob-facts" style={{ background: BG }}>
         {[
           { icon: <Clock size={15} color={A} />, label: listing?.duration ? `${listing.duration} ${listing.durationUnit || "Hrs"}` : "2.5 Hrs" },
-          { icon: <User size={15} color={A} />, label: `Min Age: ${listing?.minimumAge || "12"}` },
+          { icon: <User size={15} color={A} />, label: listing?.minimumAge ? `Min Age: ${listing.minimumAge}` : "All Ages Welcome" },
           { icon: <Zap size={15} color={A} />, label: listing?.difficultyLevel || "Moderate" },
           { icon: <Baby size={15} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
-          { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" ? listing.languages.split(",").map(s => s.trim()) : ["English"]); return l.join(", "); })() },
+          { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
           { icon: <ShieldCheck size={15} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
         ].map((fact, i) => (
           <div key={i} className="mob-fact-pill" style={{ background: isDark ? "#1A1A1A" : "#F5F7FA", color: FG, border: `1px solid ${B}` }}>
