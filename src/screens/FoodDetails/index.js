@@ -1392,6 +1392,74 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
 }
 
 
+function SignatureDishesSection({ food }) {
+  const { isMobile } = useWindowSize();
+  const { tokens: { A, FG, B, W, S }, theme } = useTheme();
+
+  const dishes = food?.signatureDishes;
+  if (!dishes || !Array.isArray(dishes) || dishes.length === 0) return null;
+
+  return (
+    <section style={{ background: W, padding: isMobile ? "48px 24px" : "80px 80px", borderTop: `1px solid ${B}` }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <Rev>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: 16, fontFamily: '"Inter", sans-serif' }}>Chef's Recommendations</span>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, margin: 0, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Signature Dishes</h3>
+            <div style={{ width: 60, height: 2, background: A, margin: "24px auto 0" }} />
+          </div>
+        </Rev>
+        
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '300px'}, 1fr))`,
+          gap: 20
+        }}>
+          {dishes.map((dish, idx) => {
+            const name = typeof dish === 'string' ? dish : dish.name || dish.title;
+            if (!name) return null;
+
+            return (
+              <Rev delay={0.05 * (idx % 5)} key={idx} style={{ height: "100%" }}>
+                <div style={{
+                  background: S,
+                  borderRadius: 16,
+                  border: `1px solid ${B}`,
+                  padding: "20px 24px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 20,
+                  height: "100%",
+                  transition: "transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
+                  cursor: "default"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.borderColor = A;
+                  e.currentTarget.style.boxShadow = theme === 'dark' ? "0 8px 24px rgba(0,0,0,0.3)" : "0 8px 24px rgba(0,0,0,0.06)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.borderColor = B;
+                  e.currentTarget.style.boxShadow = "none";
+                }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Sparkles size={20} color={A} fill="transparent" />
+                  </div>
+                  <h4 style={{ fontSize: 18, fontWeight: 700, color: FG, margin: 0, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1.3 }}>
+                    {name}
+                  </h4>
+                </div>
+              </Rev>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 function LocationSection({ food }) {
   const { isMobile } = useWindowSize();
   const { tokens: { A, FG, M, B, W }, theme } = useTheme();
@@ -1399,153 +1467,170 @@ function LocationSection({ food }) {
   return (
     <section className="prep-section" style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "45fr 55fr", gap: isMobile ? 32 : 64 }} className="prep-grid">
-          <Rev delay={0.1} style={{ height: "100%" }}>
-            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it All Happens</h3>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ background: W, border: `1px solid ${B}`, height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
-                  <div style={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    zIndex: 10,
-                    background: W,
-                    padding: "10px 16px",
-                    borderRadius: "12px",
-                    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)",
-                    border: `1px solid ${B}`,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    pointerEvents: "none"
-                  }}>
-                    <MapPin size={16} color={A} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{food?.meetingLocationName || "The Grand Atrium"}</span>
-                  </div>
-                  {(() => {
-                    const lat = food?.meetingLatitude || food?.latitude;
-                    const lng = food?.meetingLongitude || food?.longitude;
-                    const address = food?.meetingAddress || food?.address;
-                    const srcUrl = (lat && lng)
-                      ? `https://maps.google.com/maps?ll=${lat},${lng}&hl=en&z=14&output=embed`
-                      : (address ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=14&output=embed` : null);
+        
+        {/* Title Group outside the card */}
+        <div style={{ marginBottom: 40 }}>
+          <Rev delay={0.1}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Location & Details</span>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it All Happens</h3>
+            <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>Find your way to the culinary experience and get all the essential details for a smooth journey.</p>
+          </Rev>
+        </div>
 
-                    return (
-                      <>
-                        {srcUrl ? (
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            style={{ border: 0 }}
-                            src={srcUrl}
-                            allowFullScreen
-                            title="Meeting Location"
-                          />
-                        ) : (
-                          <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "20px 20px" }} />
-                        )}
-                        {/* Radar pulse animation overlaid on top of the map background */}
-                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 12, height: 12, background: A, borderRadius: "50%", pointerEvents: "none", zIndex: 5 }}>
-                          <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-6px", border: `2px solid ${A}`, borderRadius: "50%" }} />
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
+        {/* Main Card Container */}
+        <div style={{
+          background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
+          borderRadius: 24,
+          border: `1px solid ${B}`,
+          padding: 16,
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: isMobile ? 24 : 32,
+          boxShadow: theme === 'dark' ? "none" : "0 8px 32px rgba(0,0,0,0.04)"
+        }} className="prep-grid">
+
+          {/* LEFT: Map */}
+          <Rev delay={0.1} style={{ height: "100%" }}>
+            <div style={{ position: "sticky", top: 120, height: 400, maxHeight: "calc(100vh - 160px)", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
+              <div style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                zIndex: 10,
+                background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                padding: "8px 16px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                border: `1px solid ${B}`,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                pointerEvents: "none"
+              }}>
+                <MapPin size={16} color={A} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>{food?.meetingLocationName || "Location"}</span>
               </div>
+              {(() => {
+                const lat = food?.meetingLatitude || food?.latitude;
+                const lng = food?.meetingLongitude || food?.longitude;
+                const address = food?.meetingAddress || food?.address;
+                const srcUrl = (lat && lng)
+                  ? `https://maps.google.com/maps?ll=${lat},${lng}&hl=en&z=14&output=embed`
+                  : (address ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=14&output=embed` : null);
+
+                return (
+                  <>
+                    {srcUrl ? (
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src={srcUrl}
+                        allowFullScreen
+                        title="Meeting Location"
+                      />
+                    ) : (
+                      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${A}18 1px,transparent 1px),linear-gradient(90deg,${A}18 1px,transparent 1px)`, backgroundSize: "20px 20px" }} />
+                    )}
+                    {/* Radar pulse animation overlaid on top of the map background */}
+                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 12, height: 12, background: A, borderRadius: "50%", pointerEvents: "none", zIndex: 5 }}>
+                      <motion.div animate={{ scale: [1, 2.5, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: "-6px", border: `2px solid ${A}`, borderRadius: "50%" }} />
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </Rev>
+
+          {/* RIGHT: Details List */}
           <Rev delay={0.2} style={{ height: "100%" }}>
-            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Where it is</h3>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
-                  {(food?.meetingAddress || food?.address) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingAddress || food.address}</span>
-                      </div>
-                    </li>
-                  )}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0" }}>
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
+                {(food?.meetingAddress || food?.address) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <MapPin size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingAddress || food.address}</span>
+                    </div>
+                  </li>
+                )}
 
-                  {(food?.meetingLandmark || food?.nearestLandmark || food?.landmark) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Navigation size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingLandmark || food.nearestLandmark || food.landmark}</span>
-                      </div>
-                    </li>
-                  )}
+                {(food?.meetingLandmark || food?.nearestLandmark || food?.landmark) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Navigation size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingLandmark || food.nearestLandmark || food.landmark}</span>
+                    </div>
+                  </li>
+                )}
 
-                  {(food?.meetingDistrict || food?.district) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingDistrict || food.district}</span>
-                      </div>
-                    </li>
-                  )}
+                {(food?.meetingDistrict || food?.district) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <MapPin size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingDistrict || food.district}</span>
+                    </div>
+                  </li>
+                )}
 
-                  {(food?.meetingState || food?.state || food?.city) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Map size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingState || food.state || food.city}</span>
-                      </div>
-                    </li>
-                  )}
+                {(food?.meetingState || food?.state || food?.city) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Map size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingState || food.state || food.city}</span>
+                    </div>
+                  </li>
+                )}
 
-                  {(food?.meetingCountry || food?.country) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Globe size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingCountry || food.country}</span>
-                      </div>
-                    </li>
-                  )}
+                {(food?.meetingCountry || food?.country) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Globe size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingCountry || food.country}</span>
+                    </div>
+                  </li>
+                )}
 
-                  {(food?.meetingInstructions || food?.directions) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Info size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingInstructions || food.directions}</span>
-                      </div>
-                    </li>
-                  )}
-                  {(!food?.meetingDistrict && !food?.meetingState && !food?.meetingCountry && !food?.meetingAddress && !food?.meetingLandmark && !food?.address && !food?.nearestLandmark && !food?.landmark) && (
-                    <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <MapPin size={20} color={A} fill="transparent" />
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
-                        <span style={{ fontSize: 16, color: M, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
-                      </div>
-                    </li>
-                  )}
-                </ul>
-              </div>
+                {(food?.meetingInstructions || food?.directions) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Info size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingInstructions || food.directions}</span>
+                    </div>
+                  </li>
+                )}
+                
+                {(!food?.meetingDistrict && !food?.meetingState && !food?.meetingCountry && !food?.meetingAddress && !food?.meetingLandmark && !food?.address && !food?.nearestLandmark && !food?.landmark) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <MapPin size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
+                      <span style={{ fontSize: 16, color: M, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
+                    </div>
+                  </li>
+                )}
+              </ul>
             </div>
           </Rev>
         </div>
@@ -2109,6 +2194,7 @@ const FoodDetails = () => {
         if (!id) return;
         setLoading(true);
         const data = await getFoodDetails(id);
+        console.log("Food Details from Backend:", data);
         if (!mounted) return;
         if (isFoodUnavailable(data)) {
           showUnavailablePopupAndRedirect();
@@ -2374,6 +2460,7 @@ const FoodDetails = () => {
         );
       })()}
 
+      <SignatureDishesSection food={food} />
       <LocationSection food={food} />
 
       <ReservationNoir food={food} hostData={hostData} hostAvatar={hostAvatar} />
