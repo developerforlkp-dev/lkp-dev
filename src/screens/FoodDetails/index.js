@@ -18,6 +18,7 @@ import Favorite from "../../components/Favorite";
 import Icon from "../../components/Icon";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import DetailPageNavPortal from "../../components/DetailPageNavPortal";
+import CuratedContent from "../../components/CuratedContent";
 
 const toDisplayString = (value) => {
   if (!value) return "";
@@ -2486,7 +2487,9 @@ const FoodDetails = () => {
         );
       })()}
 
+
       <SignatureDishesSection food={food} />
+      <CuratedContent curatedContent={food?.curatedContent} headlineFontFamily="'Fraunces', Georgia, serif" bodyFontFamily="'Inter', system-ui, sans-serif" />
       <LocationSection food={food} />
 
       <ReservationNoir food={food} hostData={hostData} hostAvatar={hostAvatar} />

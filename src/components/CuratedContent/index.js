@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../components/JUI/Theme";
-import FullScreenImage from "../../components/FullScreenImage";
+import { useTheme } from "../JUI/Theme";
+import FullScreenImage from "../FullScreenImage";
 import { Sparkles, Camera } from "lucide-react";
 
 const formatImageUrlGlobal = (url) => {
@@ -13,22 +13,22 @@ const formatImageUrlGlobal = (url) => {
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${encodedPath}${queryPart ? `?${queryPart}` : ""}`;
 };
 
-const ExpandableText = ({ text, tokens }) => {
+const ExpandableText = ({ text, tokens, bodyFontFamily }) => {
   const [expanded, setExpanded] = useState(false);
   if (!text) return null;
   const limit = 120;
   if (text.length <= limit) {
-    return <p style={{ fontSize: 15, color: tokens.M, fontFamily: '"Inter", sans-serif', lineHeight: 1.6, margin: 0, position: "relative", zIndex: 1 }}>{text}</p>;
+    return <p style={{ fontSize: 15, color: tokens.M, fontFamily: bodyFontFamily, lineHeight: 1.6, margin: 0, position: "relative", zIndex: 1 }}>{text}</p>;
   }
 
   return (
     <div style={{ position: "relative", zIndex: 1 }}>
-      <p style={{ fontSize: 15, color: tokens.M, fontFamily: '"Inter", sans-serif', lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontSize: 15, color: tokens.M, fontFamily: bodyFontFamily, lineHeight: 1.6, margin: 0 }}>
         {expanded ? text : `${text.substring(0, limit)}...`}
       </p>
       <button 
         onClick={() => setExpanded(!expanded)} 
-        style={{ background: "transparent", border: "none", color: tokens.A, padding: 0, marginTop: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: '"Inter", sans-serif' }}
+        style={{ background: "transparent", border: "none", color: tokens.A, padding: 0, marginTop: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: bodyFontFamily }}
       >
         {expanded ? "Read Less" : "Read More"}
       </button>
@@ -36,7 +36,14 @@ const ExpandableText = ({ text, tokens }) => {
   );
 };
 
-const ExperienceCuratedContent = ({ curatedContent }) => {
+const CuratedContent = ({ 
+  curatedContent, 
+  headlineFontFamily = '"Cormorant Garamond", "Playfair Display", serif',
+  bodyFontFamily = '"Inter", sans-serif',
+  padding = "100px 0",
+  maxWidth = "1200px",
+  width = "calc(100% - 80px)",
+}) => {
   const { tokens } = useTheme();
   const [photoVisible, setPhotoVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -51,14 +58,14 @@ const ExperienceCuratedContent = ({ curatedContent }) => {
   const hasMore = curatedContent.length > 6;
 
   return (
-    <section style={{ padding: "100px 0", background: tokens.BG, overflow: "hidden" }}>
-      <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
+    <section style={{ padding, background: tokens.BG, overflow: "hidden" }}>
+      <div style={{ width, maxWidth, margin: "0 auto", position: "relative" }}>
         
         {/* Header Section */}
         <div style={{ marginBottom: 64, textAlign: "left" }}>
-          <span style={{ fontSize: "12px", fontWeight: 700, color: tokens.A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Curated For You</span>
-          <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: tokens.FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em", margin: "0 0 24px 0" }}>The Essential Collection</h2>
-          <p style={{ color: tokens.M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>Exclusive moments and handpicked gems designed to elevate your journey.</p>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: tokens.A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: bodyFontFamily }}>Curated For You</span>
+          <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: tokens.FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: headlineFontFamily, letterSpacing: "-0.02em", margin: "0 0 24px 0" }}>The Essential Collection</h2>
+          <p style={{ color: tokens.M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: bodyFontFamily, maxWidth: 600 }}>Exclusive moments and handpicked gems designed to elevate your journey.</p>
         </div>
 
         {/* Collage Layout Container */}
@@ -75,7 +82,7 @@ const ExperienceCuratedContent = ({ curatedContent }) => {
                 {!isLast && (
                   <svg className="curated-svg" width="400" height="100%" viewBox="0 0 400 100" preserveAspectRatio="none" style={{ position: "absolute", top: "50%", left: "50%", transform: "translateX(-50%)", width: "400px", height: "calc(100% + 100px)", pointerEvents: "none", zIndex: 0, overflow: "visible" }}>
                     <path
-                      d={isEven ? "M 304 0 C 304 50, 96 50, 96 100" : "M 96 0 C 96 50, 304 50, 304 100"}
+                      d={isEven ? "M 304 0 C 150 0, 250 100, 96 100" : "M 96 0 C 250 0, 150 100, 304 100"}
                       fill="none"
                       stroke={tokens.A}
                       strokeWidth="2"
@@ -123,15 +130,15 @@ const ExperienceCuratedContent = ({ curatedContent }) => {
                     className="collage-text-card"
                   >
                     {/* Watermark Number */}
-                    <div style={{ position: "absolute", top: -16, right: -8, fontSize: 110, fontWeight: 800, color: tokens.A, opacity: 0.05, fontFamily: '"Cormorant Garamond", serif', lineHeight: 1, pointerEvents: "none" }}>
+                    <div style={{ position: "absolute", top: -16, right: -8, fontSize: 110, fontWeight: 800, color: tokens.A, opacity: 0.05, fontFamily: headlineFontFamily, lineHeight: 1, pointerEvents: "none" }}>
                       {(index + 1).toString().padStart(2, '0')}
                     </div>
 
-                    <h3 style={{ fontSize: "clamp(1.5rem, 2vw, 2rem)", fontWeight: 700, color: tokens.FG, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', margin: "0 0 12px 0", lineHeight: 1.2, position: "relative", zIndex: 1 }}>
+                    <h3 style={{ fontSize: "clamp(1.5rem, 2vw, 2rem)", fontWeight: 700, color: tokens.FG, fontFamily: headlineFontFamily, margin: "0 0 12px 0", lineHeight: 1.2, position: "relative", zIndex: 1 }}>
                       {item.text || "Highlight"}
                     </h3>
                     <div style={{ width: 32, height: 2, background: tokens.A, marginBottom: 16, position: "relative", zIndex: 1 }} />
-                    <ExpandableText text={item.description || item.desc} tokens={tokens} />
+                    <ExpandableText text={item.description || item.desc} tokens={tokens} bodyFontFamily={bodyFontFamily} />
                   </motion.div>
                 </div>
 
@@ -152,7 +159,7 @@ const ExperienceCuratedContent = ({ curatedContent }) => {
                 borderRadius: 100,
                 fontSize: 14,
                 fontWeight: 700,
-                fontFamily: '"Inter", sans-serif',
+                fontFamily: bodyFontFamily,
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 letterSpacing: "0.05em"
@@ -235,4 +242,4 @@ const ExperienceCuratedContent = ({ curatedContent }) => {
   );
 };
 
-export default ExperienceCuratedContent;
+export default CuratedContent;

@@ -18,6 +18,7 @@ import Favorite from "../../../components/Favorite";
 import Icon from "../../../components/Icon";
 import FullScreenImage from "../../../components/FullScreenImage";
 import PolicyCategoryItem from "../../../components/PolicyCategoryItem";
+import CuratedContent from "../../../components/CuratedContent";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -4146,6 +4147,7 @@ export default function EventDetails() {
             </section>
           ))}
 
+        <CuratedContent curatedContent={event?.curatedContent} headlineFontFamily="'Poppins', sans-serif" bodyFontFamily="'DM Sans', sans-serif" />
         <Venue event={event} hostName={hostName} />
         <Rules event={event} />
         <HostDetails event={event} hostName={hostName} />

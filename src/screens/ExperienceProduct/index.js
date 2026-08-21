@@ -33,7 +33,7 @@ import Favorite from "../../components/Favorite";
 import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import useIsMobile from "../../hooks/useIsMobile";
 import MobileExperienceView from "./MobileExperienceView";
-import ExperienceCuratedContent from "./ExperienceCuratedContent";
+import CuratedContent from "../../components/CuratedContent";
 
 const formatImageUrl = (url) => {
   if (!url) return null;
@@ -1655,7 +1655,7 @@ const ExperienceProduct = () => {
         )}
 
         {/* CURATED CONTENT SECTION */}
-        <ExperienceCuratedContent curatedContent={listing?.curatedContent} />
+        <CuratedContent curatedContent={listing?.curatedContent} />
 
         {/* PREPARATION SECTION */}
         <section className="prep-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>

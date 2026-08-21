@@ -12,7 +12,7 @@ import Favorite from "../../components/Favorite";
 import Icon from "../../components/Icon";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
-import ExperienceCuratedContent from "./ExperienceCuratedContent";
+import CuratedContent from "../../components/CuratedContent";
 import "./MobileExperienceView.css";
 
 /* ── helpers (copied from parent to avoid coupling) ── */
@@ -570,7 +570,7 @@ export default function MobileExperienceView({
       {/* ╔═══════════════════════════════════╗
           ║     CURATED CONTENT               ║
           ╚═══════════════════════════════════╝ */}
-      <ExperienceCuratedContent curatedContent={listing?.curatedContent} />
+      <CuratedContent curatedContent={listing?.curatedContent} />
 
       {/* ╔═══════════════════════════════════╗
           ║     LOCATION & DETAILS            ║
