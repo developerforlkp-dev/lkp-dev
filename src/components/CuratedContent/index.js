@@ -58,18 +58,18 @@ const CuratedContent = ({
   const hasMore = curatedContent.length > 6;
 
   return (
-    <section style={{ padding, background: tokens.BG, overflow: "hidden" }}>
-      <div style={{ width, maxWidth, margin: "0 auto", position: "relative" }}>
+    <section className="curated-section" style={{ padding, background: tokens.BG, overflow: "hidden" }}>
+      <div className="curated-main-wrapper" style={{ width, maxWidth, margin: "0 auto", position: "relative" }}>
         
         {/* Header Section */}
-        <div style={{ marginBottom: 64, textAlign: "left" }}>
-          <span style={{ fontSize: "12px", fontWeight: 700, color: tokens.A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: bodyFontFamily }}>
+        <div className="curated-header-wrapper" style={{ marginBottom: 64, textAlign: "left" }}>
+          <span className="curated-eyebrow" style={{ fontSize: "12px", fontWeight: 700, color: tokens.A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: bodyFontFamily }}>
             Curated For You
           </span>
-          <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: tokens.FG, margin: 0, lineHeight: 1.1, fontFamily: headlineFontFamily, letterSpacing: "-0.02em" }}>
+          <h2 className="curated-title" style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: tokens.FG, margin: 0, lineHeight: 1.1, fontFamily: headlineFontFamily, letterSpacing: "-0.02em" }}>
             The Essential Collection
           </h2>
-          <p style={{ color: tokens.M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: bodyFontFamily, maxWidth: 600 }}>
+          <p className="curated-desc" style={{ color: tokens.M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: bodyFontFamily, maxWidth: 600 }}>
             Exclusive moments and handpicked gems designed to elevate your journey.
           </p>
         </div>
@@ -219,6 +219,32 @@ const CuratedContent = ({
 
         @media (max-width: 992px) {
           .curated-svg { display: none; }
+          .curated-section {
+            padding: 32px 20px !important;
+            box-sizing: border-box !important;
+          }
+          .curated-main-wrapper {
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+          }
+          .curated-header-wrapper {
+            margin-bottom: 24px !important;
+          }
+          .curated-eyebrow {
+            font-size: 11px !important;
+            margin-bottom: 10px !important;
+          }
+          .curated-title {
+            font-size: clamp(1.6rem, 7vw, 2.2rem) !important;
+            margin-bottom: 16px !important;
+          }
+          .curated-desc {
+            font-size: 14px !important;
+            margin-top: 0 !important;
+            margin-bottom: 20px !important;
+          }
           .curated-collage-container {
             gap: 80px !important;
           }
