@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles, ChevronLeft, ChevronRight, Tag, Baby } from "lucide-react";
 import moment from "moment";
 import { useTheme } from "../../components/JUI/Theme";
-import { createStayOrder, getStayRoomAvailability } from "../../utils/api";
+import { createStayOrder, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability } from "../../utils/api";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import Counter from "../../components/Counter";
 import ChildAgeSelect from "../../components/ChildAgeSelect";
@@ -898,14 +898,34 @@ const StayBookingSystem = ({
       const load = async () => {
         if (!cancelled) setFetchingAvailability(true);
         try {
-          const data = await getStayRoomAvailability(
-            stay.stayId || stay.id,
-            checkInDate.format("YYYY-MM-DD"),
-            checkOutDate.format("YYYY-MM-DD")
-          );
+          const isProperty = isPropertyBasedBooking(stay);
+          const isHostel = isHostelBooking(stay);
+          const isBed = isHostel ||
+            stay?.bookingScope === "Bed-Based" ||
+            stay?.inventoryScope === "Bed-Based" ||
+            (Array.isArray(selectedRooms) && selectedRooms.some((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-")));
+
+          const data = isProperty
+            ? await getStayPropertyAvailability(
+                stay.stayId || stay.id,
+                checkInDate.format("YYYY-MM-DD"),
+                checkOutDate.format("YYYY-MM-DD")
+              )
+            : (isBed
+                ? await getStayBedAvailability(
+                    stay.stayId || stay.id,
+                    checkInDate.format("YYYY-MM-DD"),
+                    checkOutDate.format("YYYY-MM-DD")
+                  )
+                : await getStayRoomAvailability(
+                    stay.stayId || stay.id,
+                    checkInDate.format("YYYY-MM-DD"),
+                    checkOutDate.format("YYYY-MM-DD")
+                  ));
+
           if (!cancelled && data) setAvailabilityData(data);
         } catch (e) {
-          console.error("❌ Failed to fetch real-time room pricing:", e);
+          console.error("❌ Failed to fetch real-time stay pricing:", e);
         } finally {
           if (!cancelled) setFetchingAvailability(false);
         }
@@ -1793,6 +1813,82 @@ const StayBookingSystem = ({
     try {
       const isPropertyBased = isPropertyBasedBooking(stay);
       const isHostel = isHostelBooking(stay);
+      const stayIdVal = stay?.stayId || stay?.id;
+      const checkInStr = checkInDate.format("YYYY-MM-DD");
+      const checkOutStr = checkOutDate.format("YYYY-MM-DD");
+
+      // Verify real-time property, room, or bed availability when clicking Reserve button in modal
+      if (stayIdVal && checkInStr && checkOutStr) {
+        try {
+          const isBedSelected = isHostel ||
+            stay?.bookingScope === "Bed-Based" ||
+            stay?.inventoryScope === "Bed-Based" ||
+            (Array.isArray(selectedRooms) && selectedRooms.some((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-")));
+
+          const freshAvailability = isPropertyBased
+            ? await getStayPropertyAvailability(stayIdVal, checkInStr, checkOutStr)
+            : (isBedSelected
+                ? await getStayBedAvailability(stayIdVal, checkInStr, checkOutStr)
+                : await getStayRoomAvailability(stayIdVal, checkInStr, checkOutStr));
+
+          if (freshAvailability) {
+            setAvailabilityData(freshAvailability);
+            if (freshAvailability.isAvailable === false || freshAvailability.sameDayCheckInClosed === true) {
+              setLoading(false);
+              setValidationError(freshAvailability.availabilityReason || "This stay is currently unavailable for the selected dates.");
+              return;
+            }
+
+            if (isPropertyBased) {
+              if (freshAvailability.overlappingBookings > 0) {
+                setLoading(false);
+                setValidationError("This property is already booked for the selected dates.");
+                return;
+              }
+              const currentAdults = guests.adults || 1;
+              const currentChildren = guests.children || 0;
+              if (freshAvailability.maxAdults && currentAdults > freshAvailability.maxAdults) {
+                setLoading(false);
+                setValidationError(`Maximum ${freshAvailability.maxAdults} adults allowed for this property.`);
+                return;
+              }
+              if (freshAvailability.maxChildren !== undefined && currentChildren > freshAvailability.maxChildren) {
+                setLoading(false);
+                setValidationError(`Maximum ${freshAvailability.maxChildren} children allowed for this property.`);
+                return;
+              }
+            } else if (isBedSelected) {
+              const totalBedsRequired = totalSelectedBeds > 0 ? totalSelectedBeds : (guests.adults || 1);
+              if (freshAvailability.availableBeds !== undefined && freshAvailability.availableBeds < totalBedsRequired) {
+                setLoading(false);
+                setValidationError(`Only ${freshAvailability.availableBeds} bed(s) available for the selected dates (you requested ${totalBedsRequired}).`);
+                return;
+              }
+            } else if (!isPropertyBased && Array.isArray(selectedRooms) && selectedRooms.length > 0) {
+              const availRooms = freshAvailability.rooms || freshAvailability.roomAvailability || [];
+              for (const sel of selectedRooms) {
+                const matched = availRooms.find((r) => String(r.roomId ?? r.id) === String(sel.roomId));
+                if (matched) {
+                  if (matched.isAvailable === false) {
+                    setLoading(false);
+                    setValidationError(`Room "${matched.roomName || matched.name || "Selected Room"}" is not available for the selected dates.`);
+                    return;
+                  }
+                  const reqCount = Number(sel.count || 1);
+                  if (matched.availableRooms !== undefined && matched.availableRooms < reqCount) {
+                    setLoading(false);
+                    setValidationError(`Room "${matched.roomName || matched.name || "Selected Room"}" only has ${matched.availableRooms} room(s) available (you selected ${reqCount}).`);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        } catch (availErr) {
+          console.warn("⚠️ Error checking availability during reserve:", availErr);
+        }
+      }
+
       const extraAdultsCount = isHostel ? 0 : Math.max(0, (guests.adults || 1) - pricing.baseAdultsLimit);
       const extraChildrenCount = Math.max(0, (guests.children || 0) - pricing.baseChildrenLimit);
       if (canUseChildAgeSelector) {

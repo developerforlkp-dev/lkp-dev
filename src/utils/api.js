@@ -1995,6 +1995,56 @@ export const getStayRoomAvailability = async (stayId, checkInDate, checkOutDate)
   }
 };
 
+export const getStayBedAvailability = async (stayId, checkInDate, checkOutDate) => {
+  try {
+    if (!stayId) {
+      throw new Error("stayId is required");
+    }
+    if (!checkInDate) {
+      throw new Error("checkInDate is required");
+    }
+    if (!checkOutDate) {
+      throw new Error("checkOutDate is required");
+    }
+
+    const stayIdNum = Number(stayId);
+    const stayIdStr = (!isNaN(stayIdNum) && stayIdNum > 0) ? String(stayIdNum) : String(stayId);
+
+    const response = await ListingsAPI.get(`/stays/${stayIdStr}/bed-availability`, {
+      params: { checkInDate, checkOutDate },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error fetching stay bed availability:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getStayPropertyAvailability = async (stayId, checkInDate, checkOutDate) => {
+  try {
+    if (!stayId) {
+      throw new Error("stayId is required");
+    }
+    if (!checkInDate) {
+      throw new Error("checkInDate is required");
+    }
+    if (!checkOutDate) {
+      throw new Error("checkOutDate is required");
+    }
+
+    const stayIdNum = Number(stayId);
+    const stayIdStr = (!isNaN(stayIdNum) && stayIdNum > 0) ? String(stayIdNum) : String(stayId);
+
+    const response = await ListingsAPI.get(`/stays/${stayIdStr}/property-availability`, {
+      params: { checkInDate, checkOutDate },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error fetching stay property availability:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // ✅ Get host profile data
 export const getHost = async (hostId) => {
   try {
