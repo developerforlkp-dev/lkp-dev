@@ -2298,13 +2298,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       ?? baseExperiencePrice)
     : baseExperiencePrice;
 
-  // Group pricing: override rawExperiencePrice if guest count matches a tier
-  const groupPricingRules = !isEventBooking
+  // Group pricing: override rawExperiencePrice if guest count matches a tier (not applicable for private bookings)
+  const groupPricingRules = !isEventBooking && !privateBooking
     ? (selectedSlotData?.group_booking_pricing || selectedSlotData?.groupBookingPricing || [])
     : [];
-  const groupOverridePrice = getGroupPricingTierPrice(groupPricingRules, billableAdults);
+  const groupOverridePrice = !privateBooking ? getGroupPricingTierPrice(groupPricingRules, billableAdults) : null;
   // Effective raw base price: group tier wins when matched, else use slot/listing price
-  const effectiveRawPrice = (groupOverridePrice != null && groupOverridePrice > 0)
+  const effectiveRawPrice = (!privateBooking && groupOverridePrice != null && groupOverridePrice > 0)
     ? groupOverridePrice
     : rawExperiencePrice;
 
@@ -4775,7 +4775,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
                             {/* Dynamic Pricing Modifier Labels */}
                             {(() => {
-                              const isGroupBookingApplied = (!isEventBooking && groupOverridePrice != null && groupOverridePrice > 0) || (isEventBooking && effectiveEventPrice?.tier);
+                              const isGroupBookingApplied = !privateBooking && ((!isEventBooking && groupOverridePrice != null && groupOverridePrice > 0) || (isEventBooking && effectiveEventPrice?.tier));
                               const isAddonsApplied = selectedAddOns && selectedAddOns.length > 0;
                               const isEarlyBirdApplied = activeGuestPricing && (activeGuestPricing.earlyBirdDiscountRate > 0 || activeGuestPricing.earlyBirdDiscountAmount > 0);
 

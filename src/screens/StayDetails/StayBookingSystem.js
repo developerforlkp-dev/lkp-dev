@@ -1006,18 +1006,87 @@ const StayBookingSystem = ({
   );
 
   useEffect(() => {
-    if (!isHostelBooking(stay) || !isEntirelyBedBased || totalSelectedBeds <= 0) return;
+    if (isHostelBooking(stay) && isEntirelyBedBased && totalSelectedBeds > 0) {
+      setGuests((prev) => {
+        const nextAdults = totalSelectedBeds;
+        if (prev.adults === nextAdults && prev.children === 0) return prev;
+        return {
+          ...prev,
+          adults: nextAdults,
+          children: 0,
+        };
+      });
+      return;
+    }
+
+    if (!stay || isPropertyBasedBooking(stay) || resolvedSelectedRooms.length === 0) return;
+
+    let totalBaseAdultsLimit = 0;
+    let totalBaseChildrenLimit = 0;
+    let totalExtraAdultsLimit = 0;
+    let totalExtraChildrenLimit = 0;
+    let totalNonBedRooms = 0;
+
+    resolvedSelectedRooms.forEach((room) => {
+      if (!room.isBedConfig) {
+        totalNonBedRooms += Number(room.count || 0);
+      }
+      totalBaseAdultsLimit += (room.maxAdults || 1) * Number(room.count || 0);
+      totalBaseChildrenLimit += (room.maxChildren || 0) * Number(room.count || 0);
+      totalExtraAdultsLimit += Number(
+        room.maxExtraAdults ??
+        room.maxExtraAdultsAllowed ??
+        room.maxExtraBeds ??
+        0
+      ) * Number(room.count || 0);
+      totalExtraChildrenLimit += Number(
+        room.maxExtraChildren ??
+        room.maxExtraChildrenAllowed ??
+        0
+      ) * Number(room.count || 0);
+    });
+
+    const allowedAdults = totalBaseAdultsLimit + totalExtraAdultsLimit;
+    const allowedChildren = totalBaseChildrenLimit + totalExtraChildrenLimit;
+    const minAdults = Math.max(1, totalNonBedRooms);
 
     setGuests((prev) => {
-      const nextAdults = totalSelectedBeds;
-      if (prev.adults === nextAdults && prev.children === 0) return prev;
+      let nextAdults = prev.adults;
+      let nextChildren = prev.children;
+
+      if (nextAdults > allowedAdults) {
+        nextAdults = allowedAdults;
+      }
+      if (nextAdults < minAdults) {
+        nextAdults = minAdults;
+      }
+      if (nextChildren > allowedChildren) {
+        nextChildren = Math.max(0, allowedChildren);
+      }
+
+      if (selectedRooms.length > 0) {
+        let dist = distributeGuests(selectedRooms, stayRoomsCatalog, nextAdults, nextChildren);
+        while (!dist.success && nextAdults > minAdults) {
+          nextAdults -= 1;
+          dist = distributeGuests(selectedRooms, stayRoomsCatalog, nextAdults, nextChildren);
+        }
+        while (!dist.success && nextChildren > 0) {
+          nextChildren -= 1;
+          dist = distributeGuests(selectedRooms, stayRoomsCatalog, nextAdults, nextChildren);
+        }
+      }
+
+      if (prev.adults === nextAdults && prev.children === nextChildren) {
+        return prev;
+      }
+
       return {
         ...prev,
         adults: nextAdults,
-        children: 0,
+        children: nextChildren,
       };
     });
-  }, [stay, isEntirelyBedBased, totalSelectedBeds, setGuests]);
+  }, [stay, isEntirelyBedBased, totalSelectedBeds, resolvedSelectedRooms, selectedRooms, stayRoomsCatalog, setGuests]);
 
   useEffect(() => {
     if (typeof setChildAges !== "function") return;
