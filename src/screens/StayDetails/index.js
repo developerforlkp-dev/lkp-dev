@@ -3392,7 +3392,13 @@ const StayDetails = () => {
         );
       })()}
 
-      <CuratedContent curatedContent={stay?.curatedContent} headlineFontFamily='"Cormorant Garamond", "Playfair Display", serif' bodyFontFamily='"Inter", sans-serif' />
+      <CuratedContent 
+        curatedContent={stay?.curatedContent} 
+        headlineFontFamily='"Cormorant Garamond", "Playfair Display", serif' 
+        bodyFontFamily='"Inter", sans-serif' 
+        padding={isMobile ? "32px 24px" : "100px 0"}
+        width={isMobile ? "100%" : "calc(100% - 80px)"}
+      />
 
       <StayItinerary itinerary={stay?.itinerary} />
 
