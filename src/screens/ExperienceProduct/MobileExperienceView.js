@@ -570,7 +570,11 @@ export default function MobileExperienceView({
       {/* ╔═══════════════════════════════════╗
           ║     CURATED CONTENT               ║
           ╚═══════════════════════════════════╝ */}
-      <CuratedContent curatedContent={listing?.curatedContent} />
+      <CuratedContent 
+        curatedContent={listing?.curatedContent} 
+        width="100%" 
+        padding="32px var(--mob-pad)"
+      />
 
       {/* ╔═══════════════════════════════════╗
           ║     LOCATION & DETAILS            ║

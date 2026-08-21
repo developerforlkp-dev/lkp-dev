@@ -2488,7 +2488,12 @@ const FoodDetails = () => {
 
 
       <SignatureDishesSection food={food} />
-      <CuratedContent curatedContent={food?.curatedContent} maxWidth="1000px" />
+      <CuratedContent 
+        curatedContent={food?.curatedContent} 
+        maxWidth="1000px" 
+        padding={isMobile ? "32px 24px" : "100px 0"}
+        width={isMobile ? "100%" : "calc(100% - 80px)"}
+      />
       <LocationSection food={food} />
 
       <ReservationNoir food={food} hostData={hostData} hostAvatar={hostAvatar} />
