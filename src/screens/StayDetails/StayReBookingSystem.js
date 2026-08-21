@@ -1104,10 +1104,11 @@ const StayBookingSystem = ({
     }
 
     const billingConfigDiscountPercent = (() => {
-      const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || [];
+      const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || stay?.discounts || [];
       if (!Array.isArray(discounts) || discounts.length === 0) return 0;
       const totalRate = discounts.reduce((sum, discount) => {
-        const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+        if (discount?.isEnabled === false || discount?.is_enabled === false) return sum;
+        const rate = Number(discount?.currentRate ?? discount?.current_rate ?? discount?.appliedPercentage ?? discount?.rate ?? discount?.percentage ?? 0);
         return sum + (Number.isFinite(rate) ? rate : 0);
       }, 0);
       return Math.max(0, Math.min(100, totalRate));
@@ -1343,10 +1344,11 @@ const StayBookingSystem = ({
 
     // Billing-config discounts (if provided by stay configuration)
     const billingConfigDiscountRate = (() => {
-      const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || [];
+      const discounts = stay?.billingConfig?.discounts || stay?.billing_config?.discounts || stay?.discounts || [];
       if (!Array.isArray(discounts) || discounts.length === 0) return 0;
       const totalRate = discounts.reduce((sum, discount) => {
-        const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+        if (discount?.isEnabled === false || discount?.is_enabled === false) return sum;
+        const rate = Number(discount?.currentRate ?? discount?.current_rate ?? discount?.appliedPercentage ?? discount?.rate ?? discount?.percentage ?? 0);
         return sum + (Number.isFinite(rate) ? rate : 0);
       }, 0);
       return Math.max(0, Math.min(100, totalRate));
@@ -1473,6 +1475,8 @@ const StayBookingSystem = ({
       nightsCount,
       discount: discountAmount,
       discountPercent: appliedDiscountPercent,
+      billingConfigDiscountAmount,
+      billingConfigDiscountRate,
       longStayDiscountAmount,
       earlyBirdDiscountAmount,
       earlyBirdDiscountPercent,
@@ -1949,6 +1953,9 @@ const StayBookingSystem = ({
       if (Number(pricing.longStayDiscountAmount || 0) > 0) {
         previewReceipt.push({ title: `Long Stay Discount (${Number(pricing.discountPercent || 0).toFixed(2)}%)`, content: `- ${previewCurrency} ${Number(pricing.longStayDiscountAmount).toFixed(2)}` });
       }
+      if (Number(pricing.billingConfigDiscountAmount || 0) > 0) {
+        previewReceipt.push({ title: `Discount (${Number(pricing.billingConfigDiscountRate || 0).toFixed(2)}%)`, content: `- ${previewCurrency} ${Number(pricing.billingConfigDiscountAmount).toFixed(2)}` });
+      }
       if (previewAddOnsTotalRupees > 0) {
         previewReceipt.push({ title: "Add-ons Total", content: `+ ${previewCurrency} ${Number(previewAddOnsTotalRupees).toFixed(2)}` });
       }
@@ -2324,7 +2331,10 @@ const StayBookingSystem = ({
           frontendReceipt.push({ title: `Long Stay Discount (${pricing.discountPercent}%)`, content: `- ${currency} ${Number(pricing.longStayDiscountAmount).toFixed(2)}` });
           remainingDiscount -= pricing.longStayDiscountAmount;
         }
-        if (remainingDiscount > 0.01) {
+        if (pricing.billingConfigDiscountAmount > 0 && remainingDiscount >= pricing.billingConfigDiscountAmount - 0.01) {
+          frontendReceipt.push({ title: `Discount (${Number(pricing.billingConfigDiscountRate).toFixed(2)}%)`, content: `- ${currency} ${Number(pricing.billingConfigDiscountAmount).toFixed(2)}` });
+          remainingDiscount -= pricing.billingConfigDiscountAmount;
+        } else if (remainingDiscount > 0.01) {
           frontendReceipt.push({ title: "Other Discounts", content: `- ${currency} ${Number(remainingDiscount).toFixed(2)}` });
         }
       }
