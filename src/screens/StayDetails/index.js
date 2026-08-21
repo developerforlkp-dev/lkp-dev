@@ -3578,6 +3578,7 @@ function PropertyModal({ stay, onClose }) {
   const billingConfigDiscounts =
     stay.billingConfig?.discounts ||
     stay.billing_config?.discounts ||
+    stay.discounts ||
     [];
   const discountRate = Array.isArray(billingConfigDiscounts)
     ? Math.max(
@@ -3585,7 +3586,8 @@ function PropertyModal({ stay, onClose }) {
       Math.min(
         100,
         billingConfigDiscounts.reduce((sum, discount) => {
-          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+          if (discount?.isEnabled === false || discount?.is_enabled === false) return sum;
+          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? discount?.appliedPercentage ?? discount?.rate ?? discount?.percentage ?? 0);
           return sum + (Number.isFinite(rate) ? rate : 0);
         }, 0)
       )
@@ -4012,6 +4014,7 @@ function PropertyStayCard({ stay }) {
   const billingConfigDiscounts =
     stay?.billingConfig?.discounts ||
     stay?.billing_config?.discounts ||
+    stay?.discounts ||
     [];
   const discountRate = Array.isArray(billingConfigDiscounts)
     ? Math.max(
@@ -4019,7 +4022,8 @@ function PropertyStayCard({ stay }) {
       Math.min(
         100,
         billingConfigDiscounts.reduce((sum, discount) => {
-          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? 0);
+          if (discount?.isEnabled === false || discount?.is_enabled === false) return sum;
+          const rate = Number(discount?.currentRate ?? discount?.current_rate ?? discount?.appliedPercentage ?? discount?.rate ?? discount?.percentage ?? 0);
           return sum + (Number.isFinite(rate) ? rate : 0);
         }, 0)
       )

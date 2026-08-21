@@ -738,14 +738,41 @@ const Checkout = () => {
 
       // Also include generic pricing-level discounts from stay API payload
       // (customer/total can coexist with tier-based discounts).
-      const pricingDiscount = stayDetails?.pricing?.discount || {};
-      const pricingDiscountPercent = Number(
-        pricingDiscount?.customer ??
-        pricingDiscount?.total ??
-        pricingDiscount?.guest ??
-        pricingDiscount?.lkp ??
-        0
-      ) || 0;
+      const getStayBillingConfigDiscountRate = (stay) => {
+        const discounts =
+          stay?.billingConfig?.discounts ||
+          stay?.billing_config?.discounts ||
+          stay?.discounts ||
+          [];
+        if (Array.isArray(discounts) && discounts.length > 0) {
+          const totalRate = discounts.reduce((sum, discount) => {
+            if (discount?.isEnabled === false || discount?.is_enabled === false) return sum;
+            const rate = Number(
+              discount?.currentRate ??
+              discount?.current_rate ??
+              discount?.appliedPercentage ??
+              discount?.rate ??
+              discount?.percentage ??
+              0
+            );
+            return sum + (Number.isFinite(rate) ? rate : 0);
+          }, 0);
+          if (totalRate > 0) {
+            return Math.max(0, Math.min(100, totalRate));
+          }
+        }
+        const pricingDiscount = stay?.pricing?.discount || {};
+        const fallbackPercent = Number(
+          pricingDiscount?.customer ??
+          pricingDiscount?.total ??
+          pricingDiscount?.guest ??
+          pricingDiscount?.lkp ??
+          0
+        ) || 0;
+        return Math.max(0, Math.min(100, fallbackPercent));
+      };
+
+      const pricingDiscountPercent = getStayBillingConfigDiscountRate(stayDetails);
 
       const extraRows = rows.filter((r) => {
         const title = String(r?.title || "");
