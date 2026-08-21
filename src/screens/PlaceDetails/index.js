@@ -20,6 +20,7 @@ import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import Favorite from "../../components/Favorite";
 import Icon from "../../components/Icon";
 import FullScreenImage from "../../components/FullScreenImage";
+import CuratedContent from "../../components/CuratedContent";
 
 /* ─── RESPONSIVE HOOK ─────────── */
 function useWindowSize() {
@@ -3281,6 +3282,7 @@ function MobilePlaceDetails({
       <MobileGallery galleryItems={galleryItems} />
 
       {/* 5. Highlights & Itinerary */}
+
       <MobileItinerary place={place} />
 
       {/* Visitor Information */}
@@ -3293,6 +3295,7 @@ function MobilePlaceDetails({
 
       {/* Location Map Section */}
       <PremiumMarquee items={place?.whatsSpecial} isMobile={true} fallbackItems={["Signature Offerings", "Exclusive Moments", "Bespoke Journey"]} />
+      <CuratedContent curatedContent={place?.curatedContent} headlineFontFamily="'Poppins', sans-serif" bodyFontFamily="'DM Sans', sans-serif" />
       <LocationSection place={place} />
 
       {/* Community Feedback */}
@@ -3521,6 +3524,7 @@ const PlaceDetails = () => {
       <PlaceDescription place={place} />
       <PremiumMarquee items={place?.tags} isMobile={false} fallbackItems={["Authentic Experience", "Local Heritage", "Curated Journey", "Memorable Moments"]} />
 
+
       <Itinerary place={place} />
 
       <VisitorInformation place={place} />
@@ -3530,6 +3534,7 @@ const PlaceDetails = () => {
       <GoodToKnow place={place} />
 
       <PremiumMarquee items={place?.whatsSpecial} isMobile={false} fallbackItems={["Signature Offerings", "Exclusive Moments", "Bespoke Journey"]} />
+      <CuratedContent curatedContent={place?.curatedContent} headlineFontFamily="'Poppins', sans-serif" bodyFontFamily="'DM Sans', sans-serif" />
       <LocationSection place={place} />
 
       {/* <CommunityFeedback /> */}

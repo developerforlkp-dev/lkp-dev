@@ -19,6 +19,7 @@ import roomStyles from "./RoomCards.module.sass";
 import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview } from "../../utils/api";
 import StayBookingSystem from "./StayBookingSystem";
 import StayItinerary from "./StayItinerary";
+import CuratedContent from "../../components/CuratedContent";
 import { useTheme, THEMES } from "../../components/JUI/Theme";
 import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
@@ -3390,6 +3391,8 @@ const StayDetails = () => {
           </div>
         );
       })()}
+
+      <CuratedContent curatedContent={stay?.curatedContent} headlineFontFamily='"Cormorant Garamond", "Playfair Display", serif' bodyFontFamily='"Inter", sans-serif' />
 
       <StayItinerary itinerary={stay?.itinerary} />
 
