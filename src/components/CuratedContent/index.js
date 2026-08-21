@@ -80,9 +80,9 @@ const CuratedContent = ({
                 
                 {/* SVG Curve to next item (Desktop only) */}
                 {!isLast && (
-                  <svg className="curated-svg" width="400" height="100%" viewBox="0 0 400 100" preserveAspectRatio="none" style={{ position: "absolute", top: "50%", left: "50%", transform: "translateX(-50%)", width: "400px", height: "calc(100% + 100px)", pointerEvents: "none", zIndex: 0, overflow: "visible" }}>
+                  <svg className="curated-svg" width="100%" height="100%" viewBox="0 0 1000 100" preserveAspectRatio="none" style={{ position: "absolute", top: "50%", left: 0, width: "100%", height: "calc(100% + 100px)", pointerEvents: "none", zIndex: 0, overflow: "visible" }}>
                     <path
-                      d={isEven ? "M 304 0 C 150 0, 250 100, 96 100" : "M 96 0 C 250 0, 150 100, 304 100"}
+                      d={isEven ? "M 790 0 C 790 60, 210 40, 210 100" : "M 210 0 C 210 60, 790 40, 790 100"}
                       fill="none"
                       stroke={tokens.A}
                       strokeWidth="2"
