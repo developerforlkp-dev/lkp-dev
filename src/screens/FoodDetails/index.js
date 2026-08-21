@@ -2220,7 +2220,7 @@ const FoodDetails = () => {
         if (!id) return;
         setLoading(true);
         const data = await getFoodDetails(id);
-        console.log("Food Details from Backend:", data);
+
         if (!mounted) return;
         if (isFoodUnavailable(data)) {
           showUnavailablePopupAndRedirect();
