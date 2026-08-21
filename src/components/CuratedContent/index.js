@@ -219,16 +219,6 @@ const CuratedContent = ({
 
         @media (max-width: 992px) {
           .curated-svg { display: none; }
-          .curated-section {
-            padding: 32px 20px !important;
-            box-sizing: border-box !important;
-          }
-          .curated-main-wrapper {
-            width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-          }
           .curated-header-wrapper {
             margin-bottom: 24px !important;
           }
