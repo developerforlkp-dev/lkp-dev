@@ -3295,7 +3295,13 @@ function MobilePlaceDetails({
 
       {/* Location Map Section */}
       <PremiumMarquee items={place?.whatsSpecial} isMobile={true} fallbackItems={["Signature Offerings", "Exclusive Moments", "Bespoke Journey"]} />
-      <CuratedContent curatedContent={place?.curatedContent} headlineFontFamily="'Poppins', sans-serif" bodyFontFamily="'DM Sans', sans-serif" />
+      <CuratedContent 
+        curatedContent={place?.curatedContent} 
+        headlineFontFamily="'Poppins', sans-serif" 
+        bodyFontFamily="'DM Sans', sans-serif" 
+        padding="32px 16px"
+        width="100%"
+      />
       <LocationSection place={place} />
 
       {/* Community Feedback */}
