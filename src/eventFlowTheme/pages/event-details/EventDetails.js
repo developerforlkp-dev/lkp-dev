@@ -4147,7 +4147,7 @@ export default function EventDetails() {
             </section>
           ))}
 
-        <CuratedContent curatedContent={event?.curatedContent} headlineFontFamily="'Poppins', sans-serif" bodyFontFamily="'DM Sans', sans-serif" />
+        <CuratedContent curatedContent={event?.curatedContent} />
         <Venue event={event} hostName={hostName} />
         <Rules event={event} />
         <HostDetails event={event} hostName={hostName} />

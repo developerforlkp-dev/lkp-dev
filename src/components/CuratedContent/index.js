@@ -63,9 +63,15 @@ const CuratedContent = ({
         
         {/* Header Section */}
         <div style={{ marginBottom: 64, textAlign: "left" }}>
-          <span style={{ fontSize: "12px", fontWeight: 700, color: tokens.A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: bodyFontFamily }}>Curated For You</span>
-          <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: tokens.FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: headlineFontFamily, letterSpacing: "-0.02em", margin: "0 0 24px 0" }}>The Essential Collection</h2>
-          <p style={{ color: tokens.M, fontSize: "16px", lineHeight: "1.7", margin: 0, fontWeight: 400, fontFamily: bodyFontFamily, maxWidth: 600 }}>Exclusive moments and handpicked gems designed to elevate your journey.</p>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: tokens.A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: bodyFontFamily }}>
+            Curated For You
+          </span>
+          <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: tokens.FG, margin: 0, lineHeight: 1.1, fontFamily: headlineFontFamily, letterSpacing: "-0.02em" }}>
+            The Essential Collection
+          </h2>
+          <p style={{ color: tokens.M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontFamily: bodyFontFamily, maxWidth: 600 }}>
+            Exclusive moments and handpicked gems designed to elevate your journey.
+          </p>
         </div>
 
         {/* Collage Layout Container */}

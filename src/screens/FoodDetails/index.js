@@ -1430,10 +1430,9 @@ function SignatureDishesSection({ food }) {
     <section style={{ background: W, padding: isMobile ? "48px 24px" : "80px 80px", borderTop: `1px solid ${B}` }}>
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
         <Rev>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: 16, fontFamily: '"Inter", sans-serif' }}>Chef's Recommendations</span>
+          <div style={{ textAlign: "left", marginBottom: 64 }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Chef's Recommendations</span>
             <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, margin: 0, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Signature Dishes</h3>
-            <div style={{ width: 60, height: 2, background: A, margin: "24px auto 0" }} />
           </div>
         </Rev>
         
@@ -1493,7 +1492,7 @@ function LocationSection({ food }) {
 
   return (
     <section className="prep-section" style={{ background: W, padding: isMobile ? "32px 24px" : "32px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
         
         {/* Title Group outside the card */}
         <div style={{ marginBottom: 40 }}>
@@ -2489,7 +2488,7 @@ const FoodDetails = () => {
 
 
       <SignatureDishesSection food={food} />
-      <CuratedContent curatedContent={food?.curatedContent} headlineFontFamily="'Fraunces', Georgia, serif" bodyFontFamily="'Inter', system-ui, sans-serif" />
+      <CuratedContent curatedContent={food?.curatedContent} maxWidth="1000px" />
       <LocationSection food={food} />
 
       <ReservationNoir food={food} hostData={hostData} hostAvatar={hostAvatar} />
