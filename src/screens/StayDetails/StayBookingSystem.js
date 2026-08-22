@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles, ChevronLeft, ChevronRight, Tag, Baby } from "lucide-react";
 import moment from "moment";
 import { useTheme } from "../../components/JUI/Theme";
-import { createStayOrder, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability } from "../../utils/api";
+import { createStayOrder, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability, getStayHotelRoomAvailability, getStayHostelAvailability } from "../../utils/api";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import Counter from "../../components/Counter";
 import ChildAgeSelect from "../../components/ChildAgeSelect";
@@ -900,10 +900,6 @@ const StayBookingSystem = ({
         try {
           const isProperty = isPropertyBasedBooking(stay);
           const isHostel = isHostelBooking(stay);
-          const isBed = isHostel ||
-            stay?.bookingScope === "Bed-Based" ||
-            stay?.inventoryScope === "Bed-Based" ||
-            (Array.isArray(selectedRooms) && selectedRooms.some((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-")));
 
           const data = isProperty
             ? await getStayPropertyAvailability(
@@ -911,19 +907,23 @@ const StayBookingSystem = ({
                 checkInDate.format("YYYY-MM-DD"),
                 checkOutDate.format("YYYY-MM-DD")
               )
-            : (isBed
-                ? await getStayBedAvailability(
+            : (isHostel
+                ? await getStayHostelAvailability(
                     stay.stayId || stay.id,
                     checkInDate.format("YYYY-MM-DD"),
                     checkOutDate.format("YYYY-MM-DD")
                   )
-                : await getStayRoomAvailability(
+                : await getStayHotelRoomAvailability(
                     stay.stayId || stay.id,
                     checkInDate.format("YYYY-MM-DD"),
                     checkOutDate.format("YYYY-MM-DD")
                   ));
 
-          if (!cancelled && data) setAvailabilityData(data);
+          const normalizedData = (data?.data && typeof data.data === "object" && !Array.isArray(data.data))
+            ? { ...data.data, ...data }
+            : data;
+
+          if (!cancelled && normalizedData) setAvailabilityData(normalizedData);
         } catch (e) {
           console.error("❌ Failed to fetch real-time stay pricing:", e);
         } finally {
@@ -940,7 +940,18 @@ const StayBookingSystem = ({
   const resolvedSelectedRooms = useMemo(() => {
     if (!stay || !Array.isArray(selectedRooms)) return [];
 
-    const rawRoomsSource = (availabilityData?.roomAvailability || availabilityData?.rooms || stayRoomsCatalog || []);
+    const rawRoomsSource = (
+      availabilityData?.roomAvailability?.rooms ||
+      availabilityData?.rooms ||
+      availabilityData?.roomAvailability ||
+      availabilityData?.data?.roomAvailability?.rooms ||
+      availabilityData?.data?.rooms ||
+      availabilityData?.data?.roomAvailability ||
+      (Array.isArray(availabilityData?.data) ? availabilityData.data : []) ||
+      (Array.isArray(availabilityData) ? availabilityData : []) ||
+      stayRoomsCatalog ||
+      []
+    );
     const catalogById = new Map(
       stayRoomsCatalog.map((r) => [
         String(r?.roomId ?? r?.id ?? r?.roomTypeId ?? r?.room_type_id),
@@ -1820,65 +1831,284 @@ const StayBookingSystem = ({
       // Verify real-time property, room, or bed availability when clicking Reserve button in modal
       if (stayIdVal && checkInStr && checkOutStr) {
         try {
-          const isBedSelected = isHostel ||
-            stay?.bookingScope === "Bed-Based" ||
-            stay?.inventoryScope === "Bed-Based" ||
-            (Array.isArray(selectedRooms) && selectedRooms.some((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-")));
-
-          const freshAvailability = isPropertyBased
+          const freshRaw = isPropertyBased
             ? await getStayPropertyAvailability(stayIdVal, checkInStr, checkOutStr)
-            : (isBedSelected
-                ? await getStayBedAvailability(stayIdVal, checkInStr, checkOutStr)
-                : await getStayRoomAvailability(stayIdVal, checkInStr, checkOutStr));
+            : (isHostel
+                ? await getStayHostelAvailability(stayIdVal, checkInStr, checkOutStr)
+                : await getStayHotelRoomAvailability(stayIdVal, checkInStr, checkOutStr));
+
+          const freshAvailability = (freshRaw?.data && typeof freshRaw.data === "object" && !Array.isArray(freshRaw.data))
+            ? { ...freshRaw.data, ...freshRaw }
+            : freshRaw;
 
           if (freshAvailability) {
             setAvailabilityData(freshAvailability);
-            if (freshAvailability.isAvailable === false || freshAvailability.sameDayCheckInClosed === true) {
+
+            const isOverallAvailable = freshAvailability.isAvailable !== false &&
+              freshAvailability.available !== false &&
+              freshAvailability.is_available !== false &&
+              freshAvailability.status !== "UNAVAILABLE" &&
+              freshAvailability.status !== "SOLD_OUT" &&
+              freshAvailability.status !== "BOOKED";
+
+            if (!isOverallAvailable || freshAvailability.sameDayCheckInClosed === true) {
               setLoading(false);
-              setValidationError(freshAvailability.availabilityReason || "This stay is currently unavailable for the selected dates.");
+              const reason = freshAvailability.availabilityReason || freshAvailability.reason || freshAvailability.message || (freshAvailability.sameDayCheckInClosed ? "Same-day check-in is closed for this property." : "This stay is currently unavailable for the selected dates.");
+              setValidationError(reason);
+              setBookingErrorPopup({
+                visible: true,
+                title: freshAvailability.sameDayCheckInClosed ? "Check-in Closed" : "Stay Unavailable",
+                message: reason,
+                isSameDay: Boolean(freshAvailability.sameDayCheckInClosed),
+              });
               return;
             }
 
             if (isPropertyBased) {
-              if (freshAvailability.overlappingBookings > 0) {
+              if (Number(freshAvailability.overlappingBookings || 0) > 0 || freshAvailability.isBooked === true) {
                 setLoading(false);
-                setValidationError("This property is already booked for the selected dates.");
+                const reason = "This property is already booked for the selected dates.";
+                setValidationError(reason);
+                setBookingErrorPopup({
+                  visible: true,
+                  title: "Property Already Booked",
+                  message: reason,
+                  isSameDay: false,
+                });
                 return;
               }
               const currentAdults = guests.adults || 1;
               const currentChildren = guests.children || 0;
               if (freshAvailability.maxAdults && currentAdults > freshAvailability.maxAdults) {
                 setLoading(false);
-                setValidationError(`Maximum ${freshAvailability.maxAdults} adults allowed for this property.`);
+                const reason = `Maximum ${freshAvailability.maxAdults} adults allowed for this property.`;
+                setValidationError(reason);
+                setBookingErrorPopup({
+                  visible: true,
+                  title: "Capacity Exceeded",
+                  message: reason,
+                  isSameDay: false,
+                });
                 return;
               }
               if (freshAvailability.maxChildren !== undefined && currentChildren > freshAvailability.maxChildren) {
                 setLoading(false);
-                setValidationError(`Maximum ${freshAvailability.maxChildren} children allowed for this property.`);
+                const reason = `Maximum ${freshAvailability.maxChildren} children allowed for this property.`;
+                setValidationError(reason);
+                setBookingErrorPopup({
+                  visible: true,
+                  title: "Capacity Exceeded",
+                  message: reason,
+                  isSameDay: false,
+                });
                 return;
               }
-            } else if (isBedSelected) {
-              const totalBedsRequired = totalSelectedBeds > 0 ? totalSelectedBeds : (guests.adults || 1);
-              if (freshAvailability.availableBeds !== undefined && freshAvailability.availableBeds < totalBedsRequired) {
+            } else if (isHostel) {
+              // Hostel validation for beds and rooms
+              const isBedSelected = stay?.bookingScope === "Bed-Based" ||
+                stay?.inventoryScope === "Bed-Based" ||
+                (Array.isArray(selectedRooms) && selectedRooms.some((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-")));
+              const hasBedSelection = totalSelectedBeds > 0 || isBedSelected;
+              const nonBedRoomsSelected = Array.isArray(selectedRooms) ? selectedRooms.filter(r => !r.isBedConfig && !String(r.roomId || "").startsWith("bed-")) : [];
+              const hasRoomSelection = nonBedRoomsSelected.length > 0;
+
+              if (hasBedSelection && freshAvailability.canBookBedOnly === false && !hasRoomSelection) {
                 setLoading(false);
-                setValidationError(`Only ${freshAvailability.availableBeds} bed(s) available for the selected dates (you requested ${totalBedsRequired}).`);
+                const reason = "Bed booking is currently unavailable for this hostel.";
+                setValidationError(reason);
+                setBookingErrorPopup({ visible: true, title: "Beds Unavailable", message: reason, isSameDay: false });
                 return;
               }
-            } else if (!isPropertyBased && Array.isArray(selectedRooms) && selectedRooms.length > 0) {
-              const availRooms = freshAvailability.rooms || freshAvailability.roomAvailability || [];
-              for (const sel of selectedRooms) {
-                const matched = availRooms.find((r) => String(r.roomId ?? r.id) === String(sel.roomId));
-                if (matched) {
-                  if (matched.isAvailable === false) {
+              if (hasRoomSelection && freshAvailability.canBookRoomOnly === false && !hasBedSelection) {
+                setLoading(false);
+                const reason = "Private room booking is currently unavailable for this hostel.";
+                setValidationError(reason);
+                setBookingErrorPopup({ visible: true, title: "Rooms Unavailable", message: reason, isSameDay: false });
+                return;
+              }
+
+              // Check bed availability
+              if (hasBedSelection) {
+                const bedAvail = freshAvailability.bedAvailability || {};
+                if (bedAvail.isAvailable === false) {
+                  setLoading(false);
+                  const reason = "Beds are unavailable for the selected dates.";
+                  setValidationError(reason);
+                  setBookingErrorPopup({ visible: true, title: "Beds Unavailable", message: reason, isSameDay: false });
+                  return;
+                }
+                const totalBedsRequired = totalSelectedBeds > 0 ? totalSelectedBeds : (guests.adults || 1);
+                const availableBedsCount = Number(
+                  bedAvail.availableBeds ??
+                  freshAvailability.availableBeds ??
+                  freshAvailability.remainingBeds ??
+                  freshAvailability.availableUnits ??
+                  freshAvailability.units
+                );
+                if (Number.isFinite(availableBedsCount) && availableBedsCount < totalBedsRequired) {
+                  setLoading(false);
+                  const reason = availableBedsCount === 0
+                    ? "No beds are available for the selected dates."
+                    : `Only ${availableBedsCount} bed(s) available for the selected dates (you requested ${totalBedsRequired}).`;
+                  setValidationError(reason);
+                  setBookingErrorPopup({
+                    visible: true,
+                    title: "Beds Unavailable",
+                    message: reason,
+                    isSameDay: false,
+                  });
+                  return;
+                }
+              }
+
+              // Check hostel private rooms
+              if (hasRoomSelection) {
+                const hostelRooms = freshAvailability.roomAvailability?.rooms ||
+                  freshAvailability.rooms ||
+                  freshAvailability.roomAvailability ||
+                  [];
+                for (const sel of nonBedRoomsSelected) {
+                  const selKey = String(sel.roomId ?? sel.id ?? sel.roomTypeId ?? sel.room_type_id ?? sel.bedConfigId ?? "").replace(/^bed-/, "").trim().toLowerCase();
+                  const selName = String(sel.roomName || sel.name || sel.roomTypeName || "").trim().toLowerCase();
+
+                  const matched = Array.isArray(hostelRooms) ? hostelRooms.find((r) => {
+                    const rIds = [r.roomId, r.id, r.roomTypeId, r.room_type_id, r.bedConfigId, r.bed_config_id, r._id, r.room_id]
+                      .filter((v) => v !== undefined && v !== null && String(v).trim() !== "")
+                      .map((v) => String(v).replace(/^bed-/, "").trim().toLowerCase());
+                    if (selKey && rIds.includes(selKey)) return true;
+                    const rName = String(r.roomName || r.name || r.roomTypeName || "").trim().toLowerCase();
+                    return Boolean(selName && rName && selName === rName);
+                  }) : null;
+
+                  const reqCount = Number(sel.count || 1);
+                  const roomLabel = matched?.roomName || matched?.name || sel.roomName || sel.name || "Selected Room";
+
+                  if (matched) {
+                    const isRoomAvail = !(matched.isAvailable === false || matched.is_available === false || matched.available === false || matched.status === "UNAVAILABLE" || matched.isBooked === true);
+                    const availCount = Number(matched.availableRooms ?? matched.available_rooms ?? matched.availableUnits ?? matched.units);
+                    if (!isRoomAvail || (Number.isFinite(availCount) && availCount < reqCount)) {
+                      setLoading(false);
+                      const reason = (!isRoomAvail || availCount === 0)
+                        ? `Room "${roomLabel}" is not available for the selected dates.`
+                        : `Room "${roomLabel}" only has ${availCount} room(s) available (you selected ${reqCount}).`;
+                      setValidationError(reason);
+                      setBookingErrorPopup({ visible: true, title: "Room Unavailable", message: reason, isSameDay: false });
+                      return;
+                    }
+                  } else if (Array.isArray(hostelRooms) && hostelRooms.length > 0) {
                     setLoading(false);
-                    setValidationError(`Room "${matched.roomName || matched.name || "Selected Room"}" is not available for the selected dates.`);
+                    const reason = `Room "${roomLabel}" is not available for the selected dates.`;
+                    setValidationError(reason);
+                    setBookingErrorPopup({ visible: true, title: "Room Unavailable", message: reason, isSameDay: false });
                     return;
                   }
+                }
+              }
+            } else {
+              // Hotel / Room-based validation
+              if (freshAvailability.hasAvailableRooms === false) {
+                setLoading(false);
+                const reason = freshAvailability.availabilityReason || "No rooms are available for the selected dates.";
+                setValidationError(reason);
+                setBookingErrorPopup({ visible: true, title: "No Rooms Available", message: reason, isSameDay: false });
+                return;
+              }
+
+              if (Array.isArray(selectedRooms) && selectedRooms.length > 0) {
+                const availRooms = freshAvailability.rooms ||
+                  freshAvailability.roomAvailability?.rooms ||
+                  freshAvailability.roomAvailability ||
+                  freshAvailability.data?.rooms ||
+                  (Array.isArray(freshAvailability.data) ? freshAvailability.data : []) ||
+                  (Array.isArray(freshAvailability) ? freshAvailability : []);
+
+                for (const sel of selectedRooms) {
+                  const selKey = String(sel.roomId ?? sel.id ?? sel.roomTypeId ?? sel.room_type_id ?? sel.bedConfigId ?? "").replace(/^bed-/, "").trim().toLowerCase();
+                  const selName = String(sel.roomName || sel.name || sel.roomTypeName || "").trim().toLowerCase();
+
+                  const matched = (Array.isArray(availRooms) && availRooms.length > 0)
+                    ? availRooms.find((r) => {
+                        const rIds = [
+                          r.roomId,
+                          r.id,
+                          r.roomTypeId,
+                          r.room_type_id,
+                          r.bedConfigId,
+                          r.bed_config_id,
+                          r._id,
+                          r.room_id,
+                        ]
+                          .filter((v) => v !== undefined && v !== null && String(v).trim() !== "")
+                          .map((v) => String(v).replace(/^bed-/, "").trim().toLowerCase());
+
+                        if (selKey && rIds.includes(selKey)) return true;
+
+                        const rName = String(r.roomName || r.name || r.roomTypeName || "").trim().toLowerCase();
+                        if (selName && rName && selName === rName) return true;
+
+                        return false;
+                      })
+                    : null;
+
                   const reqCount = Number(sel.count || 1);
-                  if (matched.availableRooms !== undefined && matched.availableRooms < reqCount) {
-                    setLoading(false);
-                    setValidationError(`Room "${matched.roomName || matched.name || "Selected Room"}" only has ${matched.availableRooms} room(s) available (you selected ${reqCount}).`);
-                    return;
+                  const roomLabel = matched?.roomName || matched?.name || sel.roomName || sel.name || "Selected Room";
+
+                  if (matched) {
+                    const isRoomAvailable = !(
+                      matched.isAvailable === false ||
+                      matched.is_available === false ||
+                      matched.available === false ||
+                      matched.status === "UNAVAILABLE" ||
+                      matched.status === "BOOKED" ||
+                      matched.status === "SOLD_OUT" ||
+                      matched.status === "BLOCKED" ||
+                      matched.isBooked === true ||
+                      matched.is_booked === true
+                    );
+
+                    const availableCountCandidates = [
+                      matched.availableRooms,
+                      matched.available_rooms,
+                      matched.availableUnits,
+                      matched.available_units,
+                      matched.availableCount,
+                      matched.available_count,
+                      matched.remainingRooms,
+                      matched.remaining_rooms,
+                      matched.remaining,
+                      matched.units,
+                      matched.totalAvailable,
+                    ];
+                    const availableCount = availableCountCandidates.find((val) => typeof val === "number" && !isNaN(val));
+
+                    if (!isRoomAvailable || (availableCount !== undefined && availableCount < reqCount)) {
+                      setLoading(false);
+                      const reason = (!isRoomAvailable || availableCount === 0)
+                        ? `Room "${roomLabel}" is not available for the selected dates.`
+                        : `Room "${roomLabel}" only has ${availableCount} room(s) available (you selected ${reqCount}).`;
+                      setValidationError(reason);
+                      setBookingErrorPopup({
+                        visible: true,
+                        title: "Room Unavailable",
+                        message: reason,
+                        isSameDay: false,
+                      });
+                      return;
+                    }
+                  } else if (Array.isArray(availRooms) && availRooms.length > 0) {
+                    const hasExplicitRooms = availRooms.some((r) => r.roomId !== undefined || r.roomTypeId !== undefined || r.id !== undefined);
+                    if (hasExplicitRooms) {
+                      setLoading(false);
+                      const reason = `Room "${roomLabel}" is not available for the selected dates.`;
+                      setValidationError(reason);
+                      setBookingErrorPopup({
+                        visible: true,
+                        title: "Room Unavailable",
+                        message: reason,
+                        isSameDay: false,
+                      });
+                      return;
+                    }
                   }
                 }
               }
@@ -1886,6 +2116,23 @@ const StayBookingSystem = ({
           }
         } catch (availErr) {
           console.warn("⚠️ Error checking availability during reserve:", availErr);
+          const errMsg = availErr.response?.data?.message ||
+            availErr.response?.data?.error ||
+            availErr.response?.data?.availabilityReason ||
+            availErr.message;
+          const status = availErr.response?.status;
+          if (status === 400 || status === 409 || status === 422 || (errMsg && (errMsg.toLowerCase().includes("avail") || errMsg.toLowerCase().includes("book") || errMsg.toLowerCase().includes("room")))) {
+            setLoading(false);
+            const reason = errMsg || "The selected rooms or dates are unavailable. Please choose different dates.";
+            setValidationError(reason);
+            setBookingErrorPopup({
+              visible: true,
+              title: "Booking Unavailable",
+              message: reason,
+              isSameDay: false,
+            });
+            return;
+          }
         }
       }
 

@@ -1970,55 +1970,67 @@ export const getStayDetails = async (stayId) => {
   }
 };
 
-export const getStayRoomAvailability = async (stayId, checkInDate, checkOutDate) => {
+export const getStayHotelRoomAvailability = async (stayId, checkInDate, checkOutDate) => {
   try {
-    if (!stayId) {
-      throw new Error("stayId is required");
-    }
-    if (!checkInDate) {
-      throw new Error("checkInDate is required");
-    }
-    if (!checkOutDate) {
-      throw new Error("checkOutDate is required");
-    }
+    if (!stayId) throw new Error("stayId is required");
+    if (!checkInDate) throw new Error("checkInDate is required");
+    if (!checkOutDate) throw new Error("checkOutDate is required");
 
     const stayIdNum = Number(stayId);
     const stayIdStr = (!isNaN(stayIdNum) && stayIdNum > 0) ? String(stayIdNum) : String(stayId);
 
-    const response = await ListingsAPI.get(`/stays/${stayIdStr}/room-availability`, {
-      params: { checkInDate, checkOutDate },
-    });
-    return response.data;
+    try {
+      const response = await ListingsAPI.get(`/stays/${stayIdStr}/hotel-room-availability`, {
+        params: { checkInDate, checkOutDate },
+      });
+      return response.data;
+    } catch (primaryErr) {
+      if (primaryErr.response?.status === 404) {
+        const response = await ListingsAPI.get(`/stays/${stayIdStr}/room-availability`, {
+          params: { checkInDate, checkOutDate },
+        });
+        return response.data;
+      }
+      throw primaryErr;
+    }
   } catch (error) {
-    console.error("❌ Error fetching stay room availability:", error.response?.data || error.message);
+    console.error("❌ Error fetching stay hotel room availability:", error.response?.data || error.message);
     throw error;
   }
 };
 
-export const getStayBedAvailability = async (stayId, checkInDate, checkOutDate) => {
+export const getStayRoomAvailability = getStayHotelRoomAvailability;
+
+export const getStayHostelAvailability = async (stayId, checkInDate, checkOutDate) => {
   try {
-    if (!stayId) {
-      throw new Error("stayId is required");
-    }
-    if (!checkInDate) {
-      throw new Error("checkInDate is required");
-    }
-    if (!checkOutDate) {
-      throw new Error("checkOutDate is required");
-    }
+    if (!stayId) throw new Error("stayId is required");
+    if (!checkInDate) throw new Error("checkInDate is required");
+    if (!checkOutDate) throw new Error("checkOutDate is required");
 
     const stayIdNum = Number(stayId);
     const stayIdStr = (!isNaN(stayIdNum) && stayIdNum > 0) ? String(stayIdNum) : String(stayId);
 
-    const response = await ListingsAPI.get(`/stays/${stayIdStr}/bed-availability`, {
-      params: { checkInDate, checkOutDate },
-    });
-    return response.data;
+    try {
+      const response = await ListingsAPI.get(`/stays/${stayIdStr}/hostel-availability`, {
+        params: { checkInDate, checkOutDate },
+      });
+      return response.data;
+    } catch (primaryErr) {
+      if (primaryErr.response?.status === 404) {
+        const response = await ListingsAPI.get(`/stays/${stayIdStr}/bed-availability`, {
+          params: { checkInDate, checkOutDate },
+        });
+        return response.data;
+      }
+      throw primaryErr;
+    }
   } catch (error) {
-    console.error("❌ Error fetching stay bed availability:", error.response?.data || error.message);
+    console.error("❌ Error fetching stay hostel availability:", error.response?.data || error.message);
     throw error;
   }
 };
+
+export const getStayBedAvailability = getStayHostelAvailability;
 
 export const getStayPropertyAvailability = async (stayId, checkInDate, checkOutDate) => {
   try {
