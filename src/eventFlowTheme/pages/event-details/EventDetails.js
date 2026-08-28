@@ -2421,16 +2421,17 @@ function Rules({ event }) {
     const categories = [];
     if (experienceRuleItems.length > 0) {
       categories.push({ id: 'cat-exp-rules', title: "Event Rules", items: experienceRuleItems });
-    } else if (evtItems.length > 0) {
-      categories.push({ id: 'cat-evt', title: "Event Rules", items: evtItems });
-    }
+      
+      // Show Check-in instructions and related event details only if Event Rules exist
+      if (evtItems.length > 0) {
+        categories.push({ id: 'cat-evt-details', title: "Event Details", items: evtItems });
+      }
 
-    // Fallback: If we added experienceRuleItems as 'Event Rules', but still have evtItems (check-in, dress code), put them somewhere
-    if (experienceRuleItems.length > 0 && evtItems.length > 0) {
-      categories.push({ id: 'cat-evt-details', title: "Event Details", items: evtItems });
+      // Show Minimum Age and other guest requirements only if Event Rules exist
+      if (guestItems.length > 0) {
+        categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
+      }
     }
-
-    if (guestItems.length > 0) categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     if (cancelItems.length > 0) categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
 
     const foreignerItems = [];
