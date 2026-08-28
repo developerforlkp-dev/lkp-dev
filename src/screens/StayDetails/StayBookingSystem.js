@@ -1853,7 +1853,10 @@ const StayBookingSystem = ({
 
             if (!isOverallAvailable || freshAvailability.sameDayCheckInClosed === true) {
               setLoading(false);
-              const reason = freshAvailability.availabilityReason || freshAvailability.reason || freshAvailability.message || (freshAvailability.sameDayCheckInClosed ? "Same-day check-in is closed for this property." : "This stay is currently unavailable for the selected dates.");
+              let reason = freshAvailability.availabilityReason || freshAvailability.reason || freshAvailability.message || (freshAvailability.sameDayCheckInClosed ? "Same-day check-in is closed for this property." : "This stay is currently unavailable for the selected dates.");
+              if (reason === "SAME_DAY_BOOKING_CUTOFF_PASSED") {
+                reason = "It's too late to book a stay for today. Please select tomorrow or a later date.";
+              }
               setValidationError(reason);
               setBookingErrorPopup({
                 visible: true,
