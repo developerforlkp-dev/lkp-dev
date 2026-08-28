@@ -1484,6 +1484,17 @@ function VisitorInformation({ place }) {
   const { isMobile } = useWindowSize();
   const [showAllVehicles, setShowAllVehicles] = useState(false);
 
+  useEffect(() => {
+    if (showAllVehicles) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showAllVehicles]);
+
   const formatList = (arr, singleStr, fallback, formatter) => {
     if (Array.isArray(arr) && arr.length > 0) {
       return arr.map(item => {
