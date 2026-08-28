@@ -1594,9 +1594,16 @@ function VisitorInformation({ place }) {
                     </div>
                     <div>
                       <span style={{ fontSize: 8, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Permit Category</span>
-                      <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>
-                        {place?.entryType ? `${place.entryType} Entry` : "Free Entry"}
-                      </h4>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                        <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>
+                          {place?.entryType ? `${place.entryType} Entry` : (place?.entryFee ? "Paid Entry" : "Free Entry")}
+                        </h4>
+                        {place?.entryFee && (!place?.entryType || place.entryType.toLowerCase() !== 'free') && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
+                            {place.entryFee}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
