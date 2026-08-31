@@ -6,6 +6,14 @@ import { sendPhoneOTP, verifyPhoneOTP, loginWithGoogle, completeCustomerProfile 
 import { GoogleLogin } from '@react-oauth/google';
 import Dropdown from "../Dropdown";
 
+const decodeJwt = (token) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch (e) {
+    return {};
+  }
+};
+
 const dayOptions = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const yearOptions = Array.from({ length: 100 }, (_, i) => String(new Date().getFullYear() - 18 - i));
@@ -227,7 +235,11 @@ const Login = ({ onClose }) => {
       if (!tokenResponse?.credential) {
         throw new Error("No Google ID token received");
       }
-      const response = await loginWithGoogle(tokenResponse.credential);
+      
+      const decodedGoogleData = decodeJwt(tokenResponse.credential);
+      const googleAvatar = decodedGoogleData.picture || "";
+      
+      const response = await loginWithGoogle(tokenResponse.credential, "", googleAvatar);
 
       // Store JWT token from response temporarily
       const token = response?.token;
@@ -244,9 +256,10 @@ const Login = ({ onClose }) => {
 
       const customer = response?.customer || {};
       const userInfo = {
-        firstName: customer?.firstName || "",
-        lastName: customer?.lastName || "",
-        email: customer?.email || "",
+        firstName: customer?.firstName || decodedGoogleData.given_name || "",
+        lastName: customer?.lastName || decodedGoogleData.family_name || "",
+        email: customer?.email || decodedGoogleData.email || "",
+        avatar: customer?.avatar || googleAvatar || "",
         customerId: customer?.customerId,
         loginMethod: 'google'
       };
@@ -291,7 +304,10 @@ const Login = ({ onClose }) => {
     setLoading(true);
     try {
       if (pendingGoogleCredential && !pendingToken) {
-        const response = await loginWithGoogle(pendingGoogleCredential, dateOfBirth);
+        const decodedGoogleData = decodeJwt(pendingGoogleCredential);
+        const googleAvatar = decodedGoogleData.picture || "";
+        
+        const response = await loginWithGoogle(pendingGoogleCredential, dateOfBirth, googleAvatar);
         const token = response?.token;
 
         if (token) {
@@ -300,9 +316,10 @@ const Login = ({ onClose }) => {
 
         const customer = response?.customer || {};
         const userInfo = {
-          firstName: customer?.firstName || "",
-          lastName: customer?.lastName || "",
-          email: customer?.email || "",
+          firstName: customer?.firstName || decodedGoogleData.given_name || "",
+          lastName: customer?.lastName || decodedGoogleData.family_name || "",
+          email: customer?.email || decodedGoogleData.email || "",
+          avatar: customer?.avatar || googleAvatar || "",
           customerId: customer?.customerId,
           loginMethod: 'google'
         };
