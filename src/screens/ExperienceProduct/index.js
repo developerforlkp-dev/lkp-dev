@@ -1492,7 +1492,7 @@ const ExperienceProduct = () => {
                       const addon = item.addon || item;
                       const addonId = addon.addonId || addon.id;
                       const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
-                      const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+                      const addonImage = addon.imageUrl || (Array.isArray(addon.imageUrls) && addon.imageUrls[0]) || addon.image || item.imageUrl || (Array.isArray(item.imageUrls) && item.imageUrls[0]) || item.image || addon.coverImageUrl || addon.coverPhotoUrl;
                       const isSelected = selectedAddOns.some(a => (a.addonId || a.id) === addonId);
 
                       return (
@@ -1527,7 +1527,7 @@ const ExperienceProduct = () => {
                                 alt={addon.title}
                                 onError={(e) => {
                                   e.target.onerror = null;
-                                  e.target.src = "/images/content/placeholder.jpg";
+                                  e.target.style.display = 'none';
                                 }}
                               />
                             ) : (
