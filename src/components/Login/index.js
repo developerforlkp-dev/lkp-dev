@@ -4,6 +4,11 @@ import styles from "./Login.module.sass";
 import Icon from "../Icon";
 import { sendPhoneOTP, verifyPhoneOTP, loginWithGoogle, completeCustomerProfile } from "../../utils/api";
 import { GoogleLogin } from '@react-oauth/google';
+import Dropdown from "../Dropdown";
+
+const dayOptions = Array.from({ length: 31 }, (_, i) => String(i + 1));
+const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const yearOptions = Array.from({ length: 100 }, (_, i) => String(new Date().getFullYear() - 18 - i));
 
 const isDateOfBirthRequiredError = (err) => {
   const dobErrors = err?.response?.data?.fieldErrors?.dateOfBirth;
@@ -90,6 +95,9 @@ const Login = ({ onClose }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dobDay, setDobDay] = useState("Day");
+  const [dobMonth, setDobMonth] = useState("Month");
+  const [dobYear, setDobYear] = useState("Year");
   const [step, setStep] = useState("phone"); // "phone", "otp", "profile"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -128,6 +136,18 @@ const Login = ({ onClose }) => {
       }
     };
   }, []);
+
+  // Sync the 3 DOB selects into the single dateOfBirth state
+  useEffect(() => {
+    if (dobYear !== "Year" && dobMonth !== "Month" && dobDay !== "Day") {
+      const monthIndex = monthOptions.indexOf(dobMonth) + 1;
+      const formattedMonth = String(monthIndex).padStart(2, '0');
+      const formattedDay = String(dobDay).padStart(2, '0');
+      setDateOfBirth(`${dobYear}-${formattedMonth}-${formattedDay}`);
+    } else {
+      setDateOfBirth("");
+    }
+  }, [dobDay, dobMonth, dobYear]);
 
   // Auto-focus first OTP input when OTP step is shown
   useEffect(() => {
@@ -638,64 +658,97 @@ const Login = ({ onClose }) => {
 
       {/* Step 3: Profile Completion */}
       {step === "profile" && (
-        <div className={styles.item}>
+        <div className={cn(styles.item, styles.profileCompleteItem)}>
           <style>{`
             .Modal-close-btn { display: none !important; }
           `}</style>
-          <div className={cn("h3", styles.title)}>
-            {pendingGoogleCredential && !pendingToken ? "Complete your sign up" : "Complete your profile"}
+          
+          <div className={styles.premiumHeader}>
+            <div className={styles.iconCircle}>
+              <Icon name="user" size="24" />
+            </div>
+            <div className={cn("h3", styles.title)}>
+              {pendingGoogleCredential && !pendingToken ? "Almost there!" : "Welcome aboard"}
+            </div>
+            <div className={styles.info}>
+              {pendingGoogleCredential && !pendingToken
+                ? "We just need your date of birth to finish setting up your account."
+                : "Please fill in a few details so we can personalize your experience."}
+            </div>
           </div>
-          <div className={styles.info}>
-            {pendingGoogleCredential && !pendingToken
-              ? "Please provide your date of birth to continue with Google"
-              : "Please provide your details to continue"}
-          </div>
+
           <form onSubmit={handleProfileSubmit} className={styles.form}>
             {!(pendingGoogleCredential && !pendingToken) && (
-              <div className={styles.nameFields} style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
-                <input
-                  type="text"
-                  className={styles.nameInput}
-                  placeholder="First Name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  disabled={loading}
-                  required
-                />
-                <input
-                  type="text"
-                  className={styles.nameInput}
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  disabled={loading}
-                  required
-                />
+              <div className={styles.nameFields}>
+                <div className={styles.inputWrap}>
+                  <label>First Name</label>
+                  <input
+                    type="text"
+                    className={styles.nameInput}
+                    placeholder="e.g. Jane"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                <div className={styles.inputWrap}>
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    className={styles.nameInput}
+                    placeholder="e.g. Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
               </div>
             )}
-            <div className={styles.dobField} style={{ marginBottom: "16px" }}>
-              <label htmlFor="profile-login-dob" className={styles.fieldLabel}>
+            
+            <div className={styles.dobField}>
+              <label className={styles.fieldLabel}>
                 <span>Date of Birth <span className={styles.required}>*</span></span>
                 <span className={styles.ageHint}>(Must be 18+)</span>
               </label>
-              <input
-                id="profile-login-dob"
-                type="date"
-                className={styles.dateInput}
-                placeholder="Date of Birth"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                disabled={loading}
-                max={maxDateOfBirth}
-                required
-              />
+              
+              <div className={styles.dobDropdowns}>
+                <div className={styles.selectWrap}>
+                  <Dropdown
+                    className={styles.dropdown}
+                    value={dobDay}
+                    setValue={setDobDay}
+                    options={dayOptions}
+                  />
+                </div>
+                
+                <div className={styles.selectWrap}>
+                  <Dropdown
+                    className={styles.dropdown}
+                    value={dobMonth}
+                    setValue={setDobMonth}
+                    options={monthOptions}
+                  />
+                </div>
+                
+                <div className={styles.selectWrap}>
+                  <Dropdown
+                    className={styles.dropdown}
+                    value={dobYear}
+                    setValue={setDobYear}
+                    options={yearOptions}
+                  />
+                </div>
+              </div>
             </div>
-            {error && <div className={styles.error} style={{ marginBottom: "16px" }}>{error}</div>}
+
+            {error && <div className={styles.error}>{error}</div>}
+            
             <button
               type="submit"
-              className={cn("button", styles.button)}
-              disabled={loading || !dateOfBirth || (!(pendingGoogleCredential && !pendingToken) && (!firstName || !lastName))}
-              style={{ width: "100%" }}
+              className={cn("button", styles.button, styles.submitBtn)}
+              disabled={loading || dobDay === "Day" || dobMonth === "Month" || dobYear === "Year" || (!(pendingGoogleCredential && !pendingToken) && (!firstName || !lastName))}
             >
               {loading ? "Saving..." : pendingGoogleCredential && !pendingToken ? "Continue with Google" : "Complete Profile"}
             </button>
