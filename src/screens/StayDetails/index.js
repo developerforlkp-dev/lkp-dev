@@ -1767,6 +1767,9 @@ function PolicyCategoryItem({ category }) {
     if (lowerTitle.includes("guest") || lowerTitle.includes("requirements")) {
       return <Users size={20} color={A} />;
     }
+    if (lowerTitle.includes("foreigner")) {
+      return <Globe size={20} color={A} />;
+    }
     return <ShieldCheck size={20} color={A} />;
   };
 
@@ -2011,6 +2014,32 @@ function StayPolicies({ stay }) {
     }
     if (cancelItems.length > 0) {
       categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
+    }
+
+    // Foreigner Guidelines
+    const foreignerItems = [];
+    const foreignersAllowed = stay?.foreignersAllowed !== undefined ? stay?.foreignersAllowed : (stay?.listing?.foreignersAllowed !== undefined ? stay?.listing?.foreignersAllowed : (stay?.stay?.foreignersAllowed !== undefined ? stay?.stay?.foreignersAllowed : stay?.privacyAndPolicy?.foreignersAllowed));
+    if (foreignersAllowed !== undefined && foreignersAllowed !== null && foreignersAllowed !== "") {
+      const isAllowed = foreignersAllowed === true || foreignersAllowed === 'true' || foreignersAllowed === 'Yes' || foreignersAllowed === 'yes' || foreignersAllowed === 1;
+      foreignerItems.push({
+        id: 'foreigners-allowed',
+        title: "Foreigners Allowed",
+        body: isAllowed ? "Yes" : "No"
+      });
+    }
+
+    const ticketPriceForeigners = stay?.ticketPriceApplicableToForeigners !== undefined ? stay?.ticketPriceApplicableToForeigners : (stay?.listing?.ticketPriceApplicableToForeigners !== undefined ? stay?.listing?.ticketPriceApplicableToForeigners : (stay?.stay?.ticketPriceApplicableToForeigners !== undefined ? stay?.stay?.ticketPriceApplicableToForeigners : stay?.privacyAndPolicy?.ticketPriceApplicableToForeigners));
+    if (ticketPriceForeigners !== undefined && ticketPriceForeigners !== null && ticketPriceForeigners !== "") {
+      const isApplicable = ticketPriceForeigners === true || ticketPriceForeigners === 'true' || ticketPriceForeigners === 'Applicable' || ticketPriceForeigners === 'yes' || ticketPriceForeigners === 1;
+      foreignerItems.push({
+        id: 'ticket-price-foreigners',
+        title: "Ticket Pricing for Foreigners",
+        body: isApplicable ? "Applicable" : "Not Applicable"
+      });
+    }
+
+    if (foreignerItems.length > 0) {
+      categories.push({ id: 'cat-foreigner', title: "Foreigner Guidelines", items: foreignerItems });
     }
 
     return categories;
