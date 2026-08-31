@@ -1457,6 +1457,7 @@ const Main = ({
         modal: {
           ondismiss: () => {
             setIsConfirmingBooking(false);
+            setTimeout(() => { window.location.reload(); }, 300);
           },
         },
         prefill: {

@@ -3653,7 +3653,7 @@ const StayBookingSystem = ({
               </div>
 
               {/* Footer */}
-              <div className="booking-modal-footer" style={{ padding: "16px 28px", background: BG, borderTop: `1px solid ${B}88`, display: "flex", flexDirection: "column", gap: 8, zIndex: 10 }}>
+              <div className="booking-modal-footer" style={{ padding: "16px 28px", background: BG, borderTop: `1px solid ${B}88`, display: "flex", flexDirection: "column", gap: 8, zIndex: 10, WebkitTransform: "translateZ(0)", transform: "translateZ(0)" }}>
                 <AnimatePresence>
                   {validationError && (
                     <motion.div
