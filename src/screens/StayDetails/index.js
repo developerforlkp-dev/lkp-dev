@@ -2749,10 +2749,18 @@ const StayDetails = () => {
 
   const handleRoomCountChange = useCallback((roomId, count) => {
     const rid = String(roomId);
-    setSelectedRooms(prev => prev.map(r =>
-      r.roomId === rid ? { ...r, count: Math.max(1, count) } : r
-    ));
-  }, []);
+    setSelectedRooms(prev => {
+      const nextRooms = prev.map(r =>
+        r.roomId === rid ? { ...r, count: Math.max(1, count) } : r
+      );
+      const totalRooms = nextRooms.reduce((sum, r) => sum + Number(r.count || 0), 0);
+      setGuests(g => ({
+        ...g,
+        adults: Math.max(g?.adults || 1, totalRooms)
+      }));
+      return nextRooms;
+    });
+  }, [setGuests]);
 
   // Rehydrate booking selection state if returning from successful authentication redirect
   useEffect(() => {

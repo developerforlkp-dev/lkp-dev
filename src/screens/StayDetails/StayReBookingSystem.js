@@ -709,14 +709,14 @@ const StayBookingSystem = ({
       const { roomId, currentCount, maxLimit, isBedConfig } = item;
 
       if (currentCount < maxLimit) {
+        handleRoomCountChangeWithReset(roomId, currentCount + 1);
         if (!isBedConfig && !isPropertyBasedBooking(stay)) {
           const nonBedCount = resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0);
-          if (nonBedCount >= (guests?.adults || 1)) {
-            setValidationError("You cannot book more rooms than the number of adults.");
-            return;
-          }
+          setGuests(prev => ({
+            ...prev,
+            adults: Math.max(prev?.adults || 1, nonBedCount + 1)
+          }));
         }
-        handleRoomCountChangeWithReset(roomId, currentCount + 1);
         setValidationError("Another room has been added to accommodate extra guests.");
         return;
       }
@@ -3687,10 +3687,19 @@ const StayBookingSystem = ({
                                       setSelectedRooms(prev => prev.filter(r => (r.roomId || r.id) !== (room.roomId || room.id)));
                                     } else {
                                       handleRoomCountChangeWithReset(room.roomId || room.id, v);
+                                      if (!room.isBedConfig && !isPropertyBasedBooking(stay)) {
+                                        const newTotalRooms = resolvedSelectedRooms
+                                          .filter(r => !r.isBedConfig)
+                                          .reduce((sum, r) => sum + ((r.roomId || r.id) === (room.roomId || room.id) ? v : Number(r.count || 0)), 0);
+                                        setGuests(prev => ({
+                                          ...prev,
+                                          adults: Math.max(prev?.adults || 1, newTotalRooms)
+                                        }));
+                                      }
                                     }
                                   }}
                                   min={resolvedSelectedRooms.length > 1 ? 0 : 1}
-                                  max={room.isBedConfig ? Number(room.units || room.totalRooms || room.availableRooms || 99) : Math.min(Number(room.units || room.totalRooms || room.availableRooms || 99), room.count + Math.max(0, (guests?.adults || 1) - resolvedSelectedRooms.filter(r => !r.isBedConfig).reduce((sum, r) => sum + Number(r.count || 0), 0)))}
+                                  max={Number(room.units || room.totalRooms || room.availableRooms || 99)}
                                 />
                               </div>
                             </div>

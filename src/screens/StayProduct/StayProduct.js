@@ -851,8 +851,8 @@ const BookingSidebar = ({
                   </div>
                   <div className={styles.counter}>
                     <button
-                      onClick={() => setGuests(g => ({ ...g, adults: Math.max(1, (g.adults || 0) - 1) }))}
-                      disabled={(guests?.adults || 0) <= 1}
+                      onClick={() => setGuests(g => ({ ...g, adults: Math.max(isRoomBased ? roomsCount : 1, (g.adults || 0) - 1) }))}
+                      disabled={(guests?.adults || 0) <= (isRoomBased ? roomsCount : 1)}
                     >-</button>
                     <span>{guests?.adults || 0}</span>
                     <button
@@ -1014,7 +1014,14 @@ const BookingSidebar = ({
                     >-</button>
                     <span>{roomsCount}</span>
                     <button
-                      onClick={() => setRoomsCount(Math.min(Number(selectedRoom.units || 99), roomsCount + 1))}
+                      onClick={() => {
+                        const nextCount = Math.min(Number(selectedRoom.units || 99), roomsCount + 1);
+                        setRoomsCount(nextCount);
+                        setGuests(g => ({
+                          ...g,
+                          adults: Math.max(g?.adults || 1, nextCount)
+                        }));
+                      }}
                       disabled={roomsCount >= Number(selectedRoom.units || 99)}
                       aria-label="Increase room count"
                     >+</button>
@@ -1185,6 +1192,7 @@ const RoomCard = ({
   onSelect,
   discountPercentage,
   guests,
+  setGuests,
   stay,
   checkInDate,
   selectedRoom,
@@ -1351,7 +1359,14 @@ const RoomCard = ({
                 >-</button>
                 <span>{roomsCount}</span>
                 <button
-                  onClick={() => setRoomsCount(Math.min(Number(room.units || 99), roomsCount + 1))}
+                  onClick={() => {
+                    const nextCount = Math.min(Number(room.units || 99), roomsCount + 1);
+                    setRoomsCount(nextCount);
+                    setGuests(g => ({
+                      ...g,
+                      adults: Math.max(g?.adults || 1, nextCount)
+                    }));
+                  }}
                   disabled={roomsCount >= Number(room.units || 99)}
                 >+</button>
               </div>
@@ -1376,6 +1391,7 @@ const AvailableRooms = ({
   selectedRoom,
   discountPercentage,
   guests,
+  setGuests,
   stay,
   checkInDate,
   roomsCount,
@@ -1421,6 +1437,7 @@ const AvailableRooms = ({
             onSelect={onSelectRoom}
             discountPercentage={discountPercentage}
             guests={guests}
+            setGuests={setGuests}
             stay={stay}
             checkInDate={checkInDate}
             selectedRoom={selectedRoom}
@@ -2925,6 +2942,7 @@ const StayProduct = () => {
                 onSelectRoom={handleSelectRoom}
                 discountPercentage={discountPercentage}
                 guests={guests}
+                setGuests={setGuests}
                 stay={stay}
                 checkInDate={checkInDate}
                 selectedRoom={selectedRoom}
