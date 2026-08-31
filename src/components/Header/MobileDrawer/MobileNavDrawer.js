@@ -18,6 +18,19 @@ const MobileNavDrawer = ({
   wishlistCount,
 }) => {
   const scrollRef = useRef(null);
+  const [avatar, setAvatar] = React.useState("");
+
+  useEffect(() => {
+    try {
+      const userInfoStr = localStorage.getItem("userInfo");
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        if (userInfo.avatar) {
+          setAvatar(userInfo.avatar);
+        }
+      }
+    } catch(e) {}
+  }, [visible]);
 
   // ESC key to close
   const handleKeyDown = useCallback(
@@ -143,7 +156,11 @@ const MobileNavDrawer = ({
                   onClick={onClose}
                 >
                   <span className={styles.navIcon}>
-                    <Icon name="user" size="20" />
+                    {avatar ? (
+                      <img src={avatar} alt="User Avatar" referrerPolicy="no-referrer" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', aspectRatio: '1/1' }} />
+                    ) : (
+                      <Icon name="user" size="20" />
+                    )}
                   </span>
                   <span className={styles.navLabel}>Account</span>
                 </NavLink>

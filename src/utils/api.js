@@ -870,10 +870,10 @@ export const resendHostingOtp = async (sessionId) => {
 };
 
 // Google OAuth login
-export const loginWithGoogle = async (idToken, dateOfBirth = "") => {
+export const loginWithGoogle = async (idToken, dateOfBirth = "", avatarUrl = "") => {
   try {
     const url = "/customers/auth/google";
-    const requestData = { idToken: idToken, dateOfBirth: dateOfBirth };
+    const requestData = { idToken, dateOfBirth, avatarUrl };
     const baseURL = getApiBaseURL();
     const fullURL = baseURL === "/api"
       ? `${window.location.origin}${baseURL}${url}`

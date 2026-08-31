@@ -91,12 +91,17 @@ const PersonalInfo = () => {
         } = data.customer;
 
         //console.log("✅ Profile loaded:", data.customer);
+        let localUserInfo = null;
+        try {
+          localUserInfo = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo")) : null;
+        } catch(e) {}
+        
         setProfile({
           firstName: firstName || "",
           lastName: lastName || "",
           email: email || "",
           phone: phone || "",
-          avatarUrl: avatarUrl || "",
+          avatarUrl: avatarUrl || localUserInfo?.avatar || "",
           countryCode: countryCode || "+91",
           isEmailVerified: !!isEmailVerified,
           isPhoneVerified: !!isPhoneVerified,
@@ -344,6 +349,7 @@ const PersonalInfo = () => {
             <img
               src={previewUrl || profile.avatarUrl}
               alt="Avatar"
+              referrerPolicy="no-referrer"
               onLoad={() => {
                 if (previewUrl || profile.avatarUrl) {
                   //console.log("🖼️ Avatar image rendered:", previewUrl || profile.avatarUrl);
