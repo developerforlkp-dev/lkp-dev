@@ -20,7 +20,7 @@ const MobileNavDrawer = ({
   const scrollRef = useRef(null);
   const [avatar, setAvatar] = React.useState("");
 
-  useEffect(() => {
+  const loadAvatar = useCallback(() => {
     try {
       const userInfoStr = localStorage.getItem("userInfo");
       if (userInfoStr) {
@@ -30,7 +30,15 @@ const MobileNavDrawer = ({
         }
       }
     } catch(e) {}
-  }, [visible]);
+  }, []);
+
+  useEffect(() => {
+    if (visible) {
+      loadAvatar();
+    }
+    window.addEventListener("user-info-changed", loadAvatar);
+    return () => window.removeEventListener("user-info-changed", loadAvatar);
+  }, [visible, loadAvatar]);
 
   // ESC key to close
   const handleKeyDown = useCallback(

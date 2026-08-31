@@ -69,6 +69,18 @@ const PersonalInfo = () => {
     fetchProfile();
   }, []);
 
+  const updateLocalUserInfo = (newAvatarUrl) => {
+    try {
+      const userInfoStr = localStorage.getItem("userInfo");
+      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
+      if (userInfo.avatar !== newAvatarUrl) {
+        userInfo.avatar = newAvatarUrl;
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
+        window.dispatchEvent(new Event("user-info-changed"));
+      }
+    } catch (e) {}
+  };
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -111,6 +123,10 @@ const PersonalInfo = () => {
           linkedin: linkedin || "",
           twitter: twitter || ""
         });
+        
+        if (avatarUrl) {
+          updateLocalUserInfo(avatarUrl);
+        }
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -306,6 +322,7 @@ const PersonalInfo = () => {
       if (result && (result.avatarUrl || result.url)) {
         const newUrl = result.avatarUrl || result.url;
         setProfile(prev => ({ ...prev, avatarUrl: newUrl }));
+        updateLocalUserInfo(newUrl);
         setPreviewUrl(null); // Clear preview once we have the real URL
         setAvatarSuccess(true);
         setTimeout(() => setAvatarSuccess(false), 3000);

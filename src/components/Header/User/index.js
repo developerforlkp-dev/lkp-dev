@@ -9,7 +9,7 @@ const User = ({ className, items }) => {
   const [visible, setVisible] = useState(false);
   const [avatar, setAvatar] = useState("");
 
-  useEffect(() => {
+  const loadAvatar = () => {
     try {
       const userInfoStr = localStorage.getItem("userInfo");
       if (userInfoStr) {
@@ -19,6 +19,12 @@ const User = ({ className, items }) => {
         }
       }
     } catch(e) {}
+  };
+
+  useEffect(() => {
+    loadAvatar();
+    window.addEventListener("user-info-changed", loadAvatar);
+    return () => window.removeEventListener("user-info-changed", loadAvatar);
   }, []);
 
   // Logout function that clears all user data and redirects to landing page
