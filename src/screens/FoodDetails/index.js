@@ -1516,8 +1516,8 @@ function LocationSection({ food }) {
         }} className="prep-grid">
 
           {/* LEFT: Map */}
-          <Rev delay={0.1} style={{ height: "100%" }}>
-            <div style={{ position: "sticky", top: 120, height: 400, maxHeight: "calc(100vh - 160px)", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
+          <Rev delay={0.1} style={{ height: "100%", minWidth: 0 }}>
+            <div style={{ position: "sticky", top: 120, height: 400, maxHeight: "calc(100vh - 160px)", width: "100%", boxSizing: "border-box", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
               <div style={{
                 position: "absolute",
                 top: 16,
@@ -1570,8 +1570,8 @@ function LocationSection({ food }) {
           </Rev>
 
           {/* RIGHT: Details List */}
-          <Rev delay={0.2} style={{ height: "100%" }}>
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0" }}>
+          <Rev delay={0.2} style={{ height: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0", width: "100%", boxSizing: "border-box" }}>
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
                 {(food?.meetingAddress || food?.address) && (
                   <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>

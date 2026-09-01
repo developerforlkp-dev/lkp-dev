@@ -585,12 +585,13 @@ export default function MobileExperienceView({
 
         {/* Map embed */}
         {(listing?.meetingLatitude && listing?.meetingLongitude) && (
-          <div className="mob-map-container" style={{ border: `1px solid ${B}` }}>
+          <div className="mob-map-container" style={{ border: `1px solid ${B}`, width: "100%", boxSizing: "border-box", overflow: "hidden", borderRadius: 12 }}>
             <iframe
               title="Location"
               src={`https://maps.google.com/maps?q=${listing.meetingLatitude},${listing.meetingLongitude}&z=14&output=embed`}
               loading="lazy"
               allowFullScreen
+              style={{ width: "100%", height: "250px", border: 0 }}
             />
           </div>
         )}

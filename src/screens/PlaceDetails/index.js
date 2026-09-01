@@ -2291,11 +2291,11 @@ function LocationSection({ place }) {
     <section className="location-section" style={{ background: W, padding: isMobile ? "40px 16px" : "48px 80px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "45fr 55fr", gap: isMobile ? 32 : 64 }} className="prep-grid">
-          <Rev delay={0.1} style={{ height: "100%" }}>
+          <Rev delay={0.1} style={{ height: "100%", minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
               <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it All Happens</h3>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ background: W, border: `1px solid ${B}`, height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
+                <div style={{ background: W, border: `1px solid ${B}`, width: "100%", boxSizing: "border-box", height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
                   <div style={{
                     position: "absolute",
                     top: 16,
@@ -2339,7 +2339,7 @@ function LocationSection({ place }) {
               </div>
             </div>
           </Rev>
-          <Rev delay={0.2} style={{ height: "100%" }}>
+          <Rev delay={0.2} style={{ height: "100%", minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
               <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it is</h3>
               <div style={{ display: "flex", flexDirection: "column" }}>
