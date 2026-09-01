@@ -2313,10 +2313,11 @@ function LocationSection({ place }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    pointerEvents: "none"
+                    pointerEvents: "none",
+                    maxWidth: isMobile ? "calc(100% - 130px)" : "calc(100% - 32px)",
                   }}>
-                    <MapPin size={16} color={A} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{place?.placeName || "Location"}</span>
+                    <MapPin size={16} color={A} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: FG, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place?.placeName || "Location"}</span>
                   </div>
                   {latitude && longitude ? (
                     <iframe

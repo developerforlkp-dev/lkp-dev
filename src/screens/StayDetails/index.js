@@ -4703,10 +4703,11 @@ function StayLocation({ stay }) {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                pointerEvents: "none"
+                pointerEvents: "none",
+                maxWidth: isMobile ? "calc(100% - 130px)" : "calc(100% - 32px)",
               }}>
-                <MapPin size={16} color={A} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>{locationName}</span>
+                <MapPin size={16} color={A} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locationName}</span>
               </div>
               <iframe
                 width="100%"
