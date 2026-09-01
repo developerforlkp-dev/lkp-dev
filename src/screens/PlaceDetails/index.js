@@ -568,7 +568,7 @@ function PlaceHero({ place, galleryItems, id }) {
               <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FFF", fontWeight: 700, marginBottom: 8, opacity: 0.8 }}>
                 {toDisplayString(place?.category) || "DESTINATION"}
               </p>
-              <h1 className="font-display" style={{ fontSize: "2.2rem", fontWeight: 800, color: "#FFF", lineHeight: 1.1, margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+              <h1 className="hero-title" style={{ fontSize: "clamp(2rem, 8vw, 2.5rem)", fontWeight: 700, color: "#FFF", lineHeight: 1.1, margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.5)", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.01em" }}>
                 {placeName}
               </h1>
            </div>
@@ -657,15 +657,13 @@ function PlaceHero({ place, galleryItems, id }) {
             }}>
               {toDisplayString(place?.category) || "DESTINATION"}
             </p>
-            <h1 className="font-display" style={{
-              fontSize: "clamp(2rem, 3.5vw, 3.8rem)",
-              fontWeight: 800,
+            <h1 className="hero-title" style={{
+              fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+              fontWeight: 700,
               color: FG,
               lineHeight: 1.1,
-              letterSpacing: "-0.03em",
+              letterSpacing: "-0.01em",
               margin: "0 0 20px 0",
-              textTransform: "uppercase",
-              wordBreak: "break-word",
               overflowWrap: "break-word"
             }}>
               {placeName}
@@ -1141,7 +1139,7 @@ function DestAbout({ place, hostData, hostAvatar }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 100 }} className="about-grid">
             <Rev>
               <p style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 24 }}>About the Destination</p>
-              <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, wordBreak: "break-word", overflowWrap: "break-word" }}>
+              <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, wordBreak: "break-word", overflowWrap: "break-word", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                 {place?.placeName || "Not Specified"}
               </h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
@@ -1403,7 +1401,7 @@ function Itinerary({ place }) {
           <div style={{ width: 4, height: 32, borderRadius: 2, background: A }} />
           <span style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Your Journey</span>
         </div>
-        <h3 style={{ fontSize: "clamp(1.8rem, 2.8vw, 2.4rem)", fontWeight: 800, color: FG, margin: "0 0 8px 0", fontFamily: "Poppins, sans-serif" }}>Curated Experience Plan</h3>
+        <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, margin: "0 0 8px 0", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Curated Experience Plan</h3>
         <p style={{ fontSize: 14, color: M, marginBottom: 40, maxWidth: 520 }}>{steps.length} carefully crafted steps to make the most of your visit</p>
 
         {/* Hero first step — full width */}
@@ -1551,11 +1549,13 @@ function VisitorInformation({ place }) {
     <section style={{ background: W, padding: isMobile ? "40px 16px" : "48px 80px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <h3 style={{
-          fontSize: isMobile ? 24 : "clamp(1.8rem, 2.5vw, 2.2rem)",
+          fontSize: isMobile ? 32 : "clamp(2.5rem, 4vw, 3.5rem)",
           fontWeight: 700,
           color: FG,
+          lineHeight: 1.1,
+          letterSpacing: "-0.02em",
           marginBottom: 32,
-          fontFamily: "Poppins, sans-serif"
+          fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
         }}>Visitor Guide</h3>
 
         <Soul y={30}>
@@ -2030,7 +2030,7 @@ function VisitorInformation({ place }) {
             >
               <style>{".no-scrollbars::-webkit-scrollbar { display: none; } .no-scrollbars { -ms-overflow-style: none; scrollbar-width: none; }"}</style>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: FG, letterSpacing: "-0.02em" }}>Vehicle Access</h3>
+                <h3 style={{ margin: 0, fontSize: "clamp(1.5rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, letterSpacing: "-0.02em", fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>Vehicle Access</h3>
                 <button onClick={() => setShowAllVehicles(false)} style={{ background: S, border: "none", cursor: "pointer", color: FG, padding: 8, borderRadius: 50, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background = B} onMouseOut={e => e.currentTarget.style.background = S}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 </button>
@@ -2077,7 +2077,7 @@ function GoodToKnow({ place }) {
   return (
     <section style={{ background: S, padding: "48px 80px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto", display: "flex", flexDirection: "column", gap: 32 }}>
-        <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, fontFamily: "Poppins, sans-serif" }}>Good To Know</h3>
+        <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Good To Know</h3>
 
         {/* Row 1: Good to Know Title & Two side-by-side cards */}
         <Rev>
@@ -2113,7 +2113,7 @@ function GoodToKnow({ place }) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                     <div>
                       <span style={{ fontSize: 9, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 800 }}>Luggage Check</span>
-                      <h4 style={{ fontSize: 17, fontWeight: 800, color: FG, margin: "2px 0 0 0", fontFamily: "Poppins, sans-serif" }}>What to Carry</h4>
+                      <h4 style={{ fontSize: 18, fontWeight: 700, color: FG, margin: "2px 0 0 0", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>What to Carry</h4>
                     </div>
                     <div style={{ background: AL, padding: 8, borderRadius: 10 }}>
                       <Briefcase size={16} color={A} />
@@ -2215,7 +2215,7 @@ function GoodToKnow({ place }) {
                 <div>
                   <div style={{ marginBottom: 14 }}>
                     <span style={{ fontSize: 9, color: warningText, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 800 }}>Customs Declaration</span>
-                    <h4 style={{ fontSize: 17, fontWeight: 800, color: warningHeader, margin: "2px 0 0 0", fontFamily: "Poppins, sans-serif" }}>Things to Avoid</h4>
+                    <h4 style={{ fontSize: 18, fontWeight: 700, color: warningHeader, margin: "2px 0 0 0", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Things to Avoid</h4>
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2268,7 +2268,7 @@ function CommunityFeedback() {
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <Rev delay={0.1}>
           <div style={{ background: W, border: `1px solid ${B}`, borderRadius: 32, padding: 48 }}>
-            <h3 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: FG, marginBottom: 12 }}>Community Feedback</h3>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 12, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Community Feedback</h3>
             <p style={{ fontSize: 12, color: M, marginBottom: 24 }}>Share your recent experience or suggest updates for this location.</p>
             <textarea
               placeholder="Share your thoughts..."
@@ -2613,13 +2613,14 @@ function MobileHero({ place, galleryItems, id }) {
           {toDisplayString(place?.category) || "DESTINATION"}
         </p>
 
-        <h1 className="font-display" style={{
-          fontSize: 22,
+        <h1 className="hero-title" style={{
+          fontSize: 24,
           fontWeight: 700,
           color: FG,
           lineHeight: 1.3,
           letterSpacing: "-0.01em",
-          margin: "0 0 14px 0"
+          margin: "0 0 14px 0",
+          fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
         }}>
           {placeName.toUpperCase()}
         </h1>
@@ -2654,12 +2655,14 @@ function MobileAbout({ place, hostData, hostAvatar }) {
         About the Destination
       </p>
 
-      <h2 className="font-display" style={{
-        fontSize: 26,
+      <h2 style={{
+        fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
         fontWeight: 700,
         color: FG,
-        lineHeight: 1.2,
-        marginBottom: 16
+        lineHeight: 1.1,
+        margin: "0 0 16px 0",
+        fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
+        letterSpacing: "-0.02em"
       }}>
         {place?.placeName || "Experience the local heritage."}
       </h2>
@@ -3253,14 +3256,14 @@ function VisitingNotes({ place }) {
                <div style={{ background: A, padding: 8, borderRadius: 12 }}>
                   <Info size={20} color="#FFFFFF" />
                </div>
-               <h3 style={{ fontSize: "clamp(1.4rem, 2vw, 1.8rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Visiting Notes</h3>
+               <h3 style={{ fontSize: "clamp(2rem, 3vw, 2.5rem)", fontWeight: 700, color: FG, margin: 0, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Visiting Notes</h3>
             </div>
             <p style={{
               fontSize: 16,
               lineHeight: 1.8,
               color: FG,
               margin: 0,
-              fontFamily: "Poppins, sans-serif",
+              fontFamily: '"Inter", sans-serif',
               fontWeight: 400,
               whiteSpace: "pre-line"
             }}>
@@ -3398,7 +3401,7 @@ function MobilePlaceDetails({
           currentListingId={currentListingId}
           title="More Places To Explore"
           sectionStyle={{ padding: "40px 16px" }}
-          titleStyle={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, marginBottom: "32px", fontFamily: "Poppins, sans-serif" }}
+          titleStyle={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, lineHeight: 1.1, marginBottom: "32px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}
         />
       </div>
 
@@ -3632,7 +3635,7 @@ const PlaceDetails = () => {
         currentListingId={currentListingId}
         title="More Places To Explore"
         sectionStyle={{ padding: "48px 80px" }}
-        titleStyle={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, marginBottom: "32px", fontFamily: "Poppins, sans-serif" }}
+        titleStyle={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, lineHeight: 1.1, marginBottom: "32px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}
       />
 
       <Footer />
