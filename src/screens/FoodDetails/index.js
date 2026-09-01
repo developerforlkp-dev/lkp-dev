@@ -1904,15 +1904,16 @@ function FoodMetadataCard({ food }) {
                 borderRadius: "14px",
                 border: `1px solid ${tokens.B}`,
                 background: theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.005)",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                minWidth: 0
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: "10px", background: tokens.AL, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A, flexShrink: 0 }}>
                 <ChefHat size={18} />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: tokens.M, letterSpacing: "0.05em", lineHeight: 1.1 }}>Category</span>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2 }}>{category}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2, wordBreak: "break-word" }}>{category}</span>
               </div>
             </motion.div>
 
@@ -1927,15 +1928,16 @@ function FoodMetadataCard({ food }) {
                 borderRadius: "14px",
                 border: `1px solid ${tokens.B}`,
                 background: theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.005)",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                minWidth: 0
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: "10px", background: tokens.AL, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A, flexShrink: 0 }}>
                 <Utensils size={18} />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: tokens.M, letterSpacing: "0.05em", lineHeight: 1.1 }}>Cuisine</span>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2 }}>{cuisine}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2, wordBreak: "break-word" }}>{cuisine}</span>
               </div>
             </motion.div>
 
@@ -1950,15 +1952,16 @@ function FoodMetadataCard({ food }) {
                 borderRadius: "14px",
                 border: `1px solid ${tokens.B}`,
                 background: theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.005)",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                minWidth: 0
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: "10px", background: tokens.AL, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A, flexShrink: 0 }}>
                 <Leaf size={18} />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: tokens.M, letterSpacing: "0.05em", lineHeight: 1.1 }}>Dietary Options</span>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2 }}>{dietary}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2, wordBreak: "break-word" }}>{dietary}</span>
               </div>
             </motion.div>
 
@@ -1973,15 +1976,16 @@ function FoodMetadataCard({ food }) {
                 borderRadius: "14px",
                 border: `1px solid ${tokens.B}`,
                 background: theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.005)",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                minWidth: 0
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: "10px", background: tokens.AL, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A, flexShrink: 0 }}>
                 <Zap size={18} />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: tokens.M, letterSpacing: "0.05em", lineHeight: 1.1 }}>Service Mode</span>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2 }}>{serveMode}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2, wordBreak: "break-word" }}>{serveMode}</span>
               </div>
             </motion.div>
 
@@ -1996,15 +2000,16 @@ function FoodMetadataCard({ food }) {
                 borderRadius: "14px",
                 border: `1px solid ${tokens.B}`,
                 background: theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.005)",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                minWidth: 0
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: "10px", background: tokens.AL, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A, flexShrink: 0 }}>
                 <GlassWater size={18} />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: tokens.M, letterSpacing: "0.05em", lineHeight: 1.1 }}>Alcohol Served</span>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2 }}>{food?.alcoholServed || food?.isAlcoholServed ? "Alcohol Served" : "No Alcohol"}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2, wordBreak: "break-word" }}>{food?.alcoholServed || food?.isAlcoholServed ? "Alcohol Served" : "No Alcohol"}</span>
               </div>
             </motion.div>
 
@@ -2019,15 +2024,16 @@ function FoodMetadataCard({ food }) {
                 borderRadius: "14px",
                 border: `1px solid ${tokens.B}`,
                 background: theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.005)",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                minWidth: 0
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: "10px", background: tokens.AL, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.A, flexShrink: 0 }}>
                 <MapPin size={18} />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: tokens.M, letterSpacing: "0.05em", lineHeight: 1.1 }}>Parking Slot</span>
-                <span style={{ fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2 }}>{food?.isParkingAvailable || food?.parkingAvailable ? "Parking Available" : "Street Parking"}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: "14px", color: tokens.FG, lineHeight: 1.2, wordBreak: "break-word" }}>{food?.isParkingAvailable || food?.parkingAvailable ? "Parking Available" : "Street Parking"}</span>
               </div>
             </motion.div>
 
