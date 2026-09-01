@@ -1508,17 +1508,17 @@ function VisitorInformation({ place }) {
     return fallback;
   };
 
-  const formattedTowns = formatList(place?.nearestTowns, place?.nearestTown, "MUNNAR", (name) => name.split('/')[0]?.trim());
-  const formattedAirports = formatList(place?.nearestAirports, place?.nearestAirport, "COCHIN", (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase());
-  const formattedRailways = formatList(place?.nearestRailwayStations, place?.nearestRailway, "ALUVA", (name) => name.split('(')[0].replace(/Railway Station/i, "").trim());
+  const formattedTowns = formatList(place?.nearestTowns, place?.nearestTown, "--", (name) => name.split('/')[0]?.trim());
+  const formattedAirports = formatList(place?.nearestAirports, place?.nearestAirport, "--", (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase());
+  const formattedRailways = formatList(place?.nearestRailwayStations, place?.nearestRailway, "--", (name) => name.split('(')[0].replace(/Railway Station/i, "").trim());
 
   const suitabilityTags = useMemo(() => {
     const raw = place?.suitableFor;
-    if (!raw) return ["Couples", "Families", "Solo"];
+    if (!raw) return ["--"];
     if (Array.isArray(raw)) return raw.map(item => toDisplayString(item));
     if (typeof raw === "string") return raw.split(',').map(t => t.trim());
     const disp = toDisplayString(raw);
-    return disp ? disp.split(',').map(t => t.trim()) : ["Couples", "Families", "Solo"];
+    return disp ? disp.split(',').map(t => t.trim()) : ["--"];
   }, [place?.suitableFor]);
 
   // Ticket notch decoration styles helper
@@ -1596,7 +1596,7 @@ function VisitorInformation({ place }) {
                       <span style={{ fontSize: 8, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Permit Category</span>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                         <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>
-                          {place?.entryType ? `${place.entryType} Entry` : (place?.entryFee ? "Paid Entry" : "Free Entry")}
+                          {place?.entryType ? `${place.entryType} Entry` : (place?.entryFee ? "Paid Entry" : "--")}
                         </h4>
                         {place?.entryFee && (!place?.entryType || place.entryType.toLowerCase() !== 'free') && (
                           <span style={{ fontSize: 10, fontWeight: 700, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
@@ -1610,12 +1610,12 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                     <div>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 2 }}>Managed By</span>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>{place?.managedBy || "Government Tourism Dept."}</p>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>{place?.managedBy || "--"}</p>
                     </div>
                     <div>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 2 }}>Support Hotline</span>
-                      <a href={`tel:${place?.contactInfo || place?.phone || "+914842567890"}`} style={{ fontSize: 14, fontWeight: 750, color: A, textDecoration: "none" }}>
-                        {place?.contactInfo || place?.phone || "+91 484 256 7890"}
+                      <a href={`tel:${place?.contactInfo || place?.phone || ""}`} style={{ fontSize: 14, fontWeight: 750, color: A, textDecoration: "none" }}>
+                        {place?.contactInfo || place?.phone || "--"}
                       </a>
                     </div>
                     <div>
@@ -1838,15 +1838,15 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Permit Category</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.entryFee || "Paid Entry"}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.entryFee || "--"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Parking Place</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.parking || "Available"}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.parking || "--"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Wheelchair</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{typeof place?.wheelchairAccess === 'boolean' ? (place?.wheelchairAccess ? 'Accessible' : 'Not Accessible') : (place?.wheelchairAccess || place?.wheelchair || "Accessible")}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{typeof place?.wheelchairAccess === 'boolean' ? (place?.wheelchairAccess ? 'Accessible' : 'Not Accessible') : (place?.wheelchairAccess || place?.wheelchair || "--")}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}`, gap: 16 }}>
                       <span style={{ fontSize: 12, color: M, flexShrink: 0 }}>Age Restriction</span>
@@ -1855,7 +1855,7 @@ function VisitorInformation({ place }) {
                           ? (isNaN(place?.ageRestriction || place?.minAge) 
                               ? (place?.ageRestriction || place?.minAge) 
                               : `${place?.ageRestriction || place?.minAge} Years+`) 
-                          : "All Ages"}
+                          : "--"}
                       </span>
                     </div>
                   </div>
@@ -1869,7 +1869,7 @@ function VisitorInformation({ place }) {
               <div style={{ padding: "20px 28px 28px 28px", height: "30%", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "space-between", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.02)` }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={{ fontSize: 9, color: M, display: "block" }}>Best Visit Season</span>
-                  <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.bestTimeToVisit || "Year Round"}</span>
+                  <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.bestTimeToVisit || "--"}</span>
                 </div>
 
                 {/* Stamp Clipart */}
@@ -1942,15 +1942,15 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Opening Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.openingTime || "08:30 AM"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.openingTime || "--"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closing Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closingTime || place?.closeTime || "04:30 PM"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closingTime || place?.closeTime || "--"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closed On</span>
-                      <span style={{ fontWeight: 850, color: A, fontSize: 13, textTransform: "uppercase" }}>{Array.isArray(place?.closedDays) ? place?.closedDays.join(', ') : (place?.closedDays || "None")}</span>
+                      <span style={{ fontWeight: 850, color: A, fontSize: 13, textTransform: "uppercase" }}>{Array.isArray(place?.closedDays) ? place?.closedDays.join(', ') : (place?.closedDays || "--")}</span>
                     </div>
                   </div>
                 </div>
