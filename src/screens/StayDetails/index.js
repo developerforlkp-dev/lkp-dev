@@ -2751,6 +2751,7 @@ const StayDetails = () => {
   const handleRoomSelect = useCallback((roomId, mealPlan, action = "toggle") => {
     const rid = String(roomId);
     setSelectedRooms(prev => {
+      let updated;
       const exists = prev.find(r => r.roomId === rid);
       if (exists) {
         if (action === "update") {
@@ -2767,20 +2768,43 @@ const StayDetails = () => {
           if (stayRoomsCatalog.length > 0) {
             const firstRoom = stayRoomsCatalog[0];
             const firstRoomId = String(firstRoom.roomId ?? firstRoom.id ?? firstRoom.roomTypeId ?? firstRoom.room_type_id);
-            return [{ roomId: firstRoomId, mealPlan: "EP", count: 1 }];
+            updated = [{ roomId: firstRoomId, mealPlan: "EP", count: 1 }];
+          } else {
+            updated = filtered;
           }
+        } else {
+          updated = filtered;
         }
-        return filtered;
+      } else {
+        updated = [...prev, { roomId: rid, mealPlan: mealPlan || "EP", count: 1 }];
       }
-      return [...prev, { roomId: rid, mealPlan: mealPlan || "EP", count: 1 }];
+      const totalRooms = updated.reduce((sum, r) => sum + Number(r.count || 0), 0);
+      setGuests(g => {
+        if ((g?.adults || 1) < totalRooms) {
+          return { ...g, adults: totalRooms };
+        }
+        return g;
+      });
+      return updated;
     });
   }, [stay]);
 
   const handleRoomCountChange = useCallback((roomId, count) => {
     const rid = String(roomId);
-    setSelectedRooms(prev => prev.map(r =>
-      r.roomId === rid ? { ...r, count: Math.max(1, count) } : r
-    ));
+    const newCount = Math.max(1, count);
+    setSelectedRooms(prev => {
+      const updated = prev.map(r =>
+        r.roomId === rid ? { ...r, count: newCount } : r
+      );
+      const totalRooms = updated.reduce((sum, r) => sum + Number(r.count || 0), 0);
+      setGuests(g => {
+        if ((g?.adults || 1) < totalRooms) {
+          return { ...g, adults: totalRooms };
+        }
+        return g;
+      });
+      return updated;
+    });
   }, []);
 
   // Rehydrate booking selection state if returning from successful authentication redirect
