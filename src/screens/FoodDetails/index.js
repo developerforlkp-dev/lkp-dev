@@ -1678,9 +1678,9 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
     ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim()
     : (hostData?.host?.displayName || hostData?.displayName || food?.host?.displayName || "Owner"));
 
-  const phoneNum = hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone || food?.host?.phone;
+  const phoneNum = food?.contactPhone || food?.phone || hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone || food?.host?.phone;
 
-  const websiteUrl = food?.website;
+  const websiteUrl = food?.websiteUrl || food?.website || food?.socialLink || food?.socialUrl || food?.link || food?.url || food?.contactWebsite || food?.websiteLink || food?.socialMediaLink || food?.socialLinkUrl || food?.websiteOrSocialLink || food?.contactInfo?.website || hostData?.website || hostData?.host?.website;
   const instaHandle = food?.instagramHandle || food?.instagram || food?.host?.instagram;
 
   const realAvatar = hostData?.host?.profilePhotoUrl || food?.host?.profilePhotoUrl || hostData?.profilePhotoUrl || food?.profilePhotoUrl || hostAvatar;
@@ -1726,20 +1726,6 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
                       <span style={{ color: M, fontWeight: 600 }}>Manager:</span>
                       <span>{chefName}</span>
                     </div>
-                    {phoneNum && (
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: FG }}>
-                        <Phone size={14} color={A} />
-                        <span style={{ color: M, fontWeight: 600 }}>Phone:</span>
-                        <span>{phoneNum}</span>
-                      </div>
-                    )}
-                    {websiteUrl && (
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: FG }}>
-                        <Globe size={14} color={A} />
-                        <span style={{ color: M, fontWeight: 600 }}>Website:</span>
-                        <a href={websiteUrl} target="_blank" rel="noreferrer" style={{ color: A, textDecoration: "none" }}>{websiteUrl}</a>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1774,7 +1760,7 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
                   >
                     <Phone size={18} color={A} />
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                      <span style={{ fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase", color: M, fontWeight: 700, lineHeight: 1 }}>Call Host</span>
+                      <span style={{ fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase", color: M, fontWeight: 700, lineHeight: 1 }}>Call {chefName}</span>
                       <span style={{ marginTop: 2 }}>{phoneNum}</span>
                     </div>
                   </motion.a>
@@ -1785,7 +1771,7 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
                     <motion.a
                       whileHover={{ scale: 1.02, backgroundColor: A, color: "#fff", borderColor: A }}
                       whileTap={{ scale: 0.98 }}
-                      href={websiteUrl}
+                      href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`}
                       target="_blank"
                       rel="noreferrer"
                       style={{
@@ -1808,6 +1794,35 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
                       }}
                     >
                       <Globe size={15} /> Website
+                    </motion.a>
+                  )}
+                  {instaHandle && (
+                    <motion.a
+                      whileHover={{ scale: 1.02, backgroundColor: A, color: "#fff", borderColor: A }}
+                      whileTap={{ scale: 0.98 }}
+                      href={`https://instagram.com/${instaHandle.replace('@', '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                        padding: "12px",
+                        borderRadius: 12,
+                        border: `1.5px solid ${A}`,
+                        color: A,
+                        textDecoration: "none",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.1em",
+                        textAlign: "center",
+                        transition: "all 0.25s ease"
+                      }}
+                    >
+                      <Instagram size={15} /> Instagram
                     </motion.a>
                   )}
                 </div>
