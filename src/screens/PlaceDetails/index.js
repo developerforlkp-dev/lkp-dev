@@ -632,7 +632,8 @@ function PlaceHero({ place, galleryItems, id }) {
       }}>
 
         <div style={{
-          width: "30%",
+          width: "40%",
+          minWidth: 0,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-start",
@@ -657,13 +658,15 @@ function PlaceHero({ place, galleryItems, id }) {
               {toDisplayString(place?.category) || "DESTINATION"}
             </p>
             <h1 className="font-display" style={{
-              fontSize: "clamp(2.5rem, 4vw, 4.2rem)",
+              fontSize: "clamp(2rem, 3.5vw, 3.8rem)",
               fontWeight: 800,
               color: FG,
               lineHeight: 1.1,
               letterSpacing: "-0.03em",
               margin: "0 0 20px 0",
-              textTransform: "uppercase"
+              textTransform: "uppercase",
+              wordBreak: "break-word",
+              overflowWrap: "break-word"
             }}>
               {placeName}
             </h1>
@@ -805,7 +808,8 @@ function PlaceHero({ place, galleryItems, id }) {
             setShowArrows(false);
           }}
           style={{
-            width: "70%",
+            width: "60%",
+            minWidth: 0,
             height: "100%",
             overflow: "hidden",
             position: "relative",
@@ -1130,7 +1134,7 @@ function DestAbout({ place, hostData, hostAvatar }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 100 }} className="about-grid">
             <Rev>
               <p style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 24 }}>About the Destination</p>
-              <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32 }}>
+              <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {place?.placeName || "Not Specified"}
               </h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
