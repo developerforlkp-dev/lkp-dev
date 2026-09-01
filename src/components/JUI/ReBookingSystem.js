@@ -10,7 +10,7 @@ import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import Dropdown from "../Dropdown";
 import ChildAgeSelect from "../ChildAgeSelect";
-import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder, finalizeFreeEvent } from "../../utils/api";
+import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
@@ -1480,6 +1480,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   }, [getBusinessInterestLabel]);
 
   const getBookingErrorDetails = useCallback((error) => {
+    const errorPayload = error?.response?.data;
+    if (errorPayload && (errorPayload.results || errorPayload.canBook === false)) {
+      return formatEventPrecheckErrorMessage(errorPayload);
+    }
     const rawMessage = getBookingErrorMessage(error);
     const availabilityMatch = rawMessage.match(/only\s+(\d+)\s+seat\(s\)\s+available\s+for\s+"([^"]+)"\s+on\s+([0-9-]+)/i);
     const requestedMatch = rawMessage.match(/you\s+requested\s+(\d+)\s+seat\(s\)/i);
@@ -2962,19 +2966,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           (item) => Number(item?.remainingAllowedQuantity) === 0
         );
 
-        if (reachedLimit) {
-          showErrorPopup("Booking limit for this event slot has been reached.");
-          if (isMountedRef.current) setBookingLoading(false);
-          return;
-        }
-
-        if (precheckRes?.canBook === false || precheckResults.some((item) => item?.canBook === false)) {
-          const firstFailure = precheckResults.find((item) => item?.canBook === false);
-          const message =
-            firstFailure?.failureReason ||
-            precheckRes?.message ||
-            "Unable to proceed with this booking right now.";
-          showErrorPopup(message);
+        if (precheckRes?.canBook === false || reachedLimit || precheckResults.some((item) => item?.canBook === false)) {
+          const formattedError = formatEventPrecheckErrorMessage(precheckRes);
+          showErrorPopup(formattedError.message, formattedError.title, {
+            reason: formattedError.reason,
+            ctaLabel: formattedError.ctaLabel,
+          });
           if (isMountedRef.current) setBookingLoading(false);
           return;
         }
