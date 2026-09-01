@@ -1264,6 +1264,7 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
           transition={{ duration: 0.4 }}
           style={{
             display: "flex",
+            flexDirection: (typeof window !== 'undefined' && window.innerWidth <= 768) ? "column" : "row",
             background: W,
             border: `1px solid ${B}`,
             borderRadius: 28,
@@ -1272,11 +1273,11 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
             minHeight: 340,
           }}
         >
-          {/* Hero image left */}
+          {/* Hero image left/top */}
           {imgUrl && (
             <div
               className="itinerary-image-wrapper"
-              style={{ flex: "0 0 50%", position: "relative", cursor: "pointer", overflow: "hidden" }}
+              style={{ flex: (typeof window !== 'undefined' && window.innerWidth <= 768) ? "none" : "0 0 50%", height: (typeof window !== 'undefined' && window.innerWidth <= 768) ? 220 : "auto", position: "relative", cursor: "pointer", overflow: "hidden" }}
               onClick={() => {
                 const imgs = getItineraryImages(s);
                 setSelectedImages(imgs);
@@ -1291,15 +1292,14 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
               </div>
             </div>
           )}
-          {/* Hero content right */}
-          <div style={{ flex: 1, padding: "40px 44px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
-            <span className="font-display" style={{ position: "absolute", top: -20, right: 16, fontSize: "10rem", fontWeight: 900, color: A, opacity: 0.04, pointerEvents: "none", lineHeight: 1 }}>1</span>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: A, color: W, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800 }}>1</div>
-              <span style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Start Here</span>
+          <div style={{ flex: 1, padding: "28px 24px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
+            <span style={{ position: "absolute", top: -10, right: 16, fontSize: "6rem", fontWeight: 900, color: A, opacity: 0.04, pointerEvents: "none", lineHeight: 1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>{i + 1}</span>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: A, color: W, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>{i + 1}</div>
+              <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 700 }}>{i === 0 ? "Start Here" : `Step ${i + 1}`}</span>
             </div>
-            <h3 className="font-display" style={{ fontSize: "clamp(1.6rem, 2.2vw, 2rem)", fontWeight: 800, color: FG, marginBottom: 16, lineHeight: 1.2 }}>{s.title || s.name}</h3>
-            <p style={{ fontSize: 14, color: M, lineHeight: 1.85, margin: 0, whiteSpace: "pre-line" }}>
+            <h3 style={{ fontSize: "clamp(1.3rem, 1.8vw, 1.6rem)", fontWeight: 700, color: FG, marginBottom: 12, lineHeight: 1.2, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.01em" }}>{s.title || s.name}</h3>
+            <p style={{ fontSize: 13, color: M, lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
               {displayText}
               {isLong && (
                 <span onClick={() => setExpanded(!expanded)} style={{ color: A, cursor: "pointer", fontWeight: 600, marginLeft: 8 }}>
@@ -1315,8 +1315,8 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
 
   // Regular grid card
   return (
-    <div style={{ flex: "0 0 calc(33.333% - 22px)", minWidth: 280, display: "flex" }}>
-      <Soul delay={i * 0.12} y={60} r={i % 2 === 0 ? 2 : -2} style={{ width: "100%", display: "flex" }}>
+    <div style={{ width: "100%", display: "flex", height: "100%" }}>
+      <Soul delay={i * 0.12} y={60} r={i % 2 === 0 ? 2 : -2} style={{ width: "100%", display: "flex", height: "100%" }}>
         <motion.div
           whileHover={{ y: -8, boxShadow: `0 20px 40px rgba(0,0,0,0.06)` }}
           transition={{ duration: 0.35 }}
@@ -1329,6 +1329,7 @@ const StepCard = ({ s, i, A, W, B, FG, M, getItineraryImageUrl, getItineraryImag
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
+            height: "100%"
           }}
         >
           {/* Step number circle on top-left corner */}
@@ -1382,96 +1383,85 @@ function Itinerary({ place }) {
   const [photoVisible, setPhotoVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [showAll, setShowAll] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const steps = place?.itinerary || [];
+  
+  const cardsToShow = isMobile ? 1 : Math.min(3, steps.length);
+  const maxIndex = Math.max(0, steps.length - cardsToShow);
+
   if (steps.length === 0) return null;
 
-  const heroStep = steps[0];
-  const restSteps = steps.slice(1);
-  const INITIAL_VISIBLE = 6;
-  const hasMore = restSteps.length > INITIAL_VISIBLE;
-  const visibleRest = showAll ? restSteps : restSteps.slice(0, INITIAL_VISIBLE);
+  const handleNext = () => setActiveIndex((prev) => Math.min(maxIndex, prev + 1));
+  const handlePrev = () => setActiveIndex((prev) => Math.max(0, prev - 1));
 
   return (
     <section style={{ background: S, padding: isMobile ? "40px 16px" : "64px 80px", position: "relative" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         {/* Section header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
-          <div style={{ width: 4, height: 32, borderRadius: 2, background: A }} />
-          <span style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Your Journey</span>
+        <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", marginBottom: 24, flexDirection: isMobile ? "column" : "row", gap: 16 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
+              <div style={{ width: 4, height: 32, borderRadius: 2, background: A }} />
+              <span style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700 }}>Your Journey</span>
+            </div>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, margin: "0 0 8px 0", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Curated Experience Plan</h3>
+            <p style={{ fontSize: 14, color: M, margin: 0, maxWidth: 520 }}>{steps.length} carefully crafted steps to make the most of your visit</p>
+          </div>
+          {/* Nav Buttons */}
+          {steps.length > cardsToShow && (
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={handlePrev} disabled={activeIndex === 0} style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid ${B}`, background: W, display: "flex", alignItems: "center", justifyContent: "center", cursor: activeIndex === 0 ? "default" : "pointer", color: FG, opacity: activeIndex === 0 ? 0.3 : 1, transition: "all 0.3s ease" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button onClick={handleNext} disabled={activeIndex >= maxIndex} style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid ${B}`, background: W, display: "flex", alignItems: "center", justifyContent: "center", cursor: activeIndex >= maxIndex ? "default" : "pointer", color: FG, opacity: activeIndex >= maxIndex ? 0.3 : 1, transition: "all 0.3s ease" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+          )}
         </div>
-        <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, margin: "0 0 8px 0", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Curated Experience Plan</h3>
-        <p style={{ fontSize: 14, color: M, marginBottom: 40, maxWidth: 520 }}>{steps.length} carefully crafted steps to make the most of your visit</p>
 
-        {/* Hero first step — full width */}
-        <StepCard
-          s={heroStep} i={0} A={A} W={W} B={B} FG={FG} M={M}
-          getItineraryImageUrl={getItineraryImageUrl}
-          getItineraryImages={getItineraryImages}
-          setSelectedImages={setSelectedImages}
-          setPhotoIndex={setPhotoIndex}
-          setPhotoVisible={setPhotoVisible}
-          isHero={true}
-        />
-
-        {/* Vertical connector line */}
-        {restSteps.length > 0 && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
-            <div style={{ width: 2, height: 40, background: `linear-gradient(to bottom, ${A}, ${B})`, borderRadius: 1 }} />
+        <div style={{ position: "relative", padding: "12px 4px", margin: "-12px -4px" }}>
+          <div style={{ display: "flex", gap: 24, width: "100%" }}>
+            {[...Array(cardsToShow)].map((_, idx) => {
+              const actualIdx = activeIndex + idx;
+              if (!steps[actualIdx]) return null;
+              return (
+                <div key={idx} style={{ flex: 1, minWidth: 0, display: "flex" }}>
+                  <StepCard
+                    s={steps[actualIdx]} i={actualIdx} A={A} W={W} B={B} FG={FG} M={M}
+                    getItineraryImageUrl={getItineraryImageUrl}
+                    getItineraryImages={getItineraryImages}
+                    setSelectedImages={setSelectedImages}
+                    setPhotoIndex={setPhotoIndex}
+                    setPhotoVisible={setPhotoVisible}
+                    isHero={false}
+                  />
+                </div>
+              );
+            })}
           </div>
-        )}
-
-        {/* Remaining steps in a 3-col grid */}
-        {visibleRest.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 28, justifyContent: visibleRest.length < 3 ? "center" : "flex-start" }}>
-            {visibleRest.map((s, i) => (
-              <StepCard
-                key={i + 1}
-                s={s}
-                i={i + 1}
-                A={A} W={W} B={B} FG={FG} M={M}
-                getItineraryImageUrl={getItineraryImageUrl}
-                getItineraryImages={getItineraryImages}
-                setSelectedImages={setSelectedImages}
-                setPhotoIndex={setPhotoIndex}
-                setPhotoVisible={setPhotoVisible}
-                isHero={false}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Show More / Show Less button */}
-        {hasMore && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: `0 8px 24px rgba(0,0,0,0.08)` }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setShowAll(!showAll)}
-              style={{
-                background: showAll ? W : A,
-                color: showAll ? A : W,
-                border: `1.5px solid ${A}`,
-                borderRadius: 50,
-                padding: "12px 32px",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                letterSpacing: "0.02em",
-                transition: "all 0.3s ease",
-              }}
-            >
-              {showAll ? "Show Less" : `Show All ${restSteps.length - INITIAL_VISIBLE} More Steps`}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </motion.button>
-          </div>
-        )}
+          
+          {/* Dots Indicator */}
+          {steps.length > cardsToShow && (
+            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
+              {[...Array(maxIndex + 1)].map((_, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => setActiveIndex(idx)}
+                  style={{ 
+                    width: activeIndex === idx ? 24 : 8, 
+                    height: 8, 
+                    borderRadius: 4, 
+                    background: activeIndex === idx ? A : B,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease"
+                  }} 
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <AnimatePresence>
         {photoVisible && (
