@@ -1686,7 +1686,7 @@ const ExperienceProduct = () => {
                   <div style={{
                     position: "absolute",
                     top: 16,
-                    right: 16,
+                    left: 16,
                     zIndex: 10,
                     background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
                     padding: "8px 16px",
@@ -3680,21 +3680,16 @@ export const ExpandableInstructionText = ({ text, FG, A }) => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1, minWidth: 0, width: "100%" }}>
-      <motion.div
-        animate={{ maxHeight: expanded ? "1000px" : "67px" }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        style={{ overflow: "hidden", width: "100%" }}
-      >
-        <span style={{
-          fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif',
-          display: "-webkit-box",
-          WebkitLineClamp: expanded ? "unset" : 3,
-          WebkitBoxOrient: "vertical",
-          whiteSpace: "pre-wrap"
-        }}>
-          {text}
-        </span>
-      </motion.div>
+      <span style={{
+        fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif',
+        display: "-webkit-box",
+        WebkitLineClamp: expanded ? "unset" : 3,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "pre-wrap"
+      }}>
+        {text}
+      </span>
       {isLong && (
         <button
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}

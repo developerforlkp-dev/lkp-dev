@@ -2317,7 +2317,7 @@ function LocationSection({ place }) {
               <div style={{
                 position: "absolute",
                 top: 16,
-                right: 16,
+                left: 16,
                 zIndex: 10,
                 background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
                 padding: "8px 16px",
@@ -2437,9 +2437,9 @@ function LocationSection({ place }) {
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Info size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1, minWidth: 0 }}>
                       <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{instructions}</span>
+                      <ExpandableInstructionText text={instructions} FG={FG} A={A} />
                     </div>
                   </li>
                 )}
@@ -3635,3 +3635,32 @@ const PlaceDetails = () => {
 };
 
 export default PlaceDetails;
+
+export const ExpandableInstructionText = ({ text, FG, A }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text && text.length > 120;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1, minWidth: 0, width: "100%" }}>
+      <span style={{
+        fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif',
+        display: "-webkit-box",
+        WebkitLineClamp: expanded ? "unset" : 3,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "pre-wrap"
+      }}>
+        {text}
+      </span>
+      {isLong && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+          style={{ background: "transparent", border: "none", color: A, fontSize: 13, fontWeight: 600, padding: 0, marginTop: 6, cursor: "pointer", outline: "none", textDecoration: "underline", fontFamily: '"Inter", sans-serif', transition: "opacity 0.2s" }}
+        >
+          {expanded ? "Read Less" : "Read More"}
+        </button>
+      )}
+    </div>
+  );
+};
+
