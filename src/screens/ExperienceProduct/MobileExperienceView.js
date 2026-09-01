@@ -1068,9 +1068,6 @@ export default function MobileExperienceView({
           ║      RELATED EXPERIENCES          ║
           ╚═══════════════════════════════════╝ */}
       <div className="mob-related" style={{ background: isDark ? BG : W }}>
-        <div className="mob-related-header" style={{ paddingBottom: 8 }}>
-          <span className="mob-section-eyebrow" style={{ color: A }}>Discover More</span>
-        </div>
         <RelatedListingsStrip
           businessInterestId={1}
           primaryCategoryId={primaryCategoryId}

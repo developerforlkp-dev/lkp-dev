@@ -4602,47 +4602,32 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
 
 const ExpandableInstructionText = ({ text, FG, A }) => {
   const [expanded, setExpanded] = useState(false);
-  const isLong = text && text.length > 180;
+  const isLong = text && text.length > 120;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", minWidth: 0, width: "100%" }}>
-      <p style={{
-        fontSize: 16, color: FG, lineHeight: 1.6, margin: 0, fontFamily: '"Inter", sans-serif',
-        overflow: "hidden",
-        display: expanded ? "block" : "-webkit-box",
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1, minWidth: 0, width: "100%" }}>
+      <span style={{
+        fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif',
+        display: "-webkit-box",
         WebkitLineClamp: expanded ? "unset" : 3,
         WebkitBoxOrient: "vertical",
-        fontWeight: 400,
-        wordBreak: "break-word",
+        overflow: "hidden",
         whiteSpace: "pre-wrap"
       }}>
         {text}
-      </p>
+      </span>
       {isLong && (
         <button
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-          style={{
-            background: "none",
-            border: "none",
-            padding: "8px 0 0 0",
-            color: A,
-            fontSize: "12px",
-            fontWeight: 700,
-            fontFamily: '"Inter", sans-serif',
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            outline: "none"
-          }}
+          style={{ background: "transparent", border: "none", color: A, fontSize: 13, fontWeight: 600, padding: 0, marginTop: 6, cursor: "pointer", outline: "none", textDecoration: "underline", fontFamily: '"Inter", sans-serif', transition: "opacity 0.2s" }}
         >
-          {expanded ? "Read Less" : "Read More"} <span style={{ fontSize: "14px", marginLeft: "4px" }}>&rarr;</span>
+          {expanded ? "Read Less" : "Read More"}
         </button>
       )}
     </div>
   );
 };
+
 
 function StayLocation({ stay }) {
   const { isMobile } = useWindowSize();

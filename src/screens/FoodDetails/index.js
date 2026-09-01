@@ -1500,6 +1500,35 @@ function SignatureDishesSection({ food }) {
   );
 }
 
+const ExpandableInstructionText = ({ text, FG, A }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text && text.length > 120;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1, minWidth: 0, width: "100%" }}>
+      <span style={{
+        fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif',
+        display: "-webkit-box",
+        WebkitLineClamp: expanded ? "unset" : 3,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "pre-wrap"
+      }}>
+        {text}
+      </span>
+      {isLong && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+          style={{ background: "transparent", border: "none", color: A, fontSize: 13, fontWeight: 600, padding: 0, marginTop: 6, cursor: "pointer", outline: "none", textDecoration: "underline", fontFamily: '"Inter", sans-serif', transition: "opacity 0.2s" }}
+        >
+          {expanded ? "Read Less" : "Read More"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+
 
 function LocationSection({ food }) {
   const { isMobile } = useWindowSize();
@@ -1656,7 +1685,7 @@ function LocationSection({ food }) {
                     </div>
                     <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                       <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingInstructions || food.directions}</span>
+                      <ExpandableInstructionText text={food.meetingInstructions || food.directions} FG={FG} A={A} />
                     </div>
                   </li>
                 )}
