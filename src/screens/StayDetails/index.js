@@ -436,6 +436,7 @@ const ScopedStyles = () => (
       .highlight-item:not(:last-child) { border-right: none !important; }
       .highlights-banner { display: none !important; }
       .editorial-narrative-block { display: none !important; }
+      .amenities-section-container { margin-top: 4px !important; }
       .highlight-item { justify-content: flex-start !important; padding-bottom: 12px !important; border-bottom: 1px solid var(--B) !important; }
       .highlight-item:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
 
@@ -1523,7 +1524,7 @@ function StayAmenities({ stay }) {
   }, [stay]);
 
   return (
-    <section style={{ background: "transparent", padding: isMobile ? "16px 24px" : "0px 80px", boxSizing: "border-box", overflow: "hidden" }}>
+    <section style={{ background: "transparent", padding: isMobile ? "0px 24px 16px" : "0px 80px", boxSizing: "border-box", overflow: "hidden" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
         <Soul y={isMobile ? 30 : 60} s={0.03}>
@@ -4703,10 +4704,11 @@ function StayLocation({ stay }) {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                pointerEvents: "none"
+                pointerEvents: "none",
+                maxWidth: isMobile ? "calc(100% - 130px)" : "calc(100% - 32px)",
               }}>
-                <MapPin size={16} color={A} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif' }}>{locationName}</span>
+                <MapPin size={16} color={A} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locationName}</span>
               </div>
               <iframe
                 width="100%"

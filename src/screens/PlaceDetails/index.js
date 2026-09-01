@@ -632,7 +632,8 @@ function PlaceHero({ place, galleryItems, id }) {
       }}>
 
         <div style={{
-          width: "30%",
+          width: "40%",
+          minWidth: 0,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-start",
@@ -657,13 +658,15 @@ function PlaceHero({ place, galleryItems, id }) {
               {toDisplayString(place?.category) || "DESTINATION"}
             </p>
             <h1 className="font-display" style={{
-              fontSize: "clamp(2.5rem, 4vw, 4.2rem)",
+              fontSize: "clamp(2rem, 3.5vw, 3.8rem)",
               fontWeight: 800,
               color: FG,
               lineHeight: 1.1,
               letterSpacing: "-0.03em",
               margin: "0 0 20px 0",
-              textTransform: "uppercase"
+              textTransform: "uppercase",
+              wordBreak: "break-word",
+              overflowWrap: "break-word"
             }}>
               {placeName}
             </h1>
@@ -805,7 +808,8 @@ function PlaceHero({ place, galleryItems, id }) {
             setShowArrows(false);
           }}
           style={{
-            width: "70%",
+            width: "60%",
+            minWidth: 0,
             height: "100%",
             overflow: "hidden",
             position: "relative",
@@ -1014,10 +1018,10 @@ function PlaceDescription({ place }) {
   const description = place?.description || "Experience the local heritage, vibrant culture, and breathtaking landscapes of this select destination.";
 
   const facts = [
-    { label: "Timings", val: (place?.openingTime && place?.closingTime) ? `${place.openingTime} - ${place.closingTime}` : (place?.timings || place?.openingHours || "06:00 - 20:00"), icon: Clock },
-    { label: "Entry Fee", val: place?.entryFee || "Free Entry", icon: Ticket },
-    { label: "Best Time", val: place?.bestTimeToVisit || "Year Round", icon: Star },
-    { label: "Rating", val: `${place?.rating || place?.averageRating || "4.8"} Rating`, icon: Check },
+    { label: "Timings", val: (place?.openingTime && place?.closingTime) ? `${place.openingTime} - ${place.closingTime}` : (place?.timings || place?.openingHours || "Not Specified"), icon: Clock },
+    { label: "Entry Fee", val: place?.entryFee || "Not Specified", icon: Ticket },
+    { label: "Best Time", val: place?.bestTimeToVisit || "Not Specified", icon: Star },
+    { label: "Rating", val: place?.rating || place?.averageRating ? `${place?.rating || place?.averageRating} Rating` : "Not Rated", icon: Check },
   ];
 
   if (isMobile) {
@@ -1130,11 +1134,11 @@ function DestAbout({ place, hostData, hostAvatar }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 100 }} className="about-grid">
             <Rev>
               <p style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 700, marginBottom: 24 }}>About the Destination</p>
-              <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32 }}>
-                {place?.placeName || "Experience the local heritage."}
+              <h2 className="font-display" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: 32, wordBreak: "break-word", overflowWrap: "break-word" }}>
+                {place?.placeName || "Not Specified"}
               </h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                {[toDisplayString(place?.category), place?.city, "Historical", "Vibrant"].filter(Boolean).map(tag => (
+                {[toDisplayString(place?.category), place?.city].filter(Boolean).map(tag => (
                   <div key={tag} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "#f8f8f8", borderRadius: 12, border: `1px solid ${B}` }}>
                     <User size={12} color={A} />
                     <span style={{ fontSize: 11, fontWeight: 600, color: FG }}>{tag}</span>
@@ -1144,12 +1148,12 @@ function DestAbout({ place, hostData, hostAvatar }) {
             </Rev>
             <Rev delay={0.2}>
               <p style={{ fontSize: 17, lineHeight: 1.85, color: M, marginBottom: 32 }}>
-                {place?.description || "Discover the hidden gems and vibrant culture of this unique location. From historical landmarks to modern attractions, there is something for everyone."}
+                {place?.description || "No description provided."}
               </p>
               <div style={{ marginTop: 48, borderTop: `1px solid ${B}`, paddingTop: 40, display: "flex", gap: 64 }}>
                 <div>
                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Location</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{place?.city || "Discovery Town"}</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: FG }}>{place?.city || "Not Specified"}</p>
                 </div>
                 <div>
                   <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 8 }}>Curator</p>
@@ -1157,7 +1161,7 @@ function DestAbout({ place, hostData, hostAvatar }) {
                     <img src={hostAvatar || "https://picsum.photos/seed/host/40/40"} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} alt="" />
                     <div>
                       <p style={{ fontSize: 15, fontWeight: 700, color: FG, margin: 0 }}>
-                        {hostData?.host?.firstName ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() : (hostData?.host?.displayName || hostData?.displayName || "Lead Curator")}
+                        {hostData?.host?.firstName ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() : (hostData?.host?.displayName || hostData?.displayName || "Not Specified")}
                       </p>
                       {(hostData?.host?.bio || hostData?.bio) && (
                         <p style={{ fontSize: 12, color: M, marginTop: 4, fontStyle: "italic", margin: "4px 0 0 0" }}>{hostData?.host?.bio || hostData?.bio}</p>
@@ -1186,7 +1190,7 @@ function Logistics({ place, hostData }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 40 }}>
                 <div>
                   <h4 style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: M, marginBottom: 12 }}>Address</h4>
-                  <p style={{ fontSize: 16, color: FG, fontWeight: 600, maxWidth: 350, lineHeight: 1.6 }}>{place?.address || "Explore the local maps for the exact navigation details."}</p>
+                  <p style={{ fontSize: 16, color: FG, fontWeight: 600, maxWidth: 350, lineHeight: 1.6 }}>{place?.address || "Not Specified"}</p>
                 </div>
                 <motion.a whileHover={{ scale: 1.1 }} href={`https://www.google.com/maps/search/?api=1&query=${place?.placeName}`} target="_blank" style={{ background: A, width: 52, height: 52, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
                   <Navigation size={22} color={W} />
@@ -1196,9 +1200,9 @@ function Logistics({ place, hostData }) {
                 <h4 style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: M, marginBottom: 24 }}>Getting There</h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   {[
-                    { l: "Nearest Station", d: "3 km" },
-                    { l: "City Center", d: place?.distance || "5 km" },
-                    { l: "International Airport", d: "25 km" },
+                    { l: "Nearest Station", d: "Not Specified" },
+                    { l: "City Center", d: place?.distance || "Not Specified" },
+                    { l: "International Airport", d: "Not Specified" },
                   ].map(loc => (
                     <div key={loc.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 14, color: M }}>{loc.l}</span>
@@ -1218,10 +1222,10 @@ function Logistics({ place, hostData }) {
                 <h3 className="font-display" style={{ fontSize: 24, fontWeight: 700, color: FG, marginBottom: 32 }}>{hostData?.host?.displayName || hostData?.displayName || "Tourism Authority"}</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   <a href={`tel:${hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone}`} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                    <Phone size={18} color={A} /> {hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone || "Contact via App"}
+                    <Phone size={18} color={A} /> {hostData?.host?.phone || hostData?.host?.phoneNumber || hostData?.phone || "Not Provided"}
                   </a>
                   <a href="#" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", fontSize: 14, color: FG, fontWeight: 600 }}>
-                    <Globe size={18} color={A} /> {place?.website || "Official Portal"}
+                    <Globe size={18} color={A} /> {place?.website || "Not Provided"}
                   </a>
                 </div>
               </div>
@@ -1508,17 +1512,17 @@ function VisitorInformation({ place }) {
     return fallback;
   };
 
-  const formattedTowns = formatList(place?.nearestTowns, place?.nearestTown, "MUNNAR", (name) => name.split('/')[0]?.trim());
-  const formattedAirports = formatList(place?.nearestAirports, place?.nearestAirport, "COCHIN", (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase());
-  const formattedRailways = formatList(place?.nearestRailwayStations, place?.nearestRailway, "ALUVA", (name) => name.split('(')[0].replace(/Railway Station/i, "").trim());
+  const formattedTowns = formatList(place?.nearestTowns, place?.nearestTown, "Not Specified", (name) => name.split('/')[0]?.trim());
+  const formattedAirports = formatList(place?.nearestAirports, place?.nearestAirport, "Not Specified", (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase());
+  const formattedRailways = formatList(place?.nearestRailwayStations, place?.nearestRailway, "Not Specified", (name) => name.split('(')[0].replace(/Railway Station/i, "").trim());
 
   const suitabilityTags = useMemo(() => {
     const raw = place?.suitableFor;
-    if (!raw) return ["Couples", "Families", "Solo"];
+    if (!raw) return ["Not Specified"];
     if (Array.isArray(raw)) return raw.map(item => toDisplayString(item));
     if (typeof raw === "string") return raw.split(',').map(t => t.trim());
     const disp = toDisplayString(raw);
-    return disp ? disp.split(',').map(t => t.trim()) : ["Couples", "Families", "Solo"];
+    return disp ? disp.split(',').map(t => t.trim()) : ["Not Specified"];
   }, [place?.suitableFor]);
 
   // Ticket notch decoration styles helper
@@ -1596,7 +1600,7 @@ function VisitorInformation({ place }) {
                       <span style={{ fontSize: 8, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Permit Category</span>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                         <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>
-                          {place?.entryType ? `${place.entryType} Entry` : (place?.entryFee ? "Paid Entry" : "Free Entry")}
+                          {place?.entryType ? `${place.entryType} Entry` : (place?.entryFee ? "Paid Entry" : "Not Specified")}
                         </h4>
                         {place?.entryFee && (!place?.entryType || place.entryType.toLowerCase() !== 'free') && (
                           <span style={{ fontSize: 10, fontWeight: 700, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
@@ -1610,12 +1614,12 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                     <div>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 2 }}>Managed By</span>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>{place?.managedBy || "Government Tourism Dept."}</p>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>{place?.managedBy || "Not Specified"}</p>
                     </div>
                     <div>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 2 }}>Support Hotline</span>
-                      <a href={`tel:${place?.contactInfo || place?.phone || "+914842567890"}`} style={{ fontSize: 14, fontWeight: 750, color: A, textDecoration: "none" }}>
-                        {place?.contactInfo || place?.phone || "+91 484 256 7890"}
+                      <a href={`tel:${place?.contactInfo || place?.phone || ""}`} style={{ fontSize: 14, fontWeight: 750, color: A, textDecoration: "none" }}>
+                        {place?.contactInfo || place?.phone || "Not Provided"}
                       </a>
                     </div>
                     <div>
@@ -1838,15 +1842,15 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Permit Category</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.entryFee || "Paid Entry"}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.entryFee || "Not Specified"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Parking Place</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.parking || "Available"}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.parking || "Not Specified"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Wheelchair</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{typeof place?.wheelchairAccess === 'boolean' ? (place?.wheelchairAccess ? 'Accessible' : 'Not Accessible') : (place?.wheelchairAccess || place?.wheelchair || "Accessible")}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{typeof place?.wheelchairAccess === 'boolean' ? (place?.wheelchairAccess ? 'Accessible' : 'Not Accessible') : (place?.wheelchairAccess || place?.wheelchair || "Not Specified")}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}`, gap: 16 }}>
                       <span style={{ fontSize: 12, color: M, flexShrink: 0 }}>Age Restriction</span>
@@ -1855,7 +1859,7 @@ function VisitorInformation({ place }) {
                           ? (isNaN(place?.ageRestriction || place?.minAge) 
                               ? (place?.ageRestriction || place?.minAge) 
                               : `${place?.ageRestriction || place?.minAge} Years+`) 
-                          : "All Ages"}
+                          : "No Restriction"}
                       </span>
                     </div>
                   </div>
@@ -1869,7 +1873,7 @@ function VisitorInformation({ place }) {
               <div style={{ padding: "20px 28px 28px 28px", height: "30%", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "space-between", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.02)` }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={{ fontSize: 9, color: M, display: "block" }}>Best Visit Season</span>
-                  <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.bestTimeToVisit || "Year Round"}</span>
+                  <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.bestTimeToVisit || "Not Specified"}</span>
                 </div>
 
                 {/* Stamp Clipart */}
@@ -1942,15 +1946,15 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Opening Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.openingTime || "08:30 AM"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.openingTime || "Not Specified"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closing Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closingTime || place?.closeTime || "04:30 PM"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closingTime || place?.closeTime || "Not Specified"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closed On</span>
-                      <span style={{ fontWeight: 850, color: A, fontSize: 13, textTransform: "uppercase" }}>{Array.isArray(place?.closedDays) ? place?.closedDays.join(', ') : (place?.closedDays || "None")}</span>
+                      <span style={{ fontWeight: 850, color: A, fontSize: 13, textTransform: "uppercase" }}>{Array.isArray(place?.closedDays) ? place?.closedDays.join(', ') : (place?.closedDays || "Not Specified")}</span>
                     </div>
                   </div>
                 </div>
@@ -2054,12 +2058,12 @@ function GoodToKnow({ place }) {
     ? place.whatToCarry.map(i => typeof i === 'string' ? i : i.name || i)
     : (typeof place?.whatToCarry === 'string' && place.whatToCarry.trim() !== '' 
         ? place.whatToCarry.split(',').map(i => i.trim()) 
-        : ["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"]);
+        : ["Not Specified"]);
   const avoidItems = Array.isArray(place?.thingsToAvoid) && place.thingsToAvoid.length > 0
     ? place.thingsToAvoid.map(i => typeof i === 'string' ? i : i.name || i)
     : (typeof place?.thingsToAvoid === 'string' && place.thingsToAvoid.trim() !== ''
         ? place.thingsToAvoid.split(',').map(i => i.trim())
-        : ["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"]);
+        : ["Not Specified"]);
 
   const feedbackBg = A === "#0097B2" ? "#f8f8f8" : S;
 
@@ -2291,11 +2295,11 @@ function LocationSection({ place }) {
     <section className="location-section" style={{ background: W, padding: isMobile ? "40px 16px" : "48px 80px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "45fr 55fr", gap: isMobile ? 32 : 64 }} className="prep-grid">
-          <Rev delay={0.1} style={{ height: "100%" }}>
+          <Rev delay={0.1} style={{ height: "100%", minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
               <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it All Happens</h3>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ background: W, border: `1px solid ${B}`, height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
+                <div style={{ background: W, border: `1px solid ${B}`, width: "100%", boxSizing: "border-box", height: 280, position: "relative", overflow: "hidden", borderRadius: 16 }}>
                   <div style={{
                     position: "absolute",
                     top: 16,
@@ -2309,10 +2313,11 @@ function LocationSection({ place }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    pointerEvents: "none"
+                    pointerEvents: "none",
+                    maxWidth: isMobile ? "calc(100% - 130px)" : "calc(100% - 32px)",
                   }}>
-                    <MapPin size={16} color={A} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>{place?.placeName || "Location"}</span>
+                    <MapPin size={16} color={A} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: FG, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place?.placeName || "Location"}</span>
                   </div>
                   {latitude && longitude ? (
                     <iframe
@@ -2339,7 +2344,7 @@ function LocationSection({ place }) {
               </div>
             </div>
           </Rev>
-          <Rev delay={0.2} style={{ height: "100%" }}>
+          <Rev delay={0.2} style={{ height: "100%", minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
               <h3 style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, marginBottom: 32, fontFamily: "Poppins, sans-serif" }}>Where it is</h3>
               <div style={{ display: "flex", flexDirection: "column" }}>

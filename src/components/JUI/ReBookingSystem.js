@@ -4797,17 +4797,17 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                       <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>
-                                        {(isEventBooking && eventChildPricingTiers.length > 0) || hasChildAgeRange ? "Extra child age" : "Children details"}
+                                        {(isEventBooking && eventChildPricingTiers.length > 0) || hasChildAgeRange ? "Child Age" : "Children details"}
                                       </span>
                                       <span style={{ fontSize: 11, fontWeight: 400, color: M }}>
                                         {(() => {
                                           if (isEventBooking && eventChildPricingTiers.length > 0) {
                                             const minAge = Math.min(...eventChildPricingTiers.map(t => t.ageFrom ?? t.age_from ?? 0));
                                             const maxAge = Math.max(...eventChildPricingTiers.map(t => t.ageTo ?? t.age_to ?? 100));
-                                            return `Ages ${minAge}–${maxAge} use extra child rate. Ages below ${minAge} are free.`;
+                                            return `Ages ${minAge}–${maxAge} use the child rate. Ages below ${minAge} are free.`;
                                           }
                                           if (hasChildAgeRange) {
-                                            return `Ages ${childAgeFrom}–${childAgeTo} use extra child rate. Ages below ${childAgeFrom} are free.`;
+                                            return `Ages ${childAgeFrom}–${childAgeTo} use the child rate. Ages below ${childAgeFrom} are free.`;
                                           }
                                           return "Please select the age for each child.";
                                         })()}

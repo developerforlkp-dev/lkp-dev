@@ -3424,7 +3424,7 @@ const StayBookingSystem = ({
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {(!isEntirelyBedBased) && (
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: 10 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: BG, border: `1px solid ${B}`, borderRadius: 16, transition: "0.2s" }}>
                                   <p style={{ fontSize: 13, fontWeight: 700, color: FG, margin: 0 }}>Adults</p>
                                   <Counter
@@ -3478,10 +3478,10 @@ const StayBookingSystem = ({
                                     <Baby size={20} color={A} />
                                   </div>
                                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Extra child age</span>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Child Age</span>
                                     <span style={{ fontSize: 11, fontWeight: 400, color: M }}>
                                       {extraChildPolicyBounds
-                                        ? `${guestAgeLabels.children} use extra child rate. Ages below ${extraChildPolicyBounds.minAge} are free.`
+                                        ? `${guestAgeLabels.children} use the child rate. Ages below ${extraChildPolicyBounds.minAge} are free.`
                                         : "Select the age for each extra child."}
                                     </span>
                                   </div>
