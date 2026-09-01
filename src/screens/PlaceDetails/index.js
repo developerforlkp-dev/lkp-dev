@@ -1053,16 +1053,19 @@ function PlaceDescription({ place }) {
           </div>
 
           {/* Description Text */}
-          <p style={{
-            fontSize: 14,
-            lineHeight: 1.8,
-            color: FG,
-            margin: 0,
-            fontWeight: 450,
-            fontFamily: "Poppins, sans-serif"
-          }}>
-            {description}
-          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <span style={{ fontSize: "10px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif' }}>About this place</span>
+            <p style={{
+              fontSize: 15,
+              lineHeight: 1.7,
+              color: FG,
+              margin: 0,
+              fontWeight: 400,
+              fontFamily: '"Inter", sans-serif'
+            }}>
+              {description}
+            </p>
+          </div>
         </div>
       </section>
     );
@@ -1104,20 +1107,24 @@ function PlaceDescription({ place }) {
           })}
         </div>
 
-        {/* Two-column Editorial text */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.25em", color: A, fontWeight: 800 }}>About this place</span>
-          <div style={{
-            columnCount: 2,
-            columnGap: 60,
+        {/* Editorial text */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 900, margin: "0 auto", textAlign: "center", marginTop: 24 }}>
+          <div>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>About this place</span>
+            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em", margin: 0 }}>
+              {place?.placeName ? `Discover ${place.placeName}` : "The Experience"}
+            </h3>
+          </div>
+          <p style={{
             fontSize: 16,
-            lineHeight: 1.9,
+            lineHeight: 1.8,
             color: FG,
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 400
+            fontFamily: '"Inter", sans-serif',
+            fontWeight: 400,
+            margin: 0
           }}>
             {description}
-          </div>
+          </p>
         </div>
 
       </div>
