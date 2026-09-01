@@ -3453,10 +3453,10 @@ const StayBookingSystem = ({
                                     <Baby size={20} color={A} />
                                   </div>
                                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Extra child age</span>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: FG }}>Child Age</span>
                                     <span style={{ fontSize: 11, fontWeight: 400, color: M }}>
                                       {extraChildPolicyBounds
-                                        ? `${guestAgeLabels.children} use extra child rate. Ages below ${extraChildPolicyBounds.minAge} are free.`
+                                        ? `${guestAgeLabels.children} use the child rate. Ages below ${extraChildPolicyBounds.minAge} are free.`
                                         : "Select the age for each extra child."}
                                     </span>
                                   </div>
