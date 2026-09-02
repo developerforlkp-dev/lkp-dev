@@ -24,6 +24,8 @@
     gap: 12px
     margin: 4px auto 0
     max-width: 1000px
+    position: relative
+    z-index: 1
     overflow-x: auto
     -webkit-overflow-scrolling: touch
     scrollbar-width: none
@@ -129,8 +131,10 @@
         +dark
             background: darken(#0097B2, 5%)
 
-// ─── Desktop Search Bar ──────────────────────────────────────────
+// ─── Desktop Search Bar Section ────────────────────────────────────────────────────────
 .searchBar
+    position: relative
+    z-index: 1
     display: flex
     align-items: center
     gap: 0
@@ -387,10 +391,10 @@
 // ─── Body / Layout ────────────────────────────────────────────────────────────
 .body
     margin-top: 0
-    background: $n7
+    background: transparent
     padding: 16px 0
     +dark
-        background: $n2
+        background: transparent
     +m
         margin-top: 0
         padding: 0
@@ -435,13 +439,13 @@
     display: flex
     flex-direction: column
     gap: 24px
-    background: $n8
+    background: transparent
+    box-shadow: none
     border-radius: 20px
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04)
     padding: 24px
     +dark
-        background: $n1
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2)
+        background: transparent
+        box-shadow: none
     +m
         gap: 16px
         padding: 0

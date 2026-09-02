@@ -15,6 +15,7 @@ import GuestPicker from "../../components/GuestPicker";
 import { getBusinessInterestFilters } from "../../utils/api";
 import { Compass, Ticket, Home, Utensils, MapPin } from "lucide-react";
 import Loader from "../../components/Loader";
+import TravelJourneyIllustration from "../../components/TravelJourneyIllustration";
 
 const GOOGLE_MAPS_SCRIPT_ID = "google-maps-places-script";
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -760,6 +761,9 @@ const Listings = () => {
       </div>
 
       <div className={cn("container", styles.container)}>
+        {/* Background Decorative Travel Line Art */}
+        <TravelJourneyIllustration />
+        
         {/* Category Navigation Header inside Portal */}
         {(portalTarget && isDesktop) ? ReactDOM.createPortal(
           <div className={styles.categoryNav}>
