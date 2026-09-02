@@ -92,27 +92,30 @@ const PriceDetails = ({
         {table && table.length > 0 && (
           <div className={styles.table}>
             {table.map((x, index) => {
-              const renderTitle = (title) => {
-                if (typeof title === "string" && (/(Extra\s+)?(Adult|Child|Children|Base price|Ticket)/i.test(title)) && title.includes("(") && title.includes(")")) {
-                  const parts = title.split("(");
+              const title = x?.title || "";
+              const value = x?.value || "";
+
+              const renderTitle = (t) => {
+                if (typeof t === "string" && t.includes("(") && t.includes(")")) {
+                  const parts = t.split("(");
                   if (parts.length > 1) {
                     const mainLabel = parts[0].trim();
-                    const calculation = "(" + parts.slice(1).join("(").trim();
+                    const detail = "(" + parts.slice(1).join("(").trim();
                     return (
                       <div className={styles.priceDetailsStack}>
                         <span className={styles.mainLabel}>{mainLabel}</span>
-                        <span className={styles.calculationLabel}>{calculation}</span>
+                        <span className={styles.calculationLabel}>{detail}</span>
                       </div>
                     );
                   }
                 }
-                return title;
+                return t;
               };
 
               return (
                 <div className={styles.row} key={index}>
-                  <div className={styles.cell}>{renderTitle(x.title)}</div>
-                  <div className={styles.cell}>{x.value}</div>
+                  <div className={styles.cell}>{renderTitle(title)}</div>
+                  <div className={styles.cell}>{value}</div>
                 </div>
               );
             })}

@@ -10,7 +10,7 @@ import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import Dropdown from "../Dropdown";
 import ChildAgeSelect from "../ChildAgeSelect";
-import { createEventOrder, createOrder, getEventSlotAvailability, getListingSlots, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent } from "../../utils/api";
+import { createEventOrder, createOrder, previewOrderPrice, getEventSlotAvailability, getListingSlots, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
@@ -3542,17 +3542,87 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         };
       }).filter(Boolean);
 
+      const safeAdults = Number(guests?.adults ?? (totalGuests - (guests?.children || 0)) ?? 1) || 1;
+      const safeChildren = Number(guests?.children ?? 0) || 0;
+      const safeTotalGuests = Number(totalGuests) || (safeAdults + safeChildren) || 1;
+      const childAges = Array.isArray(guests?.childAges) ? guests.childAges : [];
+
+      const previewPricePayload = {
+        businessInterest: "EXPERIENCE",
+        booking: {
+          listingId: Number(listingId),
+          slotId: Number(slotId),
+          bookingSlotId: Number(slotId),
+          bookingDate: dateStr,
+          bookingTime: bookingTime || startTime || undefined,
+          guestCount: safeTotalGuests,
+          quantity: safeTotalGuests,
+          childCount: safeChildren,
+          childAges: childAges,
+          guestDetails: {
+            adults: safeAdults,
+            children: safeChildren,
+            adultsCount: safeAdults,
+            childrenCount: safeChildren,
+            childAges: childAges,
+            guestCount: safeTotalGuests,
+          },
+          addons: addons.map((a) => ({
+            addonId: Number(a.addonId),
+            quantity: Number(a.quantity || 1),
+          })),
+          paymentMethod: "razorpay",
+        },
+      };
+
+      console.log("📤 [ReserveModal -> Checkout] Calling preview-price API with payload:", JSON.stringify(previewPricePayload, null, 2));
+
+      let previewPriceRes = null;
+      try {
+        if (isMountedRef.current) setBookingLoading(true);
+        previewPriceRes = await previewOrderPrice(previewPricePayload);
+        console.log("✅ [ReserveModal -> Checkout] preview-price response received:", JSON.stringify(previewPriceRes, null, 2));
+      } catch (previewErr) {
+        console.warn("⚠️ [ReserveModal -> Checkout] preview-price request failed (proceeding with fallback calculation):", previewErr);
+      } finally {
+        if (isMountedRef.current) setBookingLoading(false);
+      }
+
+      const previewPricing = previewPriceRes?.pricing || bookingData.pricing;
+      const previewPayment = previewPriceRes?.payment;
+
       const previewBookingData = {
         ...bookingData,
         checkoutType: "experience",
-        currency: "INR",
+        currency: previewPricing?.currency || previewPayment?.currency || "INR",
         orderRequest: orderData,
         selectedAddOns: selectedAddOnsFormatted,
         addOns: selectedAddOnsFormatted,
+        previewPrice: previewPriceRes,
+        pricing: previewPriceRes?.pricing ? {
+          ...bookingData.pricing,
+          ...previewPriceRes.pricing,
+        } : bookingData.pricing,
+        finalTotal: previewPricing?.total || finalTotal,
       };
 
+      const paymentData = previewPayment ? {
+        amount: previewPayment.amount, // amount in paise
+        currency: previewPayment.currency || "INR",
+        paymentMethod: previewPayment.paymentMethod || "razorpay",
+      } : {
+        amount: Math.round((previewPricing?.total || finalTotal) * 100),
+        currency: previewPricing?.currency || "INR",
+        paymentMethod: "razorpay",
+      };
+
+      console.log("🚀 [ReserveModal] Navigating to /experience-checkout with state:", {
+        bookingData: previewBookingData,
+        paymentData,
+      });
+
       clearPendingCheckoutState();
-      persistPendingCheckout({ bookingData: previewBookingData, saveCheckoutBooking: true });
+      persistPendingCheckout({ bookingData: previewBookingData, session: paymentData, saveCheckoutBooking: true });
       localStorage.removeItem("frontendPendingBookingState");
       history.push({
         pathname: "/experience-checkout",
@@ -3560,6 +3630,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         state: {
           addOns: selectedAddOnsFormatted,
           bookingData: previewBookingData,
+          paymentData,
         }
       });
       return;
@@ -3605,7 +3676,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         //console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
       }
 
-      const paymentData = {
+      const createdPaymentData = {
         orderId,
         amount: amountInPaise,
         currency,
@@ -3615,7 +3686,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         paidAmount: payment?.paidAmount || payment?.finalAmount || amountInPaise,
       };
 
-      persistPendingCheckout({ bookingData, session: paymentData, saveCheckoutBooking: true });
+      persistPendingCheckout({ bookingData, session: createdPaymentData, saveCheckoutBooking: true });
       localStorage.removeItem("frontendPendingBookingState");
       if (razorpayKeyId) localStorage.setItem("lastRazorpayKeyId", razorpayKeyId);
 
@@ -3640,7 +3711,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           state: {
             addOns: selectedAddOns.map(item => item.addon || item),
             bookingData,
-            paymentData,
+            paymentData: createdPaymentData,
           }
         });
       }

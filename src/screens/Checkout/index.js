@@ -879,7 +879,7 @@ const Checkout = () => {
         const subtotalForTax = discountableAmount - currentDiscountAmount;
         correctedTax = Math.max(0, subtotalForTax * (taxRate / 100));
         const taxRow = {
-          title: normalizeTaxTitle("Tax", taxRate),
+          title: `Tax (${Number(taxRate.toFixed(2))}%)`,
           value: formatInr(correctedTax),
         };
 
@@ -908,7 +908,7 @@ const Checkout = () => {
           return { ...row, title: "Add-ons Total", value: formatInr(parseAmount(row.value)) };
         }
         if (/^tax/i.test(title)) {
-          return { ...row, title: normalizeTaxTitle(title, taxRate), value: formatInr(parseAmount(row.value)) };
+          return { ...row, title: "Tax", value: formatInr(parseAmount(row.value)) };
         }
         return row;
       });
