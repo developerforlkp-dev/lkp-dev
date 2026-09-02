@@ -2,10 +2,9 @@ import React, { useState, useEffect, useMemo, createContext, useContext, useRef 
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate } from "framer-motion";
 import { ArrowDown, ArrowRight, MapPin, Phone, Globe, Check, Zap, ChevronDown, Moon, Sun, Plus, Minus, Calendar, Clock, Users, ChevronLeft, ChevronRight, Share2, Sparkles, ShieldCheck, Mail, Star, Heart, Compass, Info, Building, Map } from "lucide-react";
-import { X, Plus as PlusIcon } from "lucide-react";
 import { BookingSystem } from "../../../components/JUI/BookingSystem";
 import { Footer } from "../../../components/JUI/Footer";
-import { getEventDetails, getEventAddons, getEventReviews, getHost, getHostContent } from "../../../utils/api";
+import { getEventDetails, getEventAddons, getEventReviews, getHost, getHostContent, previewOrderPrice } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { useTheme } from "../../../components/JUI/Theme";
 import LoadingSkeleton from "../../../components/LoadingSkeleton";
@@ -3356,17 +3355,117 @@ function Tickets({ event }) {
     { id: "collector", name: "Collector", priceValue: 5500, price: "₹5,500", strikePrice: "₹7,000", desc: "Collector's Edition", tax: 0, discount: 0, featured: true },
   ];
 
-  const handlePurchase = (tier) => {
+  const handlePurchase = async (tier) => {
     // Construct booking data for the checkout page
-    const totalGuests = guests.adults + guests.children;
+    const totalGuests = (Number(guests.adults) || 1) + (Number(guests.children) || 0);
     const childTiers = tier.childPricingTiers || event?.childPricingTiers || [];
     const childPrice = tier.childPrice ?? event?.childPrice ?? null;
     const childAgeFrom = tier.childAgeFrom ?? event?.childAgeFrom ?? null;
     const childAgeTo = tier.childAgeTo ?? event?.childAgeTo ?? null;
+    const eventIdNum = Number(event?.id || event?.eventId || "1");
+    const ticketIdNum = Number(tier.rawTicket?.id || tier.rawTicket?.ticketTypeId || tier.id || "1") || 1;
+
+    const safeAdults = Number(guests.adults) || 1;
+    const safeChildren = Number(guests.children) || 0;
+    const safeTotalGuests = Number(totalGuests) || (safeAdults + safeChildren) || 1;
+    const childAgesArray = Array.isArray(guests.childAges) ? guests.childAges.map(Number) : [];
+    const resolvedEventDate = bookingDate || availableDates?.[0] || event?.startDate || new Date().toISOString().split("T")[0];
+
+    const localUser = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("userInfo") || "{}");
+      } catch (e) {
+        return {};
+      }
+    })();
+    const nameParts = (localUser?.name || localUser?.firstName || "Guest").trim().split(" ");
+    const firstName = localUser?.firstName || nameParts[0] || "Guest";
+    const lastName = localUser?.lastName || nameParts.slice(1).join(" ") || firstName;
+    const email = localUser?.email || "guest@example.com";
+    const mobileNumber = String(localUser?.mobileNumber || localUser?.phone || localUser?.phoneNumber || "9876543210").replace(/\D/g, "");
+    const countryCode = localUser?.countryCode || "+91";
+
+    const unitPrice = Number(tier.priceValue ?? tier.price ?? 0);
+    const resolvedSlotId = selectedSlot ? Number(selectedSlot) : undefined;
+    const resolvedSlotObj = slots.find(s => String(s.id || s.slotId) === String(selectedSlot));
+
+    const previewPricePayload = {
+      businessInterest: "EVENT",
+      booking: {
+        eventId: eventIdNum,
+        ...(resolvedSlotId ? { eventSlotId: resolvedSlotId } : {}),
+        bookingDate: resolvedEventDate,
+        bookingTime: resolvedSlotObj?.startTime || event?.startTime || "19:00:00",
+        numberOfGuests: safeTotalGuests,
+        adultCount: safeAdults,
+        childCount: safeChildren,
+        childAges: childAgesArray,
+        paymentMethod: "razorpay",
+
+        tickets: [
+          {
+            ticketTypeId: ticketIdNum,
+            ticketTypeName: tier.name || tier.ticketName || "General Pass",
+            quantity: safeTotalGuests,
+            childQuantity: safeChildren,
+            pricePerTicket: unitPrice,
+            originalPricePerTicket: unitPrice,
+            groupDiscountApplied: false,
+            groupDiscountAmount: 0,
+          },
+        ],
+
+        addons: [],
+
+        guestDetails: {
+          title: localUser?.title || "Mr",
+          firstName,
+          lastName,
+          email,
+          mobileNumber,
+          countryCode,
+          additionalGuests: [],
+        },
+      },
+    };
+
+    let previewPriceRes = null;
+    try {
+      previewPriceRes = await previewOrderPrice(previewPricePayload);
+    } catch (err) {
+      console.warn("previewOrderPrice failed in handlePurchase:", err);
+    }
+
+    const apiData = Array.isArray(previewPriceRes?.data) ? previewPriceRes.data : null;
+    const amountToBePaidFromData = apiData?.find(d => /amount\s*to\s*be\s*paid/i.test(d?.title || "") || d?.code === "amount_to_be_paid")?.amount;
+    const previewPricing = previewPriceRes?.pricing || {
+      basePrice: tier.priceValue * totalGuests,
+      tax: tier.tax * totalGuests,
+      discount: tier.discount * totalGuests,
+      totalPrice: (tier.priceValue + tier.tax - tier.discount) * totalGuests,
+      total: (tier.priceValue + tier.tax - tier.discount) * totalGuests,
+      currency: "INR",
+      pricePerPerson: tier.priceValue,
+      adultsCount: guests.adults,
+      childrenCount: guests.children,
+      guestCount: totalGuests,
+      childAges: guests.childAges || [],
+      childPricingTiers: childTiers,
+      childPricePerChild: childPrice,
+      childAgeFrom,
+      childAgeTo,
+    };
+    const previewPayment = previewPriceRes?.payment;
+    const resolvedTotal = amountToBePaidFromData != null
+      ? Number(amountToBePaidFromData)
+      : (previewPricing?.totalPrice ?? previewPricing?.total ?? ((tier.priceValue + tier.tax - tier.discount) * totalGuests));
 
     const bookingData = {
-      eventId: event?.id || "1",
-      listingId: event?.id || "1",
+      businessInterest: "EVENT",
+      checkoutType: "event",
+      eventId: previewPriceRes?.eventId ? Number(previewPriceRes.eventId) : eventIdNum,
+      eventSlotId: previewPriceRes?.eventSlotId ? Number(previewPriceRes.eventSlotId) : (selectedSlot || null),
+      listingId: eventIdNum,
       listingTitle: event?.title || "Event Booking",
       listingImage: event?.media?.[0]?.url || "/images/content/photo-1.1.jpg",
       childAges: guests.childAges || [],
@@ -3374,32 +3473,32 @@ function Tickets({ event }) {
       childAgeFrom,
       childAgeTo,
       selectedTicket: tier.rawTicket || tier,
-      pricing: {
-        basePrice: tier.priceValue * totalGuests,
-        tax: tier.tax * totalGuests,
-        discount: tier.discount * totalGuests,
-        total: (tier.priceValue + tier.tax - tier.discount) * totalGuests,
-        currency: "INR",
-        pricePerPerson: tier.priceValue,
-        adultsCount: guests.adults,
-        childrenCount: guests.children,
-        guestCount: totalGuests,
-        childAges: guests.childAges || [],
-        childPricingTiers: childTiers,
-        childPricePerChild: childPrice,
-        childAgeFrom,
-        childAgeTo,
-      },
-      selectedDate: bookingDate,
+      pricing: previewPriceRes?.pricing ? { ...previewPriceRes.pricing } : previewPricing,
+      previewPrice: previewPriceRes,
+      priceBreakdownData: apiData,
+      data: apiData,
+      selectedDate: previewPriceRes?.bookingDate || bookingDate,
       bookingSummary: {
-        date: bookingDate,
-        time: slots.find(s => String(s.id || s.slotId) === String(selectedSlot))?.startTime || event?.startTime || "10:00:00",
-        guestCount: totalGuests,
+        date: previewPriceRes?.bookingDate || bookingDate,
+        time: previewPriceRes?.bookingTime || slots.find(s => String(s.id || s.slotId) === String(selectedSlot))?.startTime || event?.startTime || "10:00:00",
+        guestCount: previewPriceRes?.numberOfGuests || totalGuests,
         adults: guests.adults,
-        children: guests.children
+        children: guests.children,
       },
       selectedTier: tier,
-      selectedSlot: selectedSlot
+      selectedSlot: selectedSlot,
+      finalTotal: resolvedTotal,
+      currency: previewPricing?.currency || previewPayment?.currency || "INR",
+    };
+
+    const paymentData = previewPayment ? {
+      amount: previewPayment.amount,
+      currency: previewPayment.currency || "INR",
+      paymentMethod: previewPayment.paymentMethod || "razorpay",
+    } : {
+      amount: Math.round(resolvedTotal * 100),
+      currency: previewPricing?.currency || "INR",
+      paymentMethod: "razorpay",
     };
 
     // Save to localStorage as a fallback for the checkout component
@@ -3407,7 +3506,7 @@ function Tickets({ event }) {
 
     history.push({
       pathname: "/experience-checkout",
-      state: { bookingData }
+      state: { bookingData, paymentData },
     });
   };
 
