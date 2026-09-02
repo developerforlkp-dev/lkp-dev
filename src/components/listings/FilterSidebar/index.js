@@ -598,6 +598,7 @@ const FilterSidebar = ({
     if (normalizedInterest.includes("EVENT")) return "Refine your event";
     if (normalizedInterest.includes("FOOD")) return "Refine your food";
     if (normalizedInterest.includes("PLACE")) return "Refine your place";
+    if (normalizedInterest.includes("EXPERIENCE")) return "Refine your experience";
     return "Refine your search";
   };
 
