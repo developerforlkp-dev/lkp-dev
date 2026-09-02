@@ -378,7 +378,7 @@ const Listings = () => {
   }, [categoryFilter, filters.apiCategoryFilter, resolvedBusinessInterestId]);
 
   // Use listings hook - only re-renders when activeSearch or other filters change
-  const { data: listings, loading, error, hasMore, fetchMore } = useListings({
+  const { data: listings, loading, error, hasMore, fetchMore, totalCount: apiTotalCount } = useListings({
     location: isCategoryDerivedSearch ? "" : activeSearch,
     dateRange,
     guests,
@@ -389,8 +389,7 @@ const Listings = () => {
     sortBy: sortBy,
   });
 
-  // eslint-disable-next-line no-unused-vars
-  const totalCount = listings.length;
+  const totalCount = apiTotalCount !== null ? apiTotalCount : listings.length;
 
   // Handle filter changes
   const handleFilterChange = (filterType, value) => {
@@ -1005,7 +1004,7 @@ const Listings = () => {
                 <span className={styles.resultCount}>
                   {loading && listings.length === 0
                     ? "Loading..."
-                    : `${listings.length} ${getListingTerm(businessInterest, listings.length)} found`
+                    : `${totalCount} ${getListingTerm(businessInterest, totalCount)} found`
                   }
                 </span>
                 <div className={styles.viewToggleWrapper}>
