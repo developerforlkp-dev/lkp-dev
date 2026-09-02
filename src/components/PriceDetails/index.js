@@ -95,7 +95,49 @@ const PriceDetails = ({
               const title = x?.title || "";
               const value = x?.value || "";
 
-              const renderTitle = (t) => {
+              const resolveColor = (colorStr, defaultColor) => {
+                if (!colorStr || typeof colorStr !== "string") return defaultColor;
+                const trimmed = colorStr.trim();
+                if (trimmed.startsWith("#") || trimmed.startsWith("rgb") || trimmed.startsWith("hsl")) {
+                  return trimmed;
+                }
+                const lower = trimmed.toLowerCase();
+                if (lower === "grey" || lower === "gray") return "#B0B4BD";
+                if (lower === "black") return undefined;
+                return lower;
+              };
+
+              const renderTitle = (t, item) => {
+                const isDiscountItem =
+                  item?.isDiscount ||
+                  item?.code === "discount" ||
+                  item?.code === "earlybird" ||
+                  item?.code === "longstay" ||
+                  item?.code === "promo" ||
+                  item?.code === "seasonal" ||
+                  (typeof item?.code === "string" && (item.code.includes("discount") || item.code.includes("stay") || item.code.includes("bird") || item.code.includes("promo") || item.code.includes("season"))) ||
+                  /discount/i.test(item?.title || t || "") ||
+                  /early\s*bird/i.test(item?.title || t || "") ||
+                  /long\s*stay/i.test(item?.title || t || "");
+
+                const titleColor = resolveColor(item?.titleColor);
+                const titleStyle = titleColor ? { color: titleColor } : undefined;
+
+                if (isDiscountItem) {
+                  return <span className={styles.mainLabel} style={titleStyle}>{item?.title || t}</span>;
+                }
+
+                if (item?.subtitle) {
+                  const subtitleColor = resolveColor(item?.subtitleColor, "#B0B4BD");
+                  const subtitleStyle = subtitleColor ? { color: subtitleColor } : undefined;
+
+                  return (
+                    <div className={styles.priceDetailsStack}>
+                      <span className={styles.mainLabel} style={titleStyle}>{item.title}</span>
+                      <span className={styles.calculationLabel} style={subtitleStyle}>{item.subtitle}</span>
+                    </div>
+                  );
+                }
                 if (typeof t === "string" && t.includes("(") && t.includes(")")) {
                   const parts = t.split("(");
                   if (parts.length > 1) {
@@ -103,19 +145,25 @@ const PriceDetails = ({
                     const detail = "(" + parts.slice(1).join("(").trim();
                     return (
                       <div className={styles.priceDetailsStack}>
-                        <span className={styles.mainLabel}>{mainLabel}</span>
-                        <span className={styles.calculationLabel}>{detail}</span>
+                        <span className={styles.mainLabel} style={titleStyle}>{mainLabel}</span>
+                        <span className={styles.calculationLabel} style={{ color: "#B0B4BD" }}>{detail}</span>
                       </div>
                     );
                   }
                 }
+                if (titleColor) {
+                  return <span style={{ color: titleColor }}>{t}</span>;
+                }
                 return t;
               };
 
+              const valueColor = resolveColor(x?.valueColor);
+              const valueStyle = valueColor ? { color: valueColor } : undefined;
+
               return (
                 <div className={styles.row} key={index}>
-                  <div className={styles.cell}>{renderTitle(title)}</div>
-                  <div className={styles.cell}>{value}</div>
+                  <div className={styles.cell}>{renderTitle(title, x)}</div>
+                  <div className={styles.cell} style={valueStyle}>{value}</div>
                 </div>
               );
             })}

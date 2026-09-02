@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles, ChevronLeft, ChevronRight, Tag, Baby } from "lucide-react";
 import moment from "moment";
 import { useTheme } from "../../components/JUI/Theme";
-import { createStayOrder, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability, getStayHotelRoomAvailability, getStayHostelAvailability } from "../../utils/api";
+import { createStayOrder, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability, getStayHotelRoomAvailability, getStayHostelAvailability, previewOrderPrice } from "../../utils/api";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import {
   getStayGuestDiscountRate,
@@ -1238,10 +1238,10 @@ const StayBookingSystem = ({
     let finalExtraCP = 0;
 
     if (isPropertyBased) {
-      totalBaseAdultsLimit = stay.maxAdults || stay.maxGuests || 1;
-      totalBaseChildrenLimit = stay.maxChildren || 0;
-      totalExtraAdultsLimit = stay.maxExtraAdults || stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
-      totalExtraChildrenLimit = stay.maxExtraChildren || stay.maxExtraChildrenAllowed || 0;
+      totalBaseAdultsLimit = Number(stay.occupancyPricing?.maxAdultCount ?? stay.occupancyPricing?.baseAdultCount ?? stay.maxAdults ?? stay.maxGuests ?? 1);
+      totalBaseChildrenLimit = Number(stay.occupancyPricing?.maxChildCount ?? stay.maxChildren ?? 0);
+      totalExtraAdultsLimit = Number(stay.occupancyPricing?.maxExtraAdultsAllowed ?? stay.maxExtraAdults ?? stay.maxExtraAdultsAllowed ?? stay.maxExtraBeds ?? 0);
+      totalExtraChildrenLimit = Number(stay.occupancyPricing?.maxExtraChildrenAllowed ?? stay.maxExtraChildren ?? stay.maxExtraChildrenAllowed ?? 0);
 
       let basePrice = parseFloat(stay.fullPropertyB2cPrice || stay.b2cPrice || stay.price || 0);
       let extraAP = parseFloat(stay.fullPropertyExtraAdultPrice || stay.extraAdultPrice || 0);
@@ -1556,10 +1556,10 @@ const StayBookingSystem = ({
     let totalExtraChildrenLimit = 0;
 
     if (isPropertyBased) {
-      totalBaseAdultsLimit = stay.maxAdults || stay.maxGuests || 1;
-      totalBaseChildrenLimit = stay.maxChildren || 0;
-      totalExtraAdultsLimit = stay.maxExtraAdults || stay.maxExtraAdultsAllowed || stay.maxExtraBeds || 0;
-      totalExtraChildrenLimit = stay.maxExtraChildren || stay.maxExtraChildrenAllowed || 0;
+      totalBaseAdultsLimit = Number(stay.occupancyPricing?.maxAdultCount ?? stay.occupancyPricing?.baseAdultCount ?? stay.maxAdults ?? stay.maxGuests ?? 1);
+      totalBaseChildrenLimit = Number(stay.occupancyPricing?.maxChildCount ?? stay.maxChildren ?? 0);
+      totalExtraAdultsLimit = Number(stay.occupancyPricing?.maxExtraAdultsAllowed ?? stay.maxExtraAdults ?? stay.maxExtraAdultsAllowed ?? stay.maxExtraBeds ?? 0);
+      totalExtraChildrenLimit = Number(stay.occupancyPricing?.maxExtraChildrenAllowed ?? stay.maxExtraChildren ?? stay.maxExtraChildrenAllowed ?? 0);
     } else {
       resolvedSelectedRooms.forEach(room => {
         totalBaseAdultsLimit += (room.maxAdults || 1) * room.count;
@@ -1841,9 +1841,18 @@ const StayBookingSystem = ({
               }
               const currentAdults = guests.adults || 1;
               const currentChildren = guests.children || 0;
-              if (freshAvailability.maxAdults && currentAdults > freshAvailability.maxAdults) {
+
+              const baseAdultsMax = Number(freshAvailability.occupancyPricing?.maxAdultCount ?? freshAvailability.maxAdults ?? stay.maxAdults ?? stay.maxGuests ?? 1);
+              const extraAdultsAllowed = Number(freshAvailability.occupancyPricing?.maxExtraAdultsAllowed ?? freshAvailability.maxExtraAdults ?? stay.maxExtraAdults ?? stay.maxExtraAdultsAllowed ?? 0);
+              const totalAllowedAdults = baseAdultsMax + extraAdultsAllowed;
+
+              const baseChildrenMax = Number(freshAvailability.occupancyPricing?.maxChildCount ?? freshAvailability.maxChildren ?? stay.maxChildren ?? 0);
+              const extraChildrenAllowed = Number(freshAvailability.occupancyPricing?.maxExtraChildrenAllowed ?? freshAvailability.maxExtraChildren ?? stay.maxExtraChildren ?? stay.maxExtraChildrenAllowed ?? 0);
+              const totalAllowedChildren = baseChildrenMax + extraChildrenAllowed;
+
+              if (totalAllowedAdults > 0 && currentAdults > totalAllowedAdults) {
                 setLoading(false);
-                const reason = `Maximum ${freshAvailability.maxAdults} adults allowed for this property.`;
+                const reason = `Maximum ${totalAllowedAdults} adults allowed for this property.`;
                 setValidationError(reason);
                 setBookingErrorPopup({
                   visible: true,
@@ -1853,9 +1862,9 @@ const StayBookingSystem = ({
                 });
                 return;
               }
-              if (freshAvailability.maxChildren !== undefined && currentChildren > freshAvailability.maxChildren) {
+              if (totalAllowedChildren > 0 && currentChildren > totalAllowedChildren) {
                 setLoading(false);
-                const reason = `Maximum ${freshAvailability.maxChildren} children allowed for this property.`;
+                const reason = `Maximum ${totalAllowedChildren} children allowed for this property.`;
                 setValidationError(reason);
                 setBookingErrorPopup({
                   visible: true,
@@ -2366,6 +2375,85 @@ const StayBookingSystem = ({
         : resolvedSelectedRooms.map(r => `${r.count}x ${r.roomName || r.name}`).join(", ");
       const previewCheckoutExtraAdults = isHostelBooking(stay) ? 0 : extraAdultsCount;
 
+      const nameParts = (customerName || userInfo?.name || "Guest User").trim().split(" ");
+      const firstName = userInfo?.firstName || nameParts[0] || "Guest";
+      const lastName = userInfo?.lastName || nameParts.slice(1).join(" ") || firstName;
+      const guestDetailsObj = {
+        title: userInfo?.title || "Mr",
+        firstName,
+        lastName,
+        email: customerEmail,
+        mobileNumber: String(customerPhone || "7934656599").replace(/\D/g, "") || "7934656599",
+        countryCode: userInfo?.countryCode || "+91",
+        additionalGuests: [],
+      };
+
+      let stayBookingObj = {
+        stayId: Number(payload.stayId),
+        checkInDate: checkInDate.format("YYYY-MM-DD"),
+        checkOutDate: checkOutDate.format("YYYY-MM-DD"),
+        numberOfGuests: Number(payload.numberOfGuests || (guests.adults || 1) + (guests.children || 0)),
+        paymentMethod: "razorpay",
+        addons: backendAddOns.map((a) => ({
+          addonId: Number(a.addonId),
+          quantity: Number(a.quantity || 1),
+        })),
+        guestDetails: guestDetailsObj,
+      };
+
+      if (isPropertyBased) {
+        stayBookingObj = {
+          ...stayBookingObj,
+          adults: Number(payload.adults || guests.adults || 1),
+          children: Number(payload.children || guests.children || 0),
+          childAges: normalizedChildAges,
+          extraAdults: Number(extraAdultsCount || 0),
+          extraChildren: Number(extraChildrenCount || 0),
+        };
+      } else if (Array.isArray(payload.bedConfigs) && payload.bedConfigs.length > 0) {
+        stayBookingObj = {
+          ...stayBookingObj,
+          bedConfigs: payload.bedConfigs.map((b) => ({
+            name: b.name || "Dorm Bed",
+            bedsBooked: Number(b.bedsBooked || 1),
+            mealPlanCode: b.mealPlanCode || "EP",
+            extraAdults: Number(b.extraAdults || 0),
+            extraChildren: Number(b.extraChildren || 0),
+          })),
+        };
+      } else {
+        stayBookingObj = {
+          ...stayBookingObj,
+          rooms: Array.isArray(payload.rooms) ? payload.rooms.map((r) => ({
+            roomId: Number(r.roomId),
+            roomsBooked: Number(r.roomsBooked || 1),
+            adults: Number(r.adults || 1),
+            children: Number(r.children || 0),
+            childAges: Array.isArray(r.childAges) ? r.childAges.map(Number) : [],
+            mealPlanCode: r.mealPlanCode || "CP",
+            extraBeds: Number(r.extraBeds || 0),
+            extraAdults: Number(r.extraAdults || 0),
+            extraChildren: Number(r.extraChildren || 0),
+          })) : [],
+        };
+      }
+
+      const previewPricePayload = {
+        businessInterest: "STAY",
+        booking: stayBookingObj,
+      };
+
+      let previewPriceRes = null;
+      try {
+        previewPriceRes = await previewOrderPrice(previewPricePayload);
+      } catch (previewErr) {
+        console.warn("previewOrderPrice failed for stay:", previewErr);
+      }
+
+      const apiData = Array.isArray(previewPriceRes?.data) ? previewPriceRes.data : null;
+      const amountToBePaidFromData = apiData?.find(d => /amount\s*to\s*be\s*paid/i.test(d?.title || "") || d?.code === "amount_to_be_paid")?.amount;
+      const resolvedTotal = amountToBePaidFromData != null ? Number(amountToBePaidFromData) : (pricing.finalTotal || 0);
+
       const previewBookingData = {
         checkoutType: "stay",
         stayId: payload.stayId,
@@ -2381,8 +2469,11 @@ const StayBookingSystem = ({
         extraAdults: previewCheckoutExtraAdults,
         extraChildren: extraChildrenCount,
         receipt: previewReceipt,
-        totalAmount: pricing.finalTotal || 0,
-        finalTotal: pricing.finalTotal || 0,
+        totalAmount: resolvedTotal,
+        finalTotal: resolvedTotal,
+        previewPrice: previewPriceRes,
+        priceBreakdownData: apiData,
+        data: apiData,
         selectedAddOns: previewSelectedAddOnsData,
         currency: previewCurrency,
         orderRequest: payload,
