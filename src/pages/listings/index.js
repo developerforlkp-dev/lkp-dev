@@ -9,6 +9,7 @@ import FilterSidebar from "../../components/listings/FilterSidebar";
 import ListingsGrid from "../../components/listings/ListingsGrid";
 import MobileFilterModal from "../../components/listings/MobileFilterModal";
 import Icon from "../../components/Icon";
+import Dropdown from "../../components/Dropdown";
 import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
 import { getBusinessInterestFilters } from "../../utils/api";
@@ -1003,7 +1004,17 @@ const Listings = () => {
                     : `${listings.length} ${getListingTerm(businessInterest, listings.length)} found`
                   }
                 </span>
-                <div className={styles.viewToggle}>
+                <div className={styles.viewToggleWrapper}>
+                  <div className={styles.sortWrapper}>
+                    <span className={styles.sortLabel}>Sort by</span>
+                    <Dropdown
+                      className={styles.sortDropdown}
+                      value={sortBy === "newest" ? "Newest" : "Rating"}
+                      setValue={(val) => setSortBy(val === "Newest" ? "newest" : "rating")}
+                      options={["Newest", "Rating"]}
+                    />
+                  </div>
+                  <div className={styles.viewToggle}>
                   <button
                     className={cn(styles.viewToggleBtn, { [styles.viewToggleBtnActive]: viewMode === "grid" })}
                     onClick={() => setViewMode("grid")}
@@ -1029,6 +1040,7 @@ const Listings = () => {
                       <rect x="1" y="12" width="14" height="2" rx="1" />
                     </svg>
                   </button>
+                  </div>
                 </div>
               </div>
 
