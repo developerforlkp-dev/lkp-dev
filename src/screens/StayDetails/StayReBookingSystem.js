@@ -605,7 +605,9 @@ const StayBookingSystem = ({
       if (count === 0) return prev.filter(r => String(r.roomId) !== String(roomId));
       const existing = prev.find(r => String(r.roomId) === String(roomId));
       if (existing) return prev.map(r => String(r.roomId) === String(roomId) ? { ...r, count } : r);
-      return [...prev, { roomId: String(roomId), mealPlan: "EP", count }];
+      const catalogRoom = stayRoomsCatalog?.find(r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id ?? r.bedConfigId) === String(roomId));
+      const defaultPlan = catalogRoom?.mealPlanPricing && Object.keys(catalogRoom.mealPlanPricing).length > 0 ? Object.keys(catalogRoom.mealPlanPricing)[0] : catalogRoom?.epPrice ? "EP" : catalogRoom?.bbPrice ? "BB" : catalogRoom?.cpPrice ? "CP" : catalogRoom?.mapPrice ? "MAP" : catalogRoom?.apPrice ? "AP" : "EP";
+      return [...prev, { roomId: String(roomId), mealPlan: defaultPlan, count }];
     });
   };
 
@@ -921,7 +923,8 @@ const StayBookingSystem = ({
     if (selectedRooms.length === 0) {
       const firstRoom = stayRoomsCatalog[0];
       const firstRoomId = String(firstRoom.roomId ?? firstRoom.id ?? firstRoom.roomTypeId ?? firstRoom.room_type_id);
-      setSelectedRooms([{ roomId: firstRoomId, mealPlan: "EP", count: 1 }]);
+      const defaultPlan = firstRoom?.mealPlanPricing && Object.keys(firstRoom.mealPlanPricing).length > 0 ? Object.keys(firstRoom.mealPlanPricing)[0] : firstRoom?.epPrice ? "EP" : firstRoom?.bbPrice ? "BB" : firstRoom?.cpPrice ? "CP" : firstRoom?.mapPrice ? "MAP" : firstRoom?.apPrice ? "AP" : "EP";
+      setSelectedRooms([{ roomId: firstRoomId, mealPlan: defaultPlan, count: 1 }]);
     }
   }, [selectedRooms, stay, stayRoomsCatalog, setSelectedRooms]);
 

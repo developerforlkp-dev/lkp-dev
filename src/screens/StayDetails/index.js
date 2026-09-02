@@ -2769,7 +2769,8 @@ const StayDetails = () => {
           if (stayRoomsCatalog.length > 0) {
             const firstRoom = stayRoomsCatalog[0];
             const firstRoomId = String(firstRoom.roomId ?? firstRoom.id ?? firstRoom.roomTypeId ?? firstRoom.room_type_id);
-            updated = [{ roomId: firstRoomId, mealPlan: "EP", count: 1 }];
+            const defaultPlan = firstRoom?.mealPlanPricing && Object.keys(firstRoom.mealPlanPricing).length > 0 ? Object.keys(firstRoom.mealPlanPricing)[0] : firstRoom?.epPrice ? "EP" : firstRoom?.bbPrice ? "BB" : firstRoom?.cpPrice ? "CP" : firstRoom?.mapPrice ? "MAP" : firstRoom?.apPrice ? "AP" : "EP";
+            updated = [{ roomId: firstRoomId, mealPlan: defaultPlan, count: 1 }];
           } else {
             updated = filtered;
           }
@@ -2777,7 +2778,9 @@ const StayDetails = () => {
           updated = filtered;
         }
       } else {
-        updated = [...prev, { roomId: rid, mealPlan: mealPlan || "EP", count: 1 }];
+        const addedRoom = (stay?.rooms || stay?.roomTypes || stay?.room_types || []).find(r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id) === rid);
+        const defaultPlan = addedRoom?.mealPlanPricing && Object.keys(addedRoom.mealPlanPricing).length > 0 ? Object.keys(addedRoom.mealPlanPricing)[0] : addedRoom?.epPrice ? "EP" : addedRoom?.bbPrice ? "BB" : addedRoom?.cpPrice ? "CP" : addedRoom?.mapPrice ? "MAP" : addedRoom?.apPrice ? "AP" : "EP";
+        updated = [...prev, { roomId: rid, mealPlan: mealPlan || defaultPlan, count: 1 }];
       }
       const totalRooms = updated.reduce((sum, r) => sum + Number(r.count || 0), 0);
       setGuests(g => {
