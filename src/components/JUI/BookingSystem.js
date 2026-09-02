@@ -2992,18 +2992,149 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           };
         }).filter(Boolean);
 
+        const safeAdults = Number(guests?.adults ?? (totalGuests - (guests?.children || 0)) ?? 1) || 1;
+        const safeChildren = Number(guests?.children ?? 0) || 0;
+        const safeTotalGuests = Number(totalGuests) || (safeAdults + safeChildren) || 1;
+
+        const guestDetailsArray = [];
+        for (let i = 0; i < safeAdults; i++) {
+          guestDetailsArray.push({
+            name: i === 0 ? (customerName || "Guest 1") : `Guest ${i + 1}`,
+            age: 30,
+          });
+        }
+        for (let j = 0; j < safeChildren; j++) {
+          const childAge = Array.isArray(guests?.childAges) && guests.childAges[j] != null ? Number(guests.childAges[j]) : 10;
+          guestDetailsArray.push({
+            name: `Child ${j + 1}`,
+            age: childAge,
+          });
+        }
+
+        const localUser = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("userInfo") || "{}");
+          } catch (e) {
+            return {};
+          }
+        })();
+        const nameParts = (customerName || localUser?.name || localUser?.firstName || "Guest").trim().split(" ");
+        const firstName = localUser?.firstName || nameParts[0] || "Guest";
+        const lastName = localUser?.lastName || nameParts.slice(1).join(" ") || firstName;
+        const email = localUser?.email || "guest@example.com";
+        const mobileNumber = String(localUser?.mobileNumber || localUser?.phone || localUser?.phoneNumber || "9876543210").replace(/\D/g, "");
+        const countryCode = localUser?.countryCode || "+91";
+
+        const unitTicketPrice = Number(pricePerTicket || eventGuestPricing?.baseUnitPrice || 0);
+        const resolvedSlotId = selectedEventSlot?.id ? Number(selectedEventSlot.id) : (selectedEventSlot?.slotId ? Number(selectedEventSlot.slotId) : (eventSlotIdNum ? Number(eventSlotIdNum) : undefined));
+
+        const previewPricePayload = {
+          businessInterest: "EVENT",
+          booking: {
+            eventId: Number(eventIdNum),
+            ...(resolvedSlotId ? { eventSlotId: resolvedSlotId } : {}),
+            bookingDate: dateStr,
+            bookingTime: selectedEventSlot?.startTime || selectedEventSlot?.slotName || startTime || "19:00:00",
+            numberOfGuests: Number(safeTotalGuests),
+            adultCount: Number(safeAdults),
+            childCount: Number(safeChildren),
+            childAges: Array.isArray(guests?.childAges) ? guests.childAges.map(Number) : [],
+            paymentMethod: "razorpay",
+
+            tickets: [
+              {
+                ticketTypeId: Number(ticketTypeId),
+                ticketTypeName: ticketTypeName || "General Pass",
+                quantity: Number(safeTotalGuests),
+                childQuantity: Number(safeChildren),
+                pricePerTicket: unitTicketPrice,
+                originalPricePerTicket: unitTicketPrice,
+                groupDiscountApplied: false,
+                groupDiscountAmount: 0,
+              },
+            ],
+
+            addons: selectedAddOnsFormatted.map((a) => ({
+              addonId: Number(a.addonId || a.id),
+              addonName: a.addonName || a.name || a.title || "Add-on",
+              addonPrice: Number(a.pricePerUnit || a.price || a.addonPrice || 0),
+              quantity: Number(a.quantity || 1),
+            })),
+
+            guestDetails: {
+              title: localUser?.title || "Mr",
+              firstName,
+              lastName,
+              email,
+              mobileNumber,
+              countryCode,
+              additionalGuests: [],
+            },
+          },
+        };
+
+        console.log("📤 [Event ReserveModal -> Checkout] Calling preview-price API with payload:", JSON.stringify(previewPricePayload, null, 2));
+
+        let previewPriceRes = null;
+        try {
+          if (isMountedRef.current) setBookingLoading(true);
+          previewPriceRes = await previewOrderPrice(previewPricePayload);
+          console.log("✅ [Event ReserveModal -> Checkout] preview-price response received:", JSON.stringify(previewPriceRes, null, 2));
+        } catch (previewErr) {
+          console.warn("⚠️ [Event ReserveModal -> Checkout] preview-price request failed (proceeding with fallback calculation):", previewErr);
+        } finally {
+          if (isMountedRef.current) setBookingLoading(false);
+        }
+
+        const apiData = Array.isArray(previewPriceRes?.data) ? previewPriceRes.data : null;
+        const amountToBePaidFromData = apiData?.find(d => /amount\s*to\s*be\s*paid/i.test(d?.title || "") || d?.code === "amount_to_be_paid")?.amount;
+        const previewPricing = previewPriceRes?.pricing || {
+          currency: previewCurrency,
+          pricePerPerson: eventGuestPricing.finalUnitPrice,
+          basePrice: eventBaseTotal,
+          allowChildPricing: actualHasChildPricing,
+          adultsCount: guests.adults,
+          childrenCount: guests.children,
+          childAges: guests.childAges || [],
+          childPricingTiers: eventChildPricingTiers,
+          basePricePerPerson: eventGuestPricing.baseUnitPrice,
+          adultBasePricePerPerson: eventGuestPricing.baseUnitPrice,
+          childPricePerChild: actualHasChildPricing
+            ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : effectiveChildPrice)
+            : 0,
+          baseChildPricePerChild,
+          discount: eventDiscountTotal,
+          discountAmount: eventDiscountTotal,
+          promoDiscount: eventPromoDiscountTotal,
+          earlyBirdDiscount: eventEarlyBirdDiscountTotal,
+          discountRate: appliedDiscountRate,
+          tax: eventTaxTotal,
+          taxAmount: eventTaxTotal,
+          taxRate: appliedTaxRate,
+          addonsTotal: addOnsTotal,
+          subtotal: subtotalBeforeAdjustments,
+          totalPrice: finalTotal,
+          total: finalTotal,
+          guestCount: totalGuests,
+        };
+        const previewPayment = previewPriceRes?.payment;
+        const resolvedTotal = amountToBePaidFromData != null
+          ? Number(amountToBePaidFromData)
+          : (previewPricing?.totalPrice ?? previewPricing?.total ?? finalTotal);
+
         const previewBookingData = {
           checkoutType: "event",
-          eventId: eventIdNum,
-          eventSlotId: eventSlotIdNum,
+          businessInterest: "EVENT",
+          eventId: previewPriceRes?.eventId ? Number(previewPriceRes.eventId) : eventIdNum,
+          eventSlotId: previewPriceRes?.eventSlotId ? Number(previewPriceRes.eventSlotId) : eventSlotIdNum,
           eventSlotIds,
           listingTitle: listing?.title || "Event Booking",
           listingImage: listing?.coverPhotoUrl || listing?.listingMedia?.[0]?.url || "",
           returnTo: `/event?id=${eventIdNum}`,
           bookingSummary: {
-            date: dateStr,
-            time: selectedEventSlots.map((slot) => slot.startTime || slot.slotName).filter(Boolean).join(", "),
-            guestCount: totalGuests,
+            date: previewPriceRes?.bookingDate || dateStr,
+            time: previewPriceRes?.bookingTime || selectedEventSlots.map((slot) => slot.startTime || slot.slotName).filter(Boolean).join(", "),
+            guestCount: previewPriceRes?.numberOfGuests || totalGuests,
           },
           guests,
           selectedAddOns: selectedAddOnsFormatted,
@@ -3016,286 +3147,56 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           priceDetails: {
             pricePerPerson: eventGuestPricing.finalUnitPrice,
             basePricePerTicket: pricePerTicket,
-            totalPrice: finalTotal,
+            totalPrice: resolvedTotal,
           },
-          pricing: {
-            currency: previewCurrency,
-            pricePerPerson: eventGuestPricing.finalUnitPrice,
-            basePrice: eventBaseTotal,
-            allowChildPricing: actualHasChildPricing,
-            adultsCount: guests.adults,
-            childrenCount: guests.children,
-            childAges: guests.childAges || [],
-            childPricingTiers: eventChildPricingTiers,
-            basePricePerPerson: eventGuestPricing.baseUnitPrice,
-            adultBasePricePerPerson: eventGuestPricing.baseUnitPrice,
-            childPricePerChild: actualHasChildPricing
-              ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : effectiveChildPrice)
-              : 0,
-            baseChildPricePerChild,
-            discount: eventDiscountTotal,
-            promoDiscount: eventPromoDiscountTotal,
-            earlyBirdDiscount: eventEarlyBirdDiscountTotal,
-            discountRate: appliedDiscountRate,
-            tax: eventTaxTotal,
-            taxRate: appliedTaxRate,
-            addonsTotal: addOnsTotal,
-            subtotal: subtotalBeforeAdjustments,
-            total: finalTotal,
-            guestCount: totalGuests,
-          },
+          pricing: previewPriceRes?.pricing ? {
+            ...previewPriceRes.pricing,
+          } : previewPricing,
           childAges: guests.childAges || [],
           childPricingTiers: eventChildPricingTiers,
           selectedTicket,
-          receipt: [
-            ...(guests.adults > 0 ? [{
-              title: `${previewCurrency} ${eventGuestPricing.baseUnitPrice.toFixed(2)} × ${guests.adults} adult${guests.adults > 1 ? "s" : ""}`,
-              content: `${previewCurrency} ${(eventGuestPricing.baseUnitPrice * guests.adults).toFixed(2)}`,
-            }] : []),
-            ...buildChildReceiptRows({
-              currencySymbol: previewCurrency,
-              isEvent: true,
-              adultUnitPrice: eventGuestPricing.baseUnitPrice,
-              childTiers: eventChildPricingTiers,
-              allowCP: actualHasChildPricing,
-              rawCP: rawChildPrice,
-            }),
-            ...(eventEarlyBirdDiscountTotal > 0 ? [{
-              title: `Early Bird Discount (${eventGuestPricing.earlyBirdDiscountRate}%)`,
-              content: `- ${previewCurrency} ${eventEarlyBirdDiscountTotal.toFixed(2)}`,
-            }] : []),
-            ...(eventPromoDiscountTotal > 0 ? [{
-              title: `Promo Discount (${eventGuestPricing.promoDiscountRate}%)`,
-              content: `- ${previewCurrency} ${eventPromoDiscountTotal.toFixed(2)}`,
-            }] : []),
-            ...(eventTaxTotal > 0 ? [{
-              title: `Taxes & Fees (${appliedTaxRate}%)`,
-              content: `+ ${previewCurrency} ${eventTaxTotal.toFixed(2)}`,
-            }] : []),
-            ...(addOnsTotal > 0 ? [{
-              title: "Add-ons",
-              content: `+ ${previewCurrency} ${addOnsTotal.toFixed(2)}`,
-              kind: "addons",
-              showInCheckout: true
-            }] : []),
-            {
-              title: "Total",
-              content: `${previewCurrency} ${finalTotal.toFixed(2)}`,
-            },
-          ],
-          currency: previewCurrency,
-          finalTotal,
+          previewPrice: previewPriceRes,
+          priceBreakdownData: apiData,
+          data: apiData,
+          currency: previewPricing?.currency || previewPayment?.currency || previewCurrency,
+          finalTotal: resolvedTotal,
           ticketType: ticketTypeName,
           ticketTypeId,
           selectedSlot: selectedEventSlot,
           selectedSlots: selectedEventSlots,
           cancellationPolicySummary: listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText,
-          orderRequest: payload,
+          orderRequest: {
+            ...payload,
+            eventId: previewPriceRes?.eventId ? Number(previewPriceRes.eventId) : eventIdNum,
+            eventSlotId: previewPriceRes?.eventSlotId ? Number(previewPriceRes.eventSlotId) : eventSlotIdNum,
+            bookingDate: previewPriceRes?.bookingDate || payload.bookingDate,
+            bookingTime: previewPriceRes?.bookingTime || payload.bookingTime,
+          },
+        };
+
+        const paymentData = previewPayment ? {
+          amount: previewPayment.amount, // amount in paise
+          currency: previewPayment.currency || "INR",
+          paymentMethod: previewPayment.paymentMethod || "razorpay",
+        } : {
+          amount: Math.round(resolvedTotal * 100),
+          currency: previewPricing?.currency || "INR",
+          paymentMethod: "razorpay",
         };
 
         clearPendingCheckoutState();
-        persistPendingCheckout({ bookingData: previewBookingData });
+        persistPendingCheckout({ bookingData: previewBookingData, session: paymentData, saveCheckoutBooking: true });
         localStorage.removeItem("frontendPendingBookingState");
 
-        if (finalTotal > 0) {
-          history.replace("/experience-checkout", {
+        history.push({
+          pathname: "/experience-checkout",
+          state: {
             bookingData: previewBookingData,
-            addOns: selectedAddOnsFormatted
-          });
-          return;
-        }
-
-        const res = await createEventOrder(payload);
-        const order = res?.order || res;
-        const payment = res?.payment || res?.data?.payment || res?.order?.payment || order?.payment || null;
-        const orderId = order?.orderId || order?.id || res?.orderId || res?.id;
-
-        const extractedRZP = extractRazorpayCredentials(res);
-
-        const razorpayOrderId = payment?.razorpayOrderId || order?.razorpayOrderId || res?.razorpayOrderId || order?.razorpay_order_id || res?.razorpay_order_id || extractedRZP.razorpayOrderId;
-        const currency = listing?.currency || payment?.currency || "INR";
-        const amountInPaise = payment?.amount || Math.round(finalTotal * 100);
-        const razorpayKeyId =
-          payment?.razorpayKeyId ||
-          payment?.razorpay_key_id ||
-          payment?.keyId ||
-          order?.razorpayKeyId ||
-          res?.razorpayKeyId ||
-          order?.razorpay_key_id ||
-          res?.razorpay_key_id ||
-          order?.razorpayKey ||
-          res?.razorpayKey ||
-          order?.keyId ||
-          res?.keyId ||
-          extractedRZP.razorpayKeyId ||
-          process.env.REACT_APP_RAZORPAY_KEY_ID ||
-          getRazorpayKeyFromCache() ||
-          "rzp_test_RaBjdu0Ed3p1gN";
-
-        const isFreeBooking = finalTotal === 0;
-
-        if (!razorpayOrderId && !isFreeBooking) {
-          //console.log("ℹ️ Razorpay Order ID not present on order creation; will be initialized on payment checkout.");
-        }
-
-        if (razorpayKeyId) {
-          try { localStorage.setItem("lastRazorpayKeyId", razorpayKeyId); } catch (e) { }
-        }
-
-        const bookingData = {
-          eventId: eventIdNum,
-          eventSlotId: eventSlotIdNum,
-          eventSlotIds,
-          listingTitle: listing?.title || "Event Booking",
-          listingImage: listing?.coverPhotoUrl || listing?.listingMedia?.[0]?.url || "",
-          returnTo: `/event?id=${eventIdNum}`,
-          bookingSummary: {
-            date: dateStr,
-            time: selectedEventSlots.map((slot) => slot.startTime || slot.slotName).filter(Boolean).join(", "),
-            guestCount: totalGuests,
-          },
-          guests,
-          selectedAddOns: selectedAddOns.map(a => (a.addon?.addonId || a.addonId || a.id)),
-          addOnQuantities: selectedAddOns.reduce((acc, a) => {
-            const id = a.addon?.addonId || a.addonId || a.id;
-            if (id) acc[id] = a.quantity || 1;
-            return acc;
-          }, {}),
-          priceDetails: {
-            pricePerPerson: eventGuestPricing.finalUnitPrice,
-            basePricePerTicket: pricePerTicket,
-            totalPrice: finalTotal,
-          },
-          pricing: {
-            currency,
-            pricePerPerson: eventGuestPricing.finalUnitPrice,
-            basePrice: eventBaseTotal,
-            // Adult/child split for checkout page
-            allowChildPricing: actualHasChildPricing,
-            adultsCount: guests.adults,
-            childrenCount: guests.children,
-            childAges: guests.childAges || [],
-            childPricingTiers: eventChildPricingTiers,
-            basePricePerPerson: eventGuestPricing.baseUnitPrice,
-            adultBasePricePerPerson: eventGuestPricing.baseUnitPrice,
-            childPricePerChild: actualHasChildPricing
-              ? (isEventTieredChildPricing ? (eventChildPriceTotal / guests.children) : effectiveChildPrice)
-              : 0,
-            baseChildPricePerChild: baseChildPricePerChild,
-            discount: eventDiscountTotal,
-            promoDiscount: eventPromoDiscountTotal,
-            earlyBirdDiscount: eventEarlyBirdDiscountTotal,
-            discountRate: appliedDiscountRate,
-            tax: eventTaxTotal,
-            taxRate: appliedTaxRate,
-            addonsTotal: addOnsTotal,
-            subtotal: subtotalBeforeAdjustments,
-            total: finalTotal,
-            guestCount: totalGuests,
-          },
-          childAges: guests.childAges || [],
-          childPricingTiers: eventChildPricingTiers,
-          selectedTicket,
-          receipt: [
-            ...(guests.adults > 0 ? [{
-              title: `${currency} ${eventGuestPricing.baseUnitPrice.toFixed(2)} × ${guests.adults} adult${guests.adults > 1 ? "s" : ""}`,
-              content: `${currency} ${(eventGuestPricing.baseUnitPrice * guests.adults).toFixed(2)}`,
-            }] : []),
-            ...buildChildReceiptRows({
-              currencySymbol: currency,
-              isEvent: true,
-              adultUnitPrice: eventGuestPricing.baseUnitPrice,
-              childTiers: eventChildPricingTiers,
-              allowCP: actualHasChildPricing,
-              rawCP: rawChildPrice,
-            }),
-            ...(eventEarlyBirdDiscountTotal > 0 ? [{
-              title: `Early Bird Discount (${eventGuestPricing.earlyBirdDiscountRate}%)`,
-              content: `- ${currency} ${eventEarlyBirdDiscountTotal.toFixed(2)}`,
-            }] : []),
-            ...(eventPromoDiscountTotal > 0 ? [{
-              title: `Promo Discount (${eventGuestPricing.promoDiscountRate}%)`,
-              content: `- ${currency} ${eventPromoDiscountTotal.toFixed(2)}`,
-            }] : []),
-            ...(eventTaxTotal > 0 ? [{
-              title: `Taxes & Fees (${appliedTaxRate}%)`,
-              content: `+ ${currency} ${eventTaxTotal.toFixed(2)}`,
-            }] : []),
-            ...(addOnsTotal > 0 ? [{
-              title: "Add-ons",
-              content: `+ ${currency} ${addOnsTotal.toFixed(2)}`,
-              kind: "addons",
-              showInCheckout: true
-            }] : []),
-            {
-              title: "Total",
-              content: `${currency} ${finalTotal.toFixed(2)}`,
-            },
-          ],
-          currency,
-          finalTotal,
-          ticketType: ticketTypeName,
-          ticketTypeId,
-          selectedSlot: selectedEventSlot,
-          selectedSlots: selectedEventSlots,
-          cancellationPolicySummary: listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText,
-        };
-
-        const paymentData = {
-          orderId,
-          amount: amountInPaise,
-          currency: payment?.currency || currency,
-          paymentMethod: "razorpay",
-          eventId: eventIdNum,
-          eventSlotId: eventSlotIdNum,
-          eventSlotIds,
-          discount: payment?.discount || res?.discount || 0,
-          finalAmount: payment?.finalAmount || amountInPaise,
-        };
-
-        persistPendingCheckout({ bookingData, session: paymentData });
-        localStorage.removeItem("frontendPendingBookingState");
-        localStorage.removeItem("razorpayPaymentSuccess");
-        localStorage.removeItem("paymentFailed");
-
-        if (isFreeBooking) {
-          // For free bookings, we can go straight to completion
-          let finalizationMode = "AUTO_CONFIRMED";
-          try {
-            const freeEventResponse = await finalizeFreeEvent(orderId);
-            finalizationMode = freeEventResponse?.finalization?.mode || "AUTO_CONFIRMED";
-          } catch (e) {
-            console.error("Failed to finalize free event:", e);
-          }
-
-          const freePaymentSuccess = {
-            razorpay_payment_id: "FREE_" + (orderId || Date.now()),
-            razorpay_order_id: "FREE_ORDER_" + (orderId || Date.now()),
-            razorpay_signature: "FREE_SIG",
-            finalizationMode
-          };
-          localStorage.setItem("razorpayPaymentSuccess", JSON.stringify(freePaymentSuccess));
-          localStorage.setItem("checkoutBooking", JSON.stringify(bookingData));
-
-          history.replace("/experience-checkout-complete", {
-            bookingData,
-            paymentSuccess: freePaymentSuccess,
-            addOns: selectedAddOns.map(item => ({ ...(item.addon || item), quantity: item.quantity || 1 }))
-          });
-        } else {
-          history.replace("/experience-checkout", {
-            bookingData,
             paymentData,
-            addOns: selectedAddOns.map((item) => {
-              const inner = item?.addon || item || {};
-              const addonId = inner.addonId || inner.id || item.addonId || item.id;
-              const name = inner.title || inner.name || inner.addonName || item.title || item.name || item.addonName || "Add-on";
-              const pricePerUnit = parseFloat(inner.price || inner.addonPrice || inner.pricePerUnit || item.price || item.addonPrice || item.pricePerUnit || 0);
-              const quantity = Number(item.quantity || inner.quantity || 1) || 1;
-              return { addonId, id: addonId, name, addonName: name, title: name, quantity, price: pricePerUnit, addonPrice: pricePerUnit, pricePerUnit, totalPrice: pricePerUnit * quantity };
-            })
-          });
-        }
+            addOns: selectedAddOnsFormatted,
+          },
+        });
+        return;
       } catch (e) {
         console.error("Event booking failed:", e?.response?.data || e?.message || e);
         const errPayload = e?.response?.data || {};
@@ -3588,8 +3489,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         if (isMountedRef.current) setBookingLoading(false);
       }
 
+      const apiData = Array.isArray(previewPriceRes?.data) ? previewPriceRes.data : null;
+      const amountToBePaidFromData = apiData?.find(d => /amount\s*to\s*be\s*paid/i.test(d?.title || "") || d?.code === "amount_to_be_paid")?.amount;
       const previewPricing = previewPriceRes?.pricing || bookingData.pricing;
       const previewPayment = previewPriceRes?.payment;
+      const resolvedTotal = amountToBePaidFromData != null
+        ? Number(amountToBePaidFromData)
+        : (previewPricing?.totalPrice ?? previewPricing?.total ?? finalTotal);
 
       const previewBookingData = {
         ...bookingData,
@@ -3599,11 +3505,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         selectedAddOns: selectedAddOnsFormatted,
         addOns: selectedAddOnsFormatted,
         previewPrice: previewPriceRes,
+        priceBreakdownData: apiData,
+        data: apiData,
         pricing: previewPriceRes?.pricing ? {
           ...bookingData.pricing,
           ...previewPriceRes.pricing,
         } : bookingData.pricing,
-        finalTotal: previewPricing?.total || finalTotal,
+        finalTotal: resolvedTotal,
       };
 
       const paymentData = previewPayment ? {
@@ -3611,7 +3519,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         currency: previewPayment.currency || "INR",
         paymentMethod: previewPayment.paymentMethod || "razorpay",
       } : {
-        amount: Math.round((previewPricing?.total || finalTotal) * 100),
+        amount: Math.round(resolvedTotal * 100),
         currency: previewPricing?.currency || "INR",
         paymentMethod: "razorpay",
       };

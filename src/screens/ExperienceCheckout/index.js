@@ -766,12 +766,220 @@ const Checkout = () => {
     ];
   }, [bookingData]);
 
-  // Build price breakdown table from bookingData.pricing
+  // Build price breakdown table from bookingData.pricing or previewPrice.data
   // eslint-disable-next-line no-unused-vars
   const { addOnsTotal, finalTotal, table } = useMemo(() => {
+    const isEvent = Boolean(bookingData?.eventId) || bookingData?.checkoutType === "event" || bookingData?.businessInterest === "EVENT";
     const pricing = bookingData?.pricing;
     const cur = pricing?.currency || paymentData?.currency || "INR";
     const fmt = (n) => formatMoneyLabel(cur, n);
+
+    const apiDataArray =
+      (Array.isArray(bookingData?.previewPrice?.data) && bookingData.previewPrice.data.length > 0)
+        ? bookingData.previewPrice.data
+        : (Array.isArray(bookingData?.priceBreakdownData) && bookingData.priceBreakdownData.length > 0)
+          ? bookingData.priceBreakdownData
+          : (Array.isArray(bookingData?.data) && bookingData.data.length > 0)
+            ? bookingData.data
+            : null;
+
+    // Strict direct data rendering from POST /api/orders/preview-price response
+    if (apiDataArray) {
+      const rows = [];
+      let totalAmountToPay = null;
+      let calculatedAddonsTotal = 0;
+
+      apiDataArray.forEach((item) => {
+        if (!item) return;
+        const title = item?.title || "";
+        const amountNum = Number(item?.amount ?? 0);
+
+        // Capture Amount to be paid for the highlight box
+        if (/amount\s*to\s*be\s*paid/i.test(title) || item?.code === "amount_to_be_paid") {
+          totalAmountToPay = amountNum;
+          return;
+        }
+
+        if (/add-?ons?\s*total/i.test(title) || item?.code === "addons_total") {
+          calculatedAddonsTotal = amountNum;
+        }
+
+        const isDiscount =
+          item?.code === "discount" ||
+          item?.code === "earlybird" ||
+          item?.code === "longstay" ||
+          item?.code === "promo" ||
+          item?.code === "seasonal" ||
+          (typeof item?.code === "string" && (item.code.includes("discount") || item.code.includes("stay") || item.code.includes("bird") || item.code.includes("promo") || item.code.includes("season"))) ||
+          /discount/i.test(title) ||
+          /early\s*bird/i.test(title) ||
+          /long\s*stay/i.test(title) ||
+          /seasonal/i.test(title);
+        const isTax = item?.code === "tax" || /tax/i.test(title);
+        const isFee = item?.code === "fee" || /fee/i.test(title);
+
+        let valueFormatted = fmt(amountNum);
+        if (isDiscount && amountNum > 0) {
+          valueFormatted = `- ${fmt(amountNum)}`;
+        }
+
+        rows.push({
+          title: item.title,
+          subtitle: isDiscount ? null : item.subtitle,
+          titleColor: item.titleColor,
+          subtitleColor: item.subtitleColor,
+          percentage: item.percentage,
+          code: item.code,
+          isDiscount,
+          amount: amountNum,
+          value: valueFormatted,
+        });
+      });
+
+      return {
+        addOnsTotal: calculatedAddonsTotal,
+        finalTotal: totalAmountToPay != null ? totalAmountToPay : (pricing?.totalPrice ?? pricing?.total ?? 0),
+        table: rows,
+      };
+    }
+
+    // Strict Event Pricing Breakdown from POST /api/orders/preview-price API response
+    if (isEvent && pricing) {
+      const rows = [];
+      const breakdown = pricing.breakdown || {};
+
+      // 1. Tickets breakdown
+      if (Array.isArray(breakdown.tickets) && breakdown.tickets.length > 0) {
+        breakdown.tickets.forEach((t) => {
+          const typeName = t.ticketTypeName || t.name || t.ticketName || "Ticket";
+          const qty = Number(t.quantity || 0);
+          const price = Number(t.pricePerTicket ?? t.price ?? 0);
+          const totalTicketPrice = Number(t.totalTicketPrice ?? (qty * price));
+          const adultQty = Number(t.adultQuantity ?? 0);
+          const childQty = Number(t.childQuantity ?? 0);
+          const childPrice = t.childPricePerTicket != null ? Number(t.childPricePerTicket) : null;
+
+          if (adultQty > 0 && childQty > 0 && childPrice != null && childPrice !== price) {
+            rows.push({
+              title: `${typeName} - Adults (${adultQty} × ${fmt(price)})`,
+              value: fmt(adultQty * price),
+            });
+            rows.push({
+              title: `${typeName} - Children (${childQty} × ${fmt(childPrice)})`,
+              value: fmt(childQty * childPrice),
+            });
+          } else if (qty > 0 && price > 0) {
+            rows.push({
+              title: `${typeName} (${qty} × ${fmt(price)})`,
+              value: fmt(totalTicketPrice),
+            });
+          } else if (qty > 0) {
+            rows.push({
+              title: `${typeName} (${qty} ${qty === 1 ? "ticket" : "tickets"})`,
+              value: fmt(totalTicketPrice),
+            });
+          } else if (totalTicketPrice > 0) {
+            rows.push({
+              title: typeName,
+              value: fmt(totalTicketPrice),
+            });
+          }
+        });
+      } else if (Number(pricing.basePrice || 0) > 0) {
+        const guests = Number(pricing.numberOfGuests || pricing.adultCount || bookingData?.bookingSummary?.guestCount || 1);
+        const ppp = guests > 0 ? (pricing.basePrice / guests) : pricing.basePrice;
+        rows.push({
+          title: `Base price (${guests} ${guests !== 1 ? "tickets" : "ticket"} × ${fmt(ppp)})`,
+          value: fmt(pricing.basePrice),
+        });
+      }
+
+      // 2. Add-ons breakdown
+      if (Array.isArray(breakdown.addons) && breakdown.addons.length > 0) {
+        breakdown.addons.forEach((a) => {
+          const aName = a.addonName || a.name || a.title || "Add-on";
+          const qty = Number(a.quantity || 1);
+          const price = Number(a.addonPrice ?? a.price ?? 0);
+          const totalAddonPrice = Number(a.totalPrice ?? (qty * price));
+          rows.push({
+            title: `${aName} (${qty} × ${fmt(price)})`,
+            value: fmt(totalAddonPrice),
+          });
+        });
+      } else if (Number(pricing.addonsTotal || 0) > 0) {
+        rows.push({
+          title: "Add-ons Total",
+          value: fmt(pricing.addonsTotal),
+        });
+      }
+
+      // 3. Subtotal
+      const hasDiscounts = Number(pricing.discountAmount || 0) > 0 || (Array.isArray(breakdown.discounts) && breakdown.discounts.length > 0);
+      const hasTaxes = Number(pricing.taxAmount || 0) > 0 || (Array.isArray(breakdown.taxes) && breakdown.taxes.length > 0);
+      const hasAddons = Number(pricing.addonsTotal || 0) > 0 || (Array.isArray(breakdown.addons) && breakdown.addons.length > 0);
+      const hasPlatformFee = Number(pricing.platformFee || 0) > 0;
+
+      if (pricing.subtotal != null && (hasDiscounts || hasTaxes || hasAddons || hasPlatformFee)) {
+        rows.push({
+          title: "Subtotal",
+          value: fmt(pricing.subtotal),
+        });
+      }
+
+      // 4. Discounts
+      if (Array.isArray(breakdown.discounts) && breakdown.discounts.length > 0) {
+        breakdown.discounts.forEach((d) => {
+          const dName = d.discountName || d.name || d.title || "Discount";
+          const dAmt = Number(d.discountAmount ?? d.amount ?? 0);
+          if (dAmt > 0) {
+            rows.push({
+              title: dName,
+              value: `- ${fmt(dAmt)}`,
+            });
+          }
+        });
+      } else if (Number(pricing.discountAmount || 0) > 0) {
+        rows.push({
+          title: "Discount",
+          value: `- ${fmt(pricing.discountAmount)}`,
+        });
+      }
+
+      // 5. Platform Fee
+      if (Number(pricing.platformFee || 0) > 0) {
+        rows.push({
+          title: "Platform fee",
+          value: `+ ${fmt(pricing.platformFee)}`,
+        });
+      }
+
+      // 6. Taxes
+      if (Array.isArray(breakdown.taxes) && breakdown.taxes.length > 0) {
+        breakdown.taxes.forEach((tx) => {
+          const txName = tx.taxName || tx.name || tx.title || "Taxes & Fees";
+          const txAmt = Number(tx.taxAmount ?? tx.amount ?? 0);
+          if (txAmt > 0) {
+            rows.push({
+              title: txName,
+              value: fmt(txAmt),
+            });
+          }
+        });
+      } else if (Number(pricing.taxAmount || 0) > 0) {
+        rows.push({
+          title: "Taxes & Fees",
+          value: fmt(pricing.taxAmount),
+        });
+      }
+
+      const totalVal = Number(pricing.totalPrice ?? pricing.total ?? 0);
+
+      return {
+        addOnsTotal: Number(pricing.addonsTotal || 0),
+        finalTotal: totalVal,
+        table: rows,
+      };
+    }
 
     if (pricing) {
       const rows = [];
@@ -1051,14 +1259,31 @@ const Checkout = () => {
   }
 
   const listingTitle = bookingData?.listingTitle || "Your trip";
-  const isEventBooking = Boolean(bookingData?.eventId);
+  const isEventBooking = Boolean(bookingData?.eventId) || bookingData?.checkoutType === "event" || bookingData?.businessInterest === "EVENT";
   const isStayBooking = Boolean(bookingData?.stayId);
   const isAmountInPaise = paymentData?.paymentMethod === "razorpay";
   const resolvedCurrency = bookingData?.pricing?.currency || bookingData?.previewPrice?.pricing?.currency || paymentData?.currency || "INR";
   
+  const apiAmountToBePaid = (() => {
+    const arr = Array.isArray(bookingData?.previewPrice?.data)
+      ? bookingData.previewPrice.data
+      : (Array.isArray(bookingData?.priceBreakdownData)
+        ? bookingData.priceBreakdownData
+        : (Array.isArray(bookingData?.data) ? bookingData.data : null));
+    if (!arr) return null;
+    const match = arr.find((item) => /amount\s*to\s*be\s*paid/i.test(item?.title || "") || item?.code === "amount_to_be_paid");
+    return match?.amount != null ? Number(match.amount) : null;
+  })();
+
   // Authoritative price comes strictly from POST /api/orders/preview-price
-  const resolvedAmountToPay = bookingData?.previewPrice?.payment?.amount
+  const resolvedAmountToPay =
+    (apiAmountToBePaid != null
+      ? (isAmountInPaise ? Math.round(apiAmountToBePaid * 100) : apiAmountToBePaid)
+      : null)
+    ?? bookingData?.previewPrice?.payment?.amount
+    ?? (bookingData?.previewPrice?.pricing?.totalPrice != null ? (isAmountInPaise ? Math.round(bookingData.previewPrice.pricing.totalPrice * 100) : bookingData.previewPrice.pricing.totalPrice) : null)
     ?? (bookingData?.previewPrice?.pricing?.total != null ? (isAmountInPaise ? Math.round(bookingData.previewPrice.pricing.total * 100) : bookingData.previewPrice.pricing.total) : null)
+    ?? (bookingData?.pricing?.totalPrice != null ? (isAmountInPaise ? Math.round(bookingData.pricing.totalPrice * 100) : bookingData.pricing.totalPrice) : null)
     ?? (bookingData?.pricing?.total != null ? (isAmountInPaise ? Math.round(bookingData.pricing.total * 100) : bookingData.pricing.total) : null)
     ?? paymentData?.amount
     ?? finalTotal
