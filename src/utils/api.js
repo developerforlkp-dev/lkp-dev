@@ -1210,6 +1210,25 @@ export const getAvailability = async (listingId, startDate, endDate, slotId) => 
   }
 };
 
+// Preview price for an order
+export const previewOrderPrice = async (payload) => {
+  try {
+    console.log("📤 [preview-price API] Request payload:", JSON.stringify(payload, null, 2));
+    const response = await ListingsAPI.post("/orders/preview-price", payload);
+    console.log("✅ [preview-price API] Response data:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    console.error("❌ [preview-price API] Error previewing price:", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      requestData: payload,
+    });
+    throw error;
+  }
+};
+
 // Create an order
 export const createOrder = async (orderData) => {
   try {
