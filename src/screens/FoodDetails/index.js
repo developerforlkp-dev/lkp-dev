@@ -2432,15 +2432,15 @@ const FoodDetails = () => {
         const tagsDuration = tagsDistance / 60; // constant speed of 60px/s
 
         return (
-          <div style={{
-            margin: isMobile ? "0 -24px" : "0 -80px",
-            overflow: "hidden",
-            position: "relative",
-            padding: "20px 0",
-            background: "var(--BG)",
-            borderTop: `1px solid var(--B)`,
-            borderBottom: `1px solid var(--B)`,
-          }}>
+          <div style={{ maxWidth: 1320, margin: "0 auto", padding: isMobile ? "0 24px" : "0 80px", boxSizing: "border-box", width: "100%" }}>
+            <div style={{
+              overflow: "hidden",
+              position: "relative",
+              padding: "20px 0",
+              background: "var(--BG)",
+              borderTop: `1px solid var(--B)`,
+              borderBottom: `1px solid var(--B)`,
+            }}>
             {/* Left & Right Edge Fades */}
             <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to right, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
             <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to left, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
@@ -2481,6 +2481,7 @@ const FoodDetails = () => {
                 );
               })}
             </motion.div>
+            </div>
           </div>
         );
       })()}
@@ -2501,15 +2502,14 @@ const FoodDetails = () => {
         const dishesDuration = dishesDistance / 60;
 
         return (
-          <div style={{
-            margin: isMobile ? "0 -24px" : "0 -80px",
-            overflow: "hidden",
-            position: "relative",
-            padding: "20px 0",
-            background: "var(--BG)",
-            borderTop: `1px solid var(--B)`,
-            borderBottom: `1px solid var(--B)`,
-          }}>
+          <div style={{ maxWidth: 1320, margin: "0 auto", padding: isMobile ? "0 24px" : "0 80px", boxSizing: "border-box", width: "100%" }}>
+            <div style={{
+              overflow: "hidden",
+              position: "relative",
+              padding: "20px 0",
+              background: "var(--BG)",
+              borderTop: `1px solid var(--B)`,
+            }}>
             {/* Left & Right Edge Fades */}
             <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to right, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
             <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to left, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
@@ -2549,6 +2549,7 @@ const FoodDetails = () => {
                 );
               })}
             </motion.div>
+            </div>
           </div>
         );
       })()}
