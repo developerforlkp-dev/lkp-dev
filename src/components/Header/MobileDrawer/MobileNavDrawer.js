@@ -193,7 +193,6 @@ const MobileNavDrawer = ({
         <div className={styles.drawerFooter}>
           {/* Dark mode toggle */}
           <button
-            ref={themeToggleRef}
             className={styles.themeRow}
             onClick={() => darkMode.toggle(themeToggleRef.current)}
             aria-label={darkMode.value ? "Switch to light mode" : "Switch to dark mode"}
@@ -201,7 +200,7 @@ const MobileNavDrawer = ({
             <span className={styles.themeLabel}>
               {darkMode.value ? "Light mode" : "Dark mode"}
             </span>
-            <span className={styles.themeIcon}>
+            <span ref={themeToggleRef} className={styles.themeIcon}>
               <Icon name={darkMode.value ? "sun" : "moon"} size="20" />
             </span>
           </button>
