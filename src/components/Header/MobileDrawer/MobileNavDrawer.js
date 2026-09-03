@@ -18,6 +18,7 @@ const MobileNavDrawer = ({
   wishlistCount,
 }) => {
   const scrollRef = useRef(null);
+  const themeToggleRef = useRef(null);
   const [avatar, setAvatar] = React.useState("");
 
   const loadAvatar = useCallback(() => {
@@ -192,8 +193,9 @@ const MobileNavDrawer = ({
         <div className={styles.drawerFooter}>
           {/* Dark mode toggle */}
           <button
+            ref={themeToggleRef}
             className={styles.themeRow}
-            onClick={darkMode.toggle}
+            onClick={() => darkMode.toggle(themeToggleRef.current)}
             aria-label={darkMode.value ? "Switch to light mode" : "Switch to dark mode"}
           >
             <span className={styles.themeLabel}>
