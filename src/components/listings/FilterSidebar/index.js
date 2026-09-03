@@ -181,6 +181,27 @@ const FilterSidebar = ({
   businessInterestFilters,
   hideHeader = false,
 }) => {
+  const propertyTypeOptions = useMemo(() => {
+    const dynamicPropertyTypes = Array.isArray(businessInterestFilters?.propertyTypes)
+      ? businessInterestFilters.propertyTypes
+        .map((type, idx) => {
+          if (typeof type === "string" || typeof type === "number") {
+            const strVal = String(type).trim();
+            return strVal ? { id: strVal, label: strVal } : null;
+          }
+          if (type && typeof type === "object") {
+            const id = type.id ?? type.value ?? type.propertyTypeId ?? type.name ?? type.label ?? `pt-${idx}`;
+            const label = type.name ?? type.label ?? type.title ?? String(id);
+            return { id: String(id), label: String(label) };
+          }
+          return null;
+        })
+        .filter(Boolean)
+      : [];
+
+    return dynamicPropertyTypes.length > 0 ? dynamicPropertyTypes : propertyTypes;
+  }, [businessInterestFilters]);
+
   const activeChips = useMemo(() => {
     const chips = [];
 
@@ -301,7 +322,7 @@ const FilterSidebar = ({
     }
 
     return chips;
-  }, [filters, businessInterestFilters]);
+  }, [filters, businessInterestFilters, propertyTypeOptions]);
 
   const handleRemoveChip = (chip) => {
     if (chip.type === "ratings") {
