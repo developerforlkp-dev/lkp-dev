@@ -99,6 +99,7 @@ const useDarkMode = (initialState = false) => {
     );
 
     const transition = document.startViewTransition(() => {
+      document.documentElement.classList.add('theme-transitioning');
       performToggle();
     });
 
@@ -117,7 +118,14 @@ const useDarkMode = (initialState = false) => {
           easing: 'ease-in-out',
           pseudoElement: '::view-transition-new(root)',
         }
-      );
+      ).onfinish = () => {
+        document.documentElement.classList.remove('theme-transitioning');
+      };
+    });
+    
+    // Fallback cleanup in case the animation doesn't run or errors out
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('theme-transitioning');
     });
   }, [value]);
 
