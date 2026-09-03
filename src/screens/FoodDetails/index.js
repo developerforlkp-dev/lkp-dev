@@ -1306,18 +1306,18 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
         {/* Short Description as Heading */}
         <div style={{ textAlign: "center", maxWidth: 900, margin: "0 auto 60px auto" }}>
           <span style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 800, display: "block", marginBottom: 16 }}>The Philosophy</span>
-          <h2 className="font-cursive" style={{ 
-            fontSize: isMobile ? "36px" : "54px", 
+          <h2 style={{ 
+            fontSize: isMobile ? "26px" : "40px", 
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
             color: FG, 
-            lineHeight: 1.2, 
+            lineHeight: 1.4, 
             margin: 0, 
-            fontStyle: "italic",
-            opacity: fontLoaded ? 1 : 0,
-            transition: "opacity 0.3s ease"
+            fontFamily: "'DM Sans', 'Inter', sans-serif"
           }}>
             "{food?.shortDescription || "A curated preview of the palate notes."}"
           </h2>
-          <div style={{ width: 60, height: 2, background: A, margin: "24px auto 0 auto" }} />
+          <div style={{ width: 40, height: 3, background: A, margin: "32px auto 0 auto", borderRadius: 1.5 }} />
         </div>
 
         {/* 2-Column Grid: Detailed Description & Chef's Story */}
