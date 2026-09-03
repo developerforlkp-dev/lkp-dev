@@ -170,3 +170,8 @@ svg.lucide
 
 ::view-transition-new(root)
     z-index: 9999
+
+// Disable all standard CSS transitions while the view transition API is running
+// This prevents massive style recalculation and paint storms that cause lag
+html.theme-transitioning *
+    transition: none !important
