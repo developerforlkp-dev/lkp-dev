@@ -315,6 +315,23 @@ const ExperienceProduct = () => {
     container.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
 
+  useEffect(() => {
+    const addonsCount = (listing?.addons || []).length;
+    if (window.innerWidth >= 1024 && addonsCount > 2) {
+      const interval = setInterval(() => {
+        if (addonsSliderRef.current) {
+          const container = addonsSliderRef.current;
+          if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+            container.scrollTo({ left: 0, behavior: "smooth" });
+          } else {
+            scrollAddonsSlider("right");
+          }
+        }
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [listing?.addons]);
+
 
 
   const [loading, setLoading] = useState(true);
@@ -1400,7 +1417,7 @@ const ExperienceProduct = () => {
 
         {/* ADDONS SECTION */}
         {(listing?.addons && listing.addons.length > 0) && (
-          <section className="addons-section" style={{ background: BG, padding: "64px 0" }}>
+          <section className="addons-section" style={{ background: BG, padding: "0" }}>
             <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
