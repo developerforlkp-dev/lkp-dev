@@ -76,6 +76,8 @@ const ScopedStyles = () => (
       transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
     }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     @keyframes marquee-l { from{transform:translateX(0)} to{transform:translateX(-50%)} }
     @keyframes marquee-r { from{transform:translateX(-50%)} to{transform:translateX(0)} }
     @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-16px) rotate(1deg)} }
@@ -3778,6 +3780,23 @@ export default function EventDetails() {
     const scrollAmount = direction === "left" ? -container.clientWidth : container.clientWidth;
     container.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
+
+  useEffect(() => {
+    const addonsCount = (event?.addons || []).length;
+    if (window.innerWidth >= 1024 && addonsCount > 2) {
+      const interval = setInterval(() => {
+        if (addonsSliderRef.current) {
+          const container = addonsSliderRef.current;
+          if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+            container.scrollTo({ left: 0, behavior: "smooth" });
+          } else {
+            scrollAddonsSlider("right");
+          }
+        }
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [event?.addons]);
 
   const handleUpdateAddonQuantity = (rawAddon, delta) => {
     const addonData = rawAddon.addon || rawAddon;
