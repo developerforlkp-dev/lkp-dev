@@ -2316,7 +2316,7 @@ const StayBookingSystem = ({
 
           return {
             ...payloadBase,
-            rooms: roomsPayload,
+            ...(roomsPayload.length > 0 ? { rooms: roomsPayload } : {}),
             ...(bedConfigsPayload.length > 0 ? { bedConfigs: bedConfigsPayload } : {})
           };
         })();
@@ -2440,32 +2440,37 @@ const StayBookingSystem = ({
           extraAdults: Number(extraAdultsCount || 0),
           extraChildren: Number(extraChildrenCount || 0),
         };
-      } else if (Array.isArray(payload.bedConfigs) && payload.bedConfigs.length > 0) {
-        stayBookingObj = {
-          ...stayBookingObj,
-          bedConfigs: payload.bedConfigs.map((b) => ({
-            name: b.name || "Dorm Bed",
-            bedsBooked: Number(b.bedsBooked || 1),
-            mealPlanCode: b.mealPlanCode || "EP",
-            extraAdults: Number(b.extraAdults || 0),
-            extraChildren: Number(b.extraChildren || 0),
-          })),
-        };
       } else {
-        stayBookingObj = {
-          ...stayBookingObj,
-          rooms: Array.isArray(payload.rooms) ? payload.rooms.map((r) => ({
+        const hasRooms = Array.isArray(payload.rooms) && payload.rooms.length > 0;
+        const hasBeds = Array.isArray(payload.bedConfigs) && payload.bedConfigs.length > 0;
+
+        if (hasRooms) {
+          stayBookingObj.rooms = payload.rooms.map((r) => ({
             roomId: Number(r.roomId),
             roomsBooked: Number(r.roomsBooked || 1),
             adults: Number(r.adults || 1),
             children: Number(r.children || 0),
             childAges: Array.isArray(r.childAges) ? r.childAges.map(Number) : [],
-            mealPlanCode: r.mealPlanCode || "CP",
+            mealPlanCode: r.mealPlanCode || "EP",
             extraBeds: Number(r.extraBeds || 0),
             extraAdults: Number(r.extraAdults || 0),
             extraChildren: Number(r.extraChildren || 0),
-          })) : [],
-        };
+          }));
+        }
+
+        if (hasBeds) {
+          stayBookingObj.bedConfigs = payload.bedConfigs.map((b) => ({
+            name: b.name || "Dorm Bed",
+            bedsBooked: Number(b.bedsBooked || 1),
+            mealPlanCode: b.mealPlanCode || "EP",
+            extraAdults: Number(b.extraAdults || 0),
+            extraChildren: Number(b.extraChildren || 0),
+          }));
+        }
+
+        if (!hasRooms && !hasBeds) {
+          stayBookingObj.rooms = [];
+        }
       }
 
       const previewPricePayload = {
