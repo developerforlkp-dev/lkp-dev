@@ -1562,7 +1562,7 @@ function LocationSection({ food }) {
 
           {/* LEFT: Map */}
           <Rev delay={0.1} style={{ height: "100%", minWidth: 0 }}>
-            <div style={{ position: "sticky", top: 120, height: 400, maxHeight: "calc(100vh - 160px)", width: "100%", boxSizing: "border-box", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
+            <div style={{ position: "relative", height: isMobile ? 300 : "100%", minHeight: isMobile ? 300 : 250, width: "100%", boxSizing: "border-box", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
               <div style={{
                 position: "absolute",
                 top: 16,
