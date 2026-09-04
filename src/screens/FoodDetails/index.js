@@ -6,7 +6,7 @@ import {
   Utensils, Star, Clock, MapPin, ChefHat, Award, Leaf, Globe,
   Coffee, Info, ChevronRight, ChevronDown, Phone, Instagram, Check, ArrowRight, ArrowDown,
   Calendar, Zap, CheckCircle, ChevronLeft, UtensilsCrossed, Share2, Search, Sparkles,
-  Users, DollarSign, GlassWater, CloudSun, Tag, Heart, Navigation, Map
+  Users, DollarSign, GlassWater, CloudSun, Tag, Heart, Navigation, Map, Building
 } from "lucide-react";
 import cn from "classnames";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
@@ -1534,6 +1534,7 @@ const ExpandableInstructionText = ({ text, FG, A }) => {
 function LocationSection({ food }) {
   const { isMobile } = useWindowSize();
   const { tokens: { A, FG, M, B, W }, theme } = useTheme();
+  const fullAddress = food?.fullAddress;
 
   return (
     <section className="prep-section" style={{ background: W, padding: isMobile ? "32px 0" : "32px 0" }}>
@@ -1643,10 +1644,22 @@ function LocationSection({ food }) {
                   </li>
                 )}
 
-                {(food?.meetingDistrict || food?.district) && (
+                {fullAddress && (
                   <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <MapPin size={20} color={A} fill="transparent" />
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Full Address</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{fullAddress}</span>
+                    </div>
+                  </li>
+                )}
+
+                {(food?.meetingDistrict || food?.district) && (
+                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Building size={20} color={A} fill="transparent" />
                     </div>
                     <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
                       <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
