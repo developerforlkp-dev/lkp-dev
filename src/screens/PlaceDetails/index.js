@@ -2315,7 +2315,7 @@ function LocationSection({ place }) {
               <div style={{
                 position: "absolute",
                 top: 16,
-                left: 16,
+                right: 16,
                 zIndex: 10,
                 background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
                 padding: "8px 16px",
