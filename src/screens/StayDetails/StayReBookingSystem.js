@@ -1164,7 +1164,10 @@ const StayBookingSystem = ({
     [resolvedSelectedRooms]
   );
   const totalSelectedBeds = useMemo(
-    () => resolvedSelectedRooms.reduce((sum, room) => sum + Number(room.count || 0), 0),
+    () =>
+      resolvedSelectedRooms
+        .filter((room) => room.isBedConfig || String(room.roomId || room.id || "").startsWith("bed-"))
+        .reduce((sum, room) => sum + Number(room.count || 0), 0),
     [resolvedSelectedRooms]
   );
 
@@ -2149,11 +2152,13 @@ const StayBookingSystem = ({
               }
             } else if (isHostel) {
               // Hostel validation for beds and rooms
-              const isBedSelected = stay?.bookingScope === "Bed-Based" ||
-                stay?.inventoryScope === "Bed-Based" ||
-                (Array.isArray(selectedRooms) && selectedRooms.some((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-")));
-              const hasBedSelection = totalSelectedBeds > 0 || isBedSelected;
-              const nonBedRoomsSelected = Array.isArray(selectedRooms) ? selectedRooms.filter(r => !r.isBedConfig && !String(r.roomId || "").startsWith("bed-")) : [];
+              const bedRoomsSelected = Array.isArray(selectedRooms)
+                ? selectedRooms.filter((r) => r.isBedConfig || String(r.roomId || "").startsWith("bed-"))
+                : [];
+              const hasBedSelection = totalSelectedBeds > 0 || bedRoomsSelected.length > 0;
+              const nonBedRoomsSelected = Array.isArray(selectedRooms)
+                ? selectedRooms.filter((r) => !r.isBedConfig && !String(r.roomId || "").startsWith("bed-"))
+                : [];
               const hasRoomSelection = nonBedRoomsSelected.length > 0;
 
               if (hasBedSelection && freshAvailability.canBookBedOnly === false && !hasRoomSelection) {
@@ -2168,6 +2173,13 @@ const StayBookingSystem = ({
                 const reason = "Private room booking is currently unavailable for this hostel.";
                 setValidationError(reason);
                 setBookingErrorPopup({ visible: true, title: "Rooms Unavailable", message: reason, isSameDay: false });
+                return;
+              }
+              if (hasBedSelection && hasRoomSelection && freshAvailability.canBookRoomAndBed === false) {
+                setLoading(false);
+                const reason = "Simultaneous private room and bed booking is currently unavailable for this hostel.";
+                setValidationError(reason);
+                setBookingErrorPopup({ visible: true, title: "Booking Unavailable", message: reason, isSameDay: false });
                 return;
               }
 
