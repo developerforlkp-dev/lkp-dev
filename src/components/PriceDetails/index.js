@@ -205,7 +205,14 @@ const PriceDetails = ({
         {cancellationPolicy && (
           <div className={styles.cancellation}>
             {!hideCancellationIcon && <Icon name="coin" size="16" />}
-            <div style={{ whiteSpace: "pre-line" }}>{cancellationPolicy}</div>
+            <div className={styles.cancellationList}>
+              {cancellationPolicy.split('.').map(p => p.trim()).filter(Boolean).map((policy, idx) => (
+                <div key={idx} className={styles.cancellationItem}>
+                  <span className={styles.bullet}>•</span>
+                  <span>{policy}.</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
