@@ -954,24 +954,13 @@ function CulinaryHero({ food, galleryItems }) {
             fontWeight: 700,
             lineHeight: 1.1,
             color: FG,
-            margin: "0 0 8px 0",
+            margin: 0,
             letterSpacing: "-0.02em",
             fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
             textTransform: "capitalize"
           }}>
             {title}
           </h1>
-          <div style={{
-            fontSize: "14px",
-            color: "#0097B2",
-            margin: "0 0 16px 0",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontFamily: '"Inter", sans-serif'
-          }}>
-            {food?.shortDescription || "Authentic Taste Experience"}
-          </div>
         </div>
 
 
