@@ -26,6 +26,7 @@ import BlogDetails from "./pages/BlogDetails";
 import ViewDetails from "./screens/ViewDetails";
 import PaymentFailed from "./screens/PaymentFailed";
 import NotFound from "./screens/NotFound";
+import ServerError from "./screens/ServerError";
 
 
 import StayProduct from "./screens/StayProduct";
@@ -347,6 +348,15 @@ function App() {
               render={() => (
                 <Page separatorHeader>
                   <PaymentFailed />
+                </Page>
+              )}
+            />
+            <Route
+              exact
+              path="/500"
+              render={() => (
+                <Page separatorHeader>
+                  <ServerError />
                 </Page>
               )}
             />

@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import App from "./App";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // ✅ Global error handler to prevent unhandled promise rejections from showing alerts
 // This MUST be set up before React renders to catch early errors
@@ -66,7 +67,9 @@ if (typeof window !== 'undefined') {
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
   document.getElementById("root")
 );
