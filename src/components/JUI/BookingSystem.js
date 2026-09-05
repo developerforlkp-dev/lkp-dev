@@ -5194,14 +5194,44 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                         const gp = isEventBooking ? eventGuestPricing : experienceGuestPricing;
                         const discountedDisplayPrice = gp ? gp.priceAfterDiscount : Number(data.price || 0);
                         const isFreeEvent = Number(discountedDisplayPrice || 0) === 0;
-                        const currentBottomTotal = (apiPayableAmount != null && Number.isFinite(apiPayableAmount))
-                          ? apiPayableAmount
-                          : finalTotal;
-                        return isFreeEvent ? (
-                          <span style={{ fontSize: 22, fontWeight: 800, color: A }}>Free Event</span>
-                        ) : (
+                        if (isFreeEvent) {
+                          return <span style={{ fontSize: 22, fontWeight: 800, color: A }}>Free Event</span>;
+                        }
+
+                        if (apiPayableLoading) {
+                          return (
+                            <>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: M, marginTop: 2 }}>Calculating...</span>
+                              <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
+                            </>
+                          );
+                        }
+
+                        if (apiPayableAmount != null && Number.isFinite(apiPayableAmount)) {
+                          return (
+                            <>
+                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(apiPayableAmount).toFixed(2)}</span>
+                              <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
+                            </>
+                          );
+                        }
+
+                        const currentTotalGuests = Number(guests?.adults || 0) + Number(guests?.children || 0);
+                        const emptyMsg = (() => {
+                          if (isEventBooking) {
+                            if (!selectedTicketTypeId && !selectedEventSlotId) return "Select a ticket";
+                            if (currentTotalGuests === 0) return "Select guests";
+                            return "Select details";
+                          }
+                          if (!startDate && !selectedDateKey) return "Select a date";
+                          if (!startTime && !selectedSlotData) return "Select a slot";
+                          if (currentTotalGuests === 0) return "Select guests";
+                          return "Select details";
+                        })();
+
+                        return (
                           <>
-                            <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(currentBottomTotal || 0).toFixed(2)}</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: M, marginTop: 2 }}>{emptyMsg}</span>
                             <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
                           </>
                         );
