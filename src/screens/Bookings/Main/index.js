@@ -1471,6 +1471,10 @@ const Main = ({
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        setIsConfirmingBooking(false);
+        window.location.href = '/payment/failed';
+      });
       rzp.open();
     } catch (err) {
       console.error("Error confirming booking:", err);

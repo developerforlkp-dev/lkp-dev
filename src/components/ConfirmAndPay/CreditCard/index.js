@@ -510,6 +510,10 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        setIsProcessing(false);
+        history.replace("/payment/failed");
+      });
       rzp.open();
     } catch (error) {
       console.error("Failed to open Razorpay checkout:", error);

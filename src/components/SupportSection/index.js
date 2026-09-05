@@ -20,13 +20,7 @@ const SupportSection = ({ title = "Need Help?", description = "Our support team 
           <Icon name="comment" size="16" className={styles.chatIcon} />
           Raise a ticket
         </Link>
-        <div className={styles.emailContact}>
-          <Icon name="email" size="20" className={styles.emailIcon} />
-          <div className={styles.emailText}>
-            <strong>Email us</strong>
-            <a href="mailto:support@littleplanet.com">support@littleplanet.com</a>
-          </div>
-        </div>
+
       </div>
     </div>
   );
