@@ -2427,9 +2427,6 @@ const FoodDetails = () => {
               borderTop: `1px solid var(--B)`,
               borderBottom: `1px solid var(--B)`,
             }}>
-            {/* Left & Right Edge Fades */}
-            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to right, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
-            <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to left, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
 
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
@@ -2496,9 +2493,6 @@ const FoodDetails = () => {
               background: "var(--BG)",
               borderTop: `1px solid var(--B)`,
             }}>
-            {/* Left & Right Edge Fades */}
-            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to right, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
-            <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: isMobile ? "60px" : "160px", background: `linear-gradient(to left, var(--BG) 0%, transparent 100%)`, zIndex: 10, pointerEvents: "none" }} />
 
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
