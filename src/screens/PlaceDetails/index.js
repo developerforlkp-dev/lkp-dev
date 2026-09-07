@@ -3405,7 +3405,7 @@ function MobilePlaceDetails({
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
           title="More Places To Explore"
-          sectionStyle={{ maxWidth: 1320, margin: "0 auto", padding: "40px 16px", boxSizing: "border-box", width: "100%" }}
+          sectionStyle={{ padding: "40px 16px", boxSizing: "border-box", width: "100%" }}
           titleStyle={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, lineHeight: 1.1, marginBottom: "32px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}
         />
       </div>
@@ -3644,7 +3644,7 @@ const PlaceDetails = () => {
         primaryCategoryId={primaryCategoryId}
         currentListingId={currentListingId}
         title="More Places To Explore"
-        sectionStyle={{ maxWidth: 1320, margin: "0 auto", padding: "48px 80px", boxSizing: "border-box", width: "100%" }}
+        sectionStyle={{ padding: "48px 80px", boxSizing: "border-box", width: "100%" }}
         titleStyle={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, lineHeight: 1.1, marginBottom: "32px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}
       />
 
