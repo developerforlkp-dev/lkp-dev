@@ -20,6 +20,7 @@ import {
   getListingReviews,
   getEligibleBookings,
   submitOrderReview,
+  getReviewErrorMessage,
 } from "../../utils/api";
 import Rating from "../../components/Rating";
 import { buildExperienceUrl, extractExperienceIdFromSlugAndId } from "../../utils/experienceUrl";
@@ -3522,7 +3523,7 @@ function ReviewsSection({ reviews = [], summary, listingId, eligibleBookings = [
       setShowForm(false);
       if (onReviewSubmitted) onReviewSubmitted();
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to submit review");
+      setError(getReviewErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }

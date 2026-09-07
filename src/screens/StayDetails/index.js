@@ -17,7 +17,7 @@ import Icon from "../../components/Icon";
 import RoomCards from "./RoomCards";
 import StayNotFound from "./StayNotFound";
 import roomStyles from "./RoomCards.module.sass";
-import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview } from "../../utils/api";
+import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview, getReviewErrorMessage } from "../../utils/api";
 import StayBookingSystem from "./StayBookingSystem";
 import StayItinerary from "./StayItinerary";
 import CuratedContent from "../../components/CuratedContent";
@@ -4398,7 +4398,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
       setShowForm(false);
       if (onReviewSubmitted) onReviewSubmitted();
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to submit review");
+      setError(getReviewErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }

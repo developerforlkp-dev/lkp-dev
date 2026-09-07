@@ -1929,6 +1929,13 @@ export const submitOrderReview = async (orderId, reviewData, requestConfig = {})
       connectionError.originalError = error;
       throw connectionError;
     }
+
+    const friendlyMessage = getReviewErrorMessage(error);
+    error.userFriendlyMessage = friendlyMessage;
+    if (!error.message || error.message.toLowerCase().includes("status code")) {
+      error.message = friendlyMessage;
+    }
+
     console.error("Error submitting review:", error.response?.data || error.message);
     console.error("Full error object:", {
       message: error.message,
@@ -1938,6 +1945,73 @@ export const submitOrderReview = async (orderId, reviewData, requestConfig = {})
     });
     throw error;
   }
+};
+
+/**
+ * Extracts a user-friendly error message from a review submission error,
+ * including business error codes and backend error messages.
+ */
+export const getReviewErrorMessage = (err, defaultMsg = "Failed to submit review. Please try again.") => {
+  if (!err) return defaultMsg;
+  if (typeof err === "string") return err;
+
+  const data = err.response?.data;
+
+  if (data) {
+    if (typeof data === "string") {
+      const trimmed = data.trim();
+      if (trimmed && !trimmed.startsWith("<")) {
+        return trimmed;
+      }
+    } else if (typeof data === "object") {
+      let code = data.code || (typeof data.error === "object" ? data.error?.code : null);
+      let errorText =
+        (typeof data.error === "string" ? data.error : null) ||
+        data.message ||
+        data.details ||
+        data.detail ||
+        (typeof data.error === "object" ? (data.error?.message || data.error?.detail) : null);
+
+      if (code && typeof code !== "string") {
+        code = String(code);
+      }
+
+      const isNumericCode = code && /^\d+$/.test(code);
+
+      if (errorText && code && !isNumericCode && String(errorText).trim().toLowerCase() !== String(code).trim().toLowerCase()) {
+        return `${errorText} (Code: ${code})`;
+      }
+
+      if (errorText) {
+        return String(errorText);
+      }
+
+      if (code && !isNumericCode) {
+        const readableCode = code
+          .replace(/_/g, " ")
+          .toLowerCase()
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        return `${readableCode} (Code: ${code})`;
+      }
+    }
+  }
+
+  const status = err.response?.status;
+  if (status === 409) {
+    return "You've already reviewed this order.";
+  }
+  if (status === 401) {
+    return "Please log in to submit a review.";
+  }
+  if (status === 403) {
+    return "You are not authorized to submit a review for this booking.";
+  }
+
+  if (err.message && !err.message.toLowerCase().includes("status code")) {
+    return err.message;
+  }
+
+  return defaultMsg;
 };
 
 // Get reviews for a listing
