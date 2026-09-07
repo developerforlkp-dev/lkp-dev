@@ -1746,21 +1746,6 @@ function ReservationNoir({ food, hostData, hostAvatar }) {
             <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 36 : 56, alignItems: "center", justifyContent: "space-between" }}>
               {/* Profile details */}
               <div style={{ display: "flex", gap: 24, alignItems: "center", flex: 1, flexDirection: isMobile ? "column" : "row", textAlign: isMobile ? "center" : "left" }}>
-                <div style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: "50%",
-                  border: `3px solid ${A}`,
-                  boxShadow: `0 8px 24px ${AL}`,
-                  overflow: "hidden",
-                  flexShrink: 0
-                }}>
-                  <img
-                    src={realAvatar || "https://picsum.photos/seed/host/200/200"}
-                    alt={chefName}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                </div>
                 <div>
                   <span style={{ fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: A, fontWeight: 800, display: "block", marginBottom: 6 }}>Managed By</span>
                   <h3 className="font-display" style={{ fontSize: "24px", fontWeight: 700, color: FG, margin: "0 0 6px 0" }}>{chefName}</h3>
