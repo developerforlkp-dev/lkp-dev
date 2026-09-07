@@ -1084,7 +1084,6 @@ const BookingSidebar = ({
                   </div>
                 )}
                 {extraChildAgeIndexes.length > 0 && (() => {
-                  const _extraCount = extraChildAgeIndexes.length;
                   const bounds = getChildAgePolicyBounds(stay);
                   const compFrom = bounds?.complimentaryFrom ?? Number(stay?.complimentaryChildAgeFrom ?? stay?.complimentary_child_age_from ?? 0);
                   const compTo = bounds?.complimentaryTo ?? Number(stay?.complimentaryChildAgeTo ?? stay?.complimentary_child_age_to ?? 5);
@@ -1100,33 +1099,6 @@ const BookingSidebar = ({
                         <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
                             <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>Extra Child Age Policy</span>
-                            <span style={{ fontSize: 10, fontWeight: 600, color: M }}>
-                              {_extraCount} Extra Child{_extraCount !== 1 ? "ren" : ""} (Beyond Base {baseChildrenLimit})
-                            </span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
-                            <span style={{
-                              fontSize: 10,
-                              fontWeight: 600,
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                              background: "rgba(34, 197, 94, 0.12)",
-                              color: "#16a34a",
-                              border: "1px solid rgba(34, 197, 94, 0.25)"
-                            }}>
-                              Ages {compFrom}–{compTo}: Complimentary (₹0)
-                            </span>
-                            <span style={{
-                              fontSize: 10,
-                              fontWeight: 600,
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                              background: AL,
-                              color: A,
-                              border: `1px solid ${A}33`
-                            }}>
-                              Ages {rateFrom}–{rateTo}: Child Rate {extraChildPrice > 0 ? `(₹${extraChildPrice}/night)` : "Applies"}
-                            </span>
                           </div>
                           <span style={{ fontSize: 10, color: M, lineHeight: 1.3 }}>
                             Complimentary age children ({compFrom}–{compTo} yrs) price is ₹0. Price only applies for children between ages {rateFrom} and {rateTo}.
@@ -2532,6 +2504,7 @@ const StayProduct = () => {
             roomsBooked: roomsNeeded,
             adults: guests.adults || 1,
             children: guests.children || 0,
+            extraAdults: Number(extraAdults || 0),
             mealPlanCode: mealPlanCode,
           },
         ],

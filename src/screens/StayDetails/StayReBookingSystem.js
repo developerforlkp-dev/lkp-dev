@@ -1754,7 +1754,7 @@ const StayBookingSystem = ({
     });
     const roomChildAges = mapChildAgesToRoomAllocations(distribution.allocations, normalizedChildAges);
     const grouped = {};
-    if (distribution.success) {
+    if (distribution.success || (distribution.allocations && distribution.allocations.length > 0)) {
       distribution.allocations.forEach(alloc => {
         if (!grouped[alloc.roomId]) {
           grouped[alloc.roomId] = {
@@ -1822,6 +1822,7 @@ const StayBookingSystem = ({
         roomsBooked: 1,
         adults: Number(guests.adults || 1),
         children: Number(guests.children || 0),
+        extraAdults: requiredExtraAdultCount,
         extraChildren: requiredExtraChildCount,
         childAges: propChildAges,
         extraBeds: 0,
@@ -1830,12 +1831,16 @@ const StayBookingSystem = ({
       });
     } else {
       resolvedSelectedRooms.forEach(r => {
+        const baseAdultsForRoom = r.count * (r.maxAdults || 1);
+        const baseChildrenForRoom = r.count * (r.maxChildren || 0);
+        const singleRoomExtraAdults = Math.max(0, Number(guests.adults || 1) - baseAdultsForRoom);
+        const singleRoomExtraChildren = Math.max(0, Number(guests.children || 0) - baseChildrenForRoom);
         const grp = grouped[r.roomId || r.id] || {
           roomsBooked: r.count,
-          adults: r.count * (r.maxAdults || 1),
-          children: 0,
-          extraAdults: 0,
-          extraChildren: 0
+          adults: resolvedSelectedRooms.length === 1 ? Number(guests.adults || 1) : baseAdultsForRoom,
+          children: resolvedSelectedRooms.length === 1 ? Number(guests.children || 0) : 0,
+          extraAdults: resolvedSelectedRooms.length === 1 ? singleRoomExtraAdults : 0,
+          extraChildren: resolvedSelectedRooms.length === 1 ? singleRoomExtraChildren : 0
         };
 
         const isBed = r.isBedConfig;
@@ -1864,6 +1869,7 @@ const StayBookingSystem = ({
             roomsBooked: Number(r.count || 1),
             adults: Number(grp.adults || 1),
             children: Number(grp.children || 0),
+            extraAdults: Number(grp.extraAdults || 0),
             extraChildren: Number(grp.extraChildren || 0),
             childAges: roomChildAges[String(r.roomId || r.id)] || [],
             extraBeds: Number(r.extraBeds || 0),
@@ -2679,7 +2685,7 @@ const StayBookingSystem = ({
           const distribution = distributeGuests(selectedRooms, stayRoomsCatalog, guests.adults || 1, guests.children || 0);
           const roomChildAges = mapChildAgesToRoomAllocations(distribution.allocations, normalizedChildAges);
           const grouped = {};
-          if (distribution.success) {
+          if (distribution.success || (distribution.allocations && distribution.allocations.length > 0)) {
             distribution.allocations.forEach(alloc => {
               if (!grouped[alloc.roomId]) {
                 grouped[alloc.roomId] = {
@@ -2706,10 +2712,10 @@ const StayBookingSystem = ({
           resolvedSelectedRooms.forEach(r => {
             const grp = grouped[r.roomId || r.id] || {
               roomsBooked: r.count,
-              adults: r.count * (r.maxAdults || 1),
-              children: 0,
-              extraAdults: 0,
-              extraChildren: 0
+              adults: resolvedSelectedRooms.length === 1 ? Number(guests.adults || 1) : r.count * (r.maxAdults || 1),
+              children: resolvedSelectedRooms.length === 1 ? Number(guests.children || 0) : 0,
+              extraAdults: resolvedSelectedRooms.length === 1 ? Number(extraAdultsCount || 0) : 0,
+              extraChildren: resolvedSelectedRooms.length === 1 ? Number(extraChildrenCount || 0) : 0
             };
 
             const isBed = r.isBedConfig;
@@ -2729,11 +2735,11 @@ const StayBookingSystem = ({
                 roomsBooked: r.count,
                 adults: grp.adults,
                 children: grp.children,
-                childAges: roomChildAges[String(r.roomId || r.id)] || [],
+                extraAdults: isHostel ? 0 : (Number(grp.extraAdults || 0) || (resolvedSelectedRooms.length === 1 ? Number(extraAdultsCount || 0) : 0)),
                 mealPlanCode: r.mealPlan || "EP",
                 extraBeds: Number(r.extraBeds || 0),
-                extraAdults: isHostel ? 0 : grp.extraAdults,
                 extraChildren: grp.extraChildren,
+                childAges: roomChildAges[String(r.roomId || r.id)] || [],
               });
             }
           });
@@ -4028,8 +4034,6 @@ const StayBookingSystem = ({
 
                             {/* Child Age Selector: show when extra children exist (property-based or room-based) */}
                             {extraChildAgeIndexes.length > 0 && (() => {
-                              const _extraCount = extraChildAgeIndexes.length;
-                              const _baseLimit = Math.max(0, (guests?.children || 0) - _extraCount);
                               const _extraIndexes = extraChildAgeIndexes;
                               const compFrom = extraChildPolicyBounds?.complimentaryFrom ?? Number(stay?.complimentaryChildAgeFrom ?? stay?.complimentary_child_age_from ?? 0);
                               const compTo = extraChildPolicyBounds?.complimentaryTo ?? Number(stay?.complimentaryChildAgeTo ?? stay?.complimentary_child_age_to ?? 5);
@@ -4045,33 +4049,6 @@ const StayBookingSystem = ({
                                     <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
                                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
                                         <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>Extra Child Age Policy</span>
-                                        <span style={{ fontSize: 11, fontWeight: 600, color: M }}>
-                                          {_extraCount} Extra Child{_extraCount !== 1 ? "ren" : ""} (Beyond Base {_baseLimit})
-                                        </span>
-                                      </div>
-                                      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
-                                        <span style={{
-                                          fontSize: 10.5,
-                                          fontWeight: 600,
-                                          padding: "3px 8px",
-                                          borderRadius: 6,
-                                          background: "rgba(34, 197, 94, 0.12)",
-                                          color: "#16a34a",
-                                          border: "1px solid rgba(34, 197, 94, 0.25)"
-                                        }}>
-                                          Ages {compFrom}–{compTo}: Complimentary (₹0)
-                                        </span>
-                                        <span style={{
-                                          fontSize: 10.5,
-                                          fontWeight: 600,
-                                          padding: "3px 8px",
-                                          borderRadius: 6,
-                                          background: AL,
-                                          color: A,
-                                          border: `1px solid ${A}33`
-                                        }}>
-                                          Ages {rateFrom}–{rateTo}: Child Rate {extraChildPrice > 0 ? `(₹${extraChildPrice}/night)` : "Applies"}
-                                        </span>
                                       </div>
                                       <span style={{ fontSize: 11, fontWeight: 400, color: M, lineHeight: 1.35 }}>
                                         Complimentary age children ({compFrom}–{compTo} yrs) price is ₹0. Price only applies for children between ages {rateFrom} and {rateTo}.
