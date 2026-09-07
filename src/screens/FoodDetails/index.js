@@ -1295,14 +1295,13 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
         {/* Short Description as Heading */}
         <div style={{ textAlign: "center", maxWidth: 900, margin: "0 auto 60px auto" }}>
           <span style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: A, fontWeight: 800, display: "block", marginBottom: 16 }}>The Philosophy</span>
-          <h2 style={{ 
+          <h2 className="font-display" style={{ 
             fontSize: isMobile ? "28px" : "44px", 
             fontWeight: 600,
             letterSpacing: "-0.02em",
             color: FG, 
             lineHeight: 1.3, 
             margin: 0, 
-            fontFamily: "'Cormorant Garamond', 'Playfair Display', serif",
             fontStyle: "italic"
           }}>
             "{food?.shortDescription || "A curated preview of the palate notes."}"
