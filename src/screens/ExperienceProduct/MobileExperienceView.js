@@ -603,9 +603,9 @@ export default function MobileExperienceView({
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
                 <MapPin size={18} color={A} />
               </div>
-              <div>
-                <p className="mob-detail-label" style={{ color: A }}>Address</p>
-                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingAddress}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingAddress}</span>
               </div>
             </div>
           )}
@@ -614,9 +614,9 @@ export default function MobileExperienceView({
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
                 <Building size={18} color={A} />
               </div>
-              <div>
-                <p className="mob-detail-label" style={{ color: A }}>District</p>
-                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingDistrict}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingDistrict}</span>
               </div>
             </div>
           )}
@@ -625,9 +625,9 @@ export default function MobileExperienceView({
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
                 <Map size={18} color={A} />
               </div>
-              <div>
-                <p className="mob-detail-label" style={{ color: A }}>State</p>
-                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingState}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingState}</span>
               </div>
             </div>
           )}
@@ -636,9 +636,9 @@ export default function MobileExperienceView({
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
                 <Globe size={18} color={A} />
               </div>
-              <div>
-                <p className="mob-detail-label" style={{ color: A }}>Country</p>
-                <p className="mob-detail-value" style={{ color: FG }}>{listing.meetingCountry}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingCountry}</span>
               </div>
             </div>
           )}
@@ -647,9 +647,11 @@ export default function MobileExperienceView({
               <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
                 <Info size={18} color={A} />
               </div>
-              <div>
-                <p className="mob-detail-label" style={{ color: A }}>Instructions</p>
-                <ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>
+                  <ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} />
+                </div>
               </div>
             </div>
           )}

@@ -2061,22 +2061,31 @@ function Venue({ event, hostName }) {
       <section id="venue" style={{ background: BG, padding: isMobile ? "32px 24px" : "32px 80px" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           {/* Header Area */}
-          <div style={{ marginBottom: 32 }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Location & Details</span>
-            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em", margin: 0 }}>Where it All Happens</h3>
-            <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>Find your way to the event and get all the essential details for a smooth journey.</p>
+          <div style={{ marginBottom: isMobile ? 24 : 32 }}>
+            {isMobile ? (
+              <>
+                <span className="mob-section-eyebrow" style={{ color: A }}>Location & Details</span>
+                <h2 className="mob-section-title" style={{ color: FG }}>Where it All Happens</h2>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>Location & Details</span>
+                <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: "24px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em", margin: 0 }}>Where it All Happens</h3>
+                <p style={{ color: M, fontSize: "16px", lineHeight: "1.7", margin: "16px 0 0 0", fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>Find your way to the event and get all the essential details for a smooth journey.</p>
+              </>
+            )}
           </div>
 
           {/* Main Card Container */}
           <div style={{
-            background: W,
-            borderRadius: 24,
-            border: `1px solid ${B}`,
-            padding: 16,
+            background: isMobile ? "transparent" : W,
+            borderRadius: isMobile ? 0 : 24,
+            border: isMobile ? "none" : `1px solid ${B}`,
+            padding: isMobile ? 0 : 16,
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
             gap: isMobile ? 24 : 32,
-            boxShadow: theme === 'dark' ? "none" : "0 8px 32px rgba(0,0,0,0.04)"
+            boxShadow: (isMobile || theme === 'dark') ? "none" : "0 8px 32px rgba(0,0,0,0.04)"
           }} className="prep-grid">
 
             {/* LEFT: Map */}
@@ -2123,84 +2132,84 @@ function Venue({ event, hostName }) {
 
             {/* RIGHT: Details List */}
             <Rev delay={0.2} style={{ height: "100%" }}>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0" }}>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: isMobile ? "0" : "16px 16px 16px 0" }}>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
                   {venueAddress && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: isMobile ? "none" : `1px solid ${B}` }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <MapPin size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueAddress}</span>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueAddress}</span>
                       </div>
                     </li>
                   )}
                   {venueLandmark && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: !venueAddress ? `1px solid ${B}` : "none" }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: !venueAddress ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <MapPin size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueLandmark}</span>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueLandmark}</span>
                       </div>
                     </li>
                   )}
                   {venueDistrict && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark) ? `1px solid ${B}` : "none" }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Building size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueDistrict}</span>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueDistrict}</span>
                       </div>
                     </li>
                   )}
                   {venueState && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict) ? `1px solid ${B}` : "none" }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Map size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueState}</span>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueState}</span>
                       </div>
                     </li>
                   )}
                   {venueCountry && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict && !venueState) ? `1px solid ${B}` : "none" }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict && !venueState) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Globe size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
-                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueCountry}</span>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                        <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{venueCountry}</span>
                       </div>
                     </li>
                   )}
                   {venueInstructions && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict && !venueState && !venueCountry) ? `1px solid ${B}` : "none" }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!venueAddress && !venueLandmark && !venueDistrict && !venueState && !venueCountry) ? `1px solid ${B}` : "none" }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Info size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                        <div style={{ flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                        <div style={{ flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>
                           <ExpandableInstructionText text={venueInstructions} FG={FG} A={A} />
                         </div>
                       </div>
                     </li>
                   )}
                   {(!venueDistrict && !venueState && !venueCountry && !venueAddress && !venueLandmark) && (
-                    <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                    <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: isMobile ? "none" : `1px solid ${B}` }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <MapPin size={20} color={A} fill="transparent" />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
-                        <span style={{ fontSize: 16, color: M, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>Specific regional details will be provided upon booking confirmation.</span>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
+                        <span style={{ fontSize: 16, color: M, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: isMobile ? "none" : 1, minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>Specific regional details will be provided upon booking confirmation.</span>
                       </div>
                     </li>
                   )}
