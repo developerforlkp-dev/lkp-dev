@@ -1609,96 +1609,96 @@ function LocationSection({ food }) {
             <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0", width: "100%", boxSizing: "border-box" }}>
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
                 {(food?.meetingAddress || food?.address) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}`  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <MapPin size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingAddress || food.address}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{food.meetingAddress || food.address}</span>
                     </div>
                   </li>
                 )}
 
                 {(food?.meetingLandmark || food?.nearestLandmark || food?.landmark) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Navigation size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingLandmark || food.nearestLandmark || food.landmark}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Landmark</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{food.meetingLandmark || food.nearestLandmark || food.landmark}</span>
                     </div>
                   </li>
                 )}
 
                 {fullAddress && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <MapPin size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Full Address</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{fullAddress}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Full Address</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{fullAddress}</span>
                     </div>
                   </li>
                 )}
 
                 {(food?.meetingDistrict || food?.district) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Building size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingDistrict || food.district}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{food.meetingDistrict || food.district}</span>
                     </div>
                   </li>
                 )}
 
                 {(food?.meetingState || food?.state || food?.city) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Map size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingState || food.state || food.city}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{food.meetingState || food.state || food.city}</span>
                     </div>
                   </li>
                 )}
 
                 {(food?.meetingCountry || food?.country) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Globe size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
-                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{food.meetingCountry || food.country}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                      <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{food.meetingCountry || food.country}</span>
                     </div>
                   </li>
                 )}
 
                 {(food?.meetingInstructions || food?.directions) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Info size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                      <ExpandableInstructionText text={food.meetingInstructions || food.directions} FG={FG} A={A} />
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                      <div style={{ flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}><ExpandableInstructionText text={food.meetingInstructions || food.directions} FG={FG} A={A} /></div>
                     </div>
                   </li>
                 )}
                 
                 {(!food?.meetingDistrict && !food?.meetingState && !food?.meetingCountry && !food?.meetingAddress && !food?.meetingLandmark && !food?.address && !food?.nearestLandmark && !food?.landmark) && (
-                  <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                  <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <MapPin size={20} color={A} fill="transparent" />
                     </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
                       <span style={{ fontSize: 16, color: M, fontWeight: 400, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
                     </div>
                   </li>
