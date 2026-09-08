@@ -3854,7 +3854,6 @@ const StayBookingSystem = ({
                       overflowX: "auto",
                       gap: 16,
                       padding: "4px 0",
-                      WebkitOverflowScrolling: "touch",
                       scrollbarWidth: "none",
                       msOverflowStyle: "none",
                       width: "100%",
@@ -3975,7 +3974,7 @@ const StayBookingSystem = ({
                 </div>
               )}
 
-              <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch" }}>
+              <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", }}>
                 <div className="booking-grid" style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {/* Booking Details & Guests */}
                   <div className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16 }}>

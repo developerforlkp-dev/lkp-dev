@@ -4267,7 +4267,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           overflowX: "auto",
                           gap: 16,
                           padding: "8px 0",
-                          WebkitOverflowScrolling: "touch",
                           scrollbarWidth: "none",
                           msOverflowStyle: "none",
                           width: "100%",
@@ -4392,7 +4391,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     </div>
                   )}
 
-                  <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch" }}>
+                  <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", }}>
 
 
                     {/* Closed state — all dates have passed */}
