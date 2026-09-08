@@ -1189,30 +1189,23 @@ export const ExpandableInstructionText = ({ text, FG, A }) => {
   const isLong = text && text.length > 120;
   
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      <div 
-        style={{ 
-          display: "grid", 
-          gridTemplateRows: expanded ? "1fr" : "0fr", 
-          transition: "grid-template-rows 0.3s ease",
-          width: "100%"
-        }}
-      >
-        <div style={{ overflow: "hidden" }}>
-          <p className="mob-detail-value" style={{ 
-            color: FG, margin: 0,
-            display: "-webkit-box", 
-            WebkitLineClamp: expanded ? "unset" : 3, 
-            WebkitBoxOrient: "vertical",
-          }}>
-            {text}
-          </p>
-        </div>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1, minWidth: 0, width: "100%" }}>
+      <span style={{ 
+        fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif',
+        display: "-webkit-box", 
+        WebkitLineClamp: expanded ? "unset" : 3, 
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "pre-wrap",
+        wordBreak: "normal",
+        overflowWrap: "anywhere"
+      }}>
+        {text}
+      </span>
       {isLong && (
         <button 
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-          style={{ background: "transparent", border: "none", color: A, fontSize: 11, fontWeight: 700, padding: 0, marginTop: 4, cursor: "pointer", outline: "none", textDecoration: "underline", transition: "color 0.2s" }}
+          style={{ background: "transparent", border: "none", color: A, fontSize: 13, fontWeight: 600, padding: 0, marginTop: 6, cursor: "pointer", outline: "none", textDecoration: "underline", fontFamily: '"Inter", sans-serif', transition: "opacity 0.2s" }}
         >
           {expanded ? "Read Less" : "Read More"}
         </button>
