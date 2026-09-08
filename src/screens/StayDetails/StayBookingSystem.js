@@ -768,6 +768,13 @@ const StayBookingSystem = ({
   const [apiPayableLoading, setApiPayableLoading] = useState(false);
   const [showLeftAddonArrow, setShowLeftAddonArrow] = useState(false);
   const [showRightAddonArrow, setShowRightAddonArrow] = useState(false);
+  const [isHoveringAddons, setIsHoveringAddons] = useState(false);
+  const addonsScrollIntervalRef = useRef(null);
+  const lastInteractionTimeRef = useRef(0);
+
+  const handleUserInteraction = useCallback(() => {
+    lastInteractionTimeRef.current = Date.now();
+  }, []);
   const externalOpenHandledRef = useRef(false);
 
   useEffect(() => {
@@ -3819,7 +3826,16 @@ const StayBookingSystem = ({
                       </button>
                     )}
 
-                    <div id="stay-header-addons-scroll" onScroll={handleAddonsScroll} style={{
+                    <div id="stay-header-addons-scroll" onScroll={handleAddonsScroll} 
+                          onMouseEnter={() => setIsHoveringAddons(true)}
+                          onMouseLeave={() => setIsHoveringAddons(false)}
+                          onTouchStart={() => {
+                            setIsHoveringAddons(true);
+                            handleUserInteraction();
+                          }}
+                          onTouchEnd={() => { setTimeout(() => setIsHoveringAddons(false), 2000); }}
+                          onWheel={() => handleUserInteraction()}
+                          style={{
                       display: "flex",
                       overflowX: "auto",
                       gap: 16,
@@ -3828,8 +3844,6 @@ const StayBookingSystem = ({
                       scrollbarWidth: "none",
                       msOverflowStyle: "none",
                       width: "100%",
-                      maskImage: "linear-gradient(to right, black, black calc(100% - 16px), transparent)",
-                      WebkitMaskImage: "linear-gradient(to right, black, black calc(100% - 16px), transparent)"
                     }}>
                       {stay.addons.map((item, i) => {
                         const addon = item.addon || item;
@@ -3837,7 +3851,9 @@ const StayBookingSystem = ({
                         const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
                         const isSelected = selectedAddOns.some(a => String(a.addonId || a.id || a) === String(addonId));
                         const quantity = addOnQuantities[addonId] || 1;
-                        const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+                        const rawAddonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image || addon.coverImageUrl || addon.coverPhotoUrl;
+                            const fallbackImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(addon.title || addon.name || 'A')}&background=random&color=fff&size=200&bold=true`;
+                            const addonImage = rawAddonImage ? rawAddonImage.replace(/^http:\/\//i, 'https://') : fallbackImage;
 
                         const handleCardClick = () => {
                           if (!onAddOnQuantityChange) return;
@@ -3860,7 +3876,18 @@ const StayBookingSystem = ({
                           >
                             {addonImage && (
                               <div className="stay-modal-addon-image">
-                                <img src={addonImage} alt={addon.title} />
+                                <img 
+                                      src={addonImage} 
+                                      alt={addon.title} 
+                                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} 
+                                      onError={(e) => { 
+                                        if (e.target.src !== fallbackImage && !e.target.src.includes('ui-avatars.com')) {
+                                          e.target.src = fallbackImage;
+                                        } else {
+                                          e.target.style.display = 'none'; 
+                                        }
+                                      }}
+                                    />
                               </div>
                             )}
                             <div className="stay-modal-addon-content">
@@ -3935,9 +3962,9 @@ const StayBookingSystem = ({
               )}
 
               <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch" }}>
-                <div className="booking-grid" style={{ display: "flex", flexDirection: "column", gap: 1, background: B }}>
+                <div className="booking-grid" style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {/* Booking Details & Guests */}
-                  <div className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16 }}>
                     {/* Section 01: Booking Details */}
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>

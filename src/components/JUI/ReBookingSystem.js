@@ -1335,6 +1335,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [bookingLoading, setBookingLoading] = useState(false);
   const [showLeftAddonArrow, setShowLeftAddonArrow] = useState(false);
   const [showRightAddonArrow, setShowRightAddonArrow] = useState(false);
+  const [isHoveringAddons, setIsHoveringAddons] = useState(false);
+  const addonsScrollIntervalRef = useRef(null);
+  const lastInteractionTimeRef = useRef(0);
+
+  const handleUserInteraction = useCallback(() => {
+    lastInteractionTimeRef.current = Date.now();
+  }, []);
 
   const handleAddonsScroll = useCallback(() => {
     const container = document.getElementById("header-addons-scroll");
@@ -4236,6 +4243,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           <button
                             className="addon-scroll-btn"
                             onClick={() => {
+                              handleUserInteraction();
                               const container = document.getElementById("header-addons-scroll");
                               if (container) container.scrollBy({ left: -260, behavior: 'smooth' });
                             }}
@@ -4245,7 +4253,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           </button>
                         )}
 
-                        <div id="header-addons-scroll" onScroll={handleAddonsScroll} style={{
+                        <div id="header-addons-scroll" onScroll={handleAddonsScroll} 
+                          onMouseEnter={() => setIsHoveringAddons(true)}
+                          onMouseLeave={() => setIsHoveringAddons(false)}
+                          onTouchStart={() => {
+                            setIsHoveringAddons(true);
+                            handleUserInteraction();
+                          }}
+                          onTouchEnd={() => { setTimeout(() => setIsHoveringAddons(false), 2000); }}
+                          onWheel={() => handleUserInteraction()}
+                          style={{
                           display: "flex",
                           overflowX: "auto",
                           gap: 16,
@@ -4254,8 +4271,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           scrollbarWidth: "none",
                           msOverflowStyle: "none",
                           width: "100%",
-                          maskImage: "linear-gradient(to right, black, black calc(100% - 16px), transparent)",
-                          WebkitMaskImage: "linear-gradient(to right, black, black calc(100% - 16px), transparent)"
                         }}>
                           {listing.addons.map((item, i) => {
                             const addon = item.addon || item;
@@ -4263,7 +4278,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
                             const isSelected = selectedAddOns.some(a => (a.addonId || a.id) === addonId);
                             const quantity = selectedAddOns.find(a => (a.addonId || a.id) === addonId)?.quantity || 1;
-                            const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+                            const rawAddonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image || addon.coverImageUrl || addon.coverPhotoUrl;
+                            const fallbackImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(addon.title || addon.name || 'A')}&background=random&color=fff&size=200&bold=true`;
+                            const addonImage = rawAddonImage ? rawAddonImage.replace(/^http:\/\//i, 'https://') : fallbackImage;
 
                             const handleCardClick = () => {
                               if (!onUpdateAddonQuantity) return;
@@ -4289,7 +4306,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               >
                                 {addonImage && (
                                   <div className="addon-img-box">
-                                    <img src={addonImage} alt={addon.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    <img 
+                                      src={addonImage} 
+                                      alt={addon.title} 
+                                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} 
+                                      onError={(e) => { 
+                                        if (e.target.src !== fallbackImage && !e.target.src.includes('ui-avatars.com')) {
+                                          e.target.src = fallbackImage;
+                                        } else {
+                                          e.target.style.display = 'none'; 
+                                        }
+                                      }}
+                                    />
                                   </div>
                                 )}
                                 <div className="addon-content">
@@ -4351,6 +4379,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           <button
                             className="addon-scroll-btn"
                             onClick={() => {
+                              handleUserInteraction();
                               const container = document.getElementById("header-addons-scroll");
                               if (container) container.scrollBy({ left: 260, behavior: 'smooth' });
                             }}
@@ -4385,8 +4414,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       </div>
                     ) : (
                       <div className="booking-modal-content" style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
-                        <div className="booking-grid" style={{ display: "flex", flexDirection: "column", gap: 1, background: B }}>
-                          <div className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16 }}>
+                        <div className="booking-grid" style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                          <div className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16 }}>
                             <div>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                                 <div style={{ fontSize: 11, color: A, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", lineHeight: "1.2" }}>
@@ -4897,7 +4926,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             </AnimatePresence>
                           </div>
 
-                          <div id="booking-guests-section-exp" className="booking-modal-column" style={{ padding: "20px 28px", background: S, display: "flex", flexDirection: "column", gap: 16, scrollMarginTop: "24px" }}>
+                          <div id="booking-guests-section-exp" className="booking-modal-column" style={{ padding: "20px 28px", background: BG, display: "flex", flexDirection: "column", gap: 16, scrollMarginTop: "24px" }}>
                             <div style={{ fontSize: 11, color: validationErrors.adults ? E : A, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 8, lineHeight: "1.2" }}>
                               02. Guests
                               {validationErrors.adults && <span style={{ fontSize: 10, fontWeight: 700, background: EL, color: E, padding: "2px 8px", borderRadius: 100, border: `1px solid ${E}22` }}>Min 1 Adult Required</span>}

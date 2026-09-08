@@ -4303,8 +4303,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           scrollbarWidth: "none",
                           msOverflowStyle: "none",
                           width: "100%",
-                          maskImage: "linear-gradient(to right, black, black calc(100% - 16px), transparent)",
-                          WebkitMaskImage: "linear-gradient(to right, black, black calc(100% - 16px), transparent)"
                         }}>
                           {listing.addons.map((item, i) => {
                             const addon = item.addon || item;
@@ -4312,7 +4310,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             const pricingType = addon.pricingType || (addon.priceType === "per_booking" ? "Group" : "Individual");
                             const isSelected = selectedAddOns.some(a => (a.addonId || a.id) === addonId);
                             const quantity = selectedAddOns.find(a => (a.addonId || a.id) === addonId)?.quantity || 1;
-                            const addonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image;
+                            const rawAddonImage = addon.imageUrl || (addon.imageUrls && addon.imageUrls[0]) || addon.image || addon.coverImageUrl || addon.coverPhotoUrl;
+                            const fallbackImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(addon.title || addon.name || 'A')}&background=random&color=fff&size=200&bold=true`;
+                            const addonImage = rawAddonImage ? rawAddonImage.replace(/^http:\/\//i, 'https://') : fallbackImage;
 
                             const handleCardClick = () => {
                               if (!onUpdateAddonQuantity) return;
@@ -4338,7 +4338,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               >
                                 {addonImage && (
                                   <div className="addon-img-box" style={{ position: "relative" }}>
-                                    <img src={addonImage} alt={addon.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                                    <img 
+                                      src={addonImage} 
+                                      alt={addon.title} 
+                                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} 
+                                      onError={(e) => { 
+                                        if (e.target.src !== fallbackImage && !e.target.src.includes('ui-avatars.com')) {
+                                          e.target.src = fallbackImage;
+                                        } else {
+                                          e.target.style.display = 'none'; 
+                                        }
+                                      }}
+                                    />
                                   </div>
                                 )}
                                 <div className="addon-content">
