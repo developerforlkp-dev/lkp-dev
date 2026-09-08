@@ -116,7 +116,8 @@ export default function MobileExperienceView({
   fallbackLocationValues, fallbackTagValues, fallbackSpecialLabelValues,
   displayHostName, hostPhone, hostEmail,
   displayTags, navigateToHostProfile,
-  normalizedReviews, displayMaxGuests
+  normalizedReviews, displayMaxGuests,
+  isDirectBooking = false
 }) {
   const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
   const isDark = theme === "dark";
@@ -1067,19 +1068,21 @@ export default function MobileExperienceView({
       {/* ╔═══════════════════════════════════╗
           ║      RELATED EXPERIENCES          ║
           ╚═══════════════════════════════════╝ */}
-      <div className="mob-related" style={{ background: isDark ? BG : W }}>
-        <RelatedListingsStrip
-          businessInterestId={1}
-          primaryCategoryId={primaryCategoryId}
-          currentListingId={currentListingId}
-          fallbackLocationValues={fallbackLocationValues}
-          fallbackTagValues={fallbackTagValues}
-          fallbackSpecialLabelValues={fallbackSpecialLabelValues}
-          title="You May Also Like"
-          sectionStyle={{ padding: "0 0 0 20px", background: "transparent" }}
-          titleStyle={{ fontSize: "clamp(1.6rem, 7vw, 2.2rem)", fontWeight: 700, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', color: FG, margin: 0, letterSpacing: "-0.02em" }}
-        />
-      </div>
+      {!isDirectBooking && (
+        <div className="mob-related" style={{ background: isDark ? BG : W }}>
+          <RelatedListingsStrip
+            businessInterestId={1}
+            primaryCategoryId={primaryCategoryId}
+            currentListingId={currentListingId}
+            fallbackLocationValues={fallbackLocationValues}
+            fallbackTagValues={fallbackTagValues}
+            fallbackSpecialLabelValues={fallbackSpecialLabelValues}
+            title="You May Also Like"
+            sectionStyle={{ padding: "0 0 0 20px", background: "transparent" }}
+            titleStyle={{ fontSize: "clamp(1.6rem, 7vw, 2.2rem)", fontWeight: 700, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', color: FG, margin: 0, letterSpacing: "-0.02em" }}
+          />
+        </div>
+      )}
 
       {/* ╔═══════════════════════════════════╗
           ║        BOOKING SYSTEM             ║
@@ -1095,6 +1098,7 @@ export default function MobileExperienceView({
         initialGuests={initialGuests}
         hostName={displayHostName}
         hostAvatar={parentFmt(leadData?.profileImageUrl || hostData?.profileImageUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar)}
+        isDirectBooking={isDirectBooking}
       />
 
       {/* Spacer for sticky CTA */}
