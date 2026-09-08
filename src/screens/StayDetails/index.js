@@ -4797,7 +4797,7 @@ function StayLocation({ stay }) {
                 {(district || city) && (
                   <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: (!address && !landmark) ? (isMobile ? "none" : `1px solid ${B}`) : "none"  }}>
                     <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Map size={20} color={A} fill="transparent" />
+                      <Building size={20} color={A} fill="transparent" />
                     </div>
                     <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 16, alignItems: isMobile ? "flex-start" : "center", flex: 1, minWidth: 0 }}>
                       <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
