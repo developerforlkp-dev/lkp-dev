@@ -2074,8 +2074,8 @@ function Venue({ event, hostName }) {
           }} className="prep-grid">
 
             {/* LEFT: Map */}
-            <Rev delay={0.1} style={{ height: "100%" }}>
-              <div style={{ height: "100%", minHeight: 320, position: "relative", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
+            <Rev delay={0.1} style={{ height: isMobile ? "250px" : "100%" }}>
+              <div style={{ height: "100%", minHeight: isMobile ? "250px" : 320, position: "relative", overflow: "hidden", borderRadius: 16, border: `1px solid ${B}` }}>
                 <div style={{
                   position: "absolute",
                   top: 16,
