@@ -3246,7 +3246,8 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
     host: event?.hostProfile?.host || event?.host || {}
   };
 
-  return <BookingSystem listing={listing} type="event" selectedAddOns={selectedAddOns} onUpdateAddonQuantity={onUpdateAddonQuantity} triggerLabel="Reserve Ticket" reserveLabel="Reserve Ticket" initialDate={initialDateStr} initialGuests={initialGuests} externalOpen={bookingModalOpen} onExternalOpenChange={setBookingModalOpen} isFreeEvent={ticketPrice === 0} />;
+  const isFree = event?.eventType?.toLowerCase() === 'free' || event?.event_type?.toLowerCase() === 'free';
+  return <BookingSystem listing={listing} type="event" selectedAddOns={selectedAddOns} onUpdateAddonQuantity={onUpdateAddonQuantity} triggerLabel="Reserve Ticket" reserveLabel="Reserve Ticket" initialDate={initialDateStr} initialGuests={initialGuests} externalOpen={bookingModalOpen} onExternalOpenChange={setBookingModalOpen} isFreeEvent={isFree} />;
 }
 
 function Tickets({ event }) {
