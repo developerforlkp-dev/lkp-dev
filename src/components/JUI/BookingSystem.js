@@ -1325,7 +1325,7 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
   );
 }
 
-export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests }) {
+export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests, isFreeEvent = false }) {
   const history = useHistory();
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
   const isMountedRef = useRef(true);
@@ -3926,7 +3926,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const canReserve = isEventBooking
     ? Boolean(ticketSaleWindow.isOpen && startDate && selectedTicket && selectedEventSlots.length > 0 && getSlotId(selectedEventSlots[0]) != null && totalGuests >= 1 && (selectedTicketMaxPerBooking === undefined || totalGuests <= selectedTicketMaxPerBooking) && (selectedTicketRemainingTickets === undefined || totalGuests <= selectedTicketRemainingTickets) && !selectedTicketSoldOut && !eventAvailabilityLoading && !bookingLoading)
     : Boolean(startDate && selectedSlotData && startTime && totalGuests >= 1 && (guestSeatLimit === undefined || totalGuests <= guestSeatLimit) && (!privateBooking || selectedSlotPrivateBookingAvailable) && !selectedSlotHasPrivateBooking && !bookingLoading);
-  const triggerDisabled = isEventBooking && !ticketSaleWindow.isOpen;
+  const triggerDisabled = (isEventBooking && !ticketSaleWindow.isOpen) || isFreeEvent;
 
   const handleOpenBooking = useCallback(() => {
     if (triggerDisabled) return;
@@ -4001,7 +4001,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           }}
           whileTap={triggerDisabled ? undefined : { scale: 0.96 }}
           disabled={triggerDisabled}
-          title={triggerDisabled ? ticketSaleWindow.message : undefined}
+          title={isFreeEvent ? "Free Event" : (triggerDisabled ? ticketSaleWindow.message : undefined)}
           className="booking-trigger"
           style={{
             position: "fixed",
@@ -4017,21 +4017,21 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             gap: 12,
             boxShadow: `0 12px 24px -6px rgba(0,0,0,0.12), 0 20px 40px -8px ${A}3b, 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.25)`,
             border: "none",
-            cursor: triggerDisabled ? "not-allowed" : "pointer",
+            cursor: isFreeEvent ? "default" : (triggerDisabled ? "not-allowed" : "pointer"),
             zIndex: 1000,
             fontWeight: 800,
             fontSize: 17,
             letterSpacing: "0.05em",
             textTransform: "uppercase",
-            opacity: triggerDisabled ? 0.76 : 1,
+            opacity: triggerDisabled && !isFreeEvent ? 0.76 : 1,
             transition: "background-color 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.2s cubic-bezier(0.25, 1, 0.5, 1)"
           }}
         >
           <IconComp size={22} />
-          {triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : triggerLabel}
+          {isFreeEvent ? "Free Event" : (triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : triggerLabel)}
         </motion.button>
       )}
-      {!hideTrigger && triggerDisabled && (
+      {!hideTrigger && triggerDisabled && !isFreeEvent && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: isFooterVisible ? 150 : 0, opacity: isFooterVisible ? 0 : 1 }}
