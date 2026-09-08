@@ -788,6 +788,7 @@ const StayBookingSystem = ({
   const externalOpenHandledRef = useRef(false);
   const lastAvailKeyRef = useRef("");
   const lastCalculatedPayloadRef = useRef("");
+  const stayCalculateTimerRef = useRef(null);
 
   useEffect(() => {
     if (externalOpen === true && !show && !externalOpenHandledRef.current) {
@@ -1847,20 +1848,35 @@ const StayBookingSystem = ({
 
   // Dynamic Stay Pricing API total fetch
   useEffect(() => {
+    return () => {
+      if (stayCalculateTimerRef.current) clearTimeout(stayCalculateTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!show) {
+      if (stayCalculateTimerRef.current) clearTimeout(stayCalculateTimerRef.current);
+      lastCalculatedPayloadRef.current = "";
       setApiPayableAmount(null);
+      setApiPayableLoading(false);
       return;
     }
 
     const stayId = Number(stay?.stayId || stay?.id);
     if (!stayId || !checkInDate || !checkOutDate) {
+      if (stayCalculateTimerRef.current) clearTimeout(stayCalculateTimerRef.current);
+      lastCalculatedPayloadRef.current = "";
       setApiPayableAmount(null);
+      setApiPayableLoading(false);
       return;
     }
 
     const isPropertyBased = isPropertyBasedBooking(stay);
     if (!isPropertyBased && resolvedSelectedRooms.length === 0) {
+      if (stayCalculateTimerRef.current) clearTimeout(stayCalculateTimerRef.current);
+      lastCalculatedPayloadRef.current = "";
       setApiPayableAmount(null);
+      setApiPayableLoading(false);
       return;
     }
 
@@ -2044,33 +2060,29 @@ const StayBookingSystem = ({
       return;
     }
 
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      if (cancelled) return;
-      lastCalculatedPayloadRef.current = payloadKey;
+    lastCalculatedPayloadRef.current = payloadKey;
+
+    if (stayCalculateTimerRef.current) {
+      clearTimeout(stayCalculateTimerRef.current);
+    }
+
+    stayCalculateTimerRef.current = setTimeout(() => {
       setApiPayableLoading(true);
 
       calculateStayTotal(payload)
         .then((res) => {
-          if (cancelled) return;
           const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
           if (amount != null && Number.isFinite(Number(amount))) {
             setApiPayableAmount(Number(amount));
           }
         })
         .catch((err) => {
-          if (cancelled) return;
           console.warn("calculateStayTotal error:", err);
         })
         .finally(() => {
-          if (!cancelled) setApiPayableLoading(false);
+          setApiPayableLoading(false);
         });
     }, 250);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
   }, [
     show,
     stay?.stayId,

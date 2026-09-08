@@ -1362,6 +1362,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   // Sync external open state
   const externalOpenHandledRef = useRef(false);
+  const lastCalculatedPayloadRef = useRef("");
+  const calculateDebounceTimerRef = useRef(null);
   const childrenDetailsRef = useRef(null);
   useEffect(() => {
     if (externalOpen === true && !show && !externalOpenHandledRef.current) {
@@ -2671,14 +2673,28 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   // Dynamic Experience & Event Pricing API total fetch
   useEffect(() => {
+    return () => {
+      if (calculateDebounceTimerRef.current) {
+        clearTimeout(calculateDebounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!show) {
+      if (calculateDebounceTimerRef.current) clearTimeout(calculateDebounceTimerRef.current);
+      lastCalculatedPayloadRef.current = "";
       setApiPayableAmount(null);
+      setApiPayableLoading(false);
       return;
     }
 
     const adultCount = Number(guests?.adults || 0);
     if (adultCount <= 0) {
+      if (calculateDebounceTimerRef.current) clearTimeout(calculateDebounceTimerRef.current);
+      lastCalculatedPayloadRef.current = "";
       setApiPayableAmount(null);
+      setApiPayableLoading(false);
       return;
     }
 
@@ -2689,9 +2705,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       return { addonId, quantity };
     }).filter(a => Boolean(a.addonId));
 
+    let payload = null;
+    let calculationFn = null;
+
     if (isEventBooking) {
       const eventId = Number(listing?.eventId ?? listing?.event_id ?? listing?.id ?? listing?.listingId);
-      if (!eventId) return;
+      if (!eventId) {
+        if (calculateDebounceTimerRef.current) clearTimeout(calculateDebounceTimerRef.current);
+        lastCalculatedPayloadRef.current = "";
+        setApiPayableAmount(null);
+        setApiPayableLoading(false);
+        return;
+      }
 
       const resolvedSlotId = Number(selectedEventSlot?.eventSlotId ?? selectedEventSlot?.id ?? selectedEventSlot?.slotId ?? selectedEventSlotId) || null;
       const rawDate = startDate || selectedDateKey;
@@ -2748,7 +2773,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         };
       }).filter(Boolean);
 
-      const payload = {
+      payload = {
         booking: {
           eventId,
           ...(resolvedSlotId ? { eventSlotId: resolvedSlotId } : {}),
@@ -2762,32 +2787,16 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           addons: formattedEventAddons,
         }
       };
-
-      let cancelled = false;
-      setApiPayableLoading(true);
-
-      calculateEventTotal(payload)
-        .then((res) => {
-          if (cancelled) return;
-          const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
-          if (amount != null && Number.isFinite(Number(amount))) {
-            setApiPayableAmount(Number(amount));
-          }
-        })
-        .catch((err) => {
-          if (cancelled) return;
-          console.warn("calculateEventTotal error:", err);
-        })
-        .finally(() => {
-          if (!cancelled) setApiPayableLoading(false);
-        });
-
-      return () => {
-        cancelled = true;
-      };
+      calculationFn = calculateEventTotal;
     } else {
       const listingId = Number(listing?.listingId || listing?.id || listing?.experienceId);
-      if (!listingId) return;
+      if (!listingId) {
+        if (calculateDebounceTimerRef.current) clearTimeout(calculateDebounceTimerRef.current);
+        lastCalculatedPayloadRef.current = "";
+        setApiPayableAmount(null);
+        setApiPayableLoading(false);
+        return;
+      }
 
       const bookingDate = startDate ? moment(startDate).format("YYYY-MM-DD") : (selectedDateKey || null);
       const bookingTime = selectedSlotData?.startTime || selectedSlotData?.start_time || startTime || null;
@@ -2796,7 +2805,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const childAges = Array.isArray(guests?.childAges) ? guests.childAges.map(Number).filter(a => Number.isFinite(a)) : [];
       const isPrivate = Boolean(privateBooking);
 
-      const payload = {
+      payload = {
         booking: {
           listingId,
           bookingDate,
@@ -2809,30 +2818,43 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           addons: formattedAddons,
         }
       };
+      calculationFn = calculateExperienceTotal;
+    }
 
-      let cancelled = false;
+    if (!payload || !calculationFn) return;
+
+    const payloadKey = JSON.stringify(payload);
+    if (lastCalculatedPayloadRef.current === payloadKey) {
+      return;
+    }
+
+    // Immediately cache the payloadKey so subsequent re-renders during the debounce delay do not loop
+    lastCalculatedPayloadRef.current = payloadKey;
+
+    if (calculateDebounceTimerRef.current) {
+      clearTimeout(calculateDebounceTimerRef.current);
+    }
+
+    calculateDebounceTimerRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
       setApiPayableLoading(true);
 
-      calculateExperienceTotal(payload)
+      calculationFn(payload)
         .then((res) => {
-          if (cancelled) return;
+          if (!isMountedRef.current) return;
           const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
           if (amount != null && Number.isFinite(Number(amount))) {
             setApiPayableAmount(Number(amount));
           }
         })
         .catch((err) => {
-          if (cancelled) return;
-          console.warn("calculateExperienceTotal error:", err);
+          if (!isMountedRef.current) return;
+          console.warn("calculateTotal error:", err);
         })
         .finally(() => {
-          if (!cancelled) setApiPayableLoading(false);
+          if (isMountedRef.current) setApiPayableLoading(false);
         });
-
-      return () => {
-        cancelled = true;
-      };
-    }
+    }, 250);
   }, [
     isEventBooking,
     show,
