@@ -286,12 +286,22 @@ const getMealPlanDisplayLabel = (code, ...pricingSources) => {
 
 const syncChildAges = (ages, childrenCount, defaultAge = 0) => {
   const safeCount = Math.max(0, Number(childrenCount || 0));
-  const next = Array.isArray(ages) ? ages.slice(0, safeCount) : [];
-
+  const current = Array.isArray(ages) ? ages : [];
+  if (current.length === safeCount && current.every(a => a !== "" && a !== null && a !== undefined)) {
+    return current;
+  }
+  const next = current.slice(0, safeCount);
   while (next.length < safeCount) {
     next.push(defaultAge);
   }
-
+  for (let i = 0; i < next.length; i++) {
+    if (next[i] === "" || next[i] === null || next[i] === undefined) {
+      next[i] = defaultAge;
+    }
+  }
+  if (current.length === next.length && current.every((v, i) => v === next[i])) {
+    return current;
+  }
   return next;
 };
 
@@ -769,6 +779,8 @@ const StayBookingSystem = ({
   const [showLeftAddonArrow, setShowLeftAddonArrow] = useState(false);
   const [showRightAddonArrow, setShowRightAddonArrow] = useState(false);
   const externalOpenHandledRef = useRef(false);
+  const lastAvailKeyRef = useRef("");
+  const lastCalculatedPayloadRef = useRef("");
 
   useEffect(() => {
     if (externalOpen === true && !show && !externalOpenHandledRef.current) {
@@ -1127,48 +1139,60 @@ const StayBookingSystem = ({
 
   // Fetch real-time availability and pricing when modal opens or dates change
   useEffect(() => {
-    if (show && (stay?.stayId || stay?.id) && checkInDate && checkOutDate) {
-      let cancelled = false;
-      const load = async () => {
-        if (!cancelled) setFetchingAvailability(true);
-        try {
-          const isProperty = isPropertyBasedBooking(stay);
-          const isHostel = isHostelBooking(stay);
-
-          const data = isProperty
-            ? await getStayPropertyAvailability(
-                stay.stayId || stay.id,
-                checkInDate.format("YYYY-MM-DD"),
-                checkOutDate.format("YYYY-MM-DD")
-              )
-            : (isHostel
-                ? await getStayHostelAvailability(
-                    stay.stayId || stay.id,
-                    checkInDate.format("YYYY-MM-DD"),
-                    checkOutDate.format("YYYY-MM-DD")
-                  )
-                : await getStayHotelRoomAvailability(
-                    stay.stayId || stay.id,
-                    checkInDate.format("YYYY-MM-DD"),
-                    checkOutDate.format("YYYY-MM-DD")
-                  ));
-
-          const normalizedData = (data?.data && typeof data.data === "object" && !Array.isArray(data.data))
-            ? { ...data.data, ...data }
-            : data;
-
-          if (!cancelled && normalizedData) setAvailabilityData(normalizedData);
-        } catch (e) {
-          console.error("❌ Failed to fetch real-time stay pricing:", e);
-        } finally {
-          if (!cancelled) setFetchingAvailability(false);
-        }
-      };
-      load();
-      return () => {
-        cancelled = true;
-      };
+    if (!show || !(stay?.stayId || stay?.id) || !checkInDate || !checkOutDate) {
+      lastAvailKeyRef.current = "";
+      return;
     }
+
+    const stayId = stay.stayId || stay.id;
+    const checkInStr = typeof checkInDate === "string" ? checkInDate : checkInDate.format?.("YYYY-MM-DD");
+    const checkOutStr = typeof checkOutDate === "string" ? checkOutDate : checkOutDate.format?.("YYYY-MM-DD");
+    if (!checkInStr || !checkOutStr) return;
+
+    const availKey = `${stayId}_${checkInStr}_${checkOutStr}`;
+    if (lastAvailKeyRef.current === availKey) return;
+    lastAvailKeyRef.current = availKey;
+
+    let cancelled = false;
+    const load = async () => {
+      if (!cancelled) setFetchingAvailability(true);
+      try {
+        const isProperty = isPropertyBasedBooking(stay);
+        const isHostel = isHostelBooking(stay);
+
+        const data = isProperty
+          ? await getStayPropertyAvailability(
+              stayId,
+              checkInStr,
+              checkOutStr
+            )
+          : (isHostel
+              ? await getStayHostelAvailability(
+                  stayId,
+                  checkInStr,
+                  checkOutStr
+                )
+              : await getStayHotelRoomAvailability(
+                  stayId,
+                  checkInStr,
+                  checkOutStr
+                ));
+
+        const normalizedData = (data?.data && typeof data.data === "object" && !Array.isArray(data.data))
+          ? { ...data.data, ...data }
+          : data;
+
+        if (!cancelled && normalizedData) setAvailabilityData(normalizedData);
+      } catch (e) {
+        console.error("❌ Failed to fetch real-time stay pricing:", e);
+      } finally {
+        if (!cancelled) setFetchingAvailability(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [show, stay?.stayId, stay?.id, checkInDate, checkOutDate]);
 
   const resolvedSelectedRooms = useMemo(() => {
@@ -2008,27 +2032,37 @@ const StayBookingSystem = ({
       booking: bookingObj
     };
 
-    let cancelled = false;
-    setApiPayableLoading(true);
+    const payloadKey = JSON.stringify(payload);
+    if (lastCalculatedPayloadRef.current === payloadKey) {
+      return;
+    }
 
-    calculateStayTotal(payload)
-      .then((res) => {
-        if (cancelled) return;
-        const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
-        if (amount != null && Number.isFinite(Number(amount))) {
-          setApiPayableAmount(Number(amount));
-        }
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.warn("calculateStayTotal error:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setApiPayableLoading(false);
-      });
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      lastCalculatedPayloadRef.current = payloadKey;
+      setApiPayableLoading(true);
+
+      calculateStayTotal(payload)
+        .then((res) => {
+          if (cancelled) return;
+          const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
+          if (amount != null && Number.isFinite(Number(amount))) {
+            setApiPayableAmount(Number(amount));
+          }
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.warn("calculateStayTotal error:", err);
+        })
+        .finally(() => {
+          if (!cancelled) setApiPayableLoading(false);
+        });
+    }, 250);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [
     show,
@@ -4120,6 +4154,15 @@ const StayBookingSystem = ({
                               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: AL, border: `1px solid ${A}33`, borderRadius: 100, width: "fit-content", marginTop: 4 }}>
                                 <Tag size={14} color={A} />
                                 <span style={{ fontSize: 11, fontWeight: 700, color: A }}>LONG STAY DISCOUNT APPLIED ({pricing.discountPercent}%)</span>
+                              </div>
+                            )}
+
+                            {Array.isArray(selectedAddOns) && selectedAddOns.length > 0 && (
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: AL, border: `1px solid ${A}33`, borderRadius: 100, width: "fit-content", marginTop: 4 }}>
+                                <Sparkles size={14} color={A} />
+                                <span style={{ fontSize: 11, fontWeight: 700, color: A }}>
+                                  ADD-ON APPLIED{selectedAddOns.length > 1 ? ` (${selectedAddOns.length})` : ""}
+                                </span>
                               </div>
                             )}
 

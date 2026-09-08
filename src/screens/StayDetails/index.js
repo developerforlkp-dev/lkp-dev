@@ -2535,7 +2535,7 @@ function StayAddons({ stay, selectedAddOns, onToggleAddOn, addOnQuantities, onAd
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 32 }}>
               {activeAddons.map(addon => {
                 const addonId = addon.addonId || addon.assignmentId || addon.id;
-                const isSelected = selectedAddOns.includes(addonId);
+                const isSelected = selectedAddOns.some(id => String(id) === String(addonId));
                 const isIndividual = addon.pricingType === "Individual";
                 const qty = isIndividual ? (addOnQuantities[addonId] || 1) : 1;
                 const price = parseFloat(addon.price || 0);
@@ -2699,12 +2699,13 @@ const StayDetails = () => {
   const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
 
   const handleToggleAddOn = useCallback((addOnId, pricingType) => {
+    const aid = String(addOnId);
     setSelectedAddOns((prev) => {
-      if (prev.includes(addOnId)) {
-        return prev.filter((id) => id !== addOnId);
+      if (prev.some(id => String(id) === aid)) {
+        return prev.filter((id) => String(id) !== aid);
       } else {
         if (pricingType === "Individual") {
-          setAddOnQuantities((qPrev) => ({ ...qPrev, [addOnId]: qPrev[addOnId] || 1 }));
+          setAddOnQuantities((qPrev) => ({ ...qPrev, [addOnId]: qPrev[addOnId] || 1, [aid]: qPrev[aid] || 1 }));
         }
         return [...prev, addOnId];
       }
@@ -2712,11 +2713,12 @@ const StayDetails = () => {
   }, []);
 
   const handleAddOnQuantityChange = useCallback((addOnId, value) => {
+    const aid = String(addOnId);
     if (value <= 0) {
-      setSelectedAddOns((prev) => prev.filter((id) => id !== addOnId));
+      setSelectedAddOns((prev) => prev.filter((id) => String(id) !== aid));
     } else {
-      setAddOnQuantities((prev) => ({ ...prev, [addOnId]: value }));
-      setSelectedAddOns((prev) => prev.includes(addOnId) ? prev : [...prev, addOnId]);
+      setAddOnQuantities((prev) => ({ ...prev, [addOnId]: value, [aid]: value }));
+      setSelectedAddOns((prev) => prev.some(id => String(id) === aid) ? prev : [...prev, addOnId]);
     }
   }, []);
 
