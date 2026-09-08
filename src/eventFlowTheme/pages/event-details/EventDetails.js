@@ -2101,7 +2101,7 @@ function Venue({ event, hostName }) {
                   borderRadius: "12px",
                   boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
                   border: `1px solid ${B}`,
-                  display: "flex",
+                  display: isMobile ? "none" : "flex",
                   alignItems: "center",
                   gap: 8,
                   pointerEvents: "none"
