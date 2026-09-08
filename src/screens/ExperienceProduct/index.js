@@ -1748,73 +1748,73 @@ const ExperienceProduct = () => {
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: "16px 16px 16px 0" }}>
                   <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
                     {listing?.meetingAddress && (
-                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                      <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}`  }}>
                         <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <MapPin size={20} color={A} fill="transparent" />
                         </div>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
-                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingAddress}</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingAddress}</span>
                         </div>
                       </li>
                     )}
 
                     {listing?.meetingDistrict && (
-                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                      <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                         <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Building size={20} color={A} fill="transparent" />
                         </div>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
-                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingDistrict}</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingDistrict}</span>
                         </div>
                       </li>
                     )}
 
                     {listing?.meetingState && (
-                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                      <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                         <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Map size={20} color={A} fill="transparent" />
                         </div>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
-                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingState}</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingState}</span>
                         </div>
                       </li>
                     )}
 
                     {listing?.meetingCountry && (
-                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                      <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                         <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Globe size={20} color={A} fill="transparent" />
                         </div>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
-                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>{listing.meetingCountry}</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                          <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingCountry}</span>
                         </div>
                       </li>
                     )}
 
                     {listing?.meetingInstructions && (
-                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0" }}>
+                      <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0"  }}>
                         <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Info size={20} color={A} fill="transparent" />
                         </div>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                          <ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} />
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                          <div style={{ flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}><ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} /></div>
                         </div>
                       </li>
                     )}
 
                     {(!listing?.meetingDistrict && !listing?.meetingState && !listing?.meetingCountry && !listing?.meetingAddress) && (
-                      <li style={{ display: "flex", gap: 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}` }}>
+                      <li style={{ display: "flex", gap: isMobile ? 12 : 24, alignItems: "flex-start", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: `1px solid ${B}`  }}>
                         <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <Info size={20} color={A} fill="transparent" />
                         </div>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center", flex: 1 }}>
-                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: 110, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
-                          <span style={{ fontSize: 16, color: M, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif' }}>Specific regional details will be provided upon booking confirmation.</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", alignItems: "center", flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, width: isMobile ? "auto" : 110, minWidth: 90, flexShrink: 0, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Region</span>
+                          <span style={{ fontSize: 16, color: M, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', flex: "1 1 150px", minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>Specific regional details will be provided upon booking confirmation.</span>
                         </div>
                       </li>
                     )}
