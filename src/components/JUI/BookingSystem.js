@@ -15,6 +15,7 @@ import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
 import { calculateExperienceGuestPricing, getExperienceCommissionRate } from "../../utils/experiencePricing";
+import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
 
 const asNumber = (value) => {
@@ -1325,8 +1326,10 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
   );
 }
 
-export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests, isFreeEvent = false }) {
+export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests, isFreeEvent = false, isDirectBooking = false }) {
   const history = useHistory();
+  const location = useLocation();
+  const isDirect = isDirectBooking || isDirectBookingPathOrState(location);
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
   const isMountedRef = useRef(true);
   const hasHandledUnavailableRef = useRef(false);
@@ -2998,7 +3001,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     // Check if user is logged in
     const token = localStorage.getItem("jwtToken");
     const isLoggedIn = !!token && token !== "undefined" && token !== "null";
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !isDirect) {
       const listingIdToSave = listing?.listingId || listing?.id || listing?.eventId || listing?.stayId;
       if (listingIdToSave) {
         const stateToStore = {
@@ -3438,16 +3441,32 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           paymentMethod: "razorpay",
         };
 
+        if (isDirect) {
+          previewBookingData.isDirectBooking = true;
+          try {
+            const rawStored = localStorage.getItem("directBookingData");
+            if (rawStored) {
+              const parsed = JSON.parse(rawStored);
+              previewBookingData.directBooking = parsed;
+              previewBookingData.directBookingToken = parsed.token || localStorage.getItem("directBookingToken");
+              if (parsed.upiId) previewBookingData.upiId = parsed.upiId;
+              if (parsed.leadName) previewBookingData.leadName = parsed.leadName;
+            }
+          } catch (e) {}
+          localStorage.setItem("isDirectBooking", "true");
+        }
+
         clearPendingCheckoutState();
         persistPendingCheckout({ bookingData: previewBookingData, session: paymentData, saveCheckoutBooking: true });
         localStorage.removeItem("frontendPendingBookingState");
 
         history.push({
-          pathname: "/experience-checkout",
+          pathname: isDirect ? "/direct-booking/experience-checkout" : "/experience-checkout",
           state: {
             bookingData: previewBookingData,
             paymentData,
             addOns: selectedAddOnsFormatted,
+            isDirectBooking: isDirect,
           },
         });
         return;
@@ -3787,16 +3806,32 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         paymentData,
       });
 
+      if (isDirect) {
+        previewBookingData.isDirectBooking = true;
+        try {
+          const rawStored = localStorage.getItem("directBookingData");
+          if (rawStored) {
+            const parsed = JSON.parse(rawStored);
+            previewBookingData.directBooking = parsed;
+            previewBookingData.directBookingToken = parsed.token || localStorage.getItem("directBookingToken");
+            if (parsed.upiId) previewBookingData.upiId = parsed.upiId;
+            if (parsed.leadName) previewBookingData.leadName = parsed.leadName;
+          }
+        } catch (e) {}
+        localStorage.setItem("isDirectBooking", "true");
+      }
+
       clearPendingCheckoutState();
       persistPendingCheckout({ bookingData: previewBookingData, session: paymentData, saveCheckoutBooking: true });
       localStorage.removeItem("frontendPendingBookingState");
       history.push({
-        pathname: "/experience-checkout",
-        search: `?listingId=${listingId}&startDate=${dateStr}&guests=${totalGuests}${startTime ? `&startTime=${encodeURIComponent(startTime)}` : ""}`,
+        pathname: isDirect ? "/direct-booking/experience-checkout" : "/experience-checkout",
+        search: `?listingId=${listingId}&startDate=${dateStr}&guests=${totalGuests}${startTime ? `&startTime=${encodeURIComponent(startTime)}` : ""}${isDirect ? "&direct=true" : ""}`,
         state: {
           addOns: selectedAddOnsFormatted,
           bookingData: previewBookingData,
           paymentData,
+          isDirectBooking: isDirect,
         }
       });
       return;
