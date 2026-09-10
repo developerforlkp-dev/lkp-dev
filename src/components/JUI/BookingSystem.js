@@ -5224,8 +5224,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                                 fontWeight: '500',
                                                 color: FG,
                                                 backgroundColor: 'transparent',
-                                                width: '50px',
-                                                minWidth: '40px'
+                                                width: '65px',
+                                                minWidth: '50px'
                                               }}
                                             />
                                           </div>
