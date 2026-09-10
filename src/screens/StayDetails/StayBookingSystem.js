@@ -1497,11 +1497,11 @@ const StayBookingSystem = ({
       }
     } else {
       const selectedRoomBasePrices = resolvedSelectedRooms
-        .map((room) => Number(room.calculatedPrice || 0))
+        .map((room) => Number(room.calculatedPrice || 0) * Number(room.count || 1))
         .filter((price) => Number.isFinite(price) && price > 0);
 
       if (selectedRoomBasePrices.length > 0) {
-        originalPerNight = Math.min(...selectedRoomBasePrices);
+        originalPerNight = selectedRoomBasePrices.reduce((a, b) => a + b, 0);
       } else {
         originalPerNight = parseFloat(stay.startingPrice || stay.pricePerNight || stay.b2cPrice || stay.price || 0);
       }
