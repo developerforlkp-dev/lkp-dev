@@ -3493,6 +3493,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               if (parsed.leadName) previewBookingData.leadName = parsed.leadName;
             }
           } catch (e) {}
+          if (typeof window !== "undefined") {
+            previewBookingData.returnTo = (location?.pathname || window.location.pathname) + (location?.search || window.location.search);
+          }
           localStorage.setItem("isDirectBooking", "true");
         }
 
@@ -3858,6 +3861,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             if (parsed.leadName) previewBookingData.leadName = parsed.leadName;
           }
         } catch (e) {}
+        if (typeof window !== "undefined") {
+          previewBookingData.returnTo = (location?.pathname || window.location.pathname) + (location?.search || window.location.search);
+        }
         localStorage.setItem("isDirectBooking", "true");
       }
 
