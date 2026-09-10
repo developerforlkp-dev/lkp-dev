@@ -136,11 +136,31 @@ export const getDirectBookingConfig = (bookingData = {}, hostData = null, paymen
   const isPaise = rawAmount > 5000 && String(paymentData?.amount) === String(rawAmount);
   const amount = Number(rawAmount) > 0 ? (isPaise ? Number(rawAmount) / 100 : Number(rawAmount)) : 0;
 
-  const orderId =
+  let orderId =
     bookingData?.orderId ||
     paymentData?.orderId ||
     bookingData?.id ||
-    `DIR-${Date.now().toString().slice(-6)}`;
+    bookingData?.directOrderId;
+
+  if (!orderId && typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem("directBookingSessionOrderId");
+      if (stored) {
+        orderId = stored;
+      } else {
+        const seed = bookingData?.directBookingToken || bookingData?.listingId || Math.floor(Math.random() * 900000 + 100000);
+        const generated = `DIR-${String(seed).slice(-6)}`;
+        sessionStorage.setItem("directBookingSessionOrderId", generated);
+        orderId = generated;
+      }
+    } catch (e) {
+      orderId = "DIR-PAYMENT";
+    }
+  }
+
+  if (!orderId) {
+    orderId = "DIR-PAYMENT";
+  }
 
   const transactionNote = `Booking ${orderId} - ${bookingData?.listingTitle ? bookingData.listingTitle.slice(0, 18) : "Experience"}`;
 
