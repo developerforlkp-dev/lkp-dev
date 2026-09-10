@@ -2767,19 +2767,8 @@ const StayDetails = () => {
         }
 
         const filtered = prev.filter(r => r.roomId !== rid);
-        if (filtered.length === 0) {
-          const stayRoomsCatalog = stay?.rooms || stay?.roomTypes || stay?.room_types || [];
-          if (stayRoomsCatalog.length > 0) {
-            const firstRoom = stayRoomsCatalog[0];
-            const firstRoomId = String(firstRoom.roomId ?? firstRoom.id ?? firstRoom.roomTypeId ?? firstRoom.room_type_id);
-            const defaultPlan = firstRoom?.mealPlanPricing && Object.keys(firstRoom.mealPlanPricing).length > 0 ? Object.keys(firstRoom.mealPlanPricing)[0] : firstRoom?.epPrice ? "EP" : firstRoom?.bbPrice ? "BB" : firstRoom?.cpPrice ? "CP" : firstRoom?.mapPrice ? "MAP" : firstRoom?.apPrice ? "AP" : "EP";
-            updated = [{ roomId: firstRoomId, mealPlan: defaultPlan, count: 1 }];
-          } else {
-            updated = filtered;
-          }
-        } else {
-          updated = filtered;
-        }
+        // Allow empty — user must intentionally select a room
+        updated = filtered;
       } else {
         const addedRoom = (stay?.rooms || stay?.roomTypes || stay?.room_types || []).find(r => String(r.roomId ?? r.id ?? r.roomTypeId ?? r.room_type_id) === rid);
         const defaultPlan = addedRoom?.mealPlanPricing && Object.keys(addedRoom.mealPlanPricing).length > 0 ? Object.keys(addedRoom.mealPlanPricing)[0] : addedRoom?.epPrice ? "EP" : addedRoom?.bbPrice ? "BB" : addedRoom?.cpPrice ? "CP" : addedRoom?.mapPrice ? "MAP" : addedRoom?.apPrice ? "AP" : "EP";
@@ -3401,7 +3390,7 @@ const StayDetails = () => {
       })()}
 
 
-      <div style={{ background: W, padding: isMobile ? "32px 24px" : "64px 0" }}>
+      <div id="accommodations-section" style={{ background: W, padding: isMobile ? "32px 24px" : "64px 0" }}>
         <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: "40px" }}>
