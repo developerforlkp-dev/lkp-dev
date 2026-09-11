@@ -2084,26 +2084,23 @@ const ViewDetails = () => {
       //console.log("🔍 Loading booking with bookingId:", bookingId);
 
       try {
-        // Extract orderId from bookingId (e.g., "bk-57" -> 57)
-        // Try multiple formats: "bk-57", "57", etc.
+        // Extract orderId from bookingId (e.g., "bk-57" -> 57, "bk-LKP-20260911-13" -> "LKP-20260911-13", "57" -> 57)
         let orderId = null;
 
-        // Format 1: "bk-57"
-        const orderIdMatch = bookingId.match(/bk-(\d+)/);
-        if (orderIdMatch) {
-          orderId = parseInt(orderIdMatch[1], 10);
-        } else {
-          // Format 2: Direct number "57"
-          const directMatch = bookingId.match(/^(\d+)$/);
-          if (directMatch) {
-            orderId = parseInt(directMatch[1], 10);
-          }
+        if (typeof bookingId === "string" && bookingId.startsWith("bk-")) {
+          const stripped = bookingId.replace(/^bk-/, "").trim();
+          const asNum = parseInt(stripped, 10);
+          orderId = (!isNaN(asNum) && String(asNum) === stripped) ? asNum : stripped;
+        } else if (typeof bookingId === "number") {
+          orderId = bookingId;
+        } else if (typeof bookingId === "string" && bookingId.trim().length > 0) {
+          const trimmed = bookingId.trim();
+          const asNum = parseInt(trimmed, 10);
+          orderId = (!isNaN(asNum) && String(asNum) === trimmed) ? asNum : trimmed;
         }
 
-        //console.log("🔍 Extracted orderId:", orderId);
-
-        if (!orderId || isNaN(orderId)) {
-          const errorMsg = `Invalid booking ID format: "${bookingId}". Expected format: "bk-57" or "57"`;
+        if (!orderId) {
+          const errorMsg = `Invalid booking ID format: "${bookingId}".`;
           console.error("❌", errorMsg);
           setError(errorMsg);
           setLoading(false);
