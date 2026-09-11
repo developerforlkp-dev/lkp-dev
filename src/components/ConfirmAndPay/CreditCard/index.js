@@ -440,7 +440,7 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
           }
           localStorage.setItem("checkoutBooking", JSON.stringify(bookingData));
         }
-        clearPendingCheckoutState({ keepCheckoutBooking: true, keepActualPaidAmount: true, keepRazorpayPaymentSuccess: true });
+        clearPendingCheckoutState({ keepCheckoutBooking: true, keepActualPaidAmount: true, keepRazorpayPaymentSuccess: true, keepDirectBooking: true });
         history.replace(buttonUrl || "/experience-checkout-complete", {
           isDirectBooking: true,
           bookingData,

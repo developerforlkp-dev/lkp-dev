@@ -16,8 +16,7 @@ export const isDirectBookingPathOrState = (location) => {
         searchParams.get("direct") === "true" ||
         searchParams.get("directBooking") === "true" ||
         searchParams.get("mode") === "direct";
-      const isStorage = window.localStorage?.getItem("isDirectBooking") === "true";
-      return isPath || isQuery || isStorage;
+      return isPath || isQuery;
     }
     return false;
   }
@@ -41,11 +40,7 @@ export const isDirectBookingPathOrState = (location) => {
     params.get("directBooking") === "true" ||
     params.get("mode") === "direct";
 
-  const isStorage =
-    typeof window !== "undefined" &&
-    window.localStorage?.getItem("isDirectBooking") === "true";
-
-  return isDirectPath || isDirectState || isDirectQuery || isStorage;
+  return isDirectPath || isDirectState || isDirectQuery;
 };
 
 /**
