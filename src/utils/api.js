@@ -262,6 +262,27 @@ OrdersAPI.interceptors.request.use((config) => {
   return config;
 });
 
+OrdersAPI.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || error.message;
+      if (status === 401) {
+        console.warn(`⚠️ Orders API 401 Unauthorized: ${message}`);
+      } else {
+        console.error(`❌ Orders API Error ${status}: ${message}`, {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.response.data,
+        });
+      }
+    }
+    error.isHandled = true;
+    return Promise.reject(error);
+  }
+);
+
 // ✅ Handle response errors gracefully - prevent unhandled promise rejections
 ListingsAPI.interceptors.response.use(
   (response) => response,
@@ -1968,6 +1989,12 @@ export const submitOrderReview = async (orderId, reviewData, requestConfig = {})
  */
 export const getReviewErrorMessage = (err, defaultMsg = "Failed to submit review. Please try again.") => {
   if (!err) return defaultMsg;
+  const rawErrorMsg = typeof err === "string" ? err : (err?.response?.data?.message || err?.response?.data?.error || err?.message || "");
+  const isExpired = /invalid\s*(or)?\s*expired\s*token|token\s*(has\s*)?expired|expired\s*token|invalid\s*token|jwt\s*expired|jwt\s*malformed|unauthorized|session\s*expired/i.test(rawErrorMsg);
+
+  if (isExpired || err?.response?.status === 401) {
+    return "Your session has expired. Please log in again to continue.";
+  }
   if (typeof err === "string") return err;
 
   const data = err.response?.data;
@@ -2014,9 +2041,6 @@ export const getReviewErrorMessage = (err, defaultMsg = "Failed to submit review
   const status = err.response?.status;
   if (status === 409) {
     return "You've already reviewed this order.";
-  }
-  if (status === 401) {
-    return "Please log in to submit a review.";
   }
   if (status === 403) {
     return "You are not authorized to submit a review for this booking.";

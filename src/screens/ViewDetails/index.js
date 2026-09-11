@@ -5,7 +5,7 @@ import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
 import { getBookingDetails } from "../../mocks/bookings";
 import { getListing, getOrderDetails, getEventOrderDetails, getEventDetails, submitOrderReview, getReviewErrorMessage, getStayDetails, cancelOrder, cancelEventOrder, getEligibleBookings, getListingReviews, getEventReviews, getStayReviews, getOrderRefundDetails, getOrderCancelPreview, validateExperienceOrEventOrder, validateStayOrder, getCustomerProfile, getCancellationReasons, getOrderMessages } from "../../utils/api";
-import { getInitializePaymentErrorMessage, initializePendingOrderPayment, isExpiredHold } from "../../utils/paymentSession";
+import { getInitializePaymentErrorMessage, initializePendingOrderPayment, isAuthOrTokenError, isExpiredHold } from "../../utils/paymentSession";
 import Rating from "../../components/Rating";
 import Modal from "../../components/Modal";
 import html2pdf from "html2pdf.js";
@@ -751,7 +751,9 @@ const transformBookingData = (apiBooking, listingData = null, eventData = null, 
   const result = {
     id: `bk-${apiBooking.orderId}`,
     orderId: apiBooking.orderId,
-    bookingId: `LKP-${apiBooking.orderId}`,
+    bookingId: String(apiBooking.orderId || "").startsWith("LKP-")
+      ? String(apiBooking.orderId)
+      : `LKP-${apiBooking.orderId}`,
     title: title,
     status: status,
     startDate: formatDate(apiBooking.checkInDate || apiBooking.eventDate || apiBooking.bookingDate),
@@ -2167,10 +2169,10 @@ const ViewDetails = () => {
             errorMessage = apiErr.message;
           }
 
-          if (apiErr.response?.status === 404) {
+          if (isAuthOrTokenError(apiErr) || isAuthOrTokenError(errorMessage)) {
+            errorMessage = "Your session has expired. Please log in again to continue.";
+          } else if (apiErr.response?.status === 404) {
             errorMessage = `Order not found (ID: ${orderId})`;
-          } else if (apiErr.response?.status === 401 || apiErr.response?.status === 403) {
-            errorMessage = "Unauthorized. Please log in again.";
           } else if (apiErr.response?.status === 500) {
             errorMessage = "Server error. Please try again later.";
           }

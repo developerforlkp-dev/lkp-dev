@@ -12,7 +12,7 @@ import Dropdown from "../Dropdown";
 import ChildAgeSelect from "../ChildAgeSelect";
 import { createEventOrder, createOrder, previewOrderPrice, getEventSlotAvailability, getListingSlots, getPublicDirectBookingSlots, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent, calculateExperienceTotal, calculateEventTotal } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
-import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
+import { clearPendingCheckoutState, persistPendingCheckout, isAuthOrTokenError } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
 import { calculateExperienceGuestPricing, getExperienceCommissionRate } from "../../utils/experiencePricing";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
@@ -1541,12 +1541,19 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   }, [listing?.businessInterest, listing?.businessInterestCode, listing?.business_interest, listing?.business_interest_code, type]);
 
   const getBookingErrorMessage = useCallback((error) => {
+    if (isAuthOrTokenError(error)) {
+      return "Your session has expired. Please log in again to continue.";
+    }
     const apiMessage =
       error?.response?.data?.message ||
       error?.response?.data?.error ||
       error?.message ||
       "";
     const normalizedMessage = String(apiMessage);
+
+    if (isAuthOrTokenError(normalizedMessage)) {
+      return "Your session has expired. Please log in again to continue.";
+    }
 
     const hasUnavailableStatus =
       /status\s*:\s*disabled/i.test(normalizedMessage) ||
@@ -3520,11 +3527,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       } catch (e) {
         console.error("Event booking failed:", e?.response?.data || e?.message || e);
         const errPayload = e?.response?.data || {};
-        if (
-          e?.response?.status === 401 ||
-          errPayload?.message === "Invalid or expired token" ||
-          errPayload?.error === "Invalid or expired token"
-        ) {
+        if (isAuthOrTokenError(e)) {
           const listingIdToSave = listing?.listingId || listing?.id || listing?.eventId || listing?.stayId;
           if (listingIdToSave) {
             const stateToStore = {
@@ -3973,11 +3976,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     } catch (e) {
       console.error("Experience booking failed:", e?.response?.data || e?.message || e);
       const errPayload = e?.response?.data || {};
-      if (
-        e?.response?.status === 401 ||
-        errPayload?.message === "Invalid or expired token" ||
-        errPayload?.error === "Invalid or expired token"
-      ) {
+      if (isAuthOrTokenError(e)) {
         const listingIdToSave = listing?.listingId || listing?.id || listing?.eventId || listing?.stayId;
         if (listingIdToSave) {
           const stateToStore = {

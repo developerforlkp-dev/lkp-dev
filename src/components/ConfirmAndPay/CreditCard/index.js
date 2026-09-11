@@ -19,6 +19,7 @@ import {
   getInitializePaymentErrorMessage,
   getPendingOrderId,
   initializePendingOrderPayment,
+  isAuthOrTokenError,
   isExpiredHold,
   persistPendingCheckout,
 } from "../../../utils/paymentSession";
@@ -78,6 +79,9 @@ const extractRazorpayCredentials = (payload) => {
 };
 
 const getOrderCreationErrorMessage = (error) => {
+  if (isAuthOrTokenError(error)) {
+    return "Your session has expired. Please log in again to continue.";
+  }
   const code = String(
     error?.response?.data?.code ||
     error?.response?.data?.errorCode ||
@@ -98,6 +102,9 @@ const getOrderCreationErrorMessage = (error) => {
   }
   if (/status:\s*DISABLED/i.test(message)) {
     return "Sorry, this experience is currently disabled and cannot be booked at the moment.\n\nPlease try another experience or contact support for help.";
+  }
+  if (isAuthOrTokenError(message)) {
+    return "Your session has expired. Please log in again to continue.";
   }
   return message;
 };
@@ -495,8 +502,9 @@ const CreditCard = ({ className, buttonUrl, hidePaymentFields = false, paymentDa
       const respData = error?.response?.data;
       let apiErrorMsg = respData?.message || respData?.details;
       
-      // If there are specific field errors from the backend, append them
-      if (respData?.errors) {
+      if (isAuthOrTokenError(error) || isAuthOrTokenError(apiErrorMsg)) {
+        apiErrorMsg = "Your session has expired. Please log in again to continue.";
+      } else if (respData?.errors) {
         const errorDetails = typeof respData.errors === 'string' 
           ? respData.errors 
           : JSON.stringify(respData.errors);
