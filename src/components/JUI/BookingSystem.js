@@ -10,7 +10,7 @@ import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import Dropdown from "../Dropdown";
 import ChildAgeSelect from "../ChildAgeSelect";
-import { createEventOrder, createOrder, previewOrderPrice, getEventSlotAvailability, getListingSlots, getPublicDirectBookingSlots, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent, calculateExperienceTotal, calculateEventTotal } from "../../utils/api";
+import { createEventOrder, createOrder, previewOrderPrice, getEventSlotAvailability, getListingSlots, getPublicDirectBookingSlots, getPublicDirectBookingOfflineReservationSlots, calculatePublicDirectBookingOfflinePrice, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent, calculateExperienceTotal, calculateEventTotal } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout, isAuthOrTokenError } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
@@ -1035,8 +1035,47 @@ const normalizeEventAvailability = (payload) => {
   return records;
 };
 
+const mapDirectOfflineSlots = (payload) => {
+  if (!payload || typeof payload !== "object") return [];
+  const rawSlots = Array.isArray(payload?.timeSlots)
+    ? payload.timeSlots
+    : (Array.isArray(payload?.slots) ? payload.slots : (Array.isArray(payload?.data?.timeSlots) ? payload.data.timeSlots : (Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []))));
+  const basePrice = Number(payload?.basePricePerGuest ?? payload?.pricePerPerson ?? payload?.basePrice ?? payload?.data?.basePricePerGuest ?? 500);
+  const seats = payload?.availableSlots != null ? Number(payload.availableSlots) : (payload?.data?.availableSlots != null ? Number(payload.data.availableSlots) : (payload?.availableSeats != null ? Number(payload.availableSeats) : 20));
+
+  return rawSlots.map((slot, index) => {
+    const start = slot?.startTime || slot?.start_time || "";
+    const end = slot?.endTime || slot?.end_time || "";
+    const slotId = slot?.id ?? slot?.slotId ?? slot?.slot_id ?? `slot-${index + 1}`;
+    const startFormatted = start ? formatTime12h(start) : "";
+    const endFormatted = end ? formatTime12h(end) : "";
+    const slotName = slot?.slotName || (startFormatted && endFormatted ? `${startFormatted} - ${endFormatted}` : (slot?.name || slot?.title || (startFormatted || `Slot ${index + 1}`)));
+    return {
+      ...slot,
+      id: slotId,
+      slotId: slotId,
+      slot_id: slotId,
+      slotName,
+      slot_name: slotName,
+      startTime: start,
+      endTime: end,
+      pricePerPerson: basePrice,
+      price_per_person: basePrice,
+      basePrice: basePrice,
+      price: basePrice,
+      availableSeats: seats,
+      available_seats: seats,
+      maxSeats: seats,
+      max_seats: seats,
+      isAvailable: seats > 0,
+      is_available: seats > 0,
+    };
+  });
+};
+
 const unwrapSlotsPayload = (payload) => {
   if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.timeSlots) || Array.isArray(payload?.data?.timeSlots)) return mapDirectOfflineSlots(payload?.timeSlots ? payload : payload.data);
   if (Array.isArray(payload?.slots)) return payload.slots;
   if (Array.isArray(payload?.data?.slots)) return payload.data.slots;
   if (Array.isArray(payload?.data)) return payload.data;
@@ -1360,6 +1399,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     return null;
   }, [listing?.directBooking?.token, listing?.directBookingToken, location?.pathname, location?.search]);
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
+  const [directOfflineSlotsData, setDirectOfflineSlotsData] = useState(null);
   const isMountedRef = useRef(true);
   const hasHandledUnavailableRef = useRef(false);
   const [show, setShow] = useState(false);
@@ -1908,7 +1948,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     const keys = new Set();
     if (isDirect) {
       const today = moment();
-      for (let i = 0; i < 180; i++) {
+      for (let i = 0; i < 730; i++) {
         keys.add(today.clone().add(i, "days").format("YYYY-MM-DD"));
       }
       return keys;
@@ -2157,11 +2197,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       setShowTimePicker(false);
     }
 
-    if (!show || !listingId || !selectedDateKey || !slotsLookupEndDate) {
-      setDateFilteredSlots([]);
-      setDateFilteredSlotsLoaded(false);
-      setSlotsError("");
-      setSlotsLoading(false);
+    if (!show || (isDirect ? !directToken : (!listingId || !selectedDateKey || !slotsLookupEndDate))) {
+      if (!isDirect) {
+        setDateFilteredSlots([]);
+        setDateFilteredSlotsLoaded(false);
+        setSlotsError("");
+        setSlotsLoading(false);
+      }
       return;
     }
 
@@ -2171,21 +2213,17 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     setDateFilteredSlotsLoaded(false);
 
     const fetchSlotsPromise = isDirect && directToken
-      ? getPublicDirectBookingSlots(directToken, selectedDateKey)
+      ? getPublicDirectBookingOfflineReservationSlots(directToken)
       : getListingSlots(listingId, selectedDateKey, slotsLookupEndDate);
 
     fetchSlotsPromise
       .then((payload) => {
         if (cancelled || !isMountedRef.current) return;
-        const normalized = normalizeExperienceSlots(unwrapSlotsPayload(payload), selectedDateKey);
-        /*console.log("[BookingSystem] getListingSlots debug", {
-          selectedDateKey,
-          listingId,
-          rawPayload: payload,
-          unwrappedSlots: unwrapSlotsPayload(payload),
-          normalizedSlots: normalized,
-          baseTimeSlots,
-        });*/
+        if (isDirect) {
+          setDirectOfflineSlotsData(payload);
+        }
+        const unwrapped = unwrapSlotsPayload(payload);
+        const normalized = normalizeExperienceSlots(unwrapped, selectedDateKey);
         setDateFilteredSlots(normalized);
         setDateFilteredSlotsLoaded(true);
 
@@ -2381,13 +2419,17 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const bookingGuestLimit = isEventBooking
     ? (eventGuestLimits.length > 0 ? Math.min(...eventGuestLimits) : undefined)
     : guestSeatLimit;
-  const baseExperiencePrice = selectedSlotData?.pricePerPerson
-    || listing?.timeSlots?.[0]?.pricePerPerson
-    || listing?.pricing?.basePrice
-    || listing?.basePrice
-    || listing?.price
-    || listing?.b2cPrice
-    || "0";
+  const directPriorityFee = isDirect ? Number(directOfflineSlotsData?.priorityFee ?? listing?.priorityFee ?? 0) : 0;
+  const directBasePrice = isDirect && directOfflineSlotsData?.basePricePerGuest != null ? Number(directOfflineSlotsData.basePricePerGuest) : null;
+  const baseExperiencePrice = (directBasePrice != null && directBasePrice > 0)
+    ? directBasePrice
+    : (selectedSlotData?.pricePerPerson
+      || listing?.timeSlots?.[0]?.pricePerPerson
+      || listing?.pricing?.basePrice
+      || listing?.basePrice
+      || listing?.price
+      || listing?.b2cPrice
+      || "0");
 
   const rawExperiencePrice = privateBooking
     ? (selectedSlotData?.privateBookingPrice
@@ -2685,7 +2727,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   const taxableSubtotal = Math.max(0, discountableAmount - totalDiscountAmount);
   const totalTaxAmount = taxableSubtotal * (appliedTaxRate / 100);
-  const finalTotal = Math.floor((taxableSubtotal + totalTaxAmount) * 100) / 100;
+  const finalTotal = Math.floor((taxableSubtotal + totalTaxAmount + directPriorityFee) * 100) / 100;
 
   useEffect(() => {
     if (!show || isEventBooking) return;
@@ -2865,6 +2907,28 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         }
       };
       calculationFn = calculateEventTotal;
+    } else if (isDirect && directToken) {
+      const adultCount = Number(guests?.adults || 0);
+      const childCount = Number(guests?.children || 0);
+      const totalGuests = (adultCount + childCount) || 1;
+      const hasPriority = directPriorityFee > 0 || (directOfflineSlotsData?.priorityFee !== undefined && directOfflineSlotsData?.priorityFee !== null);
+
+      payload = {
+        directToken,
+        guestCount: totalGuests,
+        includePriority: Boolean(hasPriority),
+      };
+      calculationFn = async (p) => {
+        const res = await calculatePublicDirectBookingOfflinePrice(p.directToken, {
+          guestCount: p.guestCount,
+          includePriority: p.includePriority,
+        });
+        const total = res?.totalAmount ?? res?.total ?? res?.data?.totalAmount ?? res?.data?.total;
+        return {
+          finalPayableAmount: total != null ? Number(total) : null,
+          totalAmount: total != null ? Number(total) : null,
+        };
+      };
     } else {
       const listingId = Number(listing?.listingId || listing?.id || listing?.experienceId);
       if (!listingId) {
@@ -2919,7 +2983,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       calculationFn(payload)
         .then((res) => {
           if (!isMountedRef.current) return;
-          const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
+          const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total ?? res?.totalAmount;
           if (amount != null && Number.isFinite(Number(amount))) {
             setApiPayableAmount(Number(amount));
           }
@@ -2934,6 +2998,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     }, 250);
   }, [
     isEventBooking,
+    isDirect,
+    directToken,
+    directPriorityFee,
+    directOfflineSlotsData,
     show,
     listing?.listingId,
     listing?.id,
@@ -3649,6 +3717,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       ? apiPayableAmount
       : finalTotal;
 
+    if (directPriorityFee > 0) {
+      receipt.push({
+        title: "Priority Fee",
+        content: `₹${directPriorityFee.toFixed(2)}`,
+        kind: "priority-fee",
+        showInCheckout: true
+      });
+    }
+
     receipt.push({
       title: "Total",
       content: `₹${effectiveExperienceFinalTotal.toFixed(2)}`,
@@ -3806,23 +3883,29 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       console.log("📤 [ReserveModal -> Checkout] Calling preview-price API with payload:", JSON.stringify(previewPricePayload, null, 2));
 
       let previewPriceRes = null;
-      try {
-        if (isMountedRef.current) setBookingLoading(true);
-        previewPriceRes = await previewOrderPrice(previewPricePayload);
-        console.log("✅ [ReserveModal -> Checkout] preview-price response received:", JSON.stringify(previewPriceRes, null, 2));
-      } catch (previewErr) {
-        console.warn("⚠️ [ReserveModal -> Checkout] preview-price request failed (proceeding with fallback calculation):", previewErr);
-      } finally {
-        if (isMountedRef.current) setBookingLoading(false);
+      if (!isDirect) {
+        try {
+          if (isMountedRef.current) setBookingLoading(true);
+          previewPriceRes = await previewOrderPrice(previewPricePayload);
+          console.log("✅ [ReserveModal -> Checkout] preview-price response received:", JSON.stringify(previewPriceRes, null, 2));
+        } catch (previewErr) {
+          console.warn("⚠️ [ReserveModal -> Checkout] preview-price request failed (proceeding with fallback calculation):", previewErr);
+        } finally {
+          if (isMountedRef.current) setBookingLoading(false);
+        }
       }
 
       const apiData = Array.isArray(previewPriceRes?.data) ? previewPriceRes.data : null;
       const amountToBePaidFromData = apiData?.find(d => /amount\s*to\s*be\s*paid/i.test(d?.title || "") || d?.code === "amount_to_be_paid")?.amount;
       const previewPricing = previewPriceRes?.pricing || bookingData.pricing;
       const previewPayment = previewPriceRes?.payment;
-      const resolvedTotal = amountToBePaidFromData != null
-        ? Number(amountToBePaidFromData)
-        : (previewPricing?.totalPrice ?? previewPricing?.total ?? finalTotal);
+      const resolvedTotal = (isDirect && apiPayableAmount != null && Number.isFinite(apiPayableAmount))
+        ? Number(apiPayableAmount)
+        : (amountToBePaidFromData != null
+          ? Number(amountToBePaidFromData)
+          : ((apiPayableAmount != null && Number.isFinite(apiPayableAmount))
+            ? Number(apiPayableAmount)
+            : (previewPricing?.totalPrice ?? previewPricing?.total ?? finalTotal)));
 
       const previewBookingData = {
         ...bookingData,
@@ -3858,6 +3941,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
       if (isDirect) {
         previewBookingData.isDirectBooking = true;
+        if (directPriorityFee > 0) {
+          previewBookingData.priorityFee = directPriorityFee;
+        }
+        if (previewBookingData.pricing) {
+          previewBookingData.pricing.priorityFee = directPriorityFee;
+        }
         try {
           const rawStored = localStorage.getItem("directBookingData");
           if (rawStored) {
@@ -4023,18 +4112,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     if (isEventBooking || (!listingId && !directToken) || !slotsLookupEndDate) return;
 
     if (isDirect && directToken) {
-      getPublicDirectBookingSlots(directToken, getIndiaDateKey())
+      getPublicDirectBookingOfflineReservationSlots(directToken)
         .then((payload) => {
+          setDirectOfflineSlotsData(payload);
           const slots = unwrapSlotsPayload(payload);
           setAllFetchedSlots(slots);
-          const hasPrivate = slots.some((slot) => {
-            if (asOptionalBoolean(slot?.privateBookingEnabled) === true || asOptionalBoolean(slot?.private_booking_enabled) === true) return true;
-            const avail = slot.availability || slot.availabilities || [];
-            return avail.some((a) => a.private_booking_available === true || a.privateBookingAvailable === true);
-          });
-          if (hasPrivate) setHasAnyPrivateBookingAvailable(true);
         })
-        .catch((e) => console.error("[BookingSystem] Error fetching direct slots for private booking check", e));
+        .catch((e) => console.error("[BookingSystem] Error fetching direct slots", e));
       return;
     }
 
@@ -4735,6 +4819,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                         const key = date.format("YYYY-MM-DD");
                                         const todayKey = getIndiaDateKey();
                                         if (key < todayKey) return true;
+                                        if (isDirect) return false;
                                         const availableKeys = isEventBooking ? eventAvailableDateKeys : experienceAvailableDateKeys;
                                         if (!availableKeys.has(key)) return true;
                                         if (key === todayKey && !hasTodayValidSlots) return true;
@@ -5333,6 +5418,37 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               );
                             })()}
 
+                             {/* Priority Fee Applied Badge */}
+                            {isDirect && directPriorityFee > 0 && (
+                              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                                <div style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  padding: "10px 14px",
+                                  borderRadius: 14,
+                                  background: `${A}12`,
+                                  border: `1px solid ${A}28`,
+                                }}>
+                                  <span style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    color: A,
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.05em",
+                                  }}>
+                                    ⚡ Priority Fee Applied
+                                  </span>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color: A }}>
+                                    + ₹{Number(directPriorityFee).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Ticket Applied Details */}
                             {isEventBooking && selectedTicketTypeId && selectedTicket && (
                               <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -5385,10 +5501,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                         }
 
                         if (apiPayableAmount != null && Number.isFinite(apiPayableAmount)) {
+                          const displayTotal = Number(apiPayableAmount);
                           return (
                             <>
-                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(apiPayableAmount).toFixed(2)}</span>
-                              <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes.</span>
+                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{displayTotal.toFixed(2)}</span>
+                              <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes{directPriorityFee > 0 ? " & priority fee." : "."}</span>
                             </>
                           );
                         }

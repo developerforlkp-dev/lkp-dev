@@ -1246,6 +1246,19 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
         rows.push({ title: `Tax${rateLabel}`, value: `+ ${fmt(resolvedTaxAmount)}` });
       }
 
+      // ── PRIORITY FEE ──
+      const priorityFee = Number(
+        pricing.priorityFee ??
+        pricing.priority_fee ??
+        bookingData?.priorityFee ??
+        bookingData?.directBooking?.priorityFee ??
+        bookingData?.directBookingData?.priorityFee ??
+        0
+      );
+      if (priorityFee > 0) {
+        rows.push({ title: "Priority Fee", value: `+ ${fmt(priorityFee)}` });
+      }
+
       return {
         addOnsTotal: addonsTotal,
         finalTotal: pricing.total || pricing.finalAmount || 0,
@@ -1256,7 +1269,7 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
     // Fallback: receipt-based rows
     if (bookingData?.receipt && Array.isArray(bookingData.receipt)) {
       const rows = bookingData.receipt
-        .filter((r) => r?.kind === "tax")
+        .filter((r) => r?.kind === "tax" || r?.kind === "priority-fee")
         .map((r) => ({ title: r.title, value: r.content }));
       return { addOnsTotal: 0, finalTotal: 0, table: rows };
     }
