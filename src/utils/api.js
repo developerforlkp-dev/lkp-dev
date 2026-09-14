@@ -735,7 +735,11 @@ export const getListing = async (id) => {
 export const getPolicyDocuments = async () => {
   try {
     const response = await ListingsAPI.get(`/public/policy-documents`);
-    return response.data;
+    const payload = response.data;
+    if (payload && typeof payload === "object" && payload.data !== undefined) {
+      return payload.data;
+    }
+    return payload;
   } catch (error) {
     console.error("❌ Error fetching policy documents:", error.response?.data || error.message);
     throw error;
