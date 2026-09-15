@@ -2957,6 +2957,20 @@ export const getPublicDirectBookingSlots = async (token, bookingDate) => {
  *   "includePriority": true
  * }
  */
+const parseNumericSlotId = (val) => {
+  if (val == null) return 1;
+  if (typeof val === "number" && Number.isFinite(val) && !isNaN(val)) return Math.floor(val);
+  const num = Number(val);
+  if (Number.isFinite(num) && !isNaN(num)) return Math.floor(num);
+  if (typeof val === "string") {
+    const digits = val.replace(/[^\d]/g, "");
+    if (digits && Number.isFinite(Number(digits))) {
+      return Number(digits);
+    }
+  }
+  return 1;
+};
+
 export const previewPublicDirectBookingPrice = async (token, {
   bookingSlotId,
   bookingDate,
@@ -2969,10 +2983,22 @@ export const previewPublicDirectBookingPrice = async (token, {
     ? `${baseUrl}/public/direct-bookings/${token}/preview-price`
     : `${baseUrl}/api/public/direct-bookings/${token}/preview-price`;
 
+  const cleanDate = (() => {
+    if (!bookingDate) return undefined;
+    if (typeof bookingDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) return bookingDate;
+    try {
+      const dt = new Date(bookingDate);
+      if (!isNaN(dt.getTime())) {
+        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      }
+    } catch {}
+    return String(bookingDate);
+  })();
+
   const payload = {
-    ...(bookingSlotId != null ? { bookingSlotId: Number(bookingSlotId) } : {}),
-    ...(bookingDate ? { bookingDate: String(bookingDate) } : {}),
-    guestCount: Number(guestCount) || 1,
+    bookingSlotId: parseNumericSlotId(bookingSlotId),
+    ...(cleanDate ? { bookingDate: cleanDate } : {}),
+    guestCount: Math.max(1, Number(guestCount) || 1),
     includePriority: Boolean(includePriority),
   };
 
