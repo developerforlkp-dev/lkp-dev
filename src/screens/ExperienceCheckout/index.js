@@ -9,7 +9,7 @@ import HeadOptions from "../../components/PriceDetails/HeadOptions";
 import ConfirmAndPay from "../../components/ConfirmAndPay";
 import PriceDetails from "../../components/PriceDetails";
 import DirectUpiSection from "../../components/DirectUpiSection";
-import { getOrderDetails, getStayDetails, getListingAddons, getEventAddons, getEventDetails, getHostContent } from "../../utils/api";
+import { getOrderDetails, getStayDetails, getListingAddons, getEventAddons, getEventDetails, getHostContent, previewPublicDirectBookingPrice } from "../../utils/api";
 import { buildExperienceUrl } from "../../utils/experienceUrl";
 import {
   getPendingPayment,
@@ -440,6 +440,95 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
       }
     }
   }, [bookingData]);
+
+  // For Direct Booking: fetch/refresh preview-price from POST /api/public/direct-bookings/:token/preview-price
+  useEffect(() => {
+    if (!isDirectBooking || !bookingData) return;
+
+    const token =
+      bookingData?.directBookingToken ||
+      bookingData?.directBooking?.token ||
+      bookingData?.token ||
+      localStorage.getItem("directBookingToken") ||
+      (() => {
+        try {
+          const stored = localStorage.getItem("directBookingData");
+          if (stored) return JSON.parse(stored)?.token;
+        } catch {}
+        return null;
+      })();
+
+    if (!token) return;
+
+    const slotId =
+      bookingData.selectedSlot?.slotId ??
+      bookingData.selectedSlot?.id ??
+      bookingData.selectedSlotId ??
+      bookingData.bookingSlotId;
+    const dateStr = (() => {
+      const rawDate = bookingData.selectedDate || bookingData.bookingDate || bookingData.startDate;
+      if (!rawDate) return null;
+      if (typeof rawDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) return rawDate;
+      try {
+        const dt = new Date(rawDate);
+        if (!isNaN(dt.getTime())) {
+          return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+        }
+      } catch {}
+      return String(rawDate);
+    })();
+    const guestCount =
+      Number(bookingData.guests?.adults || 0) + Number(bookingData.guests?.children || 0) ||
+      Number(bookingData.guestCount) ||
+      1;
+    const includePriority = Boolean(
+      bookingData.includePriority ??
+      bookingData.includePriorityFee ??
+      (bookingData.priorityFee && Number(bookingData.priorityFee) > 0)
+    );
+
+    let active = true;
+    previewPublicDirectBookingPrice(token, {
+      bookingSlotId: slotId,
+      bookingDate: dateStr,
+      guestCount,
+      includePriority,
+    })
+      .then((res) => {
+        if (!active || !res) return;
+        console.log("💳 [ExperienceCheckout Direct Booking] preview-price response:", res);
+        setBookingData((prev) => {
+          if (!prev) return prev;
+          const apiData = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : null);
+          const total = res?.totalAmount ?? res?.finalPayableAmount ?? res?.total ?? res?.data?.totalAmount ?? res?.data?.finalPayableAmount ?? res?.data?.total;
+          return {
+            ...prev,
+            previewPrice: res,
+            ...(apiData ? { priceBreakdownData: apiData, data: apiData } : {}),
+            ...(total != null ? { finalTotal: Number(total) } : {}),
+            pricing: res?.pricing ? { ...prev.pricing, ...res.pricing } : prev.pricing,
+          };
+        });
+      })
+      .catch((err) => {
+        console.warn("💳 [ExperienceCheckout Direct Booking] preview-price error:", err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [
+    isDirectBooking,
+    bookingData?.selectedDate,
+    bookingData?.bookingDate,
+    bookingData?.startDate,
+    bookingData?.selectedSlot?.slotId,
+    bookingData?.selectedSlot?.id,
+    bookingData?.guests?.adults,
+    bookingData?.guests?.children,
+    bookingData?.includePriority,
+    bookingData?.priorityFee,
+  ]);
 
   // Read payment data from route state or matching pending payment
   useEffect(() => {

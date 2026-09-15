@@ -2945,41 +2945,58 @@ export const getPublicDirectBookingSlots = async (token, bookingDate) => {
 };
 
 /**
- * Public Direct Booking Offline Reservation Price API - Calculate total price for direct booking
- * POST /api/public/direct-bookings/:token/offline-reservation-price
+ * Public Direct Booking Preview Price API - Calculate/preview price for direct booking
+ * POST /api/public/direct-bookings/:token/preview-price
  * Content-Type: application/json
  * 
  * Payload:
  * {
+ *   "bookingSlotId": 123,
+ *   "bookingDate": "2026-09-20",
  *   "guestCount": 2,
  *   "includePriority": true
  * }
- * 
- * Response shape:
- * {
- *   "totalAmount": 1298
- * }
  */
-export const calculatePublicDirectBookingOfflinePrice = async (token, { guestCount = 1, includePriority = true } = {}) => {
+export const previewPublicDirectBookingPrice = async (token, {
+  bookingSlotId,
+  bookingDate,
+  guestCount = 1,
+  includePriority = true,
+} = {}) => {
   if (!token) throw new Error("Direct booking token is required");
   const baseUrl = getApiBaseURL();
   const endpoint = baseUrl.endsWith("/api")
-    ? `${baseUrl}/public/direct-bookings/${token}/offline-reservation-price`
-    : `${baseUrl}/api/public/direct-bookings/${token}/offline-reservation-price`;
+    ? `${baseUrl}/public/direct-bookings/${token}/preview-price`
+    : `${baseUrl}/api/public/direct-bookings/${token}/preview-price`;
+
+  const payload = {
+    ...(bookingSlotId != null ? { bookingSlotId: Number(bookingSlotId) } : {}),
+    ...(bookingDate ? { bookingDate: String(bookingDate) } : {}),
+    guestCount: Number(guestCount) || 1,
+    includePriority: Boolean(includePriority),
+  };
 
   try {
-    const response = await axios.post(
-      endpoint,
-      {
-        guestCount: Number(guestCount) || 1,
-        includePriority: Boolean(includePriority),
-      },
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    const response = await axios.post(endpoint, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
     return response.data?.data || response.data;
   } catch (error) {
+    // Fallback attempt to offline-reservation-price if preview-price 404s
+    if (error?.response?.status === 404) {
+      try {
+        const altEndpoint = baseUrl.endsWith("/api")
+          ? `${baseUrl}/public/direct-bookings/${token}/offline-reservation-price`
+          : `${baseUrl}/api/public/direct-bookings/${token}/offline-reservation-price`;
+        const altResponse = await axios.post(altEndpoint, payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+        return altResponse.data?.data || altResponse.data;
+      } catch (altErr) {
+        // continue to mock/error handling
+      }
+    }
+
     const isDummy =
       token.startsWith("dummy") ||
       token.startsWith("test") ||
@@ -2988,14 +3005,21 @@ export const calculatePublicDirectBookingOfflinePrice = async (token, { guestCou
       error?.response?.status === 404;
 
     if (isDummy) {
-      console.warn(`[calculatePublicDirectBookingOfflinePrice] Using mock direct booking price data for token: "${token}"`);
+      console.warn(`[previewPublicDirectBookingPrice] Using mock direct booking price data for token: "${token}"`);
       return {
         totalAmount: includePriority ? 1298 : 1100,
+        finalPayableAmount: includePriority ? 1298 : 1100,
+        pricing: {
+          totalPrice: includePriority ? 1298 : 1100,
+          priorityFee: includePriority ? 198 : 0,
+        }
       };
     }
     throw error;
   }
 };
+
+export const calculatePublicDirectBookingOfflinePrice = previewPublicDirectBookingPrice;
 
 /**
  * Submit Direct Booking Payment Confirmation

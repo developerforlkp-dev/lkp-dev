@@ -10,7 +10,7 @@ import TimeSlotsPicker from "../TimeSlotsPicker";
 import Counter from "../Counter";
 import Dropdown from "../Dropdown";
 import ChildAgeSelect from "../ChildAgeSelect";
-import { createEventOrder, createOrder, previewOrderPrice, getEventSlotAvailability, getListingSlots, getPublicDirectBookingSlots, getPublicDirectBookingOfflineReservationSlots, calculatePublicDirectBookingOfflinePrice, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent, calculateExperienceTotal, calculateEventTotal } from "../../utils/api";
+import { createEventOrder, createOrder, previewOrderPrice, getEventSlotAvailability, getListingSlots, getPublicDirectBookingSlots, getPublicDirectBookingOfflineReservationSlots, calculatePublicDirectBookingOfflinePrice, previewPublicDirectBookingPrice, precheckEventOrder, formatEventPrecheckErrorMessage, finalizeFreeEvent, calculateExperienceTotal, calculateEventTotal } from "../../utils/api";
 import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout, isAuthOrTokenError } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
@@ -2918,18 +2918,24 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const childCount = Number(guests?.children || 0);
       const totalGuests = (adultCount + childCount) || 1;
       const hasPriority = Boolean(includePriorityFee && availablePriorityFee > 0);
+      const bookingDate = startDate ? moment(startDate).format("YYYY-MM-DD") : (selectedDateKey || null);
+      const bookingSlotId = Number(selectedSlotData?.slotId ?? selectedSlotData?.id ?? selectedSlotData?.slot_id) || null;
 
       payload = {
         directToken,
+        bookingSlotId,
+        bookingDate,
         guestCount: totalGuests,
         includePriority: Boolean(hasPriority),
       };
       calculationFn = async (p) => {
-        const res = await calculatePublicDirectBookingOfflinePrice(p.directToken, {
+        const res = await previewPublicDirectBookingPrice(p.directToken, {
+          bookingSlotId: p.bookingSlotId,
+          bookingDate: p.bookingDate,
           guestCount: p.guestCount,
           includePriority: p.includePriority,
         });
-        const total = res?.totalAmount ?? res?.total ?? res?.data?.totalAmount ?? res?.data?.total;
+        const total = res?.totalAmount ?? res?.finalPayableAmount ?? res?.total ?? res?.data?.totalAmount ?? res?.data?.finalPayableAmount ?? res?.data?.total;
         return {
           finalPayableAmount: total != null ? Number(total) : null,
           totalAmount: total != null ? Number(total) : null,
@@ -3891,7 +3897,29 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       console.log("📤 [ReserveModal -> Checkout] Calling preview-price API with payload:", JSON.stringify(previewPricePayload, null, 2));
 
       let previewPriceRes = null;
-      if (!isDirect) {
+      if (isDirect && directToken) {
+        try {
+          if (isMountedRef.current) setBookingLoading(true);
+          const bookingDate = startDate ? moment(startDate).format("YYYY-MM-DD") : (selectedDateKey || null);
+          const bookingSlotId = Number(selectedSlotData?.slotId ?? selectedSlotData?.id ?? selectedSlotData?.slot_id) || null;
+          const adultCount = Number(guests?.adults || 0);
+          const childCount = Number(guests?.children || 0);
+          const totalGuests = (adultCount + childCount) || 1;
+          const hasPriority = Boolean(includePriorityFee && availablePriorityFee > 0);
+
+          previewPriceRes = await previewPublicDirectBookingPrice(directToken, {
+            bookingSlotId,
+            bookingDate,
+            guestCount: totalGuests,
+            includePriority: hasPriority,
+          });
+          console.log("✅ [ReserveModal -> DirectCheckout] preview-price response received:", JSON.stringify(previewPriceRes, null, 2));
+        } catch (previewErr) {
+          console.warn("⚠️ [ReserveModal -> DirectCheckout] preview-price request failed (proceeding with fallback calculation):", previewErr);
+        } finally {
+          if (isMountedRef.current) setBookingLoading(false);
+        }
+      } else if (!isDirect) {
         try {
           if (isMountedRef.current) setBookingLoading(true);
           previewPriceRes = await previewOrderPrice(previewPricePayload);
