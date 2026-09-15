@@ -613,6 +613,7 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
           return {
             ...base,
             previewPrice: res,
+            ...(res?.upiId || unwrapped?.upiId ? { upiId: res?.upiId || unwrapped?.upiId } : {}),
             ...(slotId != null ? { selectedSlotId: slotId, bookingSlotId: slotId, slotId: slotId } : {}),
             ...(apiData ? { priceBreakdownData: apiData, data: apiData } : {}),
             ...(total != null && Number.isFinite(Number(total)) ? { finalTotal: Number(total) } : {}),

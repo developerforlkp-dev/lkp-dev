@@ -4026,6 +4026,9 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             if (parsed.leadName) previewBookingData.leadName = parsed.leadName;
           }
         } catch (e) {}
+        if (previewPriceRes?.upiId) {
+          previewBookingData.upiId = previewPriceRes.upiId;
+        }
         if (typeof window !== "undefined") {
           previewBookingData.returnTo = (location?.pathname || window.location.pathname) + (location?.search || window.location.search);
         }

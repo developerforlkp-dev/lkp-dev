@@ -111,12 +111,14 @@ export default function DirectUpiSection({
   }, [bookingData, hostData, paymentData]);
 
   const activeUpiId =
+    bookingData?.previewPrice?.upiId ||
+    bookingData?.previewPrice?.data?.upiId ||
+    bookingData?.upiId ||
     directApiData?.upiId ||
     directApiData?.leadUpiId ||
     directApiData?.lead?.upiId ||
     directApiData?.data?.upiId ||
     bookingData?.directBooking?.upiId ||
-    bookingData?.upiId ||
     hostData?.upiId ||
     hostData?.host?.upiId ||
     hostData?.paymentUpi ||
@@ -150,10 +152,8 @@ export default function DirectUpiSection({
   }, [activeUpiId, activePayeeName, activeAmount, config.transactionNote]);
 
   const activeQrCodeUrl = useMemo(() => {
-    return directApiData?.qrCodeUrl && !activeAmount
-      ? directApiData.qrCodeUrl
-      : getUpiQrCodeUrl(activeUpiUri, 260);
-  }, [directApiData?.qrCodeUrl, activeAmount, activeUpiUri]);
+    return getUpiQrCodeUrl(activeUpiUri, 260);
+  }, [activeUpiUri]);
 
   const initialCustomerName =
     bookingData?.customerName ||
