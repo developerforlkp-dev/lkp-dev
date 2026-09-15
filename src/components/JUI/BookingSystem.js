@@ -2957,7 +2957,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           guestCount: p.guestCount,
           includePriority: p.includePriority,
         });
-        const total = res?.totalAmount ?? res?.finalPayableAmount ?? res?.total ?? res?.data?.totalAmount ?? res?.data?.finalPayableAmount ?? res?.data?.total;
+        const total = res?.pricing?.total ?? res?.pricing?.totalPrice ?? res?.totalAmount ?? res?.finalPayableAmount ?? res?.total ?? res?.data?.totalAmount ?? res?.data?.finalPayableAmount ?? res?.data?.total;
         return {
           finalPayableAmount: total != null ? Number(total) : null,
           totalAmount: total != null ? Number(total) : null,
@@ -3967,7 +3967,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           ? Number(amountToBePaidFromData)
           : ((apiPayableAmount != null && Number.isFinite(apiPayableAmount))
             ? Number(apiPayableAmount)
-            : (previewPricing?.totalPrice ?? previewPricing?.total ?? finalTotal)));
+            : (previewPricing?.total ?? previewPricing?.totalPrice ?? finalTotal)));
 
       const previewBookingData = {
         ...bookingData,

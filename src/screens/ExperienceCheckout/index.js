@@ -585,41 +585,49 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
         if (!active || !res) return;
         console.log("💳 [ExperienceCheckout Direct Booking] preview-price response:", res);
         const unwrapped = res?.data && typeof res.data === "object" && !Array.isArray(res.data) ? res.data : res;
-        const apiData = Array.isArray(unwrapped)
-          ? unwrapped
-          : (Array.isArray(unwrapped?.data)
-            ? unwrapped.data
-            : (Array.isArray(unwrapped?.breakdown)
-              ? unwrapped.breakdown
-              : (Array.isArray(res?.data) ? res.data : null)));
+        const apiData = Array.isArray(unwrapped?.data)
+          ? unwrapped.data
+          : (Array.isArray(res?.data)
+            ? res.data
+            : (Array.isArray(unwrapped?.breakdown) ? unwrapped.breakdown : null));
+
         const total =
-          unwrapped?.totalAmount ??
-          unwrapped?.finalPayableAmount ??
-          unwrapped?.total ??
-          unwrapped?.finalAmount ??
+          res?.pricing?.total ??
+          res?.pricing?.totalPrice ??
+          res?.total ??
           res?.totalAmount ??
           res?.finalPayableAmount ??
-          res?.total;
+          unwrapped?.pricing?.total ??
+          unwrapped?.pricing?.totalPrice ??
+          unwrapped?.totalAmount ??
+          unwrapped?.finalPayableAmount ??
+          unwrapped?.total;
 
         setBookingData((prev) => {
           const base = prev || {};
+          const mergedPricing = {
+            ...(base.pricing || {}),
+            ...(res?.pricing || unwrapped?.pricing || {}),
+            ...(total != null && Number.isFinite(Number(total)) ? { total: Number(total), totalPrice: Number(total) } : {}),
+          };
           return {
             ...base,
             previewPrice: res,
-            ...(slotId != null ? { selectedSlotId: slotId, bookingSlotId: slotId } : {}),
+            ...(slotId != null ? { selectedSlotId: slotId, bookingSlotId: slotId, slotId: slotId } : {}),
             ...(apiData ? { priceBreakdownData: apiData, data: apiData } : {}),
             ...(total != null && Number.isFinite(Number(total)) ? { finalTotal: Number(total) } : {}),
-            pricing: unwrapped?.pricing ? { ...(base.pricing || {}), ...unwrapped.pricing } : (res?.pricing ? { ...(base.pricing || {}), ...res.pricing } : base.pricing),
+            pricing: mergedPricing,
           };
         });
 
         if (total != null && Number.isFinite(Number(total))) {
-          const totalInPaise = Math.round(Number(total) * 100);
+          const totalInRupees = Number(total);
           setPaymentData((prev) => ({
             ...(prev || {}),
-            amount: totalInPaise,
-            finalAmount: totalInPaise,
-            currency: unwrapped?.pricing?.currency || res?.pricing?.currency || "INR",
+            amount: totalInRupees,
+            finalAmount: totalInRupees,
+            currency: res?.pricing?.currency || unwrapped?.pricing?.currency || "INR",
+            paymentMethod: "upi",
           }));
         }
       } catch (err) {
@@ -1085,7 +1093,7 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
 
       return {
         addOnsTotal: calculatedAddonsTotal,
-        finalTotal: totalAmountToPay != null ? totalAmountToPay : (pricing?.totalPrice ?? pricing?.total ?? 0),
+        finalTotal: totalAmountToPay != null ? totalAmountToPay : (pricing?.total ?? pricing?.totalPrice ?? bookingData?.previewPrice?.pricing?.total ?? bookingData?.previewPrice?.pricing?.totalPrice ?? bookingData?.finalTotal ?? 0),
         table: rows,
       };
     }
