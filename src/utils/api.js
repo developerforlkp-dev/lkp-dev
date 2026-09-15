@@ -2957,8 +2957,8 @@ export const getPublicDirectBookingSlots = async (token, bookingDate) => {
  *   "includePriority": true
  * }
  */
-const parseNumericSlotId = (val) => {
-  if (val == null) return 1;
+export const parseNumericSlotId = (val) => {
+  if (val == null) return null;
   if (typeof val === "number" && Number.isFinite(val) && !isNaN(val)) return Math.floor(val);
   const num = Number(val);
   if (Number.isFinite(num) && !isNaN(num)) return Math.floor(num);
@@ -2968,7 +2968,7 @@ const parseNumericSlotId = (val) => {
       return Number(digits);
     }
   }
-  return 1;
+  return null;
 };
 
 export const previewPublicDirectBookingPrice = async (token, {
@@ -2995,8 +2995,10 @@ export const previewPublicDirectBookingPrice = async (token, {
     return String(bookingDate);
   })();
 
+  const parsedSlotId = parseNumericSlotId(bookingSlotId);
+
   const payload = {
-    bookingSlotId: parseNumericSlotId(bookingSlotId),
+    ...(parsedSlotId != null ? { bookingSlotId: parsedSlotId } : {}),
     ...(cleanDate ? { bookingDate: cleanDate } : {}),
     guestCount: Math.max(1, Number(guestCount) || 1),
     includePriority: Boolean(includePriority),

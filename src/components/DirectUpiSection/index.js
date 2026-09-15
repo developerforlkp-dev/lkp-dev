@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../JUI/Theme";
 import { getDirectBookingConfig, generateUpiUri, getUpiQrCodeUrl } from "../../utils/directBooking";
-import { getPublicDirectBooking, submitPublicDirectBooking } from "../../utils/api";
+import { getPublicDirectBooking, submitPublicDirectBooking, getPublicDirectBookingOfflineReservationSlots, parseNumericSlotId } from "../../utils/api";
 
 export default function DirectUpiSection({
   bookingData,
@@ -201,13 +201,16 @@ export default function DirectUpiSection({
     })();
 
   const resolvedBookingSlotId =
-    bookingData?.orderRequest?.bookingSlotId ||
-    bookingData?.bookingSlotId ||
-    bookingData?.selectedSlot?.id ||
-    bookingData?.selectedSlot?.slotId ||
-    bookingData?.orderRequest?.eventSlotId ||
-    bookingData?.eventSlotId ||
-    1;
+    parseNumericSlotId(bookingData?.bookingSlotId) ??
+    parseNumericSlotId(bookingData?.selectedSlotId) ??
+    parseNumericSlotId(bookingData?.slotId) ??
+    parseNumericSlotId(bookingData?.selectedSlot?.id) ??
+    parseNumericSlotId(bookingData?.selectedSlot?.slotId) ??
+    parseNumericSlotId(bookingData?.orderRequest?.bookingSlotId) ??
+    parseNumericSlotId(bookingData?.orderRequest?.slotId) ??
+    parseNumericSlotId(bookingData?.orderRequest?.eventSlotId) ??
+    parseNumericSlotId(bookingData?.eventSlotId) ??
+    parseNumericSlotId(typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("slotId") || new URLSearchParams(window.location.search).get("bookingSlotId")) : null);
 
   const resolvedGuestCount =
     bookingData?.guestCount ||
@@ -299,11 +302,35 @@ export default function DirectUpiSection({
 
     const token = resolveToken();
 
+    let finalSlotId = parseNumericSlotId(resolvedBookingSlotId);
+    if (token) {
+      try {
+        const slotsData = await getPublicDirectBookingOfflineReservationSlots(token);
+        const slotsList = Array.isArray(slotsData?.timeSlots)
+          ? slotsData.timeSlots
+          : (Array.isArray(slotsData?.slots) ? slotsData.slots : (Array.isArray(slotsData?.data?.timeSlots) ? slotsData.data.timeSlots : []));
+        if (slotsList.length > 0) {
+          const timeParam = bookingData?.selectedTimeSlot || bookingData?.orderRequest?.bookingTime || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("startTime") : null);
+          const matched = timeParam
+            ? slotsList.find(s => s.startTime === timeParam || s.slotName === timeParam || (s.id && String(s.id).includes(timeParam))) || slotsList[0]
+            : slotsList[0];
+          const fetchedSlotId = parseNumericSlotId(matched?.id ?? matched?.slotId ?? matched?.slot_id);
+          if (fetchedSlotId != null && (finalSlotId == null || finalSlotId === 1 || !slotsList.some(s => parseNumericSlotId(s.id ?? s.slotId) === finalSlotId))) {
+            finalSlotId = fetchedSlotId;
+          }
+        }
+      } catch (err) {
+        console.warn("[DirectUpiSection] slot resolution fallback error:", err);
+      }
+    }
+
     const formData = new FormData();
     formData.append("customerName", customerName.trim() || "Guest User");
     formData.append("customerPhone", customerPhone.trim());
     formData.append("bookingDate", resolvedBookingDate);
-    formData.append("bookingSlotId", Number(resolvedBookingSlotId) || 1);
+    if (finalSlotId != null) {
+      formData.append("bookingSlotId", finalSlotId);
+    }
     formData.append("guestCount", Number(resolvedGuestCount) || 1);
     formData.append("utrNumber", utrNumber.trim());
     if (screenshotFile) {

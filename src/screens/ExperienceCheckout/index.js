@@ -9,7 +9,7 @@ import HeadOptions from "../../components/PriceDetails/HeadOptions";
 import ConfirmAndPay from "../../components/ConfirmAndPay";
 import PriceDetails from "../../components/PriceDetails";
 import DirectUpiSection from "../../components/DirectUpiSection";
-import { getOrderDetails, getStayDetails, getListingAddons, getEventAddons, getEventDetails, getHostContent, previewPublicDirectBookingPrice } from "../../utils/api";
+import { getOrderDetails, getStayDetails, getListingAddons, getEventAddons, getEventDetails, getHostContent, previewPublicDirectBookingPrice, getPublicDirectBookingOfflineReservationSlots } from "../../utils/api";
 import { buildExperienceUrl } from "../../utils/experienceUrl";
 import {
   getPendingPayment,
@@ -497,16 +497,8 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
 
     if (!token) return;
 
-    const rawSlotId =
-      bookingData?.selectedSlot?.slotId ??
-      bookingData?.selectedSlot?.id ??
-      bookingData?.selectedSlot?.slot_id ??
-      bookingData?.selectedSlotId ??
-      bookingData?.bookingSlotId ??
-      bookingData?.slotId;
-
     const parseNumericSlotId = (val) => {
-      if (val == null) return 1;
+      if (val == null) return null;
       if (typeof val === "number" && Number.isFinite(val) && !isNaN(val)) return Math.floor(val);
       const num = Number(val);
       if (Number.isFinite(num) && !isNaN(num)) return Math.floor(num);
@@ -514,47 +506,82 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
         const digits = val.replace(/[^\d]/g, "");
         if (digits && Number.isFinite(Number(digits))) return Number(digits);
       }
-      return 1;
+      return null;
     };
 
-    const slotId = parseNumericSlotId(rawSlotId);
-
-    const dateStr = (() => {
-      const urlDate = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("startDate") : null;
-      const rawDate = bookingData?.selectedDate || bookingData?.bookingDate || bookingData?.startDate || urlDate;
-      if (!rawDate) return undefined;
-      if (typeof rawDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) return rawDate;
-      try {
-        const dt = new Date(rawDate);
-        if (!isNaN(dt.getTime())) {
-          return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
-        }
-      } catch {}
-      return String(rawDate);
-    })();
-
-    const urlGuests = typeof window !== "undefined" ? Number(new URLSearchParams(window.location.search).get("guests")) : 0;
-    const guestCount =
-      (Number(bookingData?.guests?.adults || 0) + Number(bookingData?.guests?.children || 0)) ||
-      Number(bookingData?.guestCount) ||
-      (Number.isFinite(urlGuests) && urlGuests > 0 ? urlGuests : 1);
-
-    const includePriority = Boolean(
-      bookingData?.includePriority ??
-      bookingData?.includePriorityFee ??
-      (bookingData?.priorityFee && Number(bookingData.priorityFee) > 0)
-    );
-
     let active = true;
-    console.log("📤 [ExperienceCheckout Direct Booking] Calling preview-price with:", { token, slotId, dateStr, guestCount, includePriority });
 
-    previewPublicDirectBookingPrice(token, {
-      bookingSlotId: slotId,
-      bookingDate: dateStr,
-      guestCount,
-      includePriority,
-    })
-      .then((res) => {
+    const executePreviewPrice = async () => {
+      let rawSlotId =
+        bookingData?.selectedSlotId ??
+        bookingData?.bookingSlotId ??
+        bookingData?.slotId ??
+        bookingData?.selectedSlot?.slotId ??
+        bookingData?.selectedSlot?.id ??
+        bookingData?.selectedSlot?.slot_id ??
+        bookingData?.orderRequest?.bookingSlotId ??
+        bookingData?.orderRequest?.slotId ??
+        (typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("slotId") || new URLSearchParams(window.location.search).get("bookingSlotId")) : null);
+
+      let slotId = parseNumericSlotId(rawSlotId);
+
+      if (token) {
+        try {
+          const slotsData = await getPublicDirectBookingOfflineReservationSlots(token);
+          const slotsList = Array.isArray(slotsData?.timeSlots)
+            ? slotsData.timeSlots
+            : (Array.isArray(slotsData?.slots) ? slotsData.slots : (Array.isArray(slotsData?.data?.timeSlots) ? slotsData.data.timeSlots : []));
+          if (slotsList.length > 0) {
+            const timeParam = bookingData?.selectedTimeSlot || bookingData?.orderRequest?.bookingTime || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("startTime") : null);
+            const matched = timeParam
+              ? slotsList.find(s => s.startTime === timeParam || s.slotName === timeParam || (s.id && String(s.id).includes(timeParam))) || slotsList[0]
+              : slotsList[0];
+            const fetchedSlotId = parseNumericSlotId(matched?.id ?? matched?.slotId ?? matched?.slot_id);
+            if (fetchedSlotId != null && (slotId == null || slotId === 1 || !slotsList.some(s => parseNumericSlotId(s.id ?? s.slotId) === slotId))) {
+              slotId = fetchedSlotId;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to fetch slots for direct booking slot id resolution:", e);
+        }
+      }
+
+      const dateStr = (() => {
+        const urlDate = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("startDate") : null;
+        const rawDate = bookingData?.selectedDate || bookingData?.bookingDate || bookingData?.startDate || urlDate;
+        if (!rawDate) return undefined;
+        if (typeof rawDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) return rawDate;
+        try {
+          const dt = new Date(rawDate);
+          if (!isNaN(dt.getTime())) {
+            return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+          }
+        } catch {}
+        return String(rawDate);
+      })();
+
+      const urlGuests = typeof window !== "undefined" ? Number(new URLSearchParams(window.location.search).get("guests")) : 0;
+      const guestCount =
+        (Number(bookingData?.guests?.adults || 0) + Number(bookingData?.guests?.children || 0)) ||
+        Number(bookingData?.guestCount) ||
+        (Number.isFinite(urlGuests) && urlGuests > 0 ? urlGuests : 1);
+
+      const includePriority = Boolean(
+        bookingData?.includePriority ??
+        bookingData?.includePriorityFee ??
+        (bookingData?.priorityFee && Number(bookingData.priorityFee) > 0)
+      );
+
+      console.log("📤 [ExperienceCheckout Direct Booking] Calling preview-price with:", { token, slotId, dateStr, guestCount, includePriority });
+
+      try {
+        const res = await previewPublicDirectBookingPrice(token, {
+          bookingSlotId: slotId,
+          bookingDate: dateStr,
+          guestCount,
+          includePriority,
+        });
+
         if (!active || !res) return;
         console.log("💳 [ExperienceCheckout Direct Booking] preview-price response:", res);
         const unwrapped = res?.data && typeof res.data === "object" && !Array.isArray(res.data) ? res.data : res;
@@ -579,6 +606,7 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
           return {
             ...base,
             previewPrice: res,
+            ...(slotId != null ? { selectedSlotId: slotId, bookingSlotId: slotId } : {}),
             ...(apiData ? { priceBreakdownData: apiData, data: apiData } : {}),
             ...(total != null && Number.isFinite(Number(total)) ? { finalTotal: Number(total) } : {}),
             pricing: unwrapped?.pricing ? { ...(base.pricing || {}), ...unwrapped.pricing } : (res?.pricing ? { ...(base.pricing || {}), ...res.pricing } : base.pricing),
@@ -594,10 +622,12 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
             currency: unwrapped?.pricing?.currency || res?.pricing?.currency || "INR",
           }));
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn("💳 [ExperienceCheckout Direct Booking] preview-price error:", err);
-      });
+      }
+    };
+
+    executePreviewPrice();
 
     return () => {
       active = false;

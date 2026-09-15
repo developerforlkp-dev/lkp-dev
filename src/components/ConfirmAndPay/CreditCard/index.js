@@ -13,6 +13,7 @@ import {
   sendOrderMessage,
   saveGuestDetails,
   finalizeFreeEvent,
+  parseNumericSlotId,
 } from "../../../utils/api";
 import {
   clearPendingCheckoutState,
@@ -160,7 +161,7 @@ const resolveOrderPayload = (bookingData, guestDetails, messageText) => {
         listingId: Number(bookingData?.listingId || bookingData?.id),
         bookingDate: bookingData?.bookingDate || bookingData?.startDate || bookingData?.selectedDate || bookingData?.bookingSummary?.date,
         bookingTime: bookingData?.bookingTime || bookingData?.startTime || bookingData?.bookingSummary?.time,
-        bookingSlotId: Number(bookingData?.bookingSlotId || bookingData?.slotId || bookingData?.selectedSlot?.id || 0),
+        bookingSlotId: parseNumericSlotId(bookingData?.bookingSlotId || bookingData?.selectedSlotId || bookingData?.slotId || bookingData?.selectedSlot?.id) || 0,
         guestCount: Number(bookingData?.guestCount || bookingData?.totalGuests || (bookingData?.guests?.adults || 0) + (bookingData?.guests?.children || 0) || 1),
         childCount: Number(bookingData?.childCount || bookingData?.guests?.children || 0),
         childPricePerChild: Number(bookingData?.childPricePerChild || bookingData?.pricing?.childPricePerChild || 0),

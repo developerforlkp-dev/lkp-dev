@@ -124,7 +124,14 @@ const getSlotId = (slot) => {
     : slot;
   if (raw == null) return null;
   const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : raw;
+  if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed;
+  if (typeof raw === "string") {
+    const digits = raw.replace(/[^\d]/g, "");
+    if (digits && Number.isFinite(Number(digits))) {
+      return Number(digits);
+    }
+  }
+  return raw;
 };
 
 const getSlotLabel = (slot, index = 0) => (
@@ -1491,6 +1498,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [startDate, setStartDate] = useState(() => initialDate ? moment(initialDate) : null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startTime, setStartTime] = useState(null);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [guests, setGuests] = useState(() => {
     if (initialGuests && typeof initialGuests === 'object') {
       return { adults: initialGuests.adults || 0, children: initialGuests.children || 0, infants: 0, childAges: [] };
@@ -2375,8 +2383,29 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   ), 0);
 
   // Extract proper price depending on whether a time slot is selected
-  const selectedSlotData = timeSlots.find(s => s.slotName === startTime || s.startTime === startTime) || null;
-  const staleSelectedSlotData = (selectedDateKey ? (dateFilteredSlotsLoaded ? dateFilteredSlots : baseTimeSlots) : []).find(s => s.slotName === startTime || s.startTime === startTime) || null;
+  const selectedSlotData = useMemo(() => {
+    if (!timeSlots || timeSlots.length === 0) return null;
+    if (selectedSlotId) {
+      const byId = timeSlots.find(s => String(s.id) === String(selectedSlotId) || String(s.slotId) === String(selectedSlotId));
+      if (byId) return byId;
+    }
+    if (startTime) {
+      const normSelectedTime = normalizeBookingTime(startTime);
+      const byTime = timeSlots.find(s => {
+        if (s.slotName === startTime || s.startTime === startTime || s.slot_name === startTime) return true;
+        if (normalizeBookingTime(s.startTime) === normSelectedTime) return true;
+        if (normalizeBookingTime(s.slotName) === normSelectedTime) return true;
+        if (normalizeBookingTime(s.time) === normSelectedTime) return true;
+        return false;
+      });
+      if (byTime) return byTime;
+    }
+    if (isDirect && timeSlots.length === 1) {
+      return timeSlots[0];
+    }
+    return null;
+  }, [timeSlots, selectedSlotId, startTime, isDirect]);
+  const staleSelectedSlotData = (selectedDateKey ? (dateFilteredSlotsLoaded ? dateFilteredSlots : baseTimeSlots) : []).find(s => s.slotName === startTime || s.startTime === startTime || (selectedSlotId && (String(s.id) === String(selectedSlotId) || String(s.slotId) === String(selectedSlotId)))) || null;
   const experienceSupportsPrivateBooking = useMemo(() => {
     if (isEventBooking) return false;
 
@@ -2919,7 +2948,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const totalGuests = (adultCount + childCount) || 1;
       const hasPriority = Boolean(includePriorityFee && availablePriorityFee > 0);
       const bookingDate = startDate ? moment(startDate).format("YYYY-MM-DD") : (selectedDateKey || null);
-      const bookingSlotId = Number(selectedSlotData?.slotId ?? selectedSlotData?.id ?? selectedSlotData?.slot_id) || null;
+      const effectiveSlot = selectedSlotData || (timeSlots?.length === 1 ? timeSlots[0] : null);
+      const bookingSlotId = getSlotId(effectiveSlot) ?? getSlotId(selectedSlotId) ?? null;
 
       payload = {
         directToken,
@@ -3645,11 +3675,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     }
 
     const dateStr = startDate.format("YYYY-MM-DD");
-    const slotId = getSlotId(selectedSlotData);
+    const effectiveSlot = selectedSlotData || (timeSlots?.length === 1 ? timeSlots[0] : null);
+    const slotId = getSlotId(effectiveSlot) ?? getSlotId(selectedSlotId);
     const bookingTime = normalizeBookingTime(
-      selectedSlotData?.startTime ||
-      selectedSlotData?.slotStartTime ||
-      selectedSlotData?.time ||
+      effectiveSlot?.startTime ||
+      effectiveSlot?.slotStartTime ||
+      effectiveSlot?.time ||
       startTime
     );
 
@@ -3823,11 +3854,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       }
     })();
 
+    const numericSlotId = getSlotId(slotId) ?? (Number.isFinite(Number(slotId)) ? Number(slotId) : slotId);
+
     const orderData = {
       listingId: Number(listingId),
       bookingDate: dateStr,
       bookingTime,
-      bookingSlotId: Number(slotId),
+      bookingSlotId: numericSlotId,
       guestCount: totalGuests,
       childCount: guests.children || 0,
       childPricePerChild: Number(actualHasChildPricing ? baseChildPricePerChild : 0),
@@ -3870,8 +3903,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         businessInterest: "EXPERIENCE",
         booking: {
           listingId: Number(listingId),
-          slotId: Number(slotId),
-          bookingSlotId: Number(slotId),
+          slotId: numericSlotId,
+          bookingSlotId: numericSlotId,
           bookingDate: dateStr,
           bookingTime: bookingTime || startTime || undefined,
           guestCount: safeTotalGuests,
@@ -3901,7 +3934,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         try {
           if (isMountedRef.current) setBookingLoading(true);
           const bookingDate = startDate ? moment(startDate).format("YYYY-MM-DD") : (selectedDateKey || null);
-          const bookingSlotId = Number(selectedSlotData?.slotId ?? selectedSlotData?.id ?? selectedSlotData?.slot_id) || null;
+          const effectiveSlot = selectedSlotData || (timeSlots?.length === 1 ? timeSlots[0] : null);
+          const bookingSlotId = getSlotId(effectiveSlot) ?? getSlotId(selectedSlotId) ?? numericSlotId ?? null;
           const adultCount = Number(guests?.adults || 0);
           const childCount = Number(guests?.children || 0);
           const totalGuests = (adultCount + childCount) || 1;
@@ -3976,6 +4010,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       });
 
       if (isDirect) {
+        const directSlotId = getSlotId(effectiveSlot) ?? getSlotId(selectedSlotId) ?? numericSlotId ?? null;
+        if (directSlotId != null) {
+          previewBookingData.selectedSlotId = directSlotId;
+          previewBookingData.bookingSlotId = directSlotId;
+          previewBookingData.slotId = directSlotId;
+        }
         previewBookingData.isDirectBooking = true;
         previewBookingData.includePriority = includePriorityFee;
         if (includePriorityFee && directPriorityFee > 0) {
@@ -5019,9 +5059,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                           <TimeSlotsPicker
                                             visible={true}
                                             onClose={() => setShowTimePicker(false)}
-                                            onTimeSelect={(t) => {
+                                            onTimeSelect={(t, slotObj) => {
                                               if (!startDate) return;
                                               setStartTime(t);
+                                              const rawId = slotObj?.id ?? slotObj?.slotId ?? slotObj?.slot_id;
+                                              if (rawId) setSelectedSlotId(rawId);
                                               setShowTimePicker(false);
                                               setValidationErrors(prev => {
                                                 const next = { ...prev };
