@@ -120,17 +120,9 @@ const getSlotSeatLimit = (slot) => {
 const getSlotId = (slot) => {
   if (slot === null || slot === undefined) return null;
   const raw = typeof slot === "object"
-    ? (slot.eventSlotId ?? slot.event_slot_id ?? slot.slotId ?? slot.slot_id ?? slot.id)
+    ? (slot.id ?? slot.slotId ?? slot.slot_id ?? slot.eventSlotId ?? slot.event_slot_id)
     : slot;
   if (raw == null) return null;
-  const parsed = Number(raw);
-  if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed;
-  if (typeof raw === "string") {
-    const digits = raw.replace(/[^\d]/g, "");
-    if (digits && Number.isFinite(Number(digits))) {
-      return Number(digits);
-    }
-  }
   return raw;
 };
 

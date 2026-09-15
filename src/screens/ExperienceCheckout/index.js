@@ -516,14 +516,14 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
         bookingData?.selectedSlotId ??
         bookingData?.bookingSlotId ??
         bookingData?.slotId ??
-        bookingData?.selectedSlot?.slotId ??
         bookingData?.selectedSlot?.id ??
+        bookingData?.selectedSlot?.slotId ??
         bookingData?.selectedSlot?.slot_id ??
         bookingData?.orderRequest?.bookingSlotId ??
         bookingData?.orderRequest?.slotId ??
         (typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("slotId") || new URLSearchParams(window.location.search).get("bookingSlotId")) : null);
 
-      let slotId = parseNumericSlotId(rawSlotId);
+      let slotId = (rawSlotId != null && rawSlotId !== "" && !Number.isNaN(rawSlotId)) ? String(rawSlotId).trim() : null;
 
       if (token) {
         try {
@@ -536,9 +536,9 @@ const Checkout = ({ isDirectBooking: isDirectBookingProp = false }) => {
             const matched = timeParam
               ? slotsList.find(s => s.startTime === timeParam || s.slotName === timeParam || (s.id && String(s.id).includes(timeParam))) || slotsList[0]
               : slotsList[0];
-            const fetchedSlotId = parseNumericSlotId(matched?.id ?? matched?.slotId ?? matched?.slot_id);
-            if (fetchedSlotId != null && (slotId == null || slotId === 1 || !slotsList.some(s => parseNumericSlotId(s.id ?? s.slotId) === slotId))) {
-              slotId = fetchedSlotId;
+            const fetchedSlotId = matched?.id ?? matched?.slotId ?? matched?.slot_id;
+            if (fetchedSlotId != null && (!slotId || slotId === "1" || !slotsList.some(s => String(s.id ?? s.slotId) === String(slotId)))) {
+              slotId = String(fetchedSlotId);
             }
           }
         } catch (e) {

@@ -302,7 +302,7 @@ export default function DirectUpiSection({
 
     const token = resolveToken();
 
-    let finalSlotId = parseNumericSlotId(resolvedBookingSlotId);
+    let finalSlotId = resolvedBookingSlotId != null && resolvedBookingSlotId !== "" ? String(resolvedBookingSlotId).trim() : null;
     if (token) {
       try {
         const slotsData = await getPublicDirectBookingOfflineReservationSlots(token);
@@ -314,9 +314,9 @@ export default function DirectUpiSection({
           const matched = timeParam
             ? slotsList.find(s => s.startTime === timeParam || s.slotName === timeParam || (s.id && String(s.id).includes(timeParam))) || slotsList[0]
             : slotsList[0];
-          const fetchedSlotId = parseNumericSlotId(matched?.id ?? matched?.slotId ?? matched?.slot_id);
-          if (fetchedSlotId != null && (finalSlotId == null || finalSlotId === 1 || !slotsList.some(s => parseNumericSlotId(s.id ?? s.slotId) === finalSlotId))) {
-            finalSlotId = fetchedSlotId;
+          const fetchedSlotId = matched?.id ?? matched?.slotId ?? matched?.slot_id;
+          if (fetchedSlotId != null && (!finalSlotId || finalSlotId === "1" || !slotsList.some(s => String(s.id ?? s.slotId) === String(finalSlotId)))) {
+            finalSlotId = String(fetchedSlotId);
           }
         }
       } catch (err) {
