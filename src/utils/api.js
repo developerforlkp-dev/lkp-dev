@@ -2990,7 +2990,7 @@ export const calculatePublicDirectBookingOfflinePrice = async (token, { guestCou
     if (isDummy) {
       console.warn(`[calculatePublicDirectBookingOfflinePrice] Using mock direct booking price data for token: "${token}"`);
       return {
-        totalAmount: 1298,
+        totalAmount: includePriority ? 1298 : 1100,
       };
     }
     throw error;

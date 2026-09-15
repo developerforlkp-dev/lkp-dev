@@ -1509,6 +1509,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState("");
   const [privateBooking, setPrivateBooking] = useState(false);
+  const [includePriorityFee, setIncludePriorityFee] = useState(false);
   const [hasAnyPrivateBookingAvailable, setHasAnyPrivateBookingAvailable] = useState(false);
   const [allFetchedSlots, setAllFetchedSlots] = useState([]);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -2166,6 +2167,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           const restoredGuests = getStoredGuestSelection(stored.guests);
           if (restoredGuests) setGuests(restoredGuests);
           if (stored.privateBooking !== undefined) setPrivateBooking(stored.privateBooking);
+          if (stored.includePriorityFee !== undefined) setIncludePriorityFee(Boolean(stored.includePriorityFee));
+          if (stored.includePriority !== undefined) setIncludePriorityFee(Boolean(stored.includePriority));
         }
       })
       .catch((error) => {
@@ -2249,6 +2252,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               const restoredGuests = getStoredGuestSelection(stored.guests);
               if (restoredGuests) setGuests(restoredGuests);
               if (stored.privateBooking !== undefined) setPrivateBooking(stored.privateBooking);
+              if (stored.includePriorityFee !== undefined) setIncludePriorityFee(Boolean(stored.includePriorityFee));
+              if (stored.includePriority !== undefined) setIncludePriorityFee(Boolean(stored.includePriority));
             } else {
               setStartTime(null);
               setErrorPopup({
@@ -2419,7 +2424,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const bookingGuestLimit = isEventBooking
     ? (eventGuestLimits.length > 0 ? Math.min(...eventGuestLimits) : undefined)
     : guestSeatLimit;
-  const directPriorityFee = isDirect ? Number(directOfflineSlotsData?.priorityFee ?? listing?.priorityFee ?? 0) : 0;
+  const availablePriorityFee = isDirect ? Number(directOfflineSlotsData?.priorityFee ?? listing?.priorityFee ?? 0) : 0;
+  const directPriorityFee = (isDirect && includePriorityFee) ? availablePriorityFee : 0;
   const directBasePrice = isDirect && directOfflineSlotsData?.basePricePerGuest != null ? Number(directOfflineSlotsData.basePricePerGuest) : null;
   const baseExperiencePrice = (directBasePrice != null && directBasePrice > 0)
     ? directBasePrice
@@ -2911,7 +2917,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       const adultCount = Number(guests?.adults || 0);
       const childCount = Number(guests?.children || 0);
       const totalGuests = (adultCount + childCount) || 1;
-      const hasPriority = directPriorityFee > 0 || (directOfflineSlotsData?.priorityFee !== undefined && directOfflineSlotsData?.priorityFee !== null);
+      const hasPriority = Boolean(includePriorityFee && availablePriorityFee > 0);
 
       payload = {
         directToken,
@@ -3000,6 +3006,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     isEventBooking,
     isDirect,
     directToken,
+    includePriorityFee,
+    availablePriorityFee,
     directPriorityFee,
     directOfflineSlotsData,
     show,
@@ -3717,7 +3725,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       ? apiPayableAmount
       : finalTotal;
 
-    if (directPriorityFee > 0) {
+    if (isDirect && includePriorityFee && directPriorityFee > 0) {
       receipt.push({
         title: "Priority Fee",
         content: `₹${directPriorityFee.toFixed(2)}`,
@@ -3941,11 +3949,12 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
       if (isDirect) {
         previewBookingData.isDirectBooking = true;
-        if (directPriorityFee > 0) {
+        previewBookingData.includePriority = includePriorityFee;
+        if (includePriorityFee && directPriorityFee > 0) {
           previewBookingData.priorityFee = directPriorityFee;
         }
         if (previewBookingData.pricing) {
-          previewBookingData.pricing.priorityFee = directPriorityFee;
+          previewBookingData.pricing.priorityFee = (includePriorityFee && directPriorityFee > 0) ? directPriorityFee : 0;
         }
         try {
           const rawStored = localStorage.getItem("directBookingData");
@@ -5418,33 +5427,102 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               );
                             })()}
 
-                             {/* Priority Fee Applied Badge */}
-                            {isDirect && directPriorityFee > 0 && (
-                              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                                <div style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  padding: "10px 14px",
-                                  borderRadius: 14,
-                                  background: `${A}12`,
-                                  border: `1px solid ${A}28`,
-                                }}>
-                                  <span style={{
-                                    display: "inline-flex",
+                            {/* Priority Fee Optional Toggle */}
+                            {isDirect && availablePriorityFee > 0 && (
+                              <div style={{ marginTop: 12 }}>
+                                <div
+                                  onClick={() => setIncludePriorityFee((prev) => !prev)}
+                                  role="button"
+                                  tabIndex={0}
+                                  style={{
+                                    display: "flex",
                                     alignItems: "center",
-                                    gap: 6,
-                                    color: A,
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
-                                  }}>
-                                    ⚡ Priority Fee Applied
-                                  </span>
-                                  <span style={{ fontSize: 13, fontWeight: 800, color: A }}>
-                                    + ₹{Number(directPriorityFee).toFixed(2)}
-                                  </span>
+                                    justifyContent: "space-between",
+                                    padding: "12px 14px",
+                                    borderRadius: 14,
+                                    background: includePriorityFee ? `${A}12` : `${S}`,
+                                    border: `1px solid ${includePriorityFee ? `${A}38` : `${B}`}`,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    userSelect: "none",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: 10,
+                                      background: includePriorityFee ? `${A}20` : `${B}30`,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      color: includePriorityFee ? A : M,
+                                      fontSize: 15,
+                                      flexShrink: 0
+                                    }}>
+                                      ⚡
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: FG }}>
+                                          Priority Booking
+                                        </span>
+                                        <span style={{
+                                          fontSize: 10,
+                                          fontWeight: 700,
+                                          color: includePriorityFee ? A : M,
+                                          background: includePriorityFee ? `${A}18` : `${B}35`,
+                                          padding: "2px 6px",
+                                          borderRadius: 6,
+                                          textTransform: "uppercase",
+                                          letterSpacing: "0.03em"
+                                        }}>
+                                          Optional
+                                        </span>
+                                      </div>
+                                      <span style={{ fontSize: 11, color: M, marginTop: 2, fontWeight: 500 }}>
+                                        {includePriorityFee ? "Priority slot allocation included" : "Add priority slot allocation"}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 800, color: includePriorityFee ? A : FG }}>
+                                      + ₹{Number(availablePriorityFee).toFixed(2)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIncludePriorityFee((prev) => !prev);
+                                      }}
+                                      aria-checked={includePriorityFee}
+                                      role="switch"
+                                      style={{
+                                        width: 36,
+                                        height: 20,
+                                        borderRadius: 999,
+                                        background: includePriorityFee ? A : B,
+                                        padding: 2,
+                                        display: "flex",
+                                        justifyContent: includePriorityFee ? "flex-end" : "flex-start",
+                                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                        cursor: "pointer",
+                                        border: "none",
+                                        alignItems: "center",
+                                        outline: "none"
+                                      }}
+                                    >
+                                      <span style={{
+                                        width: 16,
+                                        height: 16,
+                                        borderRadius: "50%",
+                                        background: W,
+                                        display: "block",
+                                        boxShadow: "0 1px 2px rgba(0,0,0,0.2)"
+                                      }} />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             )}
