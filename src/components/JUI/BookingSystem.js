@@ -2533,7 +2533,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     : rawExperiencePrice;
 
   const experienceGuestPricing = !isEventBooking
-    ? calculateExperienceGuestPricing(effectiveRawPrice, listing, startDate)
+    ? (isDirect
+      ? {
+        baseUnitPrice: parseFloat(effectiveRawPrice || 0),
+        priceAfterDiscount: parseFloat(effectiveRawPrice || 0),
+        finalUnitPrice: parseFloat(effectiveRawPrice || 0),
+        discountRate: 0,
+        promoDiscountRate: 0,
+        earlyBirdDiscountRate: 0,
+        customerTaxRate: 0,
+        taxType: "exclusive",
+      }
+      : calculateExperienceGuestPricing(effectiveRawPrice, listing, startDate))
     : null;
   const extractedPrice = isEventBooking
     ? eventGuestPricing.finalUnitPrice
@@ -5727,6 +5738,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Total amount</span>
                       {(() => {
+                        const currentTotalGuests = Number(guests?.adults || 0) + Number(guests?.children || 0);
                         const gp = isEventBooking ? eventGuestPricing : experienceGuestPricing;
                         const discountedDisplayPrice = gp ? gp.priceAfterDiscount : Number(data.price || 0);
                         const isFreeEvent = Number(discountedDisplayPrice || 0) === 0;
@@ -5753,7 +5765,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           );
                         }
 
-                        const currentTotalGuests = Number(guests?.adults || 0) + Number(guests?.children || 0);
+                        if (isDirect && currentTotalGuests > 0 && finalTotal != null && Number.isFinite(finalTotal) && finalTotal > 0) {
+                          return (
+                            <>
+                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(finalTotal).toFixed(2)}</span>
+                              <span style={{ fontSize: 10, color: M, fontWeight: 600 }}>Including all taxes{directPriorityFee > 0 ? " & priority fee." : "."}</span>
+                            </>
+                          );
+                        }
+
                         const emptyMsg = (() => {
                           if (isEventBooking) {
                             if (!selectedTicketTypeId && !selectedEventSlotId) return "Select a ticket";
