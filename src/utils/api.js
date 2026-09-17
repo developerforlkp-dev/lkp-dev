@@ -2424,7 +2424,7 @@ export const getHost = async (hostId) => {
 };
 
 // Get host-specific listings/content by lead user id
-export const getHostContent = async (leadUserId) => {
+export const getHostContent = async (leadUserId, params = {}) => {
   try {
     if (!leadUserId) {
       throw new Error("leadUserId is required");
@@ -2433,7 +2433,9 @@ export const getHostContent = async (leadUserId) => {
     const leadUserIdNum = Number(leadUserId);
     const leadUserIdStr = (!isNaN(leadUserIdNum) && leadUserIdNum > 0) ? String(leadUserIdNum) : String(leadUserId);
 
-    const response = await ListingsAPI.get(`/public/hosts/${leadUserIdStr}/content`);
+    const response = await ListingsAPI.get(`/public/hosts/${leadUserIdStr}/content`, {
+      params,
+    });
     return response.data;
   } catch (error) {
     console.error(`❌ Error fetching host content for lead user ${leadUserId}:`, error.response?.data || error.message);

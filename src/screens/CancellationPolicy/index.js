@@ -30,12 +30,21 @@ const CancellationPolicy = () => {
         if (data) {
           if (Array.isArray(data)) {
             cancelDoc = data.find((d) =>
-              ["cancellation-policy", "cancellationPolicy", "cancellation_policy", "cancellation"].includes(
-                d?.documentKey || d?.key || d?.slug
-              )
+              [
+                "customer-cancellation-policy",
+                "customerCancellationPolicy",
+                "customer_cancellation_policy",
+                "cancellation-policy",
+                "cancellationPolicy",
+                "cancellation_policy",
+                "cancellation",
+              ].includes(d?.documentKey || d?.key || d?.slug)
             );
           } else if (typeof data === "object") {
             cancelDoc =
+              data.customerCancellationPolicy ||
+              data["customer-cancellation-policy"] ||
+              data.customer_cancellation_policy ||
               data.cancellationPolicy ||
               data["cancellation-policy"] ||
               data.cancellation_policy ||
@@ -43,11 +52,19 @@ const CancellationPolicy = () => {
           }
         }
         if (cancelDoc) {
-          if (cancelDoc.contentHtml) {
-            setDocumentHtml(cancelDoc.contentHtml);
-          }
-          if (cancelDoc.title) {
-            setTitle(cancelDoc.title);
+          if (typeof cancelDoc === "string") {
+            setDocumentHtml(cancelDoc);
+          } else {
+            if (cancelDoc.contentHtml) {
+              setDocumentHtml(cancelDoc.contentHtml);
+            } else if (cancelDoc.content) {
+              setDocumentHtml(cancelDoc.content);
+            } else if (cancelDoc.html) {
+              setDocumentHtml(cancelDoc.html);
+            }
+            if (cancelDoc.title) {
+              setTitle(cancelDoc.title);
+            }
           }
         }
       } catch (error) {

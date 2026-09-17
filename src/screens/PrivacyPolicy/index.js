@@ -260,12 +260,22 @@ const PrivacyPolicy = () => {
         if (data) {
           if (Array.isArray(data)) {
             privacyDoc = data.find((d) =>
-              ["privacy-policy", "privacyPolicy", "privacy_policy", "privacyAndPolicies", "privacy"].includes(
-                d?.documentKey || d?.key || d?.slug
-              )
+              [
+                "customer-privacy-policy",
+                "customerPrivacyPolicy",
+                "customer_privacy_policy",
+                "privacy-policy",
+                "privacyPolicy",
+                "privacy_policy",
+                "privacyAndPolicies",
+                "privacy",
+              ].includes(d?.documentKey || d?.key || d?.slug)
             );
           } else if (typeof data === "object") {
             privacyDoc =
+              data.customerPrivacyPolicy ||
+              data["customer-privacy-policy"] ||
+              data.customer_privacy_policy ||
               data.privacyPolicy ||
               data["privacy-policy"] ||
               data.privacy_policy ||
@@ -274,11 +284,19 @@ const PrivacyPolicy = () => {
           }
         }
         if (privacyDoc) {
-          if (privacyDoc.contentHtml) {
-            setDocumentHtml(privacyDoc.contentHtml);
-          }
-          if (privacyDoc.title) {
-            setTitle(privacyDoc.title);
+          if (typeof privacyDoc === "string") {
+            setDocumentHtml(privacyDoc);
+          } else {
+            if (privacyDoc.contentHtml) {
+              setDocumentHtml(privacyDoc.contentHtml);
+            } else if (privacyDoc.content) {
+              setDocumentHtml(privacyDoc.content);
+            } else if (privacyDoc.html) {
+              setDocumentHtml(privacyDoc.html);
+            }
+            if (privacyDoc.title) {
+              setTitle(privacyDoc.title);
+            }
           }
         }
       } catch (error) {

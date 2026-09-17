@@ -30,12 +30,24 @@ const TermsOfService = () => {
         if (data) {
           if (Array.isArray(data)) {
             termsDoc = data.find((d) =>
-              ["terms-and-conditions", "termsAndConditions", "terms_and_conditions", "terms-of-service", "terms"].includes(
-                d?.documentKey || d?.key || d?.slug
-              )
+              [
+                "customer-terms-and-conditions",
+                "customerTermsAndConditions",
+                "customer_terms_and_conditions",
+                "terms-and-conditions",
+                "termsAndConditions",
+                "terms_and_conditions",
+                "terms-of-service",
+                "termsOfService",
+                "terms_of_service",
+                "terms",
+              ].includes(d?.documentKey || d?.key || d?.slug)
             );
           } else if (typeof data === "object") {
             termsDoc =
+              data.customerTermsAndConditions ||
+              data["customer-terms-and-conditions"] ||
+              data.customer_terms_and_conditions ||
               data.termsAndConditions ||
               data["terms-and-conditions"] ||
               data.terms_and_conditions ||
@@ -45,11 +57,19 @@ const TermsOfService = () => {
           }
         }
         if (termsDoc) {
-          if (termsDoc.contentHtml) {
-            setDocumentHtml(termsDoc.contentHtml);
-          }
-          if (termsDoc.title) {
-            setTitle(termsDoc.title);
+          if (typeof termsDoc === "string") {
+            setDocumentHtml(termsDoc);
+          } else {
+            if (termsDoc.contentHtml) {
+              setDocumentHtml(termsDoc.contentHtml);
+            } else if (termsDoc.content) {
+              setDocumentHtml(termsDoc.content);
+            } else if (termsDoc.html) {
+              setDocumentHtml(termsDoc.html);
+            }
+            if (termsDoc.title) {
+              setTitle(termsDoc.title);
+            }
           }
         }
       } catch (error) {
