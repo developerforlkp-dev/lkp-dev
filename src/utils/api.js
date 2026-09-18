@@ -3173,4 +3173,34 @@ export const submitPublicDirectBooking = async (token, payload) => {
   }
 };
 
+/**
+ * GET /api/public/events/:id/ticket-prices?ticketTypeId=12
+ * Fetches dynamic ticket price for an event ticket type.
+ */
+export const getEventTicketPrice = async (eventId, ticketTypeId) => {
+  if (!eventId) throw new Error("Event ID is required");
+  if (ticketTypeId == null) throw new Error("Ticket Type ID is required");
+
+  let response;
+  try {
+    response = await ListingsAPI.get(`/public/events/${eventId}/ticket-prices`, {
+      params: { ticketTypeId },
+    });
+  } catch (err) {
+    const baseUrl = getApiBaseURL();
+    const endpoint = baseUrl.endsWith("/api")
+      ? `${baseUrl}/public/events/${eventId}/ticket-prices`
+      : `${baseUrl}/api/public/events/${eventId}/ticket-prices`;
+    response = await axios.get(endpoint, {
+      params: { ticketTypeId },
+    });
+  }
+
+  const rawData = response?.data;
+  const data = rawData?.data !== undefined ? rawData.data : rawData;
+  const price = data?.price ?? data?.ticketPrice ?? data?.ticket_price ?? (typeof data === "number" ? data : (typeof rawData === "number" ? rawData : null));
+  return price != null ? { price: Number(price) } : data;
+};
+
+
 
