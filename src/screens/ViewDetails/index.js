@@ -1475,7 +1475,16 @@ const ViewDetails = () => {
     if (status === "completed" || status === "cancelled" || status === "canceled") {
       return true;
     }
-    return isPastStayCheckInTime() || isPastStayCheckOutTime() || isPastExperienceOrEventEndTime();
+    const businessInterestCode = String(booking?.originalData?.businessInterestCode || booking?.category || "").toUpperCase();
+    const isStayOrder = businessInterestCode === "STAYS" ||
+      booking?.originalData?.stayId != null ||
+      (booking?.originalData?.stayOrderRooms && booking?.originalData?.stayOrderRooms.length > 0) ||
+      booking?.stayData != null;
+
+    if (isStayOrder) {
+      return isPastStayCheckInTime();
+    }
+    return isPastExperienceOrEventEndTime();
   };
 
   const handleCancelBookingClick = async () => {

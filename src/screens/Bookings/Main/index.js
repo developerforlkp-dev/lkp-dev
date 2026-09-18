@@ -946,6 +946,8 @@ const isPastExperienceStartTime = (booking) => {
   }
 
   const startDateStr =
+    bookingData?.eventDate ||
+    booking?.eventData?.eventDate ||
     bookingData?.bookingDate ||
     bookingData?.startDate ||
     booking?.startDate;
@@ -958,6 +960,7 @@ const isPastExperienceStartTime = (booking) => {
   const startTimeStr =
     bookingData?.bookingTime ||
     bookingData?.startTime ||
+    bookingData?.timeSlotStartTime ||
     bookingData?.bookingSlot?.name ||
     bookingData?.bookingSlot?.startTime ||
     "00:00:00";
@@ -1014,7 +1017,7 @@ const getAllowedActionsForTab = (tabId, booking, orderIdsEligibleForReview) => {
     });
   }
 
-  if (isPastStayCheckInTime(booking) || isPastStayCheckOutTime(booking) || isPastExperienceStartTime(booking)) {
+  if (isPastStayCheckInTime(booking) || isPastExperienceStartTime(booking)) {
     actions = actions.filter((a) => a.label !== "Cancel Booking");
   }
 
