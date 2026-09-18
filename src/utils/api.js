@@ -1,4 +1,5 @@
 import axios from "axios";
+import moment from "moment";
 
 const normalizeBaseUrl = (url) => {
   if (!url) return url;
@@ -2377,6 +2378,68 @@ export const getStayHostelAvailability = async (stayId, checkInDate, checkOutDat
 };
 
 export const getStayBedAvailability = getStayHostelAvailability;
+
+export const getStayHotelRoomPrices = async (stayId, { date, mealPlanCode } = {}) => {
+  try {
+    if (!stayId) throw new Error("stayId is required");
+    const stayIdNum = Number(stayId);
+    const stayIdStr = (!isNaN(stayIdNum) && stayIdNum > 0) ? String(stayIdNum) : String(stayId);
+    const currentDate = date || moment().format("YYYY-MM-DD");
+    const params = { date: currentDate };
+    if (mealPlanCode) {
+      params.mealPlanCode = mealPlanCode;
+    }
+
+    try {
+      const response = await ListingsAPI.get(`/public/stays/${stayIdStr}/hotel-room-prices`, {
+        params,
+      });
+      return response.data;
+    } catch (primaryErr) {
+      if (primaryErr.response?.status === 404) {
+        const response = await ListingsAPI.get(`/stays/${stayIdStr}/hotel-room-prices`, {
+          params,
+        });
+        return response.data;
+      }
+      throw primaryErr;
+    }
+  } catch (error) {
+    console.error("❌ Error fetching stay hotel room prices:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getStayHostelRoomPrices = async (stayId, { date, mealPlanCode } = {}) => {
+  try {
+    if (!stayId) throw new Error("stayId is required");
+    const stayIdNum = Number(stayId);
+    const stayIdStr = (!isNaN(stayIdNum) && stayIdNum > 0) ? String(stayIdNum) : String(stayId);
+    const currentDate = date || moment().format("YYYY-MM-DD");
+    const params = { date: currentDate };
+    if (mealPlanCode) {
+      params.mealPlanCode = mealPlanCode;
+    }
+
+    try {
+      const response = await ListingsAPI.get(`/public/stays/${stayIdStr}/hostel-room-prices`, {
+        params,
+      });
+      return response.data;
+    } catch (primaryErr) {
+      if (primaryErr.response?.status === 404) {
+        const response = await ListingsAPI.get(`/stays/${stayIdStr}/hostel-room-prices`, {
+          params,
+        });
+        return response.data;
+      }
+      throw primaryErr;
+    }
+  } catch (error) {
+    console.error("❌ Error fetching stay hostel room prices:", error.response?.data || error.message);
+    throw error;
+  }
+};
 
 export const getStayPropertyAvailability = async (stayId, checkInDate, checkOutDate) => {
   try {

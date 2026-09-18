@@ -5300,7 +5300,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                                   )}
                                                 </div>
                                                 <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? A : FG }}>
-                                                  ₹{Number(ticketGuestPrice || 0).toFixed(2)}
+                                                  ₹{Number(ticketBasePrice || 0).toFixed(2)}
                                                 </div>
                                               </div>
                                             );
