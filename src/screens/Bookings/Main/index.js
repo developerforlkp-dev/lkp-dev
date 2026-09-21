@@ -838,20 +838,21 @@ const actionsByStatus = {
 
 const isPastStayCheckInTime = (booking) => {
   if (!booking) return false;
-  const { bookingData, stayData } = booking;
+  const bookingData = booking?.bookingData || booking?.originalData || booking;
+  const stayData = booking?.stayData;
 
   // Only apply to Stays
   const businessInterestCode = String(bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
   const isStayOrder = businessInterestCode === "STAYS" ||
     bookingData?.stayId != null ||
-    (bookingData?.stayOrderRooms && bookingData?.stayOrderRooms.length > 0) ||
+    (Array.isArray(bookingData?.stayOrderRooms) && bookingData.stayOrderRooms.length > 0) ||
     stayData != null;
 
   if (!isStayOrder) return false;
 
   const status = booking.statusTone || booking.status?.toLowerCase();
   if (status === "cancelled" || status === "canceled" || status === "completed") {
-    return false;
+    return true;
   }
 
   const checkInDateStr =
@@ -859,9 +860,7 @@ const isPastStayCheckInTime = (booking) => {
     bookingData?.bookingDate ||
     stayData?.checkInDate;
 
-  if (!checkInDateStr) return false;
-
-  const checkInDatetime = new Date(checkInDateStr);
+  if (!checkInDateStr || checkInDateStr === "TBD") return false;
 
   const checkInTimeStr =
     bookingData?.checkInTime ||
@@ -869,11 +868,30 @@ const isPastStayCheckInTime = (booking) => {
     stayData?.checkInTime ||
     "14:00:00";
 
+  let hours = 14;
+  let minutes = 0;
+  let seconds = 0;
+
   if (checkInTimeStr && typeof checkInTimeStr === 'string' && checkInTimeStr.includes(':')) {
-    const parts = checkInTimeStr.split(':').map(Number);
-    checkInDatetime.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+    const match = checkInTimeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      seconds = match[3] ? parseInt(match[3], 10) : 0;
+      const ampm = match[4] ? match[4].toLowerCase() : null;
+      if (ampm === 'pm' && hours < 12) hours += 12;
+      if (ampm === 'am' && hours === 12) hours = 0;
+    }
+  }
+
+  let checkInDatetime;
+  if (typeof checkInDateStr === "string" && /^\d{4}-\d{2}-\d{2}/.test(checkInDateStr)) {
+    const [y, m, d] = checkInDateStr.substring(0, 10).split("-").map(Number);
+    checkInDatetime = new Date(y, m - 1, d, hours, minutes, seconds, 0);
   } else {
-    checkInDatetime.setHours(14, 0, 0, 0);
+    checkInDatetime = new Date(checkInDateStr);
+    if (isNaN(checkInDatetime.getTime())) return false;
+    checkInDatetime.setHours(hours, minutes, seconds, 0);
   }
 
   return new Date() >= checkInDatetime;
@@ -881,13 +899,14 @@ const isPastStayCheckInTime = (booking) => {
 
 const isPastStayCheckOutTime = (booking) => {
   if (!booking) return false;
-  const { bookingData, stayData } = booking;
+  const bookingData = booking?.bookingData || booking?.originalData || booking;
+  const stayData = booking?.stayData;
 
   // Only apply to Stays
   const businessInterestCode = String(bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
   const isStayOrder = businessInterestCode === "STAYS" ||
     bookingData?.stayId != null ||
-    (bookingData?.stayOrderRooms && bookingData?.stayOrderRooms.length > 0) ||
+    (Array.isArray(bookingData?.stayOrderRooms) && bookingData.stayOrderRooms.length > 0) ||
     stayData != null;
 
   if (!isStayOrder) return true; // Non-stays bypass stay checkout restriction
@@ -906,9 +925,7 @@ const isPastStayCheckOutTime = (booking) => {
     bookingData?.endDate ||
     stayData?.checkOutDate;
 
-  if (!checkOutDateStr) return true; // If missing checkout date, don't restrict
-
-  const checkOutDatetime = new Date(checkOutDateStr);
+  if (!checkOutDateStr || checkOutDateStr === "TBD") return true; // If missing checkout date, don't restrict
 
   const checkOutTimeStr =
     roomCheckOutTimes[0] ||
@@ -917,11 +934,30 @@ const isPastStayCheckOutTime = (booking) => {
     stayData?.checkOutTime ||
     "11:00:00";
 
+  let hours = 11;
+  let minutes = 0;
+  let seconds = 0;
+
   if (checkOutTimeStr && typeof checkOutTimeStr === 'string' && checkOutTimeStr.includes(':')) {
-    const parts = checkOutTimeStr.split(':').map(Number);
-    checkOutDatetime.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+    const match = checkOutTimeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      seconds = match[3] ? parseInt(match[3], 10) : 0;
+      const ampm = match[4] ? match[4].toLowerCase() : null;
+      if (ampm === 'pm' && hours < 12) hours += 12;
+      if (ampm === 'am' && hours === 12) hours = 0;
+    }
+  }
+
+  let checkOutDatetime;
+  if (typeof checkOutDateStr === "string" && /^\d{4}-\d{2}-\d{2}/.test(checkOutDateStr)) {
+    const [y, m, d] = checkOutDateStr.substring(0, 10).split("-").map(Number);
+    checkOutDatetime = new Date(y, m - 1, d, hours, minutes, seconds, 0);
   } else {
-    checkOutDatetime.setHours(11, 0, 0, 0);
+    checkOutDatetime = new Date(checkOutDateStr);
+    if (isNaN(checkOutDatetime.getTime())) return true;
+    checkOutDatetime.setHours(hours, minutes, seconds, 0);
   }
 
   return new Date() >= checkOutDatetime;
@@ -929,56 +965,71 @@ const isPastStayCheckOutTime = (booking) => {
 
 const isPastExperienceStartTime = (booking) => {
   if (!booking) return false;
-  const { bookingData } = booking;
+  const bookingData = booking?.bookingData || booking?.originalData || booking;
 
   const businessInterestCode = String(bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
   const isExperienceLikeOrder =
     businessInterestCode === "EXPERIENCE" ||
     businessInterestCode === "EVENTS" ||
     businessInterestCode === "EVENT" ||
-    bookingData?.eventId != null;
+    bookingData?.eventId != null ||
+    bookingData?.eventDetails != null;
 
   if (!isExperienceLikeOrder) return false;
 
   const status = booking.statusTone || booking.status?.toLowerCase();
   if (status === "cancelled" || status === "canceled" || status === "completed") {
-    return false;
+    return true;
   }
 
   const startDateStr =
+    bookingData?.bookingDate ||
     bookingData?.eventDate ||
     booking?.eventData?.eventDate ||
-    bookingData?.bookingDate ||
+    bookingData?.eventDetails?.eventDate ||
     bookingData?.startDate ||
-    booking?.startDate;
+    booking?.startDate ||
+    booking?.reservationDate;
 
-  if (!startDateStr) return false;
-
-  const startDatetime = new Date(startDateStr);
-  if (isNaN(startDatetime.getTime())) return false; // invalid date
+  if (!startDateStr || startDateStr === "TBD") return false;
 
   const startTimeStr =
     bookingData?.bookingTime ||
     bookingData?.startTime ||
     bookingData?.timeSlotStartTime ||
-    bookingData?.bookingSlot?.name ||
     bookingData?.bookingSlot?.startTime ||
+    bookingData?.bookingSlot?.name ||
+    booking?.startTime ||
+    booking?.bookingTime ||
+    bookingData?.eventDetails?.startTime ||
+    booking?.eventData?.startTime ||
     "00:00:00";
+
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
 
   if (startTimeStr && typeof startTimeStr === 'string') {
     const timeMatch = startTimeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
     if (timeMatch) {
-      let hours = parseInt(timeMatch[1], 10);
-      const minutes = parseInt(timeMatch[2], 10);
+      hours = parseInt(timeMatch[1], 10);
+      minutes = parseInt(timeMatch[2], 10);
+      seconds = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
       const ampm = timeMatch[4] ? timeMatch[4].toLowerCase() : null;
 
       if (ampm === 'pm' && hours < 12) hours += 12;
       if (ampm === 'am' && hours === 12) hours = 0;
-
-      startDatetime.setHours(hours, minutes, 0, 0);
-    } else {
-      startDatetime.setHours(0, 0, 0, 0);
     }
+  }
+
+  let startDatetime;
+  if (typeof startDateStr === "string" && /^\d{4}-\d{2}-\d{2}/.test(startDateStr)) {
+    const [y, m, d] = startDateStr.substring(0, 10).split("-").map(Number);
+    startDatetime = new Date(y, m - 1, d, hours, minutes, seconds, 0);
+  } else {
+    startDatetime = new Date(startDateStr);
+    if (isNaN(startDatetime.getTime())) return false;
+    startDatetime.setHours(hours, minutes, seconds, 0);
   }
 
   return new Date() >= startDatetime;

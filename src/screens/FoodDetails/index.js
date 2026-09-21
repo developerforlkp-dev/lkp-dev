@@ -837,7 +837,7 @@ function CulinaryHero({ food, galleryItems }) {
   const serveModeNames = food?.serveModeNames || food?.serviceModeNames || [];
   const serveMode = Array.isArray(serveModeNames) && serveModeNames.length > 0
     ? serveModeNames.join(", ")
-    : (food?.serviceMode || food?.serveMode || "Dine-In");
+    : (food?.serviceMode || food?.serveMode || "N/A");
   const source = food?.sourceType?.displayName || food?.sourceType?.code || food?.sourceType || "Home-Made";
 
   const openDays = useMemo(() => {
@@ -1886,7 +1886,7 @@ function FoodMetadataCard({ food }) {
   const serveModeNames = food?.serveModeNames || food?.serviceModeNames || [];
   const serveMode = Array.isArray(serveModeNames) && serveModeNames.length > 0
     ? serveModeNames.join(", ")
-    : (food?.serviceMode || food?.serveMode || "Dine-In");
+    : (food?.serviceMode || food?.serveMode || "N/A");
 
   const openDays = useMemo(() => {
     const dayMap = { "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7 };

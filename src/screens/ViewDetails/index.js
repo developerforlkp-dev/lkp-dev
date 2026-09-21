@@ -1407,6 +1407,74 @@ const ViewDetails = () => {
     return new Date() >= checkOutDatetime;
   };
 
+  const isPastExperienceStartTime = () => {
+    if (!booking) return false;
+    const businessInterestCode = String(booking?.originalData?.businessInterestCode || booking?.category || "").toUpperCase();
+    const isStayOrder = businessInterestCode === "STAYS" ||
+      booking?.originalData?.stayId != null ||
+      (Array.isArray(booking?.originalData?.stayOrderRooms) && booking?.originalData?.stayOrderRooms.length > 0) ||
+      booking?.stayData != null;
+
+    if (isStayOrder) return false;
+
+    const status = booking.status?.toLowerCase() ||
+      booking.statusTone ||
+      (booking.originalData?.orderStatus ? String(booking.originalData.orderStatus).toLowerCase() : "");
+
+    if (status === "cancelled" || status === "canceled" || status === "completed") {
+      return true;
+    }
+
+    const dateStr =
+      booking?.originalData?.bookingDate ||
+      booking?.originalData?.eventDate ||
+      booking?.eventData?.eventDate ||
+      booking?.originalData?.eventDetails?.eventDate ||
+      booking?.originalData?.startDate ||
+      booking?.reservationDate ||
+      booking?.startDate;
+
+    if (!dateStr || dateStr === "TBD") return false;
+
+    const timeStr =
+      booking?.originalData?.bookingTime ||
+      booking?.originalData?.startTime ||
+      booking?.originalData?.timeSlotStartTime ||
+      booking?.startTime ||
+      booking?.bookingTime ||
+      booking?.originalData?.eventDetails?.startTime ||
+      booking?.eventData?.startTime ||
+      "00:00:00";
+
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+
+    if (timeStr && typeof timeStr === 'string') {
+      const match = timeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
+      if (match) {
+        hours = parseInt(match[1], 10);
+        minutes = parseInt(match[2], 10);
+        seconds = match[3] ? parseInt(match[3], 10) : 0;
+        const ampm = match[4] ? match[4].toLowerCase() : null;
+        if (ampm === "pm" && hours < 12) hours += 12;
+        if (ampm === "am" && hours === 12) hours = 0;
+      }
+    }
+
+    let startDatetime;
+    if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const [y, m, d] = dateStr.substring(0, 10).split("-").map(Number);
+      startDatetime = new Date(y, m - 1, d, hours, minutes, seconds, 0);
+    } else {
+      startDatetime = new Date(dateStr);
+      if (isNaN(startDatetime.getTime())) return false;
+      startDatetime.setHours(hours, minutes, seconds, 0);
+    }
+
+    return new Date() >= startDatetime;
+  };
+
   const isPastExperienceOrEventEndTime = () => {
     if (!booking) return false;
 
@@ -1436,9 +1504,6 @@ const ViewDetails = () => {
 
     if (!dateStr || dateStr === "TBD") return false;
 
-    const eventDate = new Date(dateStr);
-    if (isNaN(eventDate.getTime())) return false;
-
     const timeStr =
       booking?.endTime ||
       booking?.originalData?.timeSlotEndTime ||
@@ -1448,20 +1513,30 @@ const ViewDetails = () => {
       booking?.originalData?.bookingTime ||
       booking?.bookingTime;
 
+    let hours = 23;
+    let minutes = 59;
+    let seconds = 59;
+
     if (timeStr && typeof timeStr === 'string') {
       const match = timeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
       if (match) {
-        let hours = parseInt(match[1], 10);
-        const minutes = parseInt(match[2], 10);
+        hours = parseInt(match[1], 10);
+        minutes = parseInt(match[2], 10);
+        seconds = match[3] ? parseInt(match[3], 10) : 0;
         const ampm = match[4] ? match[4].toLowerCase() : null;
         if (ampm === "pm" && hours < 12) hours += 12;
         if (ampm === "am" && hours === 12) hours = 0;
-        eventDate.setHours(hours, minutes, 0, 0);
-      } else {
-        eventDate.setHours(23, 59, 59, 0);
       }
+    }
+
+    let eventDate;
+    if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const [y, m, d] = dateStr.substring(0, 10).split("-").map(Number);
+      eventDate = new Date(y, m - 1, d, hours, minutes, seconds, 0);
     } else {
-      eventDate.setHours(23, 59, 59, 0);
+      eventDate = new Date(dateStr);
+      if (isNaN(eventDate.getTime())) return false;
+      eventDate.setHours(hours, minutes, seconds, 0);
     }
 
     return new Date() >= eventDate;
@@ -1484,7 +1559,7 @@ const ViewDetails = () => {
     if (isStayOrder) {
       return isPastStayCheckInTime();
     }
-    return isPastExperienceOrEventEndTime();
+    return isPastExperienceStartTime();
   };
 
   const handleCancelBookingClick = async () => {
@@ -2070,32 +2145,7 @@ const ViewDetails = () => {
     }
   };
 
-  const isPastExperienceStartTime = () => {
-    if (!booking) return false;
-    const businessInterestCode = String(booking?.originalData?.businessInterestCode || "").toUpperCase();
-    const isStayOrder = businessInterestCode === "STAYS" || booking?.originalData?.stayId != null || Array.isArray(booking?.originalData?.stayOrderRooms);
-    if (isStayOrder) return false;
 
-    const dateStr = booking?.originalData?.bookingDate || booking?.originalData?.startDate || booking?.bookingDate;
-    if (!dateStr) return false;
-    const date = new Date(dateStr);
-    const timeStr = booking?.originalData?.bookingTime || booking?.originalData?.startTime || booking?.bookingTime || "00:00:00";
-    if (timeStr && typeof timeStr === 'string' && timeStr.includes(':')) {
-      const match = timeStr.match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
-      if (match) {
-        let hours = parseInt(match[1], 10);
-        const minutes = parseInt(match[2], 10);
-        const ampm = match[3] ? match[3].toUpperCase() : null;
-        if (ampm === "PM" && hours < 12) hours += 12;
-        if (ampm === "AM" && hours === 12) hours = 0;
-        date.setHours(hours, minutes, 0, 0);
-      } else {
-        const parts = timeStr.split(':').map(p => parseInt(p, 10));
-        date.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-      }
-    }
-    return new Date() >= date;
-  };
 
 
 

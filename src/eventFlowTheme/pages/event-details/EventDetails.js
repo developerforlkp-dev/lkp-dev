@@ -3207,28 +3207,40 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
     const fetchPrices = async () => {
       try {
         const priceMap = {};
-        await Promise.all(
-          rawTickets.map(async (t, i) => {
-            const ticketId = t.ticketTypeId ?? t.ticket_type_id ?? t.ticketId ?? t.ticket_id ?? t.id ?? t.typeId ?? (i + 1);
-            if (ticketId != null && !String(ticketId).startsWith("ticket-")) {
-              try {
-                const res = await getEventTicketPrice(eventId, ticketId);
-                const price = res?.price ?? res?.data?.price ?? (typeof res === "number" ? res : null);
-                if (price != null && !Number.isNaN(Number(price))) {
-                  const numP = Number(price);
-                  priceMap[String(ticketId)] = numP;
-                  if (t.id != null) priceMap[String(t.id)] = numP;
-                  if (t.ticketTypeId != null) priceMap[String(t.ticketTypeId)] = numP;
-                  if (t.name) priceMap[String(t.name).toLowerCase().trim()] = numP;
-                  priceMap[`ticket-${i}`] = numP;
-                  priceMap[String(i)] = numP;
-                }
-              } catch (err) {
-                console.error(`Failed to fetch price for ticket ${ticketId}:`, err);
+        const res = await getEventTicketPrice(eventId);
+        const rawPrices = res?.price ?? res?.prices ?? res?.data?.price ?? res?.data?.prices ?? res?.data ?? res;
+        const pricesArray = Array.isArray(rawPrices) ? rawPrices : null;
+
+        if (Array.isArray(pricesArray)) {
+          pricesArray.forEach((p, idx) => {
+            const numP = Number(p);
+            if (!Number.isNaN(numP)) {
+              priceMap[String(idx)] = numP;
+              priceMap[`ticket-${idx}`] = numP;
+              const t = rawTickets[idx];
+              if (t) {
+                const ticketId = t.ticketTypeId ?? t.ticket_type_id ?? t.ticketId ?? t.ticket_id ?? t.id ?? t.typeId;
+                if (ticketId != null) priceMap[String(ticketId)] = numP;
+                if (t.id != null) priceMap[String(t.id)] = numP;
+                if (t.ticketTypeId != null) priceMap[String(t.ticketTypeId)] = numP;
+                if (t.name) priceMap[String(t.name).toLowerCase().trim()] = numP;
               }
             }
-          })
-        );
+          });
+        } else if (rawPrices != null && !Number.isNaN(Number(rawPrices))) {
+          const numP = Number(rawPrices);
+          priceMap["0"] = numP;
+          priceMap["ticket-0"] = numP;
+          rawTickets.forEach((t, idx) => {
+            priceMap[String(idx)] = numP;
+            priceMap[`ticket-${idx}`] = numP;
+            if (t) {
+              const ticketId = t.ticketTypeId ?? t.ticket_type_id ?? t.ticketId ?? t.ticket_id ?? t.id ?? t.typeId;
+              if (ticketId != null) priceMap[String(ticketId)] = numP;
+            }
+          });
+        }
+
         if (isMounted && Object.keys(priceMap).length > 0) {
           setPopupTicketPrices((prev) => ({ ...prev, ...priceMap }));
         }
@@ -3253,16 +3265,17 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
           popupTicketPrices[String(ticket.name || "").toLowerCase().trim()] ??
           popupTicketPrices[`ticket-${index}`] ??
           popupTicketPrices[String(index)];
-        const price = dynamicP !== undefined ? Number(dynamicP) : (ticket.price ?? ticket.ticketTypePrice ?? ticket.typePrice ?? ticket.ticketPrice ?? ticket.individualPrice ?? ticket.amount ?? ticket.basePrice ?? 0);
+        const basePrice = ticket.price ?? ticket.ticketTypePrice ?? ticket.typePrice ?? ticket.ticketPrice ?? ticket.individualPrice ?? ticket.amount ?? ticket.basePrice ?? 0;
         return {
           ...ticket,
           id: ticket.id ?? ticketTypeId ?? `ticket-${index}`,
           ticketTypeId,
           name: ticket.name || ticket.ticketTypeName || ticket.typeName || ticket.title || ticket.ticketName || `Ticket ${index + 1}`,
-          price,
-          ticketPrice: price,
-          ticketTypePrice: price,
-          basePrice: price,
+          price: basePrice,
+          ticketPrice: basePrice,
+          ticketTypePrice: basePrice,
+          basePrice: basePrice,
+          discountedPrice: dynamicP !== undefined ? Number(dynamicP) : undefined,
           childPrice: ticket.childPrice ?? ticket.child_price ?? ticket.childTypePrice ?? ticket.child_type_price ?? ticket.childTicketPrice ?? 0,
           totalTickets: ticket.totalTickets ?? ticket.totalTicket ?? ticket.total_tickets ?? ticket.total_ticket,
           maxPerBooking: ticket.maxPerBooking ?? ticket.max_per_booking ?? ticket.maxTicketsPerBooking ?? ticket.max_tickets_per_booking,
@@ -3421,22 +3434,38 @@ function Tickets({ event }) {
     const fetchPrices = async () => {
       try {
         const priceMap = {};
-        await Promise.all(
-          eventTiers.map(async (t, i) => {
-            const ticketId = t.id ?? t.ticketTypeId ?? t.typeId ?? i;
-            if (ticketId != null && !String(ticketId).startsWith("ticket-")) {
-              try {
-                const res = await getEventTicketPrice(eventId, ticketId);
-                const price = res?.price ?? res?.data?.price ?? (typeof res === "number" ? res : null);
-                if (price != null && !Number.isNaN(Number(price))) {
-                  priceMap[String(ticketId)] = Number(price);
-                }
-              } catch (err) {
-                console.error(`Failed to fetch price for tier ${ticketId}:`, err);
+        const res = await getEventTicketPrice(eventId);
+        const rawPrices = res?.price ?? res?.prices ?? res?.data?.price ?? res?.data?.prices ?? res?.data ?? res;
+        const pricesArray = Array.isArray(rawPrices) ? rawPrices : null;
+
+        if (Array.isArray(pricesArray)) {
+          pricesArray.forEach((p, idx) => {
+            const numP = Number(p);
+            if (!Number.isNaN(numP)) {
+              priceMap[String(idx)] = numP;
+              priceMap[`ticket-${idx}`] = numP;
+              const t = eventTiers[idx];
+              if (t) {
+                const ticketId = t.id ?? t.ticketTypeId ?? t.typeId;
+                if (ticketId != null) priceMap[String(ticketId)] = numP;
+                if (t.name) priceMap[String(t.name).toLowerCase().trim()] = numP;
               }
             }
-          })
-        );
+          });
+        } else if (rawPrices != null && !Number.isNaN(Number(rawPrices))) {
+          const numP = Number(rawPrices);
+          priceMap["0"] = numP;
+          priceMap["ticket-0"] = numP;
+          eventTiers.forEach((t, idx) => {
+            priceMap[String(idx)] = numP;
+            priceMap[`ticket-${idx}`] = numP;
+            if (t) {
+              const ticketId = t.id ?? t.ticketTypeId ?? t.typeId;
+              if (ticketId != null) priceMap[String(ticketId)] = numP;
+            }
+          });
+        }
+
         if (isMounted && Object.keys(priceMap).length > 0) {
           setApiTicketPrices((prev) => ({ ...prev, ...priceMap }));
         }
@@ -3456,10 +3485,11 @@ function Tickets({ event }) {
   const TIERS = eventTiers.length > 0 ? eventTiers.map((t, i) => {
     const ticketIdKey = String(t.id ?? t.ticketTypeId ?? t.typeId ?? i);
     const dynamicP = apiTicketPrices[ticketIdKey];
-    const baseP = dynamicP !== undefined ? Number(dynamicP) : (t.price ?? t.amount ?? t.basePrice ?? t.b2cPrice ?? 0);
+    const rawBaseP = Number(t.price ?? t.amount ?? t.basePrice ?? t.b2cPrice ?? 0);
+    const baseP = dynamicP !== undefined ? Number(dynamicP) : rawBaseP;
     const taxP = t.tax ?? t.taxAmount ?? t.tax_amount ?? t.taxes ?? 0;
     const discP = t.discount ?? t.discountAmount ?? t.discount_amount ?? 0;
-    const strikeP = t.strikePrice ?? t.originalPrice ?? t.strike_price ?? null;
+    const strikeP = t.strikePrice ?? t.originalPrice ?? t.strike_price ?? ((dynamicP !== undefined && rawBaseP > dynamicP) ? rawBaseP : null);
 
     return {
       id: t.id || i,
