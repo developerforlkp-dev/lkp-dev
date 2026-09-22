@@ -1633,42 +1633,96 @@ const ViewDetails = () => {
     setIsFetchingRebookData(true);
     
     try {
-      const businessInterestCode = String(bookingToRebook?.originalData?.businessInterestCode || bookingToRebook?.category || "").toUpperCase();
-      const isStayOrder = businessInterestCode === "STAYS" || bookingToRebook?.originalData?.stayId != null || Array.isArray(bookingToRebook?.originalData?.stayOrderRooms);
-      const isEventOrder = businessInterestCode === "EVENTS" || bookingToRebook?.originalData?.eventId != null || bookingToRebook?.isEventOrder;
+      const businessInterestCode = String(
+        bookingToRebook?.originalData?.businessInterestCode ||
+        bookingToRebook?.originalData?.business_interest_code ||
+        bookingToRebook?.businessInterestCode ||
+        bookingToRebook?.business_interest_code ||
+        bookingToRebook?.category ||
+        bookingToRebook?.bookingData?.businessInterestCode ||
+        bookingToRebook?.serviceType ||
+        ""
+      ).toUpperCase();
+
+      const isStayOrder =
+        businessInterestCode === "STAYS" ||
+        businessInterestCode === "STAY" ||
+        businessInterestCode === "HOTEL" ||
+        businessInterestCode === "HOSTEL" ||
+        bookingToRebook?.originalData?.stayId != null ||
+        bookingToRebook?.bookingData?.stayId != null ||
+        bookingToRebook?.stayId != null ||
+        bookingToRebook?.stayData?.id != null ||
+        bookingToRebook?.stayData?.stayId != null ||
+        Array.isArray(bookingToRebook?.originalData?.stayOrderRooms) ||
+        Array.isArray(bookingToRebook?.bookingData?.stayOrderRooms);
+
+      const isEventOrder =
+        businessInterestCode === "EVENTS" ||
+        businessInterestCode === "EVENT" ||
+        bookingToRebook?.originalData?.eventId != null ||
+        bookingToRebook?.bookingData?.eventId != null ||
+        bookingToRebook?.eventId != null ||
+        bookingToRebook?.eventData?.id != null ||
+        bookingToRebook?.eventData?.eventId != null ||
+        bookingToRebook?.isEventOrder;
       
       let data = null;
       let type = "experience";
 
       if (isStayOrder) {
         type = "stay";
-        data = bookingToRebook?.stayData;
-        if (!data) {
-          const stayId = bookingToRebook?.stayData?.id || bookingToRebook?.stayData?.stayId || bookingToRebook?.originalData?.propertyId || bookingToRebook?.originalData?.stayId || bookingToRebook?.originalData?.stayOrderRooms?.[0]?.stayId || bookingToRebook?.originalData?.stayOrderRooms?.[0]?.propertyId;
-          if (stayId) {
-            const res = await getStayDetails(stayId);
-            data = res?.stay || res;
-          }
+        const stayId =
+          bookingToRebook?.originalData?.stayId ||
+          bookingToRebook?.originalData?.propertyId ||
+          bookingToRebook?.bookingData?.stayId ||
+          bookingToRebook?.bookingData?.propertyId ||
+          bookingToRebook?.stayData?.id ||
+          bookingToRebook?.stayData?.stayId ||
+          bookingToRebook?.originalData?.stayOrderRooms?.[0]?.stayId ||
+          bookingToRebook?.originalData?.stayOrderRooms?.[0]?.propertyId ||
+          bookingToRebook?.bookingData?.stayOrderRooms?.[0]?.stayId ||
+          bookingToRebook?.bookingData?.stayOrderRooms?.[0]?.propertyId ||
+          bookingToRebook?.stayId ||
+          bookingToRebook?.listingId;
+
+        if (stayId) {
+          const res = await getStayDetails(stayId);
+          data = res?.stay || res?.data?.stay || res?.data || res;
+        } else if (bookingToRebook?.stayData) {
+          data = bookingToRebook.stayData;
         }
       } else if (isEventOrder) {
         type = "event";
-        data = bookingToRebook?.eventData;
-        if (!data) {
-          const eventId = bookingToRebook?.eventData?.id || bookingToRebook?.eventData?.eventId || bookingToRebook?.originalData?.eventId;
-          if (eventId) {
-            const res = await getEventDetails(eventId);
-            data = res?.event || res;
-          }
+        const eventId =
+          bookingToRebook?.originalData?.eventId ||
+          bookingToRebook?.bookingData?.eventId ||
+          bookingToRebook?.eventData?.id ||
+          bookingToRebook?.eventData?.eventId ||
+          bookingToRebook?.eventId ||
+          bookingToRebook?.listingId;
+
+        if (eventId) {
+          const res = await getEventDetails(eventId);
+          data = res?.event || res?.data?.event || res?.data || res;
+        } else if (bookingToRebook?.eventData) {
+          data = bookingToRebook.eventData;
         }
       } else {
         type = "experience";
-        data = bookingToRebook?.listingData;
-        if (!data) {
-          const listingId = bookingToRebook?.listingData?.id || bookingToRebook?.listingData?.listingId || bookingToRebook?.originalData?.listingId;
-          if (listingId) {
-            const res = await getListing(listingId);
-            data = res?.listing || res;
-          }
+        const listingId =
+          bookingToRebook?.originalData?.listingId ||
+          bookingToRebook?.bookingData?.listingId ||
+          bookingToRebook?.listingData?.id ||
+          bookingToRebook?.listingData?.listingId ||
+          bookingToRebook?.listingId ||
+          bookingToRebook?.id;
+
+        if (listingId) {
+          const res = await getListing(listingId);
+          data = res?.listing || res?.data?.listing || res?.data || res;
+        } else if (bookingToRebook?.listingData) {
+          data = bookingToRebook.listingData;
         }
       }
 

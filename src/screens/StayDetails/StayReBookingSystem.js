@@ -4209,22 +4209,11 @@ const StayBookingSystem = ({
               }}
             >
               {/* Header */}
-              <div className="booking-modal-header" style={{ padding: "16px 28px 8px 28px", borderBottom: `1px solid ${B}88`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div className="booking-modal-header" style={{ padding: "20px 28px", borderBottom: `1px solid ${B}88`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h2 style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 2, lineHeight: "1.2" }}>
+                  <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.15em", color: A, margin: 0, lineHeight: "1.2" }}>
                     Reserve Your Stay
                   </h2>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    {!fetchingAvailability && modalHeaderPricing.hasDiscount && (
-                      <span style={{ fontSize: 13, fontWeight: 600, color: M, textDecoration: "line-through", opacity: 0.7 }}>
-                        {"\u20B9"}{formatPrice(modalHeaderPricing.originalPerNight)}
-                      </span>
-                    )}
-                    <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>
-                      {fetchingAvailability ? "..." : `${"\u20B9"}${formatPrice(modalHeaderPricing.discountedPerNight)}`}
-                    </span>
-                    <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>/ night</span>
-                  </div>
                 </div>
                 <button type="button" onClick={closeBookingModal} style={{ background: S, border: `1px solid ${B}`, padding: 8, borderRadius: 100, cursor: "pointer", color: FG }}>
                   <X size={18} />

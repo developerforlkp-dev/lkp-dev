@@ -1189,32 +1189,96 @@ const Main = ({
     setIsFetchingRebookData(true);
     
     try {
-      const businessInterestCode = String(booking?.bookingData?.businessInterestCode || booking?.category || "").toUpperCase();
-      const isStayOrder = businessInterestCode === "STAYS" || booking?.bookingData?.stayId != null || Array.isArray(booking?.bookingData?.stayOrderRooms);
-      const isEventOrder = businessInterestCode === "EVENTS" || booking?.bookingData?.eventId != null;
+      const businessInterestCode = String(
+        booking?.bookingData?.businessInterestCode ||
+        booking?.bookingData?.business_interest_code ||
+        booking?.originalData?.businessInterestCode ||
+        booking?.originalData?.business_interest_code ||
+        booking?.businessInterestCode ||
+        booking?.business_interest_code ||
+        booking?.category ||
+        booking?.serviceType ||
+        ""
+      ).toUpperCase();
+
+      const isStayOrder =
+        businessInterestCode === "STAYS" ||
+        businessInterestCode === "STAY" ||
+        businessInterestCode === "HOTEL" ||
+        businessInterestCode === "HOSTEL" ||
+        booking?.bookingData?.stayId != null ||
+        booking?.originalData?.stayId != null ||
+        booking?.stayId != null ||
+        booking?.stayData?.id != null ||
+        booking?.stayData?.stayId != null ||
+        Array.isArray(booking?.bookingData?.stayOrderRooms) ||
+        Array.isArray(booking?.originalData?.stayOrderRooms);
+
+      const isEventOrder =
+        businessInterestCode === "EVENTS" ||
+        businessInterestCode === "EVENT" ||
+        booking?.bookingData?.eventId != null ||
+        booking?.originalData?.eventId != null ||
+        booking?.eventId != null ||
+        booking?.eventData?.id != null ||
+        booking?.eventData?.eventId != null ||
+        booking?.isEventOrder;
       
       let data = null;
       let type = "experience";
 
       if (isStayOrder) {
-        const stayId = booking?.bookingData?.stayId || booking?.stayId || booking?.listingId || booking?.bookingData?.listingId;
+        const stayId =
+          booking?.bookingData?.stayId ||
+          booking?.bookingData?.propertyId ||
+          booking?.originalData?.stayId ||
+          booking?.originalData?.propertyId ||
+          booking?.stayData?.id ||
+          booking?.stayData?.stayId ||
+          booking?.bookingData?.stayOrderRooms?.[0]?.stayId ||
+          booking?.bookingData?.stayOrderRooms?.[0]?.propertyId ||
+          booking?.originalData?.stayOrderRooms?.[0]?.stayId ||
+          booking?.originalData?.stayOrderRooms?.[0]?.propertyId ||
+          booking?.stayId ||
+          booking?.listingId;
+
         if (stayId) {
           const res = await getStayDetails(stayId);
-          data = res?.stay || res;
+          data = res?.stay || res?.data?.stay || res?.data || res;
+        } else if (booking?.stayData) {
+          data = booking.stayData;
         }
         type = "stay";
       } else if (isEventOrder) {
-        const eventId = booking?.bookingData?.eventId || booking?.eventId || booking?.listingId || booking?.bookingData?.listingId;
+        const eventId =
+          booking?.bookingData?.eventId ||
+          booking?.originalData?.eventId ||
+          booking?.eventData?.id ||
+          booking?.eventData?.eventId ||
+          booking?.eventId ||
+          booking?.listingId;
+
         if (eventId) {
           const res = await getEventDetails(eventId);
-          data = res?.event || res;
+          data = res?.event || res?.data?.event || res?.data || res;
+        } else if (booking?.eventData) {
+          data = booking.eventData;
         }
         type = "event";
       } else {
-        const listingId = booking?.bookingData?.listingId || booking?.listingId;
+        const listingId =
+          booking?.bookingData?.listingId ||
+          booking?.originalData?.listingId ||
+          booking?.listingData?.id ||
+          booking?.listingData?.listingId ||
+          booking?.listingId ||
+          booking?.id;
+
         if (listingId) {
           const res = await getListing(listingId);
-          data = res?.listing || res;
+          data = res?.listing || res?.data?.listing || res?.data || res;
+        } else if (booking?.listingData) {
+          data = booking.listingData;
         }
         type = "experience";
       }
