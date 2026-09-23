@@ -994,15 +994,15 @@ const isPastExperienceStartTime = (booking) => {
   if (!startDateStr || startDateStr === "TBD") return false;
 
   const startTimeStr =
-    bookingData?.bookingTime ||
-    bookingData?.startTime ||
     bookingData?.timeSlotStartTime ||
+    bookingData?.startTime ||
     bookingData?.bookingSlot?.startTime ||
     bookingData?.bookingSlot?.name ||
     booking?.startTime ||
-    booking?.bookingTime ||
     bookingData?.eventDetails?.startTime ||
     booking?.eventData?.startTime ||
+    bookingData?.bookingTime ||
+    booking?.bookingTime ||
     "00:00:00";
 
   let hours = 0;

@@ -68,7 +68,12 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
     return () => clearInterval(timer);
   }, [discounts]);
 
-  if (!discounts || discounts.length === 0) return null;
+  if (!Array.isArray(discounts) || discounts.length === 0) return null;
+
+  const currentDiscount = discounts[index % discounts.length];
+  if (!currentDiscount) return null;
+  const days = currentDiscount.daysInAdvance ?? currentDiscount.days_in_advance ?? 0;
+  const percentage = currentDiscount.percentage ?? currentDiscount.discountPercentage ?? 0;
 
   return (
     <div style={{ display: "grid", height: 20, alignItems: "center", overflow: "hidden" }}>
@@ -92,11 +97,11 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
         >
           <span style={{ opacity: 0.7 }}>Book</span>{" "}
           <span style={{ color: isDark ? "#38BDF8" : "#0284C7", fontWeight: 800 }}>
-            {discounts[index].daysInAdvance} Days
+            {days} Days
           </span>{" "}
           <span style={{ opacity: 0.7 }}>Advance:</span>{" "}
           <span style={{ color: isDark ? "#4ADE80" : "#16A34A", fontWeight: 800 }}>
-            {discounts[index].percentage}% OFF
+            {percentage}% OFF
           </span>
         </motion.span>
       </AnimatePresence>
@@ -834,45 +839,74 @@ export default function MobileExperienceView({
                 if (!items || items.length === 0) return null;
                 return (
                   <Accordion key={catTitle} title={catTitle} icon={icon} borderColor={B} fgColor={FG} mColor={M} accentColor={A}>
-                    {items.map((item, idx) => (
-                      <div key={idx} style={{ marginBottom: idx === items.length - 1 ? 0 : 16 }}>
-                        {item.title && item.title !== item.desc && (
-                          <p style={{ fontWeight: 700, fontSize: 14, color: FG, marginBottom: 4 }}>{item.title}</p>
-                        )}
-                        {item.desc && (
-                          <div style={{ fontSize: 13, color: M, marginBottom: 8 }}>
-                            {catTitle.toLowerCase().includes('cancellation') && item.desc.split('. ').filter(s => s.trim().length > 0).length > 1 ? (
-                              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-                                {item.desc.split('. ').filter(s => s.trim().length > 0).map((sentence, idx) => (
-                                  <div key={idx} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                    <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
-                                    <div style={{ flex: 1 }}>
-                                      {sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {items.map((item, idx) => {
+                        const hasQuestions = item.questions && item.questions.length > 0;
+                        return (
+                          <div key={idx} style={{ borderBottom: idx === items.length - 1 ? "none" : `1px solid ${B}`, paddingBottom: idx === items.length - 1 ? 0 : 12 }}>
+                            {/* If item has no questions, treat item.title / item.desc as bullet point item */}
+                            {!hasQuestions && (
+                              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                                <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
+                                <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                                  {item.title && (
+                                    <span style={{ fontWeight: 600, fontSize: 13, color: FG, lineHeight: 1.4 }}>{item.title}</span>
+                                  )}
+                                  {item.desc && item.desc !== item.title && (
+                                    <div style={{ fontSize: 13, color: M, lineHeight: 1.5 }}>
+                                      {catTitle.toLowerCase().includes('cancellation') && item.desc.split('. ').filter(s => s.trim().length > 0).length > 1 ? (
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                                          {item.desc.split('. ').filter(s => s.trim().length > 0).map((sentence, sIdx) => (
+                                            <div key={sIdx} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                                              <div style={{ width: 5, height: 5, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
+                                              <div style={{ flex: 1 }}>
+                                                {sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <p style={{ margin: 0 }}>{item.desc}</p>
+                                      )}
                                     </div>
-                                  </div>
-                                ))}
+                                  )}
+                                </div>
                               </div>
-                            ) : (
-                              <p style={{ margin: 0 }}>{item.desc}</p>
+                            )}
+
+                            {/* If item has questions, render title if different, and each question with bullet point */}
+                            {hasQuestions && (
+                              <div>
+                                {item.title && item.title !== "Requirement" && (
+                                  <p style={{ fontWeight: 700, fontSize: 13, color: FG, marginBottom: 6 }}>{item.title}</p>
+                                )}
+                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                  {item.questions.map((q, qi) => {
+                                    const questionTitle = q.title || q.question?.title;
+                                    const answerText = q.answer?.valueText || q.valueText;
+                                    return (
+                                      <div key={qi} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                                        <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 6 }} />
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                                          <span style={{ fontWeight: 600, fontSize: 13, color: FG, lineHeight: 1.4 }}>{questionTitle}</span>
+                                          {answerText && (
+                                            <div style={{ marginTop: 2 }}>
+                                              <span style={{ display: "inline-block", fontSize: 12, padding: "3px 10px", borderRadius: 100, background: AL, color: A, fontWeight: 600 }}>
+                                                {answerText}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             )}
                           </div>
-                        )}
-                        {item.questions?.map((q, qi) => {
-                          const questionTitle = q.title || q.question?.title;
-                          const answerText = q.answer?.valueText || q.valueText;
-                          return (
-                            <div key={qi} style={{ marginTop: 8 }}>
-                              <p style={{ fontWeight: 600, fontSize: 13, color: FG, marginBottom: 4 }}>{questionTitle}</p>
-                              {answerText && (
-                                <span style={{ display: "inline-block", fontSize: 12, padding: "4px 10px", borderRadius: 100, background: AL, color: A, fontWeight: 600, marginRight: 6, marginBottom: 4 }}>
-                                  {answerText}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                        );
+                      })}
+                    </div>
                   </Accordion>
                 );
               };
