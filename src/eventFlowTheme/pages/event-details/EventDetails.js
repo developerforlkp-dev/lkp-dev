@@ -2976,8 +2976,8 @@ function HostDetails({ event, hostName }) {
                     }}>
                       Newly Added
                     </span>
-                    <h4 style={{ fontSize: 20, fontWeight: 700, color: FG, margin: "0 0 8px 0", fontFamily: "Poppins, sans-serif" }}>Welcome to LKP</h4>
-                    <p style={{ fontSize: 13, color: M, margin: 0, maxWidth: 280, lineHeight: 1.5 }}>
+                    <h4 style={{ fontSize: 16, fontWeight: 700, color: FG, margin: "0 0 8px 0", fontFamily: '"Poppins", sans-serif' }}>Welcome to LKP</h4>
+                    <p style={{ fontSize: 12, color: M, margin: 0, maxWidth: 280, lineHeight: 1.5, fontFamily: '"Poppins", sans-serif' }}>
                       This listing is new to our platform. It is currently building its verified trust score based on guest experiences.
                     </p>
                   </div>
