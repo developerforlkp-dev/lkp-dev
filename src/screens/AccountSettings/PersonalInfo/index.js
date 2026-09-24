@@ -512,59 +512,6 @@ const PersonalInfo = () => {
           </div>
         </div>
 
-        <div className={cn(styles.card, styles.item)}>
-          <div className={styles.category}>Social links</div>
-          <div className={styles.fieldset}>
-            <div className={styles.row}>
-              <div className={styles.col}>
-                <TextInput
-                  className={styles.field}
-                  label="Instagram"
-                  name="instagram"
-                  value={profile.instagram}
-                  onChange={handleChange}
-                  type="text"
-                  placeholder="Instagram profile link"
-                />
-              </div>
-              <div className={styles.col}>
-                <TextInput
-                  className={styles.field}
-                  label="Facebook"
-                  name="facebook"
-                  value={profile.facebook}
-                  onChange={handleChange}
-                  type="text"
-                  placeholder="Facebook profile link"
-                />
-              </div>
-            </div>
-            <div className={styles.row}>
-              <div className={styles.col}>
-                <TextInput
-                  className={styles.field}
-                  label="LinkedIn"
-                  name="linkedin"
-                  value={profile.linkedin}
-                  onChange={handleChange}
-                  type="text"
-                  placeholder="LinkedIn profile link"
-                />
-              </div>
-              <div className={styles.col}>
-                <TextInput
-                  className={styles.field}
-                  label="Twitter / X"
-                  name="twitter"
-                  value={profile.twitter}
-                  onChange={handleChange}
-                  type="text"
-                  placeholder="Twitter / X profile link"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className={styles.controls}>

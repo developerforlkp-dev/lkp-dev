@@ -1263,104 +1263,125 @@ const ExperienceProduct = () => {
                 </div>
 
                 {/* Fact 5: Languages */}
-                <div className="fact-card" style={{ position: "relative", padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF', height: "100%", boxSizing: "border-box" }}>
-                  <Languages size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
-                  {(() => {
-                    const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
-                      ? listing.languagesOffered
-                      : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : ["Flexible"]);
+                {(() => {
+                  const list = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0
+                    ? listing.languagesOffered
+                    : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : ["Flexible"]);
 
-                    const displayLanguage = list[0];
-                    const remainingCount = list.length - 1;
-                    const hasMore = remainingCount > 0;
+                  const displayLanguage = list[0];
+                  const remainingCount = list.length - 1;
+                  const hasMore = remainingCount > 0;
 
-                    return (
-                      <>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-start", width: "100%", marginBottom: 6 }}>
-                          <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {displayLanguage}
-                          </span>
-                          {hasMore && (
-                            <div style={{ position: "relative", display: "inline-flex" }}>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setLangPopoverOpen(!langPopoverOpen); }}
-                                onMouseEnter={(e) => { e.currentTarget.style.background = `${A}33`; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.background = `${A}1A`; }}
-                                style={{
-                                  background: `${A}1A`,
-                                  color: A,
-                                  border: "none",
-                                  borderRadius: "100px",
-                                  padding: "2px 8px",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  justifyContent: "center",
-                                  fontSize: "12px",
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  flexShrink: 0,
-                                  outline: "none",
-                                  transition: "background 0.2s ease"
-                                }}
-                              >
-                                +{remainingCount} <ChevronDown size={14} style={{ strokeWidth: 2.5 }} />
-                              </button>
-                              {langPopoverOpen && (
+                  return (
+                    <div
+                      className="fact-card"
+                      onMouseEnter={() => {
+                        if (hasMore) setLangPopoverOpen(true);
+                      }}
+                      onMouseLeave={() => {
+                        if (hasMore) setLangPopoverOpen(false);
+                      }}
+                      style={{
+                        position: "relative",
+                        padding: "24px 20px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        justifyContent: "center",
+                        textAlign: "left",
+                        borderRadius: "16px",
+                        border: `1px solid ${B}`,
+                        background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
+                        height: "100%",
+                        boxSizing: "border-box",
+                        cursor: hasMore ? "pointer" : "default"
+                      }}
+                    >
+                      <Languages size={24} color={A} fill="transparent" style={{ marginBottom: "16px" }} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-start", width: "100%", marginBottom: 6 }}>
+                        <span style={{ fontSize: "16px", fontWeight: 700, color: FG, fontFamily: '"Inter", sans-serif', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {displayLanguage}
+                        </span>
+                        {hasMore && (
+                          <div style={{ position: "relative", display: "inline-flex" }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setLangPopoverOpen(!langPopoverOpen); }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = `${A}33`; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = `${A}1A`; }}
+                              style={{
+                                background: `${A}1A`,
+                                color: A,
+                                border: "none",
+                                borderRadius: "100px",
+                                padding: "2px 8px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                justifyContent: "center",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                flexShrink: 0,
+                                outline: "none",
+                                transition: "background 0.2s ease"
+                              }}
+                            >
+                              +{remainingCount} <ChevronDown size={14} style={{ strokeWidth: 2.5 }} />
+                            </button>
+                            {langPopoverOpen && (
+                              <div style={{
+                                position: "absolute",
+                                bottom: "calc(100% + 14px)",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                background: W,
+                                border: `1px solid ${B}`,
+                                borderRadius: "16px",
+                                padding: "16px",
+                                boxShadow: "0 12px 32px rgba(0, 0, 0, 0.08)",
+                                zIndex: 100,
+                                minWidth: "220px",
+                                textAlign: "left"
+                              }}>
+                                <p style={{ fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: M, margin: "0 0 12px 0", fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>All Languages</p>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                                  {list.map((lang, idx) => (
+                                    <span key={idx} style={{ background: "transparent", color: A, padding: "6px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600, fontFamily: '"Inter", sans-serif', textTransform: "capitalize" }}>
+                                      {lang.trim().toLowerCase()}
+                                    </span>
+                                  ))}
+                                </div>
                                 <div style={{
                                   position: "absolute",
-                                  bottom: "calc(100% + 14px)",
+                                  top: "100%",
                                   left: "50%",
                                   transform: "translateX(-50%)",
-                                  background: W,
-                                  border: `1px solid ${B}`,
-                                  borderRadius: "16px",
-                                  padding: "16px",
-                                  boxShadow: "0 12px 32px rgba(0, 0, 0, 0.08)",
-                                  zIndex: 100,
-                                  minWidth: "220px",
-                                  textAlign: "left"
-                                }}>
-                                  <p style={{ fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: M, margin: "0 0 12px 0", fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>All Languages</p>
-                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                                    {list.map((lang, idx) => (
-                                      <span key={idx} style={{ background: "transparent", color: A, padding: "6px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600, fontFamily: '"Inter", sans-serif', textTransform: "capitalize" }}>
-                                        {lang.trim().toLowerCase()}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <div style={{
-                                    position: "absolute",
-                                    top: "100%",
-                                    left: "50%",
-                                    transform: "translateX(-50%)",
-                                    width: 0,
-                                    height: 0,
-                                    borderLeft: "8px solid transparent",
-                                    borderRight: "8px solid transparent",
-                                    borderTop: `8px solid ${B}`
-                                  }} />
-                                  <div style={{
-                                    position: "absolute",
-                                    top: "100%",
-                                    left: "50%",
-                                    transform: "translateX(-50%) translateY(-1px)",
-                                    width: 0,
-                                    height: 0,
-                                    borderLeft: "8px solid transparent",
-                                    borderRight: "8px solid transparent",
-                                    borderTop: `8px solid ${W}`
-                                  }} />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
-                  <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Languages</p>
-                </div>
+                                  width: 0,
+                                  height: 0,
+                                  borderLeft: "8px solid transparent",
+                                  borderRight: "8px solid transparent",
+                                  borderTop: `8px solid ${B}`
+                                }} />
+                                <div style={{
+                                  position: "absolute",
+                                  top: "100%",
+                                  left: "50%",
+                                  transform: "translateX(-50%) translateY(-1px)",
+                                  width: 0,
+                                  height: 0,
+                                  borderLeft: "8px solid transparent",
+                                  borderRight: "8px solid transparent",
+                                  borderTop: `8px solid ${W}`
+                                }} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <p style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: M, margin: 0, fontWeight: 600, fontFamily: '"Inter", sans-serif' }}>Languages</p>
+                    </div>
+                  );
+                })()}
 
                 {/* Fact 6: Private Tour / Group Size */}
                 <div className="fact-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", textAlign: "left", borderRadius: "16px", border: `1px solid ${B}`, background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF', height: "100%", boxSizing: "border-box" }}>
