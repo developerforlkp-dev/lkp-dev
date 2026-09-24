@@ -587,11 +587,11 @@ export default function MobileExperienceView({
           ╚═══════════════════════════════════╝ */}
       <div className="mob-section" style={{ background: isDark ? BG : W }}>
         <span className="mob-section-eyebrow" style={{ color: A }}>Location & Details</span>
-        <h2 className="mob-section-title" style={{ color: FG }}>Where it All Happens</h2>
+        <h2 className="mob-section-title" style={{ color: FG, marginBottom: 16 }}>Where it All Happens</h2>
 
         {/* Map embed */}
         {(listing?.meetingLatitude && listing?.meetingLongitude) && (
-          <div className="mob-map-container" style={{ border: `1px solid ${B}`, width: "100%", boxSizing: "border-box", overflow: "hidden", borderRadius: 12 }}>
+          <div className="mob-map-container" style={{ border: `1px solid ${B}`, width: "100%", boxSizing: "border-box", overflow: "hidden", borderRadius: 12, marginBottom: 16 }}>
             <iframe
               title="Location"
               src={`https://maps.google.com/maps?q=${listing.meetingLatitude},${listing.meetingLongitude}&z=14&output=embed`}
@@ -602,66 +602,74 @@ export default function MobileExperienceView({
           </div>
         )}
 
-        {/* Detail rows */}
-        <div className="mob-detail-rows">
-          {listing?.meetingAddress && (
-            <div className="mob-detail-row" style={{ borderColor: B }}>
-              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <MapPin size={18} color={A} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
-                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingAddress}</span>
-              </div>
-            </div>
-          )}
-          {listing?.meetingDistrict && (
-            <div className="mob-detail-row" style={{ borderColor: B }}>
-              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <Building size={18} color={A} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
-                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingDistrict}</span>
-              </div>
-            </div>
-          )}
-          {listing?.meetingState && (
-            <div className="mob-detail-row" style={{ borderColor: B }}>
-              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <Map size={18} color={A} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
-                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingState}</span>
-              </div>
-            </div>
-          )}
-          {listing?.meetingCountry && (
-            <div className="mob-detail-row" style={{ borderColor: B }}>
-              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <Globe size={18} color={A} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
-                <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingCountry}</span>
-              </div>
-            </div>
-          )}
-          {listing?.meetingInstructions && (
-            <div className="mob-detail-row" style={{ borderColor: B }}>
-              <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
-                <Info size={18} color={A} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
-                <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>
-                  <ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} />
+        <Accordion 
+          title="View Location Details"
+          icon={<MapPin size={16} color={A} />}
+          borderColor={B} fgColor={FG} mColor={M} accentColor={A}
+        >
+          <div style={{ paddingTop: 8 }}>
+            {/* Detail rows */}
+            <div className="mob-detail-rows">
+              {listing?.meetingAddress && (
+                <div className="mob-detail-row" style={{ borderColor: B }}>
+                  <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                    <MapPin size={18} color={A} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Address</span>
+                    <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingAddress}</span>
+                  </div>
                 </div>
-              </div>
+              )}
+              {listing?.meetingDistrict && (
+                <div className="mob-detail-row" style={{ borderColor: B }}>
+                  <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                    <Building size={18} color={A} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>District</span>
+                    <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingDistrict}</span>
+                  </div>
+                </div>
+              )}
+              {listing?.meetingState && (
+                <div className="mob-detail-row" style={{ borderColor: B }}>
+                  <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                    <Map size={18} color={A} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>State</span>
+                    <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingState}</span>
+                  </div>
+                </div>
+              )}
+              {listing?.meetingCountry && (
+                <div className="mob-detail-row" style={{ borderColor: B }}>
+                  <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                    <Globe size={18} color={A} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Country</span>
+                    <span style={{ fontSize: 16, color: FG, fontWeight: 400, lineHeight: 1.4, fontFamily: '"Inter", sans-serif', minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>{listing.meetingCountry}</span>
+                  </div>
+                </div>
+              )}
+              {listing?.meetingInstructions && (
+                <div className="mob-detail-row" style={{ borderColor: B }}>
+                  <div className="mob-detail-icon" style={{ background: isDark ? "#1E293B" : "#F0F9FA" }}>
+                    <Info size={18} color={A} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "12px", letterSpacing: "0.15em", textTransform: "uppercase", color: A, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>Instructions</span>
+                    <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "normal", whiteSpace: "normal" }}>
+                      <ExpandableInstructionText text={listing.meetingInstructions} FG={FG} A={A} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </Accordion>
 
         {/* Things to Keep in Mind */}
         {(listing?.thingsToKeepInMind?.length > 0 || listing?.whatToBring?.length > 0 || listing?.notSuitableFor?.length > 0) && (
@@ -733,7 +741,7 @@ export default function MobileExperienceView({
           <div className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
             <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
               <img
-                src={fmt(leadData?.profilePhotoUrl || leadData?.profileImageUrl || hostData?.profilePhotoUrl || hostData?.profileImageUrl || hostData?.host?.profilePhotoUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+                src={fmt(hostData?.profilePhotoUrl || hostData?.profileImageUrl || hostData?.host?.profilePhotoUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar || leadData?.profilePhotoUrl || leadData?.profileImageUrl) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
                 alt={displayHostName}
                 style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
                 onError={(e) => { e.target.onerror = null; e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`; }}
