@@ -2520,6 +2520,7 @@ const ViewDetails = () => {
         // Determine if this is an event order
         const isEventOrder = bookingType === "event" ||
           apiBookingData?.businessInterestCode === "EVENTS" ||
+          apiBookingData?.businessInterestCode === "EVENT" ||
           apiBookingData?.eventId != null;
 
         // For event orders, prefer using event info embedded in the event-details API response
