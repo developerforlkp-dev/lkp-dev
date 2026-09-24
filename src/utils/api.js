@@ -3032,6 +3032,8 @@ export const previewPublicDirectBookingPrice = async (token, {
   bookingDate,
   guestCount = 1,
   includePriority = true,
+  isPrivateBooking,
+  privateBooking,
 } = {}) => {
   if (!token) throw new Error("Direct booking token is required");
   const baseUrl = getApiBaseURL();
@@ -3065,6 +3067,7 @@ export const previewPublicDirectBookingPrice = async (token, {
     ...(cleanDate ? { bookingDate: cleanDate } : {}),
     guestCount: Math.max(1, Number(guestCount) || 1),
     includePriority: Boolean(includePriority),
+    ...(isPrivateBooking !== undefined || privateBooking !== undefined ? { isPrivateBooking: Boolean(isPrivateBooking || privateBooking), privateBooking: Boolean(isPrivateBooking || privateBooking) } : {}),
   };
 
   try {

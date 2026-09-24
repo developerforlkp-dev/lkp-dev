@@ -4095,6 +4095,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           quantity: safeTotalGuests,
           childCount: safeChildren,
           childAges: childAges,
+          isPrivateBooking: Boolean(privateBooking),
+          privateBooking: Boolean(privateBooking),
           guestDetails: {
             adults: safeAdults,
             children: safeChildren,
@@ -4130,6 +4132,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             bookingDate,
             guestCount: totalGuests,
             includePriority: hasPriority,
+            isPrivateBooking: Boolean(privateBooking),
+            privateBooking: Boolean(privateBooking),
           });
           console.log("✅ [ReserveModal -> DirectCheckout] preview-price response received:", JSON.stringify(previewPriceRes, null, 2));
         } catch (previewErr) {
