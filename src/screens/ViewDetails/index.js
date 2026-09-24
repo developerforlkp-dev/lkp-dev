@@ -3978,7 +3978,6 @@ const ViewDetails = () => {
               <button
                 type="button"
                 className={cn("button-stroke", styles.cancelModalBtn)}
-                style={{ marginLeft: '12px' }}
                 onClick={() => handleRebook(validationModalData.bookingToRebook)}
                 disabled={isFetchingRebookData}
               >
@@ -3989,7 +3988,6 @@ const ViewDetails = () => {
               <button
                 type="button"
                 className={cn("button", styles.cancelModalBtn)}
-                style={{ marginLeft: '12px' }}
                 onClick={() => {
                   setValidationModalVisible(false);
                   const originalStatus = booking?.originalData?.orderStatus ? String(booking.originalData.orderStatus).toUpperCase().trim() : "";
