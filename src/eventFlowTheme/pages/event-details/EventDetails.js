@@ -2043,6 +2043,7 @@ function Venue({ event, hostName }) {
   const { theme, tokens: { A, BG, FG, M, S, B, W } } = useTheme();
   const isMobile = useMobileView();
   const [instructionsExpanded, setInstructionsExpanded] = useState(false);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
   const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
   const tags = Array.isArray(event?.tags) ? event.tags :
@@ -2137,8 +2138,21 @@ function Venue({ event, hostName }) {
 
             {/* RIGHT: Details List */}
             <Rev delay={0.2} style={{ height: "100%" }}>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: isMobile ? "0" : "16px 16px 16px 0" }}>
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: isMobile ? "0" : "16px 16px 16px 0", marginTop: isMobile ? 16 : 0 }}>
+                {isMobile && (
+                  <button 
+                    onClick={() => setDetailsExpanded(!detailsExpanded)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "transparent", border: `1px solid ${B}`, borderRadius: detailsExpanded ? "12px 12px 0 0" : 12, color: FG, cursor: "pointer", outline: "none", marginBottom: detailsExpanded ? 0 : 16 }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <MapPin size={16} color={A} />
+                      <span style={{ fontSize: 14, fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>View Location Details</span>
+                    </div>
+                    <ChevronDown size={16} color={M} style={{ transform: detailsExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+                  </button>
+                )}
+                <div style={{ display: (!isMobile || detailsExpanded) ? "block" : "none", border: isMobile ? `1px solid ${B}` : "none", borderTop: "none", borderRadius: isMobile ? "0 0 12px 12px" : 0, padding: isMobile ? "0 16px 16px" : 0, marginBottom: isMobile ? 16 : 0 }}>
+                  <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", margin: 0, padding: 0 }}>
                   {venueAddress && (
                     <li style={{ display: "flex", gap: isMobile ? 16 : 24, alignItems: "center", borderBottom: `1px solid ${B}`, padding: "12px 0", borderTop: isMobile ? "none" : `1px solid ${B}` }}>
                       <div style={{ width: 40, height: 40, borderRadius: "8px", background: theme === 'dark' ? '#1E293B' : '#F0F9FA', display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -2219,6 +2233,7 @@ function Venue({ event, hostName }) {
                     </li>
                   )}
                 </ul>
+                </div>
               </div>
             </Rev>
           </div>

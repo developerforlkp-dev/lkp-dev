@@ -523,10 +523,6 @@ const PersonalInfo = () => {
           >
             {updating ? "Saving..." : "Save changes"}
           </button>
-          <button className={styles.clear} type="button" onClick={fetchProfile}>
-            <Icon name="close" size="16" />
-            Reset changes
-          </button>
         </div>
         {success && (
           <div className={styles.successMessage}>
