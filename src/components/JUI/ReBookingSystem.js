@@ -3864,6 +3864,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           quantity: safeTotalGuests,
           childCount: safeChildren,
           childAges: childAges,
+          isPrivateBooking: Boolean(privateBooking),
+          privateBooking: Boolean(privateBooking),
           guestDetails: {
             adults: safeAdults,
             children: safeChildren,
