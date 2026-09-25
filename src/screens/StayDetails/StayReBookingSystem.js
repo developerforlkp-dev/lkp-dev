@@ -907,6 +907,7 @@ const StayBookingSystem = ({
   addOnQuantities: initialAddOnQuantitiesProp,
   onAddOnQuantityChange: _unused14,
   onToggleAddOn: _unused15,
+  onClearBookingState,
   externalOpen,
   onExternalOpenChange,
 }) => {
@@ -1249,10 +1250,18 @@ const StayBookingSystem = ({
   const closeBookingModal = useCallback(() => {
     externalOpenHandledRef.current = false;
     setShow(false);
+    setValidationError("");
+    setSelectionMode("check-in");
+    setApiPayableAmount(null);
+    setApiPayableLoading(false);
+    setBookingErrorPopup({ visible: false, title: "", message: "", isSameDay: false });
+    if (typeof onClearBookingState === "function") {
+      onClearBookingState();
+    }
     if (onExternalOpenChange) {
       onExternalOpenChange(false);
     }
-  }, [onExternalOpenChange]);
+  }, [onClearBookingState, onExternalOpenChange]);
 
   // Removed faulty useEffect that called onExternalOpenChange(show) on mount
 
@@ -2499,14 +2508,13 @@ const StayBookingSystem = ({
     }
 
     lastCalculatedPayloadRef.current = payloadKey;
+    setApiPayableLoading(true);
 
     if (stayCalculateTimerRef.current) {
       clearTimeout(stayCalculateTimerRef.current);
     }
 
     stayCalculateTimerRef.current = setTimeout(() => {
-      setApiPayableLoading(true);
-
       calculateStayTotal(payload)
         .then((res) => {
           const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;

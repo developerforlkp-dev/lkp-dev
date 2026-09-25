@@ -114,7 +114,7 @@ const EarlyBirdTicker = ({ discounts, A, FG, isDark }) => {
    ════════════════════════════════════════════════════════════ */
 export default function MobileExperienceView({
   listing, hostData, leadData, galleryItems,
-  selectedAddOns, handleUpdateAddonQuantity,
+  selectedAddOns, handleUpdateAddonQuantity, onClearAddons,
   reviews, reviewSummary, eligibleBookings,
   history, id, formatImageUrl: parentFmt,
   description, primaryCategoryId, currentListingId,
@@ -1135,9 +1135,15 @@ export default function MobileExperienceView({
         listing={listing}
         selectedAddOns={selectedAddOns}
         onUpdateAddonQuantity={handleUpdateAddonQuantity}
+        onClearAddons={onClearAddons}
         hideTrigger={true}
         externalOpen={bookingOpen}
-        onExternalOpenChange={setBookingOpen}
+        onExternalOpenChange={(isOpen) => {
+          setBookingOpen(isOpen);
+          if (!isOpen && typeof onClearAddons === "function") {
+            onClearAddons();
+          }
+        }}
         initialDate={initialDateStr}
         initialGuests={initialGuests}
         hostName={displayHostName}

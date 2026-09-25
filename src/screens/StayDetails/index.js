@@ -2744,6 +2744,16 @@ const StayDetails = () => {
   const [addOnQuantities, setAddOnQuantities] = useState({});
   const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
 
+  const resetStayBookingState = useCallback(() => {
+    setCheckInDate(null);
+    setCheckOutDate(null);
+    setGuests({ adults: 1, children: 0 });
+    setChildAges([]);
+    setSelectedRooms([]);
+    setSelectedAddOns([]);
+    setAddOnQuantities({});
+  }, []);
+
   const handleToggleAddOn = useCallback((addOnId, pricingType) => {
     const aid = String(addOnId);
     setSelectedAddOns((prev) => {
@@ -3609,8 +3619,14 @@ const StayDetails = () => {
         addOnQuantities={addOnQuantities}
         onAddOnQuantityChange={handleAddOnQuantityChange}
         onToggleAddOn={handleToggleAddOn}
+        onClearBookingState={resetStayBookingState}
         externalOpen={bookingModalOpen}
-        onExternalOpenChange={setBookingModalOpen}
+        onExternalOpenChange={(isOpen) => {
+          setBookingModalOpen(isOpen);
+          if (!isOpen) {
+            resetStayBookingState();
+          }
+        }}
       />
 
       <div className="related-listings-wrapper" style={{ padding: isMobile ? "24px 0" : "64px 0", background: theme === 'dark' ? BG : W }}>

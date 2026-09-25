@@ -856,6 +856,7 @@ const ExperienceProduct = () => {
           galleryItems={galleryItems}
           selectedAddOns={selectedAddOns}
           handleUpdateAddonQuantity={handleUpdateAddonQuantity}
+          onClearAddons={() => setSelectedAddOns([])}
           reviews={reviews}
           reviewSummary={reviewSummary}
           eligibleBookings={eligibleBookings}
@@ -2713,10 +2714,16 @@ const ExperienceProduct = () => {
           type={isEventDetailPage ? "event" : "experience"}
           selectedAddOns={selectedAddOns}
           onUpdateAddonQuantity={handleUpdateAddonQuantity}
+          onClearAddons={() => setSelectedAddOns([])}
           initialDate={initialDateStr}
           initialGuests={initialGuests}
           externalOpen={bookingModalOpen}
-          onExternalOpenChange={setBookingModalOpen}
+          onExternalOpenChange={(isOpen) => {
+            setBookingModalOpen(isOpen);
+            if (!isOpen) {
+              setSelectedAddOns([]);
+            }
+          }}
           hostName={displayHostName}
           hostAvatar={formatImageUrl(leadData?.profileImageUrl || hostData?.profileImageUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar)}
           isDirectBooking={isDirectBooking}

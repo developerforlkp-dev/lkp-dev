@@ -3200,7 +3200,7 @@ function EventReviews({ reviews = [] }) {
   );
 }
 
-function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
+function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity, onClearAddons, addonsLoading }) {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const [bookingModalOpen, setBookingModalOpen] = useState(Boolean(location.state?.openReserveModal));
@@ -3214,6 +3214,7 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
     : (initialGuestsStr ? { adults: Number(initialGuestsStr), children: 0 } : null);
 
   const [popupTicketPrices, setPopupTicketPrices] = useState({});
+  const [isPricesLoading, setIsPricesLoading] = useState(true);
   const eventId = event?.id || event?.eventId || event?.listingId;
 
   useEffect(() => {
@@ -3221,9 +3222,13 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
       Array.isArray(event?.ticketTiers) ? event.ticketTiers :
         Array.isArray(event?.tickets) ? event.tickets : [];
 
-    if (!eventId || rawTickets.length === 0) return;
+    if (!eventId || rawTickets.length === 0) {
+      setIsPricesLoading(false);
+      return;
+    }
 
     let isMounted = true;
+    setIsPricesLoading(true);
     const fetchPrices = async () => {
       try {
         const priceMap = {};
@@ -3266,6 +3271,8 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
         }
       } catch (e) {
         console.error("Error fetching popup ticket prices:", e);
+      } finally {
+        if (isMounted) setIsPricesLoading(false);
       }
     };
 
@@ -3361,7 +3368,29 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity }) {
   };
 
   const isFree = event?.eventType?.toLowerCase() === 'free' || event?.event_type?.toLowerCase() === 'free';
-  return <BookingSystem listing={listing} type="event" selectedAddOns={selectedAddOns} onUpdateAddonQuantity={onUpdateAddonQuantity} triggerLabel="Reserve Ticket" reserveLabel="Reserve Ticket" initialDate={initialDateStr} initialGuests={initialGuests} externalOpen={bookingModalOpen} onExternalOpenChange={setBookingModalOpen} isFreeEvent={isFree} />;
+  return (
+    <BookingSystem
+      listing={listing}
+      type="event"
+      selectedAddOns={selectedAddOns}
+      onUpdateAddonQuantity={onUpdateAddonQuantity}
+      onClearAddons={onClearAddons}
+      triggerLabel="Reserve Ticket"
+      reserveLabel="Reserve Ticket"
+      initialDate={initialDateStr}
+      initialGuests={initialGuests}
+      externalOpen={bookingModalOpen}
+      onExternalOpenChange={(isOpen) => {
+        setBookingModalOpen(isOpen);
+        if (!isOpen && typeof onClearAddons === "function") {
+          onClearAddons();
+        }
+      }}
+      isFreeEvent={isFree}
+      ticketPricesLoading={isPricesLoading}
+      addonsLoading={addonsLoading}
+    />
+  );
 }
 
 function Tickets({ event }) {
@@ -4463,7 +4492,7 @@ export default function EventDetails() {
         <Rules event={event} />
         <HostDetails event={event} hostName={hostName} />
         <EventReviews reviews={reviews} />
-        <EventBookingPopup event={event} selectedAddOns={selectedAddOns} onUpdateAddonQuantity={handleUpdateAddonQuantity} />
+        <EventBookingPopup event={event} selectedAddOns={selectedAddOns} onUpdateAddonQuantity={handleUpdateAddonQuantity} onClearAddons={() => setSelectedAddOns([])} addonsLoading={!event?.addons} />
         <RelatedListingsStrip
           businessInterestId={2}
           primaryCategoryId={primaryCategoryId}

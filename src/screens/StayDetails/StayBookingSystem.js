@@ -801,6 +801,7 @@ const StayBookingSystem = ({
   addOnQuantities = {},
   onAddOnQuantityChange,
   onToggleAddOn,
+  onClearBookingState,
   externalOpen,
   onExternalOpenChange,
 }) => {
@@ -863,12 +864,24 @@ const StayBookingSystem = ({
   const lastCalculatedPayloadRef = useRef("");
   const stayCalculateTimerRef = useRef(null);
 
+  const resetStayBookingFormState = useCallback(() => {
+    setValidationError("");
+    setSelectionMode("check-in");
+    setApiPayableAmount(null);
+    setApiPayableLoading(false);
+    setBookingErrorPopup({ visible: false, title: "", message: "", isSameDay: false });
+    if (typeof onClearBookingState === "function") {
+      onClearBookingState();
+    }
+  }, [onClearBookingState]);
+
   useEffect(() => {
     if (externalOpen === true && !show && !externalOpenHandledRef.current) {
       externalOpenHandledRef.current = true;
+      resetStayBookingFormState();
       setShow(true);
     }
-  }, [externalOpen, show]);
+  }, [externalOpen, show, resetStayBookingFormState]);
 
   useEffect(() => {
     if (externalOpen !== true) {
@@ -879,10 +892,11 @@ const StayBookingSystem = ({
   const closeBookingModal = useCallback(() => {
     externalOpenHandledRef.current = false;
     setShow(false);
+    resetStayBookingFormState();
     if (onExternalOpenChange) {
       onExternalOpenChange(false);
     }
-  }, [onExternalOpenChange]);
+  }, [onExternalOpenChange, resetStayBookingFormState]);
 
   useEffect(() => {
     if (onExternalOpenChange) {
@@ -2130,14 +2144,13 @@ const StayBookingSystem = ({
     }
 
     lastCalculatedPayloadRef.current = payloadKey;
+    setApiPayableLoading(true);
 
     if (stayCalculateTimerRef.current) {
       clearTimeout(stayCalculateTimerRef.current);
     }
 
     stayCalculateTimerRef.current = setTimeout(() => {
-      setApiPayableLoading(true);
-
       calculateStayTotal(payload)
         .then((res) => {
           const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
