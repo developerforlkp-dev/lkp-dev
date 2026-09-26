@@ -94,12 +94,18 @@ const CheckoutComplete = ({
       container.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 2px solid #0097B2; margin-bottom: 24px;">
           <div>
-            <div style="font-size: 24px; font-weight: 800; color: #0097B2; letter-spacing: -0.02em; margin-bottom: 4px;">
-              Little Known Planet
-            </div>
-            <div style="font-size: 12px; color: #777E90; font-weight: 500;">
-              dev.littleknownplanet.com
-            </div>
+            ${isDirectBooking ? `
+              <div style="font-size: 24px; font-weight: 800; color: #0097B2; letter-spacing: -0.02em; margin-bottom: 4px;">
+                Booking Confirmation
+              </div>
+            ` : `
+              <div style="font-size: 24px; font-weight: 800; color: #0097B2; letter-spacing: -0.02em; margin-bottom: 4px;">
+                Little Known Planet
+              </div>
+              <div style="font-size: 12px; color: #777E90; font-weight: 500;">
+                dev.littleknownplanet.com
+              </div>
+            `}
           </div>
           <div style="text-align: right;">
             <div style="font-size: 11px; font-weight: 800; color: #0097B2; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 151, 178, 0.08); padding: 4px 12px; border-radius: 100px; display: inline-block; margin-bottom: 6px;">
@@ -148,9 +154,9 @@ const CheckoutComplete = ({
         ` : ""}
 
         <div style="text-align: center; padding-top: 16px; border-top: 1px solid #E6E8EC; font-size: 11px; color: #777E90; line-height: 1.6;">
-          <div>Thank you for booking with Little Known Planet!</div>
+          <div>${isDirectBooking ? "Thank you for your booking!" : "Thank you for booking with Little Known Planet!"}</div>
           <div style="font-size: 10px; color: #B1B5C3; margin-top: 2px;">
-            Secure booking & payment powered by Little Known Planet
+            ${isDirectBooking ? "Secure booking & payment" : "Secure booking & payment powered by Little Known Planet"}
           </div>
         </div>
       `;
@@ -159,7 +165,7 @@ const CheckoutComplete = ({
 
       const opt = {
         margin: [8, 8, 8, 8],
-        filename: `LKP_Receipt_${cleanRef || "DirectBooking"}.pdf`,
+        filename: `${isDirectBooking ? "Receipt" : "LKP_Receipt"}_${cleanRef || "DirectBooking"}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: {
           scale: 2,

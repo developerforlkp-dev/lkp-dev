@@ -6085,7 +6085,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
                   <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
                     <ShieldCheck size={12} />
-                    <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
+                    <span style={{ fontWeight: 600 }}>{isDirect ? "Secure booking & payment" : "Secure booking & payment powered by Little Known Planet"}</span>
                   </div>
                 </>
               )}

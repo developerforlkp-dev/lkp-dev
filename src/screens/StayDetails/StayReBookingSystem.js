@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Users, Bed, X, Star, ShieldCheck, ChevronDown, Plus, Minus, Info, AlertCircle, Sparkles, ChevronLeft, ChevronRight, Tag, Baby } from "lucide-react";
 import moment from "moment";
+import { isDirectBookingPathOrState } from "../../utils/directBooking";
 import { useTheme } from "../../components/JUI/Theme";
 import { createStayOrder, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability, getStayHotelRoomAvailability, getStayHostelAvailability, previewOrderPrice, calculateStayTotal } from "../../utils/api";
 import { clearPendingCheckoutState, persistPendingCheckout, isAuthOrTokenError } from "../../utils/paymentSession";
@@ -910,9 +911,12 @@ const StayBookingSystem = ({
   onClearBookingState,
   externalOpen,
   onExternalOpenChange,
+  isDirectBooking = false,
 }) => {
   const stay = rawStay?.stay || rawStay?.data?.stay || rawStay?.data || rawStay;
   const history = useHistory();
+  const location = useLocation();
+  const isDirect = isDirectBooking || isDirectBookingPathOrState(location);
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
 
   // 1. Initial Check-in Date
@@ -5115,7 +5119,7 @@ const StayBookingSystem = ({
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
                 <ShieldCheck size={12} />
-                <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
+                <span style={{ fontWeight: 600 }}>{isDirect ? "Secure booking & payment" : "Secure booking & payment powered by Little Known Planet"}</span>
               </div>
             </motion.div>
           </div>

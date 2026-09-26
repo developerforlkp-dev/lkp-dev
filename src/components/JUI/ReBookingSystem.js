@@ -15,6 +15,7 @@ import LoginPromptModal from "../LoginPromptModal";
 import { clearPendingCheckoutState, persistPendingCheckout, isAuthOrTokenError } from "../../utils/paymentSession";
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
 import { calculateExperienceGuestPricing, getExperienceCommissionRate } from "../../utils/experiencePricing";
+import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
 
 const asNumber = (value) => {
@@ -1365,8 +1366,10 @@ function EventInlineCalendar({ selectedDate, onDateSelect, availableDateKeys, to
   );
 }
 
-export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, onClearAddons, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests, isFreeEvent = false }) {
+export function BookingSystem({ listing, type = "experience", selectedAddOns = [], triggerLabel = "Reserve Now", reserveLabel = "Reserve Experience", onUpdateAddonQuantity, onClearAddons, externalOpen, onExternalOpenChange, hideTrigger = false, hostName: externalHostName, hostAvatar: externalHostAvatar, initialDate, initialGuests, isFreeEvent = false, isDirectBooking = false }) {
   const history = useHistory();
+  const location = useLocation();
+  const isDirect = isDirectBooking || isDirectBookingPathOrState(location);
   const { tokens: { A, AH, BG, FG, M, S, B, AL, W, E, EL } } = useTheme();
   const isMountedRef = useRef(true);
   const hasHandledUnavailableRef = useRef(false);
@@ -5578,7 +5581,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
                   <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 28px 12px", color: M, fontSize: 10, background: BG }}>
                     <ShieldCheck size={12} />
-                    <span style={{ fontWeight: 600 }}>Secure booking & payment powered by Little Known Planet</span>
+                    <span style={{ fontWeight: 600 }}>{isDirect ? "Secure booking & payment" : "Secure booking & payment powered by Little Known Planet"}</span>
                   </div>
                 </>
               )}
