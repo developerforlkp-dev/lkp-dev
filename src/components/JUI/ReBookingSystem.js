@@ -1202,6 +1202,39 @@ const normalizeExperienceSlots = (slots = [], dateKey = "") => (
     .filter(Boolean) : []
 );
 
+const collectPrivateBookedSlotIdsForDate = (listing, dateKey) => {
+  if (!dateKey) return new Set();
+  const sources = [
+    listing?.privateBookedSlots,
+    listing?.private_booked_slots,
+    listing?.privateBookedSlotIds,
+    listing?.private_booked_slot_ids,
+    listing?.privateBookingSlots,
+    listing?.private_booking_slots,
+  ].filter(Array.isArray);
+  const ids = new Set();
+
+  sources.flat().forEach((item) => {
+    if (!item) return;
+    if (typeof item === "object") {
+      const itemDate = getDateKey(item.date || item.bookingDate || item.booking_date || item.startDate || item.start_date);
+      const bookedDates = Array.isArray(item.bookedDates)
+        ? item.bookedDates
+        : (Array.isArray(item.booked_dates) ? item.booked_dates : []);
+      
+      if (itemDate && itemDate !== dateKey) return;
+      if (bookedDates.length > 0 && !bookedDates.some(d => getDateKey(d) === dateKey)) return;
+
+      const id = getSlotId(item);
+      if (id != null) ids.add(String(id));
+    } else {
+      ids.add(String(item));
+    }
+  });
+
+  return ids;
+};
+
 const collectPrivateBookedSlotIds = (listing) => {
   const sources = [
     listing?.privateBookedSlots,
@@ -1436,6 +1469,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const [errorPopup, setErrorPopup] = useState({ visible: false, title: "", message: "", reason: "", ctaLabel: "Adjust Now" });
   const [apiPayableAmount, setApiPayableAmount] = useState(null);
   const [apiPayableLoading, setApiPayableLoading] = useState(false);
+  const [calculateError, setCalculateError] = useState(null);
   const pendingRestoreRef = useRef(null);
   const pendingEventTicketRestoreRef = useRef(null);
 
@@ -2013,7 +2047,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const listingId = listing?.listingId;
   const selectedDateKey = useMemo(() => getDateKey(startDate), [startDate]);
   const slotsLookupEndDate = useMemo(() => getLatestExperienceSlotEndDate(listing), [listing]);
-  const privateBookedSlotIds = useMemo(() => collectPrivateBookedSlotIds(listing), [listing]);
+  const privateBookedSlotIdsForDate = useMemo(
+    () => collectPrivateBookedSlotIdsForDate(listing, selectedDateKey),
+    [listing, selectedDateKey]
+  );
   const fullyBookedSlotIdsForDate = useMemo(
     () => collectFullyBookedSlotIdsForDate(listing, selectedDateKey),
     [listing, selectedDateKey]
@@ -2025,7 +2062,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       return baseMatch ? mergeDefinedSlotFields(baseMatch, slot) : slot;
     }).filter((slot) => {
       const slotId = getSlotId(slot);
-      const isPrivatelyBooked = slot?.hasPrivateBooking === true || (slotId != null && privateBookedSlotIds.has(String(slotId)));
+      const isPrivatelyBooked = slot?.hasPrivateBooking === true || (slotId != null && privateBookedSlotIdsForDate.has(String(slotId)));
       const isFullyBookedByConfig = slotId != null && fullyBookedSlotIdsForDate.has(String(slotId));
       const availableSeats = asNumber(slot?.availableSeats ?? slot?.available_seats);
       const isUnavailable = asOptionalBoolean(slot?.isAvailable ?? slot?.is_available) === false;
@@ -2063,7 +2100,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
       return !isPrivatelyBooked && !isFullyBookedByConfig && !isUnavailable && !isFullBySeats;
     });
-  }, [baseTimeSlots, dateFilteredSlots, dateFilteredSlotsLoaded, fullyBookedSlotIdsForDate, isEventBooking, privateBookedSlotIds, selectedDateKey]);
+  }, [baseTimeSlots, dateFilteredSlots, dateFilteredSlotsLoaded, fullyBookedSlotIdsForDate, isEventBooking, privateBookedSlotIdsForDate, selectedDateKey]);
   const experienceAvailableDateKeys = useMemo(() => {
     if (isEventBooking) return new Set();
     const keys = new Set();
@@ -2126,6 +2163,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     const indiaNow = getIndiaNow();
     const todayKey = getIndiaDateKey(indiaNow);
     const todayFullyBookedSlotIds = collectFullyBookedSlotIdsForDate(listing, todayKey);
+    const todayPrivateBookedSlotIds = collectPrivateBookedSlotIdsForDate(listing, todayKey);
 
     if (isEventBooking) {
       const validEventSlots = eventSlots.filter((slot, index) => {
@@ -2207,7 +2245,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       }
 
       // 4. Check bookings/availability
-      const isPrivatelyBooked = slot?.hasPrivateBooking === true || (slotId != null && privateBookedSlotIds.has(String(slotId)));
+      const isPrivatelyBooked = slot?.hasPrivateBooking === true || (slotId != null && todayPrivateBookedSlotIds.has(String(slotId)));
       if (isPrivatelyBooked) return false;
 
       const isFullyBookedByConfig = slotId != null && todayFullyBookedSlotIds.has(String(slotId));
@@ -2234,7 +2272,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     });
 
     return validSlots.length > 0;
-  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking, privateBookedSlotIds]);
+  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking]);
 
 
 
@@ -2513,6 +2551,30 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const dateHasPrivateBookingAvailable = !isEventBooking && Boolean(selectedDateKey) && dateFilteredSlotsLoaded && timeSlots.some((slot) => slot.privateBookingAvailable === true);
   const selectedSlotPrivateBookingAvailable = !isEventBooking && Boolean(startTime) && selectedSlotData?.privateBookingAvailable === true;
   const showPrivateBookingToggle = experienceSupportsPrivateBooking && selectedSlotPrivateBookingAvailable;
+  const privateBookingWarning = useMemo(() => {
+    if (isEventBooking || !privateBooking) return null;
+    if (calculateError) return calculateError;
+    if (selectedSlotHasPrivateBooking) {
+      return "This slot already has a private booking. Choose another slot.";
+    }
+    if (startTime && !selectedSlotPrivateBookingAvailable) {
+      return "Private booking is not available for this slot. Please choose another slot or turn off private booking.";
+    }
+    if (selectedDateKey && dateFilteredSlotsLoaded && !dateHasPrivateBookingAvailable) {
+      return "No private booking available for this date.";
+    }
+    return null;
+  }, [
+    isEventBooking,
+    privateBooking,
+    calculateError,
+    selectedSlotHasPrivateBooking,
+    startTime,
+    selectedSlotPrivateBookingAvailable,
+    selectedDateKey,
+    dateFilteredSlotsLoaded,
+    dateHasPrivateBookingAvailable,
+  ]);
   const privateBookingMessage = experienceSupportsPrivateBooking && !isEventBooking && selectedDateKey && dateFilteredSlotsLoaded
     ? (selectedSlotHasPrivateBooking
       ? "This slot already has a private booking. Choose another slot."
@@ -3069,6 +3131,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       calculationFn(payload)
         .then((res) => {
           if (!isMountedRef.current) return;
+          setCalculateError(null);
           const amount = res?.finalPayableAmount ?? res?.data?.finalPayableAmount ?? res?.amount ?? res?.total;
           if (amount != null && Number.isFinite(Number(amount))) {
             setApiPayableAmount(Number(amount));
@@ -3077,6 +3140,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         .catch((err) => {
           if (!isMountedRef.current) return;
           console.warn("calculateTotal error:", err);
+          const errData = err?.response?.data;
+          const errMsg = errData?.error || errData?.message || (typeof errData === "string" ? errData : null);
+          const errCode = errData?.code;
+          if (errCode === "PRIVATE_BOOKING_NOT_AVAILABLE" || (errMsg && /private.*not.*available/i.test(errMsg))) {
+            setCalculateError(errMsg || "Private booking is not available for this slot");
+          } else if (errMsg) {
+            setCalculateError(errMsg);
+          }
         })
         .finally(() => {
           if (isMountedRef.current) setApiPayableLoading(false);
@@ -3292,6 +3363,18 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     // Clear validation on success
     setValidationErrors({});
     setShowValidation(false);
+
+    if (!isEventBooking && privateBooking && privateBookingWarning) {
+      showErrorPopup(
+        privateBookingWarning,
+        "Private Booking Unavailable",
+        {
+          reason: "This slot may only allow standard bookings or is already privately reserved. Choose another slot or turn off private booking to continue.",
+          ctaLabel: "Change Slot"
+        }
+      );
+      return;
+    }
 
     if (!isEventBooking && guestSeatLimit !== undefined && totalGuests > guestSeatLimit) {
       showErrorPopup(
@@ -4305,20 +4388,31 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                         {isEventBooking ? "Reserve Your Event" : "Reserve Your Experience"}
                       </h2>
 
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", minHeight: 30 }}>
                         {(() => {
                           const gp = isEventBooking ? eventGuestPricing : experienceGuestPricing;
                           const hasDiscount = gp && gp.discountRate > 0;
                           const baseDisplayPrice = gp ? gp.baseUnitPrice : Number(data.price || 0);
                           const discountedDisplayPrice = gp ? gp.priceAfterDiscount : Number(data.price || 0);
+                          const isExplicitFree = isFreeEvent || (isEventBooking && String(listing?.eventType || listing?.event_type || "").toLowerCase() === "free");
+
+                          if (isExplicitFree) {
+                            return <span style={{ fontSize: 22, fontWeight: 800, color: A }}>Free Event</span>;
+                          }
+
+                          const hasValidPrice = discountedDisplayPrice != null && Number(discountedDisplayPrice) > 0;
+                          if (!hasValidPrice) {
+                            return null;
+                          }
+
                           return (
                             <>
-                              {hasDiscount && baseDisplayPrice != null && (
+                              {hasDiscount && baseDisplayPrice != null && baseDisplayPrice > 0 && (
                                 <span style={{ fontSize: 13, fontWeight: 600, color: M, textDecoration: "line-through", opacity: 0.7 }}>
                                   ₹{Number(baseDisplayPrice).toFixed(2)}
                                 </span>
                               )}
-                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(discountedDisplayPrice || 0).toFixed(2)}</span>
+                              <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(discountedDisplayPrice).toFixed(2)}</span>
                               <span style={{ fontSize: 11, color: M, fontWeight: 500 }}>per {data.unit}</span>
                             </>
                           );
@@ -4332,7 +4426,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>Private Booking</span>
                           <button
                             type="button"
-                            onClick={() => setPrivateBooking((value) => !value)}
+                            onClick={() => {
+                              setPrivateBooking((value) => !value);
+                              setCalculateError(null);
+                            }}
                             style={{
                               width: 36,
                               height: 20,
@@ -4762,6 +4859,26 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   </p>
                                 </div>
                               </div>
+                              {privateBookingWarning && (
+                                <div
+                                  style={{
+                                    marginTop: 10,
+                                    padding: "10px 14px",
+                                    borderRadius: 14,
+                                    background: "rgba(245, 158, 11, 0.12)",
+                                    border: "1px solid rgba(245, 158, 11, 0.35)",
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    gap: 10,
+                                    boxShadow: "0 2px 8px rgba(245, 158, 11, 0.08)",
+                                  }}
+                                >
+                                  <AlertCircle size={16} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
+                                  <span style={{ fontSize: 12, color: "#d97706", fontWeight: 700, lineHeight: 1.4 }}>
+                                    {privateBookingWarning}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             <AnimatePresence>
@@ -5513,8 +5630,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       {(() => {
                         const gp = isEventBooking ? eventGuestPricing : experienceGuestPricing;
                         const discountedDisplayPrice = gp ? gp.priceAfterDiscount : Number(data.price || 0);
-                        const isFreeEvent = Number(discountedDisplayPrice || 0) === 0;
-                        if (isFreeEvent) {
+                        const isExplicitFree = isFreeEvent || (isEventBooking && String(listing?.eventType || listing?.event_type || "").toLowerCase() === "free");
+                        if (isExplicitFree) {
                           return <span style={{ fontSize: 22, fontWeight: 800, color: A }}>Free Event</span>;
                         }
 

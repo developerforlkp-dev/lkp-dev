@@ -568,6 +568,8 @@ const ExperienceCheckoutComplete = ({ isDirectBooking: isDirectBookingProp = fal
               title={title}
               options={options}
               items={items}
+              booking={booking}
+              hostName={booking?.hostName || booking?.officialName || booking?.leadName || booking?.directBooking?.leadName}
               paymentFailed={paymentFailed}
               isEvent={isEventBooking}
               isDirectBooking={isDirectBooking}
