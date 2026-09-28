@@ -415,13 +415,32 @@ const CheckoutComplete = () => {
 
     //console.log("💰 Final amount paid:", amountPaid);
 
+    const isDirect =
+      Boolean(booking?.isDirectBooking) ||
+      Boolean(paymentSuccess?.payment_method === "upi") ||
+      Boolean(paymentSuccess?.displayDirectBookingOrderId);
+
+    const directOrderId =
+      booking?.displayDirectBookingOrderId ||
+      booking?.displayDirectBookingOrderld ||
+      booking?.directBookingOrderId ||
+      booking?.directBookingOrderld ||
+      paymentSuccess?.displayDirectBookingOrderId ||
+      paymentSuccess?.displayDirectBookingOrderld ||
+      paymentSuccess?.directBookingOrderId ||
+      paymentSuccess?.directBookingOrderld ||
+      paymentSuccess?.order_id ||
+      booking?.orderId ||
+      booking?.id;
+
     return [
       {
-        title: "Payment ID:",
-        content:
-          paymentSuccess?.razorpay_payment_id ||
-          paymentSuccess?.payment_id ||
-          (paymentFailed ? "Payment Failed" : "—"),
+        title: isDirect ? "Direct Booking Order ID:" : "Payment ID:",
+        content: isDirect
+          ? (directOrderId || "—")
+          : (paymentSuccess?.razorpay_payment_id ||
+              paymentSuccess?.payment_id ||
+              (paymentFailed ? "Payment Failed" : "—")),
         icon: "hand-cart",
       },
       {
@@ -434,13 +453,15 @@ const CheckoutComplete = () => {
         icon: "calendar",
       },
       {
-        title: paymentFailed ? "Amount to pay:" : "Amount paid:",
+        title: (paymentFailed || isDirect) ? "Amount to pay:" : "Amount paid:",
         content: paymentFailed ? (amountPaid !== "—" ? amountPaid : "—") : amountPaid,
         icon: "receipt",
       },
       {
         title: "Payment method:",
-        content: paymentFailed ? "Payment Failed" : "Razorpay",
+        content: paymentFailed
+          ? "Payment Failed"
+          : (isDirect ? "UPI / QR Code (Direct)" : "Razorpay"),
         icon: paymentFailed ? "alert-circle" : "wallet",
       },
     ];

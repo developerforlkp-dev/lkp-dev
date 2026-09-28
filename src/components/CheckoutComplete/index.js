@@ -1,7 +1,6 @@
 import React, { useRef, useState } from "react";
 import cn from "classnames";
 import { Link } from "react-router-dom";
-import html2pdf from "html2pdf.js";
 import styles from "./CheckoutComplete.module.sass";
 import Icon from "../Icon";
 
@@ -32,7 +31,7 @@ const CheckoutComplete = ({
       ? "Your event has been booked!"
       : "Your trip has been booked!";
 
-  const handlePrintReceipt = async () => {
+  const handlePrintReceipt = () => {
     if (onPrintReceipt) {
       onPrintReceipt();
       return;
@@ -73,11 +72,18 @@ const CheckoutComplete = ({
       });
 
       const orderRef =
-        options?.find((o) => o.title?.toLowerCase().includes("reference") || o.title?.toLowerCase().includes("payment"))?.content ||
+        options?.find((o) => o.title?.toLowerCase().includes("order") || o.title?.toLowerCase().includes("reference") || o.title?.toLowerCase().includes("payment"))?.content ||
+        bookingData?.displayDirectBookingOrderId ||
+        bookingData?.displayDirectBookingOrderld ||
+        bookingData?.directBookingOrderId ||
         bookingData?.orderId ||
         bookingData?.id ||
+        directPaymentSuccess?.displayDirectBookingOrderId ||
+        directPaymentSuccess?.displayDirectBookingOrderld ||
+        directPaymentSuccess?.directBookingOrderId ||
         directPaymentSuccess?.order_id ||
         directPaymentSuccess?.payment_id ||
+        (typeof window !== "undefined" ? localStorage.getItem("displayDirectBookingOrderId") || localStorage.getItem("directBookingOrderId") : null) ||
         "Receipt";
       const cleanRef = String(orderRef).replace(/[^a-zA-Z0-9-_]/g, "");
 
@@ -129,13 +135,14 @@ const CheckoutComplete = ({
         bookingData?.utrNumber ||
         directPaymentSuccess?.utrNumber ||
         (typeof window !== "undefined" && bookingData?.orderId ? localStorage.getItem(`utr_${bookingData.orderId}`) : null) ||
+        (typeof window !== "undefined" && cleanRef ? localStorage.getItem(`utr_${cleanRef}`) : null) ||
         "";
 
       const itemsHtml = Array.isArray(items) && items.length > 0
         ? items.map((x) => `
-          <div style="background: #F4F5F6; border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; border: 1px solid #E6E8EC;">
-            <div style="font-size: 11px; font-weight: 700; color: #777E90; text-transform: uppercase; letter-spacing: 0.05em;">${x.title || ""}</div>
-            <div style="font-size: 13px; font-weight: 600; color: #141416;">${x.content || "—"}</div>
+          <div style="background: #F4F5F6; border-radius: 10px; padding: 12px 16px; border: 1px solid #E6E8EC;">
+            <div style="font-size: 11px; font-weight: 700; color: #777E90; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">${x.title || ""}</div>
+            <div style="font-size: 14px; font-weight: 600; color: #141416;">${x.content || "—"}</div>
           </div>
         `).join("")
         : "";
@@ -191,124 +198,165 @@ const CheckoutComplete = ({
         `
         : "";
 
-      // Create a fixed on-top container so html2canvas renders completely with positive zIndex
-      const container = document.createElement("div");
-      container.style.position = "fixed";
-      container.style.top = "0";
-      container.style.left = "0";
-      container.style.width = "750px";
-      container.style.zIndex = "999999";
-      container.style.background = "#ffffff";
-      container.style.opacity = "1";
-      container.style.pointerEvents = "none";
-      container.style.boxSizing = "border-box";
-      container.style.padding = "32px 36px";
-      container.style.fontFamily = "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-
-      container.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 18px; border-bottom: 2px solid #0097B2; margin-bottom: 20px;">
-          <div>
-            <div style="font-size: 22px; font-weight: 800; color: #0097B2; letter-spacing: -0.02em; margin-bottom: 2px;">
-              ${hostDisplayName}
+      const receiptContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Receipt_${cleanRef || "DirectBooking"}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 12mm 15mm;
+            }
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              color: #141416;
+              background: #ffffff;
+              margin: 0;
+              padding: 16px;
+              font-size: 13px;
+              line-height: 1.5;
+            }
+            .receipt-container {
+              max-width: 750px;
+              margin: 0 auto;
+              padding: 24px 28px;
+              border: 1px solid #E6E8EC;
+              border-radius: 12px;
+            }
+            @media print {
+              body {
+                background: #ffffff;
+                padding: 0;
+              }
+              .receipt-container {
+                border: none;
+                padding: 0;
+                max-width: 100%;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 18px; border-bottom: 2px solid #0097B2; margin-bottom: 20px;">
+              <div>
+                <div style="font-size: 22px; font-weight: 800; color: #0097B2; letter-spacing: -0.02em; margin-bottom: 2px;">
+                  ${hostDisplayName}
+                </div>
+                <div style="font-size: 12px; color: #777E90; font-weight: 600;">
+                  ${isDirectBooking ? "Official Direct Booking Receipt" : "Official Booking Receipt"}
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 11px; font-weight: 800; color: #0097B2; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 151, 178, 0.08); padding: 4px 12px; border-radius: 100px; display: inline-block; margin-bottom: 4px;">
+                  ${cleanRef ? `Ref: ${cleanRef}` : "Confirmed"}
+                </div>
+                <div style="font-size: 12px; color: #777E90; font-weight: 600;">
+                  Date: ${formattedDate}
+                </div>
+              </div>
             </div>
-            <div style="font-size: 12px; color: #777E90; font-weight: 600;">
-              ${isDirectBooking ? "Official Direct Booking Receipt" : "Official Booking Receipt"}
+
+            <!-- Bill To & Booking Info Cards -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 20px;">
+              <div style="background: #FAFAFB; border-radius: 12px; padding: 14px 16px; border: 1px solid #E6E8EC;">
+                <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                  Bill To / Guest
+                </div>
+                <div style="font-size: 14px; font-weight: 700; color: #141416; margin-bottom: 2px;">${guestName}</div>
+                ${guestPhone ? `<div style="font-size: 12px; color: #777E90;">Phone: ${guestPhone}</div>` : ""}
+                ${guestEmail ? `<div style="font-size: 12px; color: #777E90;">Email: ${guestEmail}</div>` : ""}
+                ${utrNumber ? `<div style="font-size: 12px; color: #0097B2; font-weight: 600; margin-top: 4px;">UTR: ${utrNumber}</div>` : ""}
+              </div>
+
+              <div style="background: #FAFAFB; border-radius: 12px; padding: 14px 16px; border: 1px solid #E6E8EC;">
+                <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                  Experience & Location
+                </div>
+                <div style="font-size: 14px; font-weight: 700; color: #141416; margin-bottom: 2px;">${experienceTitle}</div>
+                <div style="font-size: 12px; color: #777E90;">Hosted by ${hostDisplayName}</div>
+                ${meetingLoc ? `<div style="font-size: 12px; color: #777E90; margin-top: 2px;">📍 ${meetingLoc}</div>` : ""}
+              </div>
+            </div>
+
+            ${itemsHtml ? `
+              <div style="margin-bottom: 20px;">
+                <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
+                  Reservation Summary
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                  ${itemsHtml}
+                </div>
+              </div>
+            ` : ""}
+
+            ${addonsHtml}
+
+            ${optionsHtml ? `
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
+                  Payment & Pricing Breakdown
+                </div>
+                <div style="border-radius: 12px; overflow: hidden; border: 1px solid #E6E8EC;">
+                  ${optionsHtml}
+                </div>
+              </div>
+            ` : ""}
+
+            ${instructionsHtml}
+
+            <div style="text-align: center; padding-top: 14px; border-top: 1px solid #E6E8EC; font-size: 11px; color: #777E90; line-height: 1.6;">
+              <div>Thank you for your booking! This is your official electronic booking receipt.</div>
+              <div style="font-size: 10px; color: #B1B5C3; margin-top: 2px;">
+                ${isDirectBooking ? `Direct Booking • ${hostDisplayName}` : "Secure booking powered by Little Known Planet"}
+              </div>
             </div>
           </div>
-          <div style="text-align: right;">
-            <div style="font-size: 11px; font-weight: 800; color: #0097B2; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 151, 178, 0.08); padding: 4px 12px; border-radius: 100px; display: inline-block; margin-bottom: 4px;">
-              ${cleanRef ? `Ref: ${cleanRef}` : "Confirmed"}
-            </div>
-            <div style="font-size: 12px; color: #777E90; font-weight: 600;">
-              Date: ${formattedDate}
-            </div>
-          </div>
-        </div>
-
-        <!-- Bill To & Booking Info Cards -->
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 20px;">
-          <div style="background: #FAFAFB; border-radius: 12px; padding: 14px 16px; border: 1px solid #E6E8EC;">
-            <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
-              Bill To / Guest
-            </div>
-            <div style="font-size: 14px; font-weight: 700; color: #141416; margin-bottom: 2px;">${guestName}</div>
-            ${guestPhone ? `<div style="font-size: 12px; color: #777E90;">Phone: ${guestPhone}</div>` : ""}
-            ${guestEmail ? `<div style="font-size: 12px; color: #777E90;">Email: ${guestEmail}</div>` : ""}
-            ${utrNumber ? `<div style="font-size: 12px; color: #0097B2; font-weight: 600; margin-top: 4px;">UTR: ${utrNumber}</div>` : ""}
-          </div>
-
-          <div style="background: #FAFAFB; border-radius: 12px; padding: 14px 16px; border: 1px solid #E6E8EC;">
-            <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
-              Experience & Location
-            </div>
-            <div style="font-size: 14px; font-weight: 700; color: #141416; margin-bottom: 2px;">${experienceTitle}</div>
-            <div style="font-size: 12px; color: #777E90;">Hosted by ${hostDisplayName}</div>
-            ${meetingLoc ? `<div style="font-size: 12px; color: #777E90; margin-top: 2px;">📍 ${meetingLoc}</div>` : ""}
-          </div>
-        </div>
-
-        ${itemsHtml ? `
-          <div style="margin-bottom: 20px;">
-            <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
-              Reservation Summary
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-              ${itemsHtml}
-            </div>
-          </div>
-        ` : ""}
-
-        ${addonsHtml}
-
-        ${optionsHtml ? `
-          <div style="margin-bottom: 24px;">
-            <div style="font-size: 11px; font-weight: 800; color: #777E90; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
-              Payment & Pricing Breakdown
-            </div>
-            <div style="border-radius: 12px; overflow: hidden; border: 1px solid #E6E8EC;">
-              ${optionsHtml}
-            </div>
-          </div>
-        ` : ""}
-
-        ${instructionsHtml}
-
-        <div style="text-align: center; padding-top: 14px; border-top: 1px solid #E6E8EC; font-size: 11px; color: #777E90; line-height: 1.6;">
-          <div>Thank you for your booking! This is your official electronic booking receipt.</div>
-          <div style="font-size: 10px; color: #B1B5C3; margin-top: 2px;">
-            ${isDirectBooking ? `Direct Booking • ${hostDisplayName}` : "Secure booking powered by Little Known Planet"}
-          </div>
-        </div>
+        </body>
+        </html>
       `;
 
-      document.body.appendChild(container);
+      // Create a hidden iframe to print cleanly without full-page disturbance
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("style", "position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0; visibility: hidden;");
+      document.body.appendChild(iframe);
 
-      const opt = {
-        margin: [8, 8, 8, 8],
-        filename: `${isDirectBooking ? "Receipt" : "LKP_Receipt"}_${cleanRef || "DirectBooking"}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: "#ffffff",
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 750,
-        },
-        pagebreak: { mode: ["avoid-all", "css"] },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(receiptContent);
+      doc.close();
+
+      const triggerPrint = () => {
+        try {
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }
+        } catch (e) {
+          console.error("Iframe print error, falling back to window.print():", e);
+          window.print();
+        } finally {
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+            setIsPrinting(false);
+          }, 1500);
+        }
       };
 
-      await html2pdf().from(container).set(opt).save();
-
-      if (document.body.contains(container)) {
-        document.body.removeChild(container);
-      }
+      setTimeout(triggerPrint, 250);
     } catch (err) {
       console.error("Receipt generation error:", err);
       window.print();
-    } finally {
       setIsPrinting(false);
     }
   };

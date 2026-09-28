@@ -1860,6 +1860,29 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               setStartDate(parsedDate);
             }
           }
+          if (stored.selectedSlotId) {
+            setSelectedSlotId(stored.selectedSlotId);
+          }
+          if (stored.startTime) {
+            setStartTime(stored.startTime);
+          }
+          if (stored.guests) {
+            const restoredGuests = getStoredGuestSelection(stored.guests);
+            if (restoredGuests) setGuests(restoredGuests);
+          }
+          if (stored.privateBooking !== undefined) {
+            setPrivateBooking(Boolean(stored.privateBooking));
+          }
+          if (stored.includePriorityFee !== undefined) {
+            setIncludePriorityFee(Boolean(stored.includePriorityFee));
+          }
+          if (stored.selectedTicketTypeId) {
+            setSelectedTicketTypeId(String(stored.selectedTicketTypeId));
+          }
+          if (Array.isArray(stored.selectedEventSlotIds)) {
+            setSelectedEventSlotIds(stored.selectedEventSlotIds);
+          }
+
           // Clear so it does not persist across future completely independent user visits
           localStorage.removeItem("frontendPendingBookingState");
 
@@ -2513,6 +2536,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             }
 
             if (isValid) {
+              const restoredSlotId = getSlotId(targetSlot) ?? stored.selectedSlotId ?? null;
+              if (restoredSlotId != null) {
+                setSelectedSlotId(restoredSlotId);
+              }
               setStartTime(targetSlot.slotName || targetSlot.startTime || stored.selectedSlotLabel || stored.startTime);
               const restoredGuests = getStoredGuestSelection(stored.guests);
               if (restoredGuests) setGuests(restoredGuests);
@@ -2521,6 +2548,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               if (stored.includePriority !== undefined) setIncludePriorityFee(Boolean(stored.includePriority));
             } else {
               setStartTime(null);
+              setSelectedSlotId(null);
               setErrorPopup({
                 visible: true,
                 title: "Slot Unavailable",
@@ -3286,9 +3314,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         return;
       }
 
+      // Avoid calculating with premature/unfiltered slots while date-filtered slots are actively loading
+      if (!isEventBooking && !isDirect && selectedDateKey && slotsLoading && !dateFilteredSlotsLoaded) {
+        return;
+      }
+
       const bookingDate = startDate ? moment(startDate).format("YYYY-MM-DD") : (selectedDateKey || null);
       const bookingTime = selectedSlotData?.startTime || selectedSlotData?.start_time || startTime || null;
-      const bookingSlotId = Number(selectedSlotData?.slotId ?? selectedSlotData?.id ?? selectedSlotData?.slot_id) || null;
+      const bookingSlotId = Number(selectedSlotData?.slotId ?? selectedSlotData?.id ?? selectedSlotData?.slot_id ?? selectedSlotId) || null;
       const childCount = Number(guests?.children || 0);
       const childAges = Array.isArray(guests?.childAges) ? guests.childAges.map(Number).filter(a => Number.isFinite(a)) : [];
       const isPrivate = Boolean(privateBooking);
@@ -3369,7 +3402,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     startDate,
     selectedDateKey,
     startTime,
+    selectedSlotId,
     selectedSlotData,
+    dateFilteredSlotsLoaded,
+    slotsLoading,
     selectedEventSlot,
     selectedEventSlotId,
     selectedTicket,
@@ -3482,10 +3518,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           type,
           startDate: startDate ? startDate.format("YYYY-MM-DD") : null,
           startTime,
+          selectedSlotId: selectedSlotId || selectedSlotData?.slotId || selectedSlotData?.id || selectedSlotData?.slot_id || null,
+          selectedSlotLabel: selectedSlotData?.slotName || selectedSlotData?.slot_name || startTime || null,
+          selectedTimeValue: selectedSlotData?.startTime || selectedSlotData?.start_time || startTime || null,
           guests,
           selectedTicketTypeId,
           selectedEventSlotIds,
           privateBooking,
+          includePriorityFee,
           selectedAddOns: selectedAddOns.map(a => a?.addon?.addonId || a?.addonId || a?.id),
         };
         try {
@@ -3973,10 +4013,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
               type,
               startDate: startDate ? startDate.format("YYYY-MM-DD") : null,
               startTime,
+              selectedSlotId: selectedSlotId || selectedSlotData?.slotId || selectedSlotData?.id || selectedSlotData?.slot_id || null,
+              selectedSlotLabel: selectedSlotData?.slotName || selectedSlotData?.slot_name || startTime || null,
+              selectedTimeValue: selectedSlotData?.startTime || selectedSlotData?.start_time || startTime || null,
               guests,
               selectedTicketTypeId,
               selectedEventSlotIds,
               privateBooking,
+              includePriorityFee,
               selectedAddOns: selectedAddOns.map(a => a?.addon?.addonId || a?.addonId || a?.id),
             };
             try {
@@ -4485,10 +4529,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             type,
             startDate: startDate ? startDate.format("YYYY-MM-DD") : null,
             startTime,
+            selectedSlotId: selectedSlotId || selectedSlotData?.slotId || selectedSlotData?.id || selectedSlotData?.slot_id || null,
+            selectedSlotLabel: selectedSlotData?.slotName || selectedSlotData?.slot_name || startTime || null,
+            selectedTimeValue: selectedSlotData?.startTime || selectedSlotData?.start_time || startTime || null,
             guests,
             selectedTicketTypeId,
             selectedEventSlotIds,
             privateBooking,
+            includePriorityFee,
             selectedAddOns: selectedAddOns.map(a => a?.addon?.addonId || a?.addonId || a?.id),
           };
           try {
