@@ -1680,11 +1680,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     }
   }, [onExternalOpenChange, resetBookingFormState]);
 
-  useEffect(() => {
-    if (onExternalOpenChange) {
-      onExternalOpenChange(show);
-    }
-  }, [onExternalOpenChange, show]);
+  // Removed faulty useEffect that called onExternalOpenChange(show) on mount/render
 
   const getBusinessInterestLabel = useCallback(() => {
     const normalizedType = String(type || "").trim().toLowerCase();
