@@ -223,18 +223,23 @@ export default function DirectUpiSection({
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
   const [copied, setCopied] = useState(false);
   const [copiedNote, setCopiedNote] = useState(false);
-  const [utrNumber, setUtrNumber] = useState(
-    () => (typeof window !== "undefined" ? localStorage.getItem(`utr_${config.orderId}`) || "" : "")
-  );
+  const [utrNumber, setUtrNumber] = useState("");
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [screenshotName, setScreenshotName] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(
-    () => (typeof window !== "undefined" ? Boolean(localStorage.getItem(`utr_submitted_${config.orderId}`)) : false)
-  );
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setIsSubmitted(false);
+    setUtrNumber("");
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    setScreenshotName("");
+    setSubmitError(null);
+  }, [bookingData?.listingId, bookingData?.selectedDate, bookingData?.selectedSlotId, bookingData?.bookingSlotId]);
 
   useEffect(() => {
     if (guestDetails) {

@@ -148,6 +148,10 @@ const ExperienceCheckoutComplete = ({ isDirectBooking: isDirectBookingProp = fal
     } catch (e) {
       console.error("Error checking payment failure status:", e);
     }
+
+    try {
+      sessionStorage.removeItem("directBookingSessionOrderId");
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
