@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useHistory } from "react-router-dom";
 import cn from "classnames";
 import styles from "./ViewDetails.module.sass";
 import Icon from "../../components/Icon";
@@ -1130,6 +1130,7 @@ const getPublicCancellationPolicyTexts = ({ booking, refundDetails, cancelPrevie
 
 const ViewDetails = () => {
   const location = useLocation();
+  const history = useHistory();
   const params = new URLSearchParams(location.search);
   const bookingId = params.get("id") || "bk-up-001";
   const bookingType = params.get("type"); // "event" for event orders
@@ -3392,6 +3393,64 @@ const ViewDetails = () => {
     }
     return styles.statusDefault;
   };
+  const handleExploreAlternatives = () => {
+    const businessInterestCode = String(
+      booking?.originalData?.businessInterestCode ||
+      booking?.originalData?.business_interest_code ||
+      booking?.businessInterestCode ||
+      booking?.business_interest_code ||
+      booking?.category ||
+      booking?.bookingData?.businessInterestCode ||
+      booking?.serviceType ||
+      ""
+    ).toUpperCase();
+
+    const isStayOrder =
+      businessInterestCode === "STAYS" ||
+      businessInterestCode === "STAY" ||
+      businessInterestCode === "HOTEL" ||
+      businessInterestCode === "HOSTEL" ||
+      booking?.originalData?.stayId != null ||
+      booking?.originalData?.propertyId != null ||
+      booking?.bookingData?.stayId != null ||
+      booking?.bookingData?.propertyId != null ||
+      booking?.stayId != null ||
+      booking?.stayData?.id != null ||
+      booking?.stayData?.stayId != null ||
+      booking?.stayData != null ||
+      booking?.isStay ||
+      Array.isArray(booking?.originalData?.stayOrderRooms) ||
+      Array.isArray(booking?.bookingData?.stayOrderRooms);
+
+    const isEventOrder =
+      bookingType === "event" ||
+      businessInterestCode === "EVENTS" ||
+      businessInterestCode === "EVENT" ||
+      booking?.originalData?.eventId != null ||
+      booking?.bookingData?.eventId != null ||
+      booking?.eventId != null ||
+      booking?.eventData?.id != null ||
+      booking?.eventData?.eventId != null ||
+      booking?.eventData != null ||
+      booking?.isEventOrder ||
+      booking?.isEvent;
+
+    let targetPath = "/experiences";
+    if (isStayOrder) {
+      targetPath = "/stays";
+    } else if (isEventOrder) {
+      targetPath = "/events";
+    } else {
+      targetPath = "/experiences";
+    }
+
+    if (history && history.push) {
+      history.push(targetPath);
+    } else {
+      window.location.href = targetPath;
+    }
+  };
+
   const getActionButtons = () => {
     const status = booking.status?.toLowerCase() ||
       booking.statusTone ||
@@ -3453,9 +3512,9 @@ const ViewDetails = () => {
         });
       }
       return actions;
-    } else if (status === "cancelled" || status === "canceled") {
+    } else if (status === "cancelled" || status === "canceled" || status === "rejected") {
       return [
-        { label: "Explore Alternatives", variant: "primary", onClick: () => window.location.href = "/" },
+        { label: "Explore Alternatives", variant: "primary", onClick: handleExploreAlternatives },
       ];
     } else {
       return [
