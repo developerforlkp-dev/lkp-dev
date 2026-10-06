@@ -4572,6 +4572,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       width: 50px;
                       flex-shrink: 0;
                       border-right: 1px solid ${B}55;
+                      position: relative;
                     }
                     .addon-content {
                       flex: 1;

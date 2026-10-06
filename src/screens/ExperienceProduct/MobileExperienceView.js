@@ -470,7 +470,7 @@ export default function MobileExperienceView({
                           setActivityPhotoVisible(true);
                         }}
                       >
-                        <img src={imgUrl} alt={act.name || act.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img src={imgUrl} alt={act.name || act.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.parentElement.style.display = 'none'; }} />
                         <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.6)", padding: "4px 8px", borderRadius: 8, color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, backdropFilter: "blur(10px)" }}>
                           <Camera size={12} /> GALLERY
                         </div>

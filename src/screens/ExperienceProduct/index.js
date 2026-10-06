@@ -1555,6 +1555,9 @@ const ExperienceProduct = () => {
                               src={activityImageUrl}
                               style={{ width: "100%", height: "100%", minHeight: "180px", objectFit: "cover", transition: "transform 0.3s ease" }}
                               alt={it.name}
+                              onError={(e) => {
+                                e.target.parentElement.style.display = 'none';
+                              }}
                             />
                             <div
                               className="gallery-overlay"
