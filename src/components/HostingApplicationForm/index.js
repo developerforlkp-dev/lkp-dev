@@ -544,6 +544,7 @@ const HostingApplicationForm = ({ visible, onClose }) => {
                   value={formData.state || "Select State"}
                   setValue={(val) => handleChange({ target: { name: "state", value: val } })}
                   options={Object.keys(INDIA_STATE_DISTRICTS)}
+                  searchable={true}
                 />
               </div>
               <div className={styles.field} style={{ pointerEvents: loading || !formData.state ? 'none' : 'auto', opacity: loading || !formData.state ? 0.6 : 1 }}>
@@ -553,6 +554,7 @@ const HostingApplicationForm = ({ visible, onClose }) => {
                   value={formData.district || "Select District"}
                   setValue={(val) => handleChange({ target: { name: "district", value: val } })}
                   options={formData.state ? INDIA_STATE_DISTRICTS[formData.state] : []}
+                  searchable={true}
                 />
               </div>
             </div>
