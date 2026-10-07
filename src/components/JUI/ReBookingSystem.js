@@ -2231,9 +2231,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       ...(Array.isArray(listing?.slots) ? listing.slots : []),
       ...(Array.isArray(listing?.timeSlots) ? listing.timeSlots : []),
       ...(Array.isArray(allFetchedSlots) ? allFetchedSlots : []),
-      ...(Array.isArray(directOfflineSlotsData?.slots) ? directOfflineSlotsData.slots : []),
-      ...(Array.isArray(directOfflineSlotsData?.timeSlots) ? directOfflineSlotsData.timeSlots : []),
-      ...(Array.isArray(directOfflineSlotsData?.reservationSlots) ? directOfflineSlotsData.reservationSlots : []),
     ];
 
     const seenSlotIds = new Set();
@@ -2298,7 +2295,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     });
 
     return validSlots.length > 0;
-  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking, allFetchedSlots, directOfflineSlotsData, isDirect]);
+  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking, allFetchedSlots, isDirect]);
 
 
 
