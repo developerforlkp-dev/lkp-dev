@@ -2916,12 +2916,12 @@ function HostDetails({ event, hostName }) {
                         {/* Verification Criteria Pills */}
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
                           <span style={{
-                            fontSize: "9px",
+                            fontSize: "11px",
                             fontWeight: 700,
                             color: A,
                             background: theme === "dark" ? "rgba(0, 151, 178, 0.08)" : "rgba(0, 151, 178, 0.05)",
                             border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.2)" : "rgba(0, 151, 178, 0.12)"}`,
-                            padding: "3px 8px",
+                            padding: "5px 12px",
                             borderRadius: "6px",
                             display: "inline-flex",
                             alignItems: "center",
@@ -2931,12 +2931,12 @@ function HostDetails({ event, hostName }) {
                           </span>
 
                           <span style={{
-                            fontSize: "9px",
+                            fontSize: "11px",
                             fontWeight: 700,
                             color: "#10B981",
                             background: theme === "dark" ? "rgba(16, 185, 129, 0.08)" : "rgba(16, 185, 129, 0.05)",
                             border: `1px solid ${theme === "dark" ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.12)"}`,
-                            padding: "3px 8px",
+                            padding: "5px 12px",
                             borderRadius: "6px",
                             display: "inline-flex",
                             alignItems: "center",
@@ -2946,12 +2946,12 @@ function HostDetails({ event, hostName }) {
                           </span>
 
                           <span style={{
-                            fontSize: "9px",
+                            fontSize: "11px",
                             fontWeight: 700,
                             color: "#D97706",
                             background: theme === "dark" ? "rgba(245, 158, 11, 0.08)" : "rgba(245, 158, 11, 0.05)",
                             border: `1px solid ${theme === "dark" ? "rgba(245, 158, 11, 0.2)" : "rgba(245, 158, 11, 0.12)"}`,
-                            padding: "3px 8px",
+                            padding: "5px 12px",
                             borderRadius: "6px",
                             display: "inline-flex",
                             alignItems: "center",
