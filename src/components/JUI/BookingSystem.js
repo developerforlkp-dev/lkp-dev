@@ -2341,6 +2341,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       ...(Array.isArray(baseTimeSlots) ? baseTimeSlots : []),
       ...(Array.isArray(dateFilteredSlots) ? dateFilteredSlots : []),
       ...(Array.isArray(listing?.slots) ? listing.slots : []),
+      ...(Array.isArray(listing?.timeSlots) ? listing.timeSlots : []),
+      ...(Array.isArray(allFetchedSlots) ? allFetchedSlots : []),
+      ...(Array.isArray(directOfflineSlotsData?.slots) ? directOfflineSlotsData.slots : []),
+      ...(Array.isArray(directOfflineSlotsData?.timeSlots) ? directOfflineSlotsData.timeSlots : []),
+      ...(Array.isArray(directOfflineSlotsData?.reservationSlots) ? directOfflineSlotsData.reservationSlots : []),
     ];
 
     const seenSlotIds = new Set();
@@ -2366,8 +2371,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       if (!isWeekdayEnabled(slot, weekday) && !isWeekdayEnabled(schedule, weekday)) return false;
 
       // 3. Check date range
-      const slotStart = slot.startDate || slot.start_date || schedule.startDate || schedule.start_date;
-      const slotEnd = slot.endDate || slot.end_date || schedule.endDate || schedule.end_date;
+      const slotStart = slot.startDate || slot.start_date || schedule.startDate || schedule.start_date || slot.slotStartDate || slot.slot_start_date;
+      const slotEnd = slot.endDate || slot.end_date || schedule.endDate || schedule.end_date || slot.slotEndDate || slot.slot_end_date;
       if (slotStart) {
         const start = makeLocalDate(getDateKey(slotStart));
         if (indiaNow.toDate() < start) return false;
@@ -2392,7 +2397,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       if (seats != null && seats <= 0) return false;
 
       // 5. Check time validity (future slots only)
-      const startTime = slot.startTime || slot.start_time || schedule.startTime || schedule.start_time;
+      const startTime = slot.startTime || slot.start_time || schedule.startTime || schedule.start_time || slot.slotName || slot.slot_name;
       if (startTime) {
         const slotStartTimeValue = getSlotStartTimeValue(slot, startTime);
         const cutoffMoment = getSlotCutoffMoment(todayKey, String(slotStartTimeValue), getExperienceBookingCutoffHours(slot));
@@ -2405,7 +2410,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     });
 
     return validSlots.length > 0;
-  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking]);
+  }, [baseTimeSlots, dateFilteredSlots, eventSlots, listing, isEventBooking, allFetchedSlots, directOfflineSlotsData, isDirect]);
 
 
 
@@ -5345,10 +5350,10 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                         const key = date.format("YYYY-MM-DD");
                                         const todayKey = getIndiaDateKey();
                                         if (key < todayKey) return true;
+                                        if (key === todayKey && !hasTodayValidSlots) return true;
                                         if (isDirect) return false;
                                         const availableKeys = isEventBooking ? eventAvailableDateKeys : experienceAvailableDateKeys;
                                         if (!availableKeys.has(key)) return true;
-                                        if (key === todayKey && !hasTodayValidSlots) return true;
                                         return false;
                                       }}
                                       tokens={{ A, AL, BG, FG, M, B, S, W }}
