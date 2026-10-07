@@ -344,17 +344,23 @@ export default function MobileExperienceView({
           ╚═══════════════════════════════════╝ */}
       <div className="mob-facts" style={{ background: BG }}>
         {[
-          { icon: <Clock size={15} color={A} />, label: listing?.duration ? `${listing.duration} ${listing.durationUnit || "Hrs"}` : "2.5 Hrs" },
-          { icon: <User size={15} color={A} />, label: listing?.minimumAge ? `Min Age: ${listing.minimumAge}` : "All Ages Welcome" },
-          { icon: <Zap size={15} color={A} />, label: listing?.difficultyLevel || "Moderate" },
-          { icon: <Baby size={15} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
-          { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
-          { icon: <ShieldCheck size={15} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
-          { icon: <Users size={15} color={A} />, label: `Max ${displayMaxGuests || 15} Guests` },
+          { icon: <Clock size={14} color={A} />, label: listing?.duration ? `${listing.duration} ${listing.durationUnit || "Hrs"}` : "2.5 Hrs" },
+          { icon: <User size={14} color={A} />, label: listing?.minimumAge ? `Min Age: ${listing.minimumAge}` : "All Ages Welcome" },
+          { icon: <Zap size={14} color={A} />, label: listing?.difficultyLevel || "Moderate" },
+          { icon: <Baby size={14} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
+          { icon: <Languages size={14} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
+          { icon: <ShieldCheck size={14} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
+          { icon: <Users size={14} color={A} />, label: `Max ${displayMaxGuests || 15} Guests` },
         ].map((fact, i) => (
-          <div key={i} className="mob-fact-pill" style={{ background: isDark ? "#1A1A1A" : "#F5F7FA", color: FG, border: `1px solid ${B}` }}>
-            {fact.icon}
-            <span>{fact.label}</span>
+          <div key={i} className="mob-fact-item" style={{ 
+            color: FG, 
+            background: isDark ? "#1A1A1A" : "#FFFFFF", 
+            borderColor: isDark ? "#333333" : "rgba(0, 151, 178, 0.15)" 
+          }}>
+            <div className="mob-fact-icon" style={{ background: isDark ? "rgba(0, 151, 178, 0.15)" : "rgba(0, 151, 178, 0.08)" }}>
+              {fact.icon}
+            </div>
+            <span className="mob-fact-label">{fact.label}</span>
           </div>
         ))}
       </div>
@@ -390,7 +396,7 @@ export default function MobileExperienceView({
           ╚═══════════════════════════════════╝ */}
       {rawTags.length > 0 && (
         <div className="mob-marquee" style={{ borderColor: B, background: isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.005)" }}>
-          <div className="mob-marquee-track" style={{ "--marquee-duration": `${Math.max(rawTags.length * 20, 65)}s` }}>
+          <div className="mob-marquee-track" style={{ "--marquee-duration": `${rawTags.length * 4 * 1.8}s` }}>
             {[...rawTags, ...rawTags, ...rawTags, ...rawTags].map((tag, i) => (
               <div key={i} className="mob-marquee-item">
                 <span className="mob-marquee-text" style={{ fontWeight: i % 2 === 0 ? 700 : 300, color: i % 2 === 0 ? FG : M, opacity: i % 2 === 0 ? 1 : 0.75 }}>
@@ -716,7 +722,7 @@ export default function MobileExperienceView({
             borderTop: `1px solid ${B}`,
             borderBottom: `1px solid ${B}`
           }}>
-            <div className="mob-marquee-track" style={{ "--marquee-duration": `${Math.max(displayCats.length * 45, 90)}s` }}>
+            <div className="mob-marquee-track" style={{ "--marquee-duration": `${displayCats.length * 12 * 1.8}s` }}>
               {repeatedCats.map((cat, i) => (
                 <div key={i} className="mob-marquee-item">
                   <span className="mob-marquee-text" style={{ fontWeight: i % 2 === 0 ? 700 : 300, color: i % 2 === 0 ? FG : M, opacity: i % 2 === 0 ? 1 : 0.75 }}>
@@ -1000,12 +1006,12 @@ export default function MobileExperienceView({
                     {/* Verification Criteria Pills */}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
                       <span style={{
-                        fontSize: "9px",
+                        fontSize: "11px",
                         fontWeight: 700,
                         color: A,
                         background: "rgba(0, 151, 178, 0.08)",
                         border: "1px solid rgba(0, 151, 178, 0.2)",
-                        padding: "4px 10px",
+                        padding: "5px 12px",
                         borderRadius: "6px",
                         display: "inline-flex",
                         alignItems: "center",
@@ -1015,12 +1021,12 @@ export default function MobileExperienceView({
                       </span>
 
                       <span style={{
-                        fontSize: "9px",
+                        fontSize: "11px",
                         fontWeight: 700,
                         color: "#10B981",
                         background: "rgba(16, 185, 129, 0.08)",
                         border: "1px solid rgba(16, 185, 129, 0.2)",
-                        padding: "4px 10px",
+                        padding: "5px 12px",
                         borderRadius: "6px",
                         display: "inline-flex",
                         alignItems: "center",
@@ -1030,12 +1036,12 @@ export default function MobileExperienceView({
                       </span>
 
                       <span style={{
-                        fontSize: "9px",
+                        fontSize: "11px",
                         fontWeight: 700,
                         color: "#D97706",
                         background: "rgba(245, 158, 11, 0.08)",
                         border: "1px solid rgba(245, 158, 11, 0.2)",
-                        padding: "4px 10px",
+                        padding: "5px 12px",
                         borderRadius: "6px",
                         display: "inline-flex",
                         alignItems: "center",
