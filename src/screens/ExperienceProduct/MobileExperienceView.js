@@ -344,17 +344,23 @@ export default function MobileExperienceView({
           ╚═══════════════════════════════════╝ */}
       <div className="mob-facts" style={{ background: BG }}>
         {[
-          { icon: <Clock size={15} color={A} />, label: listing?.duration ? `${listing.duration} ${listing.durationUnit || "Hrs"}` : "2.5 Hrs" },
-          { icon: <User size={15} color={A} />, label: listing?.minimumAge ? `Min Age: ${listing.minimumAge}` : "All Ages Welcome" },
-          { icon: <Zap size={15} color={A} />, label: listing?.difficultyLevel || "Moderate" },
-          { icon: <Baby size={15} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
-          { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
-          { icon: <ShieldCheck size={15} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
-          { icon: <Users size={15} color={A} />, label: `Max ${displayMaxGuests || 15} Guests` },
+          { icon: <Clock size={14} color={A} />, label: listing?.duration ? `${listing.duration} ${listing.durationUnit || "Hrs"}` : "2.5 Hrs" },
+          { icon: <User size={14} color={A} />, label: listing?.minimumAge ? `Min Age: ${listing.minimumAge}` : "All Ages Welcome" },
+          { icon: <Zap size={14} color={A} />, label: listing?.difficultyLevel || "Moderate" },
+          { icon: <Baby size={14} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
+          { icon: <Languages size={14} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
+          { icon: <ShieldCheck size={14} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
+          { icon: <Users size={14} color={A} />, label: `Max ${displayMaxGuests || 15} Guests` },
         ].map((fact, i) => (
-          <div key={i} className="mob-fact-pill" style={{ background: isDark ? "#1A1A1A" : "#F5F7FA", color: FG, border: `1px solid ${B}` }}>
-            {fact.icon}
-            <span>{fact.label}</span>
+          <div key={i} className="mob-fact-item" style={{ 
+            color: FG, 
+            background: isDark ? "#1A1A1A" : "#FFFFFF", 
+            borderColor: isDark ? "#333333" : "rgba(0, 151, 178, 0.15)" 
+          }}>
+            <div className="mob-fact-icon" style={{ background: isDark ? "rgba(0, 151, 178, 0.15)" : "rgba(0, 151, 178, 0.08)" }}>
+              {fact.icon}
+            </div>
+            <span className="mob-fact-label">{fact.label}</span>
           </div>
         ))}
       </div>
