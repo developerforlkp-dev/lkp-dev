@@ -190,7 +190,7 @@ export default function MobileExperienceView({
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: listing?.title, url: window.location.href });
+        await navigator.share({ title: listing?.title, text: listing?.description || listing?.aboutListing || "", url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
       }
