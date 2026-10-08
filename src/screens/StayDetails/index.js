@@ -560,7 +560,7 @@ const ScopedStyles = () => (
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 16px 4px;
         gap: 6px;
         text-align: center;
@@ -574,11 +574,12 @@ const ScopedStyles = () => (
         margin-bottom: 2px;
       }
       .mobile-feature-grid .feature-card .feature-value {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         color: var(--FG, #fff);
         font-family: "Inter", sans-serif;
-        line-height: 1.2;
+        line-height: 1.3;
+        word-break: break-word;
       }
       .mobile-feature-grid .feature-card .feature-label {
         font-size: 10px;
