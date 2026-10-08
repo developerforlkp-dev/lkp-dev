@@ -3,7 +3,7 @@ import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import moment from "moment";
 import cn from "classnames";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, ChevronRight, Sparkles, Star, Compass, Share2, Building, Map, Globe, Info } from "lucide-react";
+import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera, Coffee, Phone, Mail, Plus, Minus, Baby, Languages, ShieldCheck, ChevronLeft, ChevronRight, Sparkles, Star, Compass, Share2, Building, Map, Globe, Info, X } from "lucide-react";
 import PolicyCategoryItem from "../../components/PolicyCategoryItem";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
@@ -382,6 +382,7 @@ const ExperienceProduct = () => {
   const [activityPhotoVisible, setActivityPhotoVisible] = useState(false);
   const [activityPhotoIndex, setActivityPhotoIndex] = useState(0);
   const [selectedActivityImages, setSelectedActivityImages] = useState([]);
+  const [desktopReviewsModalOpen, setDesktopReviewsModalOpen] = useState(false);
   const [flowTab, setFlowTab] = useState("itinerary");
   const [narrativeExpanded, setNarrativeExpanded] = useState(false);
   const [overviewExpanded, setOverviewExpanded] = useState(false);
@@ -2622,7 +2623,7 @@ const ExperienceProduct = () => {
                       }}
                       className="no-scrollbar"
                     >
-                      {normalizedReviews.map((rev, idx) => {
+                      {normalizedReviews.slice(0, 8).map((rev, idx) => {
                         const name = rev.customerName || rev.author || "Guest";
                         const rating = rev.rating || 5;
                         const text = rev.comment || rev.text || "";
@@ -2699,6 +2700,35 @@ const ExperienceProduct = () => {
                           </motion.div>
                         );
                       })}
+                      {normalizedReviews.length > 8 && (
+                        <motion.div
+                          whileHover={{ y: -8, scale: 1.02 }}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                          onClick={() => setDesktopReviewsModalOpen(true)}
+                          style={{
+                            width: "360px",
+                            background: theme === "dark"
+                              ? "linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)"
+                              : "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.55) 100%)",
+                            backdropFilter: "blur(20px)",
+                            border: `1px solid ${B}`,
+                            borderRadius: "24px",
+                            padding: "28px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            gap: 16,
+                            flexShrink: 0,
+                            cursor: "pointer",
+                            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.boxShadow = `0 20px 40px ${A}0f`; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.02)"; }}
+                        >
+                          <span style={{ fontSize: 18, fontWeight: 700, color: A }}>View all {normalizedReviews.length} reviews &rarr;</span>
+                        </motion.div>
+                      )}
                     </div>
                   </>
                 )}
@@ -2838,6 +2868,98 @@ const ExperienceProduct = () => {
             onNavigate={setActivityPhotoIndex}
             onClose={() => setActivityPhotoVisible(false)}
           />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {desktopReviewsModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+              background: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)",
+              zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: 24
+            }}
+            onClick={() => setDesktopReviewsModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%", maxWidth: 680, maxHeight: "85vh",
+                background: theme === "dark" ? "#111" : "#FFF",
+                borderRadius: 24, overflow: "hidden", display: "flex", flexDirection: "column",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.2)"
+              }}
+            >
+              <div style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${B}` }}>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: FG, fontFamily: '"Cormorant Garamond", serif' }}>All Guest Reviews</h2>
+                <button onClick={() => setDesktopReviewsModalOpen(false)} style={{ background: "transparent", border: "none", color: FG, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div style={{ padding: 24, overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
+                {reviewSummary?.averageRating && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8, padding: 20, borderRadius: 16, border: `1px solid ${B}`, background: theme === "dark" ? "#1A1A1A" : "#F9FAFB" }}>
+                    <span style={{ fontSize: 40, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
+                    <div>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={18} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} fill={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent"} />
+                        ))}
+                      </div>
+                      <p style={{ fontSize: 13, color: M, fontWeight: 600, margin: "6px 0 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                        {reviewSummary.totalReviews || normalizedReviews.length} reviews
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {normalizedReviews.map((rev, i) => {
+                  const name = rev.customerName || rev.author || "Verified Guest";
+                  const rating = rev.rating || 5;
+                  const text = rev.comment || rev.text || "";
+                  const vendorResponse = rev.vendorResponse || rev.hostResponse || rev.reply || "";
+                  return (
+                    <div key={i} style={{ borderRadius: 16, border: `1px solid ${B}`, padding: 24 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                        <div style={{ width: 44, height: 44, borderRadius: "50%", background: AL, border: `2px solid ${A}22`, display: "flex", alignItems: "center", justifyContent: "center", color: A, fontSize: 16, fontWeight: 700, flexShrink: 0 }}>
+                          {name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: FG, display: "block" }}>{name}</span>
+                          <div style={{ display: "flex", gap: 3, marginTop: 4 }}>
+                            {[...Array(5)].map((_, si) => (
+                              <Star key={si} size={12} color={si < rating ? "#F59E0B" : "#CBD5E1"} style={{ fill: si < rating ? "#F59E0B" : "transparent" }} />
+                            ))}
+                          </div>
+                        </div>
+                        <span style={{ marginLeft: "auto", fontSize: 13, color: M, fontWeight: 500 }}>
+                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Recently"}
+                        </span>
+                      </div>
+                      <ExpandableReviewText text={text} vendorResponse={vendorResponse} FG={FG} A={A} />
+                      {vendorResponse && (
+                        <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${B}`, opacity: 0.96 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                            Response from Host
+                          </div>
+                          <p style={{ fontSize: 14, color: FG, margin: 0, lineHeight: 1.6 }}>
+                            {vendorResponse}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
       <style>{`
