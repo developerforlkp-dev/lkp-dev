@@ -315,7 +315,10 @@ function HeroShareFab({ title, text, url, style = {} }) {
     setTimeout(() => setRipple(false), 700);
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url: shareUrl });
+        await navigator.share({ 
+          title, 
+          text: text ? `${text}\n${shareUrl}` : shareUrl 
+        });
       } else {
         const fallbackText = text ? `${text}\n${shareUrl}` : shareUrl;
         await navigator.clipboard.writeText(fallbackText);
@@ -889,7 +892,11 @@ function MobileHero({ event, heroRef }) {
     const shareUrl = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title, text: getShareText(event, "event"), url: shareUrl });
+        const shareText = getShareText(event, "event");
+        await navigator.share({ 
+          title, 
+          text: shareText ? `${shareText}\n${shareUrl}` : shareUrl 
+        });
       } else {
         const fallbackText = `${getShareText(event, "event")}\n${shareUrl}`;
         await navigator.clipboard.writeText(fallbackText);

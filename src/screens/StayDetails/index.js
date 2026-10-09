@@ -847,7 +847,10 @@ function HeroShareFab({ title, text, url, label = "Share Stay" }) {
     e.stopPropagation();
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ 
+          title, 
+          text: text ? `${text}\n${url}` : url 
+        });
       } else {
         const fallbackText = text ? `${text}\n${url}` : url;
         await navigator.clipboard.writeText(fallbackText);
@@ -1139,7 +1142,11 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                   e.stopPropagation();
                   try {
                     if (navigator.share) {
-                      await navigator.share({ title, text: getShareText(stay, "stay"), url: window.location.href });
+                      const shareText = getShareText(stay, "stay");
+                      await navigator.share({ 
+                        title, 
+                        text: shareText ? `${shareText}\n${window.location.href}` : window.location.href 
+                      });
                     } else {
                       const fallbackText = `${getShareText(stay, "stay")}\n${window.location.href}`;
                       await navigator.clipboard.writeText(fallbackText);

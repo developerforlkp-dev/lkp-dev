@@ -125,7 +125,10 @@ function HeroShareFab({ title, text, url, label = "Share Journey" }) {
     e.stopPropagation();
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ 
+          title, 
+          text: text ? `${text}\n${url}` : url 
+        });
       } else {
         const fallbackText = text ? `${text}\n${url}` : url;
         await navigator.clipboard.writeText(fallbackText);
