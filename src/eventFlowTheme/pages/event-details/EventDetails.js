@@ -18,6 +18,7 @@ import Icon from "../../../components/Icon";
 import FullScreenImage from "../../../components/FullScreenImage";
 import PolicyCategoryItem from "../../../components/PolicyCategoryItem";
 import CuratedContent from "../../../components/CuratedContent";
+import { getShareText } from "../../../utils/shareUtils";
 import { isDirectBookingPathOrState } from "../../../utils/directBooking";
 
 const formatImageUrl = (url) => {
@@ -887,7 +888,7 @@ function MobileHero({ event, heroRef }) {
     const shareUrl = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title, text: `Check out ${title}`, url: shareUrl });
+        await navigator.share({ title, text: getShareText(event, "event"), url: shareUrl });
       } else {
         await navigator.clipboard.writeText(shareUrl);
       }
@@ -1297,7 +1298,7 @@ function Hero({ event, heroRef }) {
         </Favorite>
         <HeroShareFab
           title={title}
-          text={`Check out ${title} on Little Known Planet`}
+          text={getShareText(event, "event")}
           url={window.location.href}
           style={{
             position: "relative",
