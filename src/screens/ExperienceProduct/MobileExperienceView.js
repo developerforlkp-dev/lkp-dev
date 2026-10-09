@@ -193,7 +193,8 @@ export default function MobileExperienceView({
       if (navigator.share) {
         await navigator.share({ title: listing?.title, text: getShareText(listing, "experience"), url: window.location.href });
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        const fallbackText = `${getShareText(listing, "experience")}\n${window.location.href}`;
+        await navigator.clipboard.writeText(fallbackText);
       }
     } catch (_) { }
   };

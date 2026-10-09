@@ -317,7 +317,8 @@ function HeroShareFab({ title, text, url, style = {} }) {
       if (navigator.share) {
         await navigator.share({ title, text, url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(shareUrl);
+        const fallbackText = text ? `${text}\n${shareUrl}` : shareUrl;
+        await navigator.clipboard.writeText(fallbackText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2400);
       }
@@ -890,7 +891,8 @@ function MobileHero({ event, heroRef }) {
       if (navigator.share) {
         await navigator.share({ title, text: getShareText(event, "event"), url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(shareUrl);
+        const fallbackText = `${getShareText(event, "event")}\n${shareUrl}`;
+        await navigator.clipboard.writeText(fallbackText);
       }
     } catch (_) { }
   };

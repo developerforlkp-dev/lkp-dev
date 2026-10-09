@@ -127,7 +127,8 @@ function HeroShareFab({ title, text, url, label = "Share Journey" }) {
       if (navigator.share) {
         await navigator.share({ title, text, url });
       } else {
-        await navigator.clipboard.writeText(url);
+        const fallbackText = text ? `${text}\n${url}` : url;
+        await navigator.clipboard.writeText(fallbackText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2400);
       }
