@@ -847,9 +847,13 @@ function HeroShareFab({ title, text, url, label = "Share Stay" }) {
     e.stopPropagation();
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ 
+          title, 
+          text: text ? `${text}\n${url}` : url 
+        });
       } else {
-        await navigator.clipboard.writeText(url);
+        const fallbackText = text ? `${text}\n${url}` : url;
+        await navigator.clipboard.writeText(fallbackText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2400);
       }
@@ -1138,9 +1142,14 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                   e.stopPropagation();
                   try {
                     if (navigator.share) {
-                      await navigator.share({ title, text: getShareText(stay, "stay"), url: window.location.href });
+                      const shareText = getShareText(stay, "stay");
+                      await navigator.share({ 
+                        title, 
+                        text: shareText ? `${shareText}\n${window.location.href}` : window.location.href 
+                      });
                     } else {
-                      await navigator.clipboard.writeText(window.location.href);
+                      const fallbackText = `${getShareText(stay, "stay")}\n${window.location.href}`;
+                      await navigator.clipboard.writeText(fallbackText);
                     }
                   } catch (_) { }
                 }} style={{ width: 44, height: 44, borderRadius: "50%", background: theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)", border: `1px solid ${A}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", outline: "none", cursor: "pointer" }}>

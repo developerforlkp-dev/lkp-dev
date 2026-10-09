@@ -10,9 +10,9 @@ export const getShareText = (listing, type) => {
     console.error("Error reading userInfo from localStorage", e);
   }
 
-  const title = listing?.title || "this";
-  let location = listing?.location?.address || listing?.address || listing?.city || "";
-  let description = listing?.aboutListing || listing?.description || "";
+  const title = listing?.title || listing?.propertyName || listing?.placeName || listing?.menuName || listing?.name || "this";
+  let location = listing?.location?.address || listing?.address || listing?.fullAddress || listing?.locationName || listing?.location || listing?.city || "";
+  let description = listing?.shortDescription || listing?.detailedDescription || listing?.description || listing?.aboutListing || "";
   if (description.length > 100) {
     description = description.substring(0, 97) + "...";
   }

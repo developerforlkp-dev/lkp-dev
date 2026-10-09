@@ -191,9 +191,14 @@ export default function MobileExperienceView({
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: listing?.title, text: getShareText(listing, "experience"), url: window.location.href });
+        const shareText = getShareText(listing, "experience");
+        await navigator.share({ 
+          title: listing?.title, 
+          text: shareText ? `${shareText}\n${window.location.href}` : window.location.href 
+        });
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        const fallbackText = `${getShareText(listing, "experience")}\n${window.location.href}`;
+        await navigator.clipboard.writeText(fallbackText);
       }
     } catch (_) { }
   };
