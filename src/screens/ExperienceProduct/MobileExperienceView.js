@@ -13,6 +13,7 @@ import Icon from "../../components/Icon";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import CuratedContent from "../../components/CuratedContent";
+import { getShareText } from "../../utils/shareUtils";
 import "./MobileExperienceView.css";
 
 /* ── helpers (copied from parent to avoid coupling) ── */
@@ -190,7 +191,7 @@ export default function MobileExperienceView({
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: listing?.title, text: listing?.description || listing?.aboutListing || "", url: window.location.href });
+        await navigator.share({ title: listing?.title, text: getShareText(listing, "experience"), url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
       }

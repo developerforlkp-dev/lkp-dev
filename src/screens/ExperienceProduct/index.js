@@ -11,6 +11,7 @@ import ShareButton from "../../components/ShareButton";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import Icon from "../../components/Icon";
+import { getShareText } from "../../utils/shareUtils";
 import {
   getListing,
   getEventDetails,
@@ -124,7 +125,7 @@ function HeroShareFab({ title, text, url, label = "Share Journey" }) {
     e.stopPropagation();
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ title, url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -1031,7 +1032,12 @@ const ExperienceProduct = () => {
                       );
                     }}
                   </Favorite>
-                  <HeroShareFab title={listing?.title} text={listing?.description || listing?.aboutListing || ""} url={window.location.href} label="Share Journey" />
+                  <HeroShareFab 
+                    title={listing?.title} 
+                    text={getShareText(listing, "experience")} 
+                    url={window.location.href} 
+                    label="Share Journey" 
+                  />
                 </div>
               </Rev>
             </div>
