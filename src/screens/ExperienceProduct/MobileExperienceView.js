@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft, ChevronDown, Clock, User, Users, Zap, Baby, Languages,
-  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Compass, Heart, Building, Map, Globe, Camera
+  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Compass, Heart, Building, Map, Globe, Camera, X
 } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import PhotoView from "../../components/PhotoView";
@@ -13,6 +13,7 @@ import Icon from "../../components/Icon";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import CuratedContent from "../../components/CuratedContent";
+import { getShareText } from "../../utils/shareUtils";
 import "./MobileExperienceView.css";
 
 /* ── helpers (copied from parent to avoid coupling) ── */
@@ -150,6 +151,7 @@ export default function MobileExperienceView({
   const [addonPhotoVisible, setAddonPhotoVisible] = useState(false);
   const [selectedAddonImages, setSelectedAddonImages] = useState([]);
   const [addonPhotoIndex, setAddonPhotoIndex] = useState(0);
+  const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
   const galleryRef = useRef(null);
 
   /* ── gallery scroll handler ── */
@@ -189,7 +191,7 @@ export default function MobileExperienceView({
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: listing?.title, url: window.location.href });
+        await navigator.share({ title: listing?.title, text: getShareText(listing, "experience"), url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
       }
@@ -1107,7 +1109,7 @@ export default function MobileExperienceView({
           </div>
 
           {revs.length > 3 && (
-            <button onClick={() => history.push(`/reviews/experience/${currentListingId}`)}
+            <button onClick={() => setReviewsModalOpen(true)}
               style={{ marginTop: 16, width: "100%", padding: "14px", borderRadius: 12, border: `1px solid ${B}`, background: "transparent", color: A, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, outline: "none" }}>
               See All Reviews
             </button>
@@ -1208,6 +1210,68 @@ export default function MobileExperienceView({
             onNavigate={setAddonPhotoIndex}
             onClose={() => setAddonPhotoVisible(false)}
           />
+        )}
+        {reviewsModalOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            style={{
+              position: "fixed",
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: isDark ? "#000" : "#FFF",
+              zIndex: 9999,
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            <div style={{ position: "sticky", top: 0, background: isDark ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${B}`, zIndex: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: FG }}>All Guest Reviews</h2>
+              <button onClick={() => setReviewsModalOpen(false)} style={{ background: "transparent", border: "none", color: FG, padding: 8, cursor: "pointer" }}>
+                <X size={24} />
+              </button>
+            </div>
+            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+              {reviewSummary?.averageRating && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, padding: "16px", borderRadius: 12, border: `1px solid ${B}`, background: isDark ? "#111" : W }}>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
+                  <div>
+                    <div style={{ display: "flex", gap: 2 }}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={16} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} fill={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent"} />
+                      ))}
+                    </div>
+                    <p style={{ fontSize: 12, color: M, fontWeight: 600, margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      {reviewSummary.totalReviews || revs.length} reviews
+                    </p>
+                  </div>
+                </div>
+              )}
+              {revs.map((rev, i) => (
+                <div key={i} style={{ borderRadius: 16, border: `1px solid ${B}`, padding: 20, background: isDark ? "#111" : W }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: AL, border: `2px solid ${A}22`, display: "flex", alignItems: "center", justifyContent: "center", color: A, fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+                      {(rev.customerName || rev.author || "G")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: FG, display: "block" }}>{rev.customerName || rev.author || "Verified Guest"}</span>
+                      <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                        {[...Array(5)].map((_, si) => (
+                          <Star key={si} size={12} color={si < (rev.rating || 5) ? "#F59E0B" : "#CBD5E1"} style={{ fill: si < (rev.rating || 5) ? "#F59E0B" : "transparent" }} />
+                        ))}
+                      </div>
+                    </div>
+                    <span style={{ marginLeft: "auto", fontSize: 12, color: M, fontWeight: 500 }}>
+                      {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Recently"}
+                    </span>
+                  </div>
+                  <ExpandableReviewText text={rev.comment || rev.text} vendorResponse={rev.vendorResponse || rev.hostResponse || rev.reply} FG={FG} A={A} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
