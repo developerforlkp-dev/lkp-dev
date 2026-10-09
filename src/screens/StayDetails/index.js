@@ -21,6 +21,7 @@ import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReview
 import StayBookingSystem from "./StayBookingSystem";
 import StayItinerary from "./StayItinerary";
 import CuratedContent from "../../components/CuratedContent";
+import { getShareText } from "../../utils/shareUtils";
 import { useTheme, THEMES } from "../../components/JUI/Theme";
 import Rating from "../../components/Rating";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
@@ -1137,7 +1138,7 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                   e.stopPropagation();
                   try {
                     if (navigator.share) {
-                      await navigator.share({ title, text: stay?.shortDescription || stay?.description || "", url: window.location.href });
+                      await navigator.share({ title, text: getShareText(stay, "stay"), url: window.location.href });
                     } else {
                       await navigator.clipboard.writeText(window.location.href);
                     }
@@ -1188,7 +1189,7 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                   );
                 }}
               </Favorite>
-              <HeroShareFab title={title} text={stay?.shortDescription || stay?.description || ""} url={window.location.href} label="Share Stay" />
+              <HeroShareFab title={title} text={getShareText(stay, "stay")} url={window.location.href} label="Share Stay" />
             </div>
           </div>
 
