@@ -930,7 +930,7 @@ function MobileHero({ event, heroRef }) {
       <div style={{
         position: "absolute",
         top: "40%",
-        right: "-70px",
+        right: "-20px",
         transform: "translateY(-50%) scale(0.55)",
         transformOrigin: "center right",
         zIndex: 5,
