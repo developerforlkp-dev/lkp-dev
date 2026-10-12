@@ -1796,8 +1796,16 @@ const Main = ({
           const validCompletedOrders = completedArray.filter(order => order);
 
           if (validCompletedOrders.length > 0) {
-            completedRaw = validCompletedOrders.map(enrichRawBooking);
+            const classifiedCompleted = validCompletedOrders.map(enrichRawBooking);
+            completedRaw = classifiedCompleted.filter((booking) => booking.statusTone === "completed");
+            const reclassifiedUpcoming = classifiedCompleted.filter((booking) => booking.statusTone === "upcoming");
             setRawCompletedBookings(completedRaw);
+            if (reclassifiedUpcoming.length > 0) {
+              setRawBookings((previous) => {
+                const existingIds = new Set(previous.map((booking) => String(booking.orderId)));
+                return [...previous, ...reclassifiedUpcoming.filter((booking) => !existingIds.has(String(booking.orderId)))];
+              });
+            }
           } else {
             setRawCompletedBookings([]);
           }
@@ -1822,7 +1830,7 @@ const Main = ({
     };
 
     processBookings();
-  }, [propBookingData, propCompletedOrders, initialTabSet]);
+  }, [propBookingData, propCompletedOrders]);
 
   const countsByTab = useMemo(() => {
     // Count upcoming, completed (date-overridden), pending, and cancelled from regular bookings
@@ -2029,8 +2037,16 @@ const Main = ({
         //console.log("✅ Fetched completed orders:", completedOrdersData);
 
         if (Array.isArray(completedOrdersData) && completedOrdersData.length > 0) {
-          const completedRaw = completedOrdersData.filter(order => order).map(enrichRawBooking);
+          const classifiedCompleted = completedOrdersData.filter(order => order).map(enrichRawBooking);
+          const completedRaw = classifiedCompleted.filter((booking) => booking.statusTone === "completed");
+          const reclassifiedUpcoming = classifiedCompleted.filter((booking) => booking.statusTone === "upcoming");
           setRawCompletedBookings(completedRaw);
+          if (reclassifiedUpcoming.length > 0) {
+            setRawBookings((previous) => {
+              const existingIds = new Set(previous.map((booking) => String(booking.orderId)));
+              return [...previous, ...reclassifiedUpcoming.filter((booking) => !existingIds.has(String(booking.orderId)))];
+            });
+          }
         }
         // Eligible bookings = completed orders without reviews; show "Leave review" for these orderIds
         const eligibleList = Array.isArray(eligibleData) ? eligibleData : [];
