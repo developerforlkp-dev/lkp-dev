@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import cn from "classnames";
 import { Link } from "react-router-dom";
 import styles from "./Item.module.sass";
 import Icon from "../../Icon";
+import { scrollElementToCenter } from "../../../utils/scrollHelper";
 
-const Item = ({ className, item }) => {
+const Item = ({ className, item, isActive, onSelect }) => {
+  const cardRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -13,6 +15,13 @@ const Item = ({ className, item }) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (isActive && cardRef.current) {
+      scrollElementToCenter(cardRef.current);
+    }
+  }, [isActive]);
+
   const defaultImage = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
   const finalSrc = imageError ? defaultImage : item.src;
   const finalSrcSet = imageError ? undefined : `${item.srcSet} 2x`;
@@ -31,10 +40,20 @@ const Item = ({ className, item }) => {
 
   return (
     <Link 
-      className={cn(className, styles.item)} 
+      ref={cardRef}
+      className={cn(className, styles.item, { [styles.active]: isActive })} 
       to={item.url}
-      target={isMobile ? "_self" : "_blank"}
+      target={isMobile ? "_self" : (onSelect ? "_self" : "_blank")}
       rel="noopener noreferrer"
+      onClick={(e) => {
+        if (!e.ctrlKey && !e.metaKey && onSelect) {
+          e.preventDefault();
+          if (cardRef.current) {
+            scrollElementToCenter(cardRef.current);
+          }
+          onSelect(item);
+        }
+      }}
     >
       <div className={cn(styles.preview, { [styles.loaded]: imageLoaded })}>
         <img 

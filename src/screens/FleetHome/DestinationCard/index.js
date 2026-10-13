@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import cn from "classnames";
 import { Link } from "react-router-dom";
 import styles from "./DestinationCard.module.sass";
+import { scrollElementToCenter } from "../../../utils/scrollHelper";
 
-const DestinationCard = ({ className, item }) => {
+const DestinationCard = ({ className, item, isActive, onSelect }) => {
+  const cardRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -12,15 +14,32 @@ const DestinationCard = ({ className, item }) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (isActive && cardRef.current) {
+      scrollElementToCenter(cardRef.current);
+    }
+  }, [isActive]);
+
   const defaultImage = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
   const finalSrc = imageError ? defaultImage : item.src;
   const finalSrcSet = imageError ? undefined : (item.srcSet ? `${item.srcSet} 2x` : undefined);
   return (
     <Link 
-      className={cn(className, styles.card)} 
+      ref={cardRef}
+      className={cn(className, styles.card, { [styles.active]: isActive })} 
       to={item.url || "/experience-category"}
-      target={isMobile ? "_self" : "_blank"}
+      target={isMobile ? "_self" : (onSelect ? "_self" : "_blank")}
       rel="noopener noreferrer"
+      onClick={(e) => {
+        if (!e.ctrlKey && !e.metaKey && onSelect) {
+          e.preventDefault();
+          if (cardRef.current) {
+            scrollElementToCenter(cardRef.current);
+          }
+          onSelect(item);
+        }
+      }}
     >
       <div className={cn(styles.imageWrapper, { [styles.loaded]: imageLoaded })}>
         <img
@@ -61,6 +80,11 @@ const DestinationCard = ({ className, item }) => {
         <div className={styles.title}>{item.title}</div>
         {item.location && (
           <div className={styles.location}>{item.location}</div>
+        )}
+        {isActive && (
+          <div className={styles.activeIndicator}>
+            <div className={styles.activeDot} />
+          </div>
         )}
       </div>
     </Link>

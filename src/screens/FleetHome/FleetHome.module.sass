@@ -851,6 +851,14 @@
                 height: 240px !important
                 display: block !important
 
+.destinationCard,
+.destinationCardHorizontal,
+.gridCardHorizontal,
+.browseCardSquare
+    &:global(.active),
+    &[class*="active"]
+        scroll-snap-align: center !important
+
 // Horizontal Scroll Wrapper - Used by all sections
 .horizontalScrollWrapper
     margin-left: -32px

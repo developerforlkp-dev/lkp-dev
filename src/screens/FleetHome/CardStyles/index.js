@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback } from "react";
 import cn from "classnames";
 import { Link } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import Card from "../../../components/Card";
 import BrowseItem from "../../../components/Browse/Item";
 import DestinationCard from "../DestinationCard";
@@ -8,6 +9,7 @@ import CircleCard from "../CircleCard";
 import Destination from "../../../components/Destination";
 import HorizontalScroll from "../../../components/HorizontalScroll";
 import Icon from "../../../components/Icon";
+import InlineFilteredShelf from "../InlineFilteredShelf";
 import styles from "../FleetHome.module.sass";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 
@@ -203,7 +205,13 @@ const transformListingToCard = (listing, section) => {
   const entityType = getEntityType(listing);
 
   // Price formatting
-  const price = isCategory ? 0 : (listing.individualPrice ?? listing.startingPrice ?? 0);
+  const price = isCategory
+    ? 0
+    : (listing.individualPrice ??
+       listing.startingPrice ??
+       listing.priceSummary?.startingPrice ??
+       listing.priceSummary?.individualPrice ??
+       0);
   const hasPrice = !isCategory && price > 0 && entityType !== "place";
   let suffix = "";
   if (entityType === "experience" || entityType === "event") suffix = " / person";
@@ -313,6 +321,7 @@ const transformListingToBrowse = (listing, section) => {
 
 // Transform API listing to DestinationCard format
 const transformListingToDestination = (listing, section) => {
+  const isCategory = listing?.isCategoryCard || isShowCategoriesOnly(section);
   const id = getEntityId(listing);
   const coverPhotoUrl = formatImageUrl(getEntityImageUrl(listing));
 
@@ -325,6 +334,11 @@ const transformListingToDestination = (listing, section) => {
     srcSet: coverPhotoUrl,
     url: getEntityUrl(listing, id, section),
     isClosed: Boolean(listing.isClosed),
+    isCategoryCard: isCategory,
+    categoryType: listing?.categoryType || section?.categoryType,
+    categoryId: listing?.categoryId ?? id,
+    businessInterest: listing?.businessInterest || section?.businessInterestCode || section?.businessInterest,
+    businessInterestId: listing?.businessInterestId || section?.businessInterestId,
   };
 };
 
@@ -525,7 +539,7 @@ const formatSectionDescription = (text) => {
 /**
  * CARD_SQUARE_HORIZONTAL_NODETAIL - Square image cards with horizontal scrolling, no detailed info
  */
-export const CardCarousel = ({ section, listings, className }) => {
+export const CardCarousel = ({ section, listings, className, activeItem, onSelectItem }) => {
   const browseItems = listings.map((listing) => transformListingToBrowse(listing, section));
   const sectionListingsUrl = getSectionListingsUrl(section);
 
@@ -548,20 +562,34 @@ export const CardCarousel = ({ section, listings, className }) => {
       </div>
       <div className={styles.horizontalScrollWrapper}>
         <HorizontalScroll className={styles.horizontalScroll} gap={24}>
-          {browseItems.map((item) => (
-            <BrowseItem
-              className={styles.browseCardSquare}
-              item={item}
-              key={item.id}
-            />
-          ))}
+          {browseItems.map((item) => {
+            const isFilter = Boolean(item.isCategoryCard || (item.url && item.url.includes("/listings")));
+            return (
+              <BrowseItem
+                className={styles.browseCardSquare}
+                item={item}
+                key={item.id}
+                isActive={activeItem && (activeItem.id === item.id || activeItem.title === item.title)}
+                onSelect={isFilter && onSelectItem ? () => onSelectItem(item) : undefined}
+              />
+            );
+          })}
         </HorizontalScroll>
       </div>
+      <AnimatePresence>
+        {activeItem && (
+          <InlineFilteredShelf
+            activeItem={activeItem}
+            section={section}
+            onClose={() => onSelectItem && onSelectItem(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
 
-export const CardGrid = ({ section, listings, className }) => {
+export const CardGrid = ({ section, listings, className, activeItem, onSelectItem }) => {
   const scrollRef = useRef(null);
   const [scrollState, setScrollState] = useState({ canScrollLeft: false, canScrollRight: true });
   const cardItems = listings.map((listing) => transformListingToCard(listing, section));
@@ -624,11 +652,29 @@ export const CardGrid = ({ section, listings, className }) => {
       </div>
       <div className={styles.horizontalScrollWrapper}>
         <HorizontalScroll ref={scrollRef} hideDefaultArrows={true} onScrollStateChange={handleScrollStateChange} className={styles.horizontalScroll} gap={24}>
-          {cardItems.map((item) => (
-            <Card className={styles.gridCardHorizontal} item={item} key={item.id} />
-          ))}
+          {cardItems.map((item) => {
+            const isFilter = Boolean(item.isCategoryCard || (item.url && item.url.includes("/listings")));
+            return (
+              <Card
+                className={styles.gridCardHorizontal}
+                item={item}
+                key={item.id}
+                isActive={activeItem && (activeItem.id === item.id || activeItem.title === item.title)}
+                onSelect={isFilter && onSelectItem ? () => onSelectItem(item) : undefined}
+              />
+            );
+          })}
         </HorizontalScroll>
       </div>
+      <AnimatePresence>
+        {activeItem && (
+          <InlineFilteredShelf
+            activeItem={activeItem}
+            section={section}
+            onClose={() => onSelectItem && onSelectItem(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
@@ -636,7 +682,7 @@ export const CardGrid = ({ section, listings, className }) => {
 /**
  * CARD_OVAL_VERTICAL_NODETAIL - Oval/circular image cards with vertical layout, minimal details
  */
-export const CardDestination = ({ section, listings, className }) => {
+export const CardDestination = ({ section, listings, className, activeItem, onSelectItem }) => {
   const scrollRef = useRef(null);
   const [scrollState, setScrollState] = useState({ canScrollLeft: false, canScrollRight: true });
   const destinationItems = listings.map((listing) => transformListingToDestination(listing, section));
@@ -699,15 +745,29 @@ export const CardDestination = ({ section, listings, className }) => {
       </div>
       <div className={styles.horizontalScrollWrapper}>
         <HorizontalScroll ref={scrollRef} hideDefaultArrows={true} onScrollStateChange={handleScrollStateChange} className={styles.horizontalScroll} gap={24}>
-          {destinationItems.map((item) => (
-            <DestinationCard
-              className={styles.destinationCard}
-              item={item}
-              key={item.id}
-            />
-          ))}
+          {destinationItems.map((item) => {
+            const isFilter = Boolean(item.isCategoryCard || (item.url && item.url.includes("/listings")));
+            return (
+              <DestinationCard
+                className={styles.destinationCard}
+                item={item}
+                key={item.id}
+                isActive={activeItem && (activeItem.id === item.id || activeItem.title === item.title)}
+                onSelect={isFilter && onSelectItem ? () => onSelectItem(item) : undefined}
+              />
+            );
+          })}
         </HorizontalScroll>
       </div>
+      <AnimatePresence>
+        {activeItem && (
+          <InlineFilteredShelf
+            activeItem={activeItem}
+            section={section}
+            onClose={() => onSelectItem && onSelectItem(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
@@ -715,7 +775,7 @@ export const CardDestination = ({ section, listings, className }) => {
 /**
  * CARD_CIRCLE_NODETAIL - Perfect circle image cards with vertical layout, minimal details
  */
-export const CardCircle = ({ section, listings, className }) => {
+export const CardCircle = ({ section, listings, className, activeItem, onSelectItem }) => {
   const scrollRef = useRef(null);
   const [scrollState, setScrollState] = useState({ canScrollLeft: false, canScrollRight: true });
   const destinationItems = listings.map((listing) => transformListingToDestination(listing, section));
@@ -778,15 +838,29 @@ export const CardCircle = ({ section, listings, className }) => {
       </div>
       <div className={styles.horizontalScrollWrapper}>
         <HorizontalScroll ref={scrollRef} hideDefaultArrows={true} onScrollStateChange={handleScrollStateChange} className={styles.horizontalScroll} gap={24}>
-          {destinationItems.map((item) => (
-            <CircleCard
-              className={styles.destinationCard}
-              item={item}
-              key={item.id}
-            />
-          ))}
+          {destinationItems.map((item) => {
+            const isFilter = Boolean(item.isCategoryCard || (item.url && item.url.includes("/listings")));
+            return (
+              <CircleCard
+                className={styles.destinationCard}
+                item={item}
+                key={item.id}
+                isActive={activeItem && (activeItem.id === item.id || activeItem.title === item.title)}
+                onSelect={isFilter && onSelectItem ? () => onSelectItem(item) : undefined}
+              />
+            );
+          })}
         </HorizontalScroll>
       </div>
+      <AnimatePresence>
+        {activeItem && (
+          <InlineFilteredShelf
+            activeItem={activeItem}
+            section={section}
+            onClose={() => onSelectItem && onSelectItem(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
@@ -794,7 +868,7 @@ export const CardCircle = ({ section, listings, className }) => {
 /**
  * CARD_RECT_HORIZONTAL_NODETAIL - Rectangular horizontal cards with image, title, and content, no detailed info
  */
-export const CardDestinationHorizontal = ({ section, listings, className }) => {
+export const CardDestinationHorizontal = ({ section, listings, className, activeItem, onSelectItem }) => {
   const destinationItems = listings.map((listing) => transformListingToDestinationHorizontal(listing, section));
   const sectionListingsUrl = getSectionListingsUrl(section);
 
@@ -817,16 +891,30 @@ export const CardDestinationHorizontal = ({ section, listings, className }) => {
       </div>
       <div className={styles.horizontalScrollWrapper}>
         <HorizontalScroll className={styles.horizontalScroll} gap={24}>
-          {destinationItems.map((item) => (
-            <Card
-              className={styles.destinationCardHorizontal}
-              item={item}
-              key={item.id}
-              hidePrice={true}
-            />
-          ))}
+          {destinationItems.map((item) => {
+            const isFilter = Boolean(item.isCategoryCard || (item.url && item.url.includes("/listings")));
+            return (
+              <Card
+                className={styles.destinationCardHorizontal}
+                item={item}
+                key={item.id}
+                hidePrice={true}
+                isActive={activeItem && (activeItem.id === item.id || activeItem.title === item.title)}
+                onSelect={isFilter && onSelectItem ? () => onSelectItem(item) : undefined}
+              />
+            );
+          })}
         </HorizontalScroll>
       </div>
+      <AnimatePresence>
+        {activeItem && (
+          <InlineFilteredShelf
+            activeItem={activeItem}
+            section={section}
+            onClose={() => onSelectItem && onSelectItem(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
@@ -844,7 +932,17 @@ export const CardDestinationHorizontal = ({ section, listings, className }) => {
  * - "CARD_CAROUSEL" → CARD_SQUARE_HORIZONTAL_NODETAIL
  * - "CARD_LIST" → CARD_OVAL_VERTICAL_NODETAIL
  */
-export const HomepageSectionCard = ({ section, listings, className }) => {
+export const HomepageSectionCard = ({ section, listings, className, activeItem, onSelectItem }) => {
+  const [localActiveItem, setLocalActiveItem] = useState(null);
+  const currentActiveItem = activeItem !== undefined ? activeItem : localActiveItem;
+  const currentOnSelect = onSelectItem !== undefined ? onSelectItem : (item) => {
+    if (localActiveItem && (localActiveItem.id === item?.id || localActiveItem.title === item?.title)) {
+      setLocalActiveItem(null);
+    } else {
+      setLocalActiveItem(item);
+    }
+  };
+
   const renderListings = getRenderListings(section, listings);
 
   if (!section || renderListings.length === 0) {
@@ -854,52 +952,107 @@ export const HomepageSectionCard = ({ section, listings, className }) => {
   // Use cardStyle exactly as provided by API (case-sensitive)
   const cardStyle = section.cardStyle || "CARD_RECT_VERTICAL_DETAIL";
 
-  // Log section details for debugging the "Starting From" price
-  // console.log(`[CardStyles] 📋 Rendering Section: "${section.sectionTitle}"`);
-  // console.log(`[CardStyles] 💰 priceStartingFrom:`, section.priceStartingFrom);
-  // console.log(`[CardStyles] 🎨 Applied Card Style:`, cardStyle);
-  // console.log(`[CardStyles] 📦 Section Data:`, section);
-
   // Map API cardStyle values to component card styles (case-sensitive matching)
-  // Supports both new descriptive names and old names for backward compatibility
   switch (cardStyle) {
-    // New descriptive names
     case "CARD_RECT_VERTICAL_DETAIL":
-      return <CardGrid section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardGrid
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     case "CARD_SQUARE_HORIZONTAL_NODETAIL":
-      return <CardCarousel section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardCarousel
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     case "CARD_OVAL_VERTICAL_NODETAIL":
-      return <CardDestination section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardDestination
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     case "CARD_CIRCLE_NODETAIL":
-      return <CardCircle section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardCircle
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     case "CARD_RECT_HORIZONTAL_NODETAIL":
-      return <CardDestinationHorizontal section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardDestinationHorizontal
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     // Backward compatibility: Old names
     case "CARD_GRID":
-      return <CardGrid section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardGrid
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     case "CARD_CAROUSEL":
-      return <CardCarousel section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardCarousel
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     case "CARD_LIST":
-      return <CardDestination section={section} listings={renderListings} className={className} />;
-
+      return (
+        <CardDestination
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
 
     default:
-      // Default to rectangular vertical detail layout
-      return <CardGrid section={section} listings={renderListings} className={className} />;
+      return (
+        <CardGrid
+          section={section}
+          listings={renderListings}
+          className={className}
+          activeItem={currentActiveItem}
+          onSelectItem={currentOnSelect}
+        />
+      );
   }
 };
 

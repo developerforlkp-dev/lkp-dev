@@ -18,6 +18,7 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import OfficialPartners from "./OfficialPartners";
+import { scrollElementToCenter } from "../../utils/scrollHelper";
 
 const GOOGLE_MAPS_SCRIPT_ID = "google-maps-places-script";
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -98,6 +99,33 @@ const FleetHome = () => {
   const [error, setError] = useState(null);
   const [businessInterestAvailability, setBusinessInterestAvailability] = useState({});
   const [businessInterestActiveMap, setBusinessInterestActiveMap] = useState({});
+  const [activeInlineFilter, setActiveInlineFilter] = useState(null); // { sectionId, item }
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setActiveInlineFilter(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSectionCardSelect = (sectionId, item) => {
+    if (!item) {
+      setActiveInlineFilter(null);
+      return;
+    }
+    if (
+      activeInlineFilter &&
+      activeInlineFilter.sectionId === sectionId &&
+      (activeInlineFilter.item.id === item.id || activeInlineFilter.item.title === item.title)
+    ) {
+      setActiveInlineFilter(null);
+    } else {
+      setActiveInlineFilter({ sectionId, item });
+    }
+  };
 
 
   // Search state
@@ -181,6 +209,20 @@ const FleetHome = () => {
       setActiveFilter(filterFromPath);
     }
   }, [location.pathname]);
+
+  // Close inline shelf when switching category tabs
+  useEffect(() => {
+    setActiveInlineFilter(null);
+  }, [activeFilter]);
+
+  // Auto-center active mobile category card
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMobileOrTablet) return;
+    const activeEl = document.querySelector(`.${styles.mobileCategoryCardActive}`);
+    if (activeEl) {
+      scrollElementToCenter(activeEl, { delay: 100 });
+    }
+  }, [activeFilter, isMobileOrTablet]);
 
   // Dynamic browser tab title based on active section
   const sectionTitleMap = {
@@ -991,8 +1033,11 @@ const FleetHome = () => {
                         [styles.mobileCategoryCardActive]: isActive,
                         [styles.mobileCategoryCardDisabled]: !isEnabledForListings,
                       })}
-                      onClick={() => {
-                        if (isEnabledForListings) handleFilterClick(filter.id);
+                      onClick={(e) => {
+                        if (isEnabledForListings) {
+                          scrollElementToCenter(e.currentTarget);
+                          handleFilterClick(filter.id);
+                        }
                       }}
                     >
                       <img src={filter.image} alt={filter.label} className={styles.mobileCategoryBg} />
@@ -1077,11 +1122,16 @@ const FleetHome = () => {
                 }
 
 
+                const sectionId = sectionData.section.sectionId || index;
+                const isSectionActive = activeInlineFilter?.sectionId === sectionId;
+
                 return (
                   <HomepageSectionCard
-                    key={sectionData.section.sectionId || index}
+                    key={sectionId}
                     section={sectionData.section}
                     listings={sectionData.listings}
+                    activeItem={isSectionActive ? activeInlineFilter.item : null}
+                    onSelectItem={(item) => handleSectionCardSelect(sectionId, item)}
                   />
                 );
               })}

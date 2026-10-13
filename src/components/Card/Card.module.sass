@@ -18,10 +18,16 @@
         .preview
             img
                 transform: scale(1.05)
+    &.active
+        scroll-snap-align: center !important
+        box-shadow: 0 0 0 3px #0097B2, 0 16px 40px rgba(0, 151, 178, 0.22)
+        transform: translateY(-4px)
     +dark
         background: $n1
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2)
         color: $n8
+        &.active
+            box-shadow: 0 0 0 3px #0097B2, 0 16px 40px rgba(0, 151, 178, 0.4)
     &.row
         flex-direction: row
         border-radius: 16px

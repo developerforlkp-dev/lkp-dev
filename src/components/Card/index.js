@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import cn from "classnames";
 import { Link, useLocation } from "react-router-dom";
 import styles from "./Card.module.sass";
 import Icon from "../Icon";
 import Favorite from "../Favorite";
+import { scrollElementToCenter } from "../../utils/scrollHelper";
 
 export const getWishlistConfig = (item) => {
   if (item?.isCategoryCard || item?.isCategory) return null;
@@ -38,7 +39,8 @@ export const getWishlistConfig = (item) => {
   return null;
 };
 
-const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
+const Item = ({ className, item, row, car, hidePrice, hideWishlist, isActive, onSelect }) => {
+  const cardRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -47,6 +49,12 @@ const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (isActive && cardRef.current) {
+      scrollElementToCenter(cardRef.current);
+    }
+  }, [isActive]);
   const location = useLocation();
   const wishlistConfig = getWishlistConfig(item);
   const shouldHideWishlist = hideWishlist || item?.hideWishlist || item?.isCategoryCard || item?.isCategory;
@@ -125,15 +133,26 @@ const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
 
   return (
     <Link
+      ref={cardRef}
       className={cn(
         className,
         styles.card,
         { [styles.row]: row },
-        { [styles.car]: car }
+        { [styles.car]: car },
+        { [styles.active]: isActive }
       )}
       to={getDestinationUrl()}
-      target={isMobile ? "_self" : "_blank"}
+      target={isMobile ? "_self" : (onSelect ? "_self" : "_blank")}
       rel="noopener noreferrer"
+      onClick={(e) => {
+        if (!e.ctrlKey && !e.metaKey && onSelect) {
+          e.preventDefault();
+          if (cardRef.current) {
+            scrollElementToCenter(cardRef.current);
+          }
+          onSelect(item);
+        }
+      }}
     >
       <div className={cn(styles.preview, { [styles.loaded]: imageLoaded })}>
         <img 
