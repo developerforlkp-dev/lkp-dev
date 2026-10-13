@@ -4612,7 +4612,9 @@ export default function EventDetails() {
         <Rules event={event} />
         <HostDetails event={event} hostName={hostName} />
         <EventReviews reviews={reviews} />
-        <EventBookingPopup event={event} selectedAddOns={selectedAddOns} onUpdateAddonQuantity={handleUpdateAddonQuantity} onClearAddons={() => setSelectedAddOns([])} addonsLoading={!event?.addons} />
+        {String(event?.eventType || event?.event_type || "").trim().toLowerCase() === "ticketed" && (
+          <EventBookingPopup event={event} selectedAddOns={selectedAddOns} onUpdateAddonQuantity={handleUpdateAddonQuantity} onClearAddons={() => setSelectedAddOns([])} addonsLoading={!event?.addons} />
+        )}
         <RelatedListingsStrip
           businessInterestId={2}
           primaryCategoryId={primaryCategoryId}
