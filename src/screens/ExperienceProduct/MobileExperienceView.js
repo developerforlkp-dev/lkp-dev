@@ -142,7 +142,6 @@ export default function MobileExperienceView({
   const [descExpanded, setDescExpanded] = useState(false);
   const [photoVisible, setPhotoVisible] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [galleryIndex, setGalleryIndex] = useState(0);
   const [expandedActivities, setExpandedActivities] = useState({});
   const [bookingOpen, setBookingOpen] = useState(false);
   const [activityPhotoVisible, setActivityPhotoVisible] = useState(false);
@@ -152,9 +151,8 @@ export default function MobileExperienceView({
   const [selectedAddonImages, setSelectedAddonImages] = useState([]);
   const [addonPhotoIndex, setAddonPhotoIndex] = useState(0);
   const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
-  const galleryRef = useRef(null);
 
-  /* ── gallery scroll handler ── */
+  /* ── footer visibility handler ── */
   const [isFooterVisible, setIsFooterVisible] = useState(false);
 
   React.useEffect(() => {
@@ -177,14 +175,6 @@ export default function MobileExperienceView({
       clearInterval(interval);
       observer.disconnect();
     };
-  }, []);
-
-  const handleGalleryScroll = useCallback(() => {
-    if (!galleryRef.current) return;
-    const el = galleryRef.current;
-    const itemWidth = el.querySelector(".mob-gallery-item")?.offsetWidth || 280;
-    const idx = Math.round(el.scrollLeft / (itemWidth + 12));
-    setGalleryIndex(idx);
   }, []);
 
   /* ── share handler ── */
@@ -327,22 +317,104 @@ export default function MobileExperienceView({
           ║         GALLERY SECTION           ║
           ╚═══════════════════════════════════╝ */}
       {imgs.length > 0 && (
-        <div className="mob-gallery" style={{ background: BG, paddingTop: 16 }}>
-          <div className="mob-gallery-scroll" ref={galleryRef} onScroll={handleGalleryScroll}>
-            {imgs.map((src, i) => (
-              <div key={i} className="mob-gallery-item" onClick={() => { setPhotoIndex(i); setPhotoVisible(true); }}>
-                <img src={src} alt={`Gallery ${i + 1}`} loading="lazy" />
+        <div className="mob-gallery" style={{ background: BG, paddingTop: 16, paddingBottom: 24, position: "relative", overflow: "hidden" }}>
+
+          {(() => {
+            const baseItemsLocal = imgs.length > 0 ? imgs : ["/images/content/placeholder.jpg"];
+            let filledItems = [...baseItemsLocal];
+            while (filledItems.length < 8) {
+              filledItems = [...filledItems, ...baseItemsLocal];
+            }
+            const doubledItems = [...filledItems, ...filledItems];
+
+            const itemWidth = 240;
+            const gap = 12;
+            const galleryDistance = filledItems.length * (itemWidth + gap);
+            const galleryDuration = galleryDistance / 20;
+
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  gap: gap,
+                  width: "max-content",
+                  animation: `expMobMarqueeScroll ${galleryDuration}s linear infinite`,
+                  willChange: "transform",
+                  transform: "translate3d(0, 0, 0)",
+                  WebkitTransform: "translate3d(0, 0, 0)",
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden"
+                }}
+              >
+                <style>{`
+                  @keyframes expMobMarqueeScroll {
+                    0% { transform: translate3d(0, 0, 0); }
+                    100% { transform: translate3d(-50%, 0, 0); }
+                  }
+                `}</style>
+                {doubledItems.map((img, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      setPhotoIndex(i % (imgs.length || 1));
+                      setPhotoVisible(true);
+                    }}
+                    style={{
+                      width: itemWidth,
+                      height: 160,
+                      borderRadius: 18,
+                      overflow: "hidden",
+                      flexShrink: 0,
+                      border: `1px solid ${B}`,
+                      cursor: "pointer",
+                      transform: "translateZ(0)",
+                      WebkitTransform: "translateZ(0)",
+                      WebkitMaskImage: "-webkit-radial-gradient(white, black)"
+                    }}
+                  >
+                    <img
+                      src={img}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      alt="Gallery"
+                      loading="eager"
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          {imgs.length > 1 && (
-            <div className="mob-gallery-dots">
-              {imgs.slice(0, Math.min(imgs.length, 8)).map((_, i) => (
-                <div key={i} className={`mob-gallery-dot${galleryIndex === i ? " active" : ""}`}
-                  style={{ background: galleryIndex === i ? A : (isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)") }} />
-              ))}
-            </div>
-          )}
+            );
+          })()}
+
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setPhotoIndex(0);
+              setPhotoVisible(true);
+            }}
+            style={{
+              position: "absolute",
+              bottom: 32,
+              right: 20,
+              background: "rgba(0, 0, 0, 0.45)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              color: "#FFFFFF",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
+              borderRadius: 20,
+              padding: "6px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "12px",
+              fontWeight: 500,
+              fontFamily: '"Inter", sans-serif',
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
+              cursor: "pointer",
+              zIndex: 10
+            }}
+          >
+            <Camera size={14} />
+            See photos
+          </motion.button>
         </div>
       )}
 
