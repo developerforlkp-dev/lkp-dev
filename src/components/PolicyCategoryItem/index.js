@@ -91,43 +91,56 @@ function PolicyCategoryItem({ category }) {
                 <div key={item.id || idx} style={{ borderBottom: idx === category.items.length - 1 ? "none" : `1px solid ${B}`, paddingBottom: idx === category.items.length - 1 ? 0 : 16, paddingTop: idx === 0 ? 0 : 16 }}>
                   {(!item.questions || item.questions.length === 0) && item.title && item.title !== item.body && (
                     <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 6 }}>
-                      <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: FG, flex: 1 }}>{item.title}</span>
+                      <div style={{ width: 5, height: 5, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
+                      <span style={{ fontSize: "13px", color: M, lineHeight: 1.6, flex: 1, fontFamily: '"Inter", sans-serif' }}>{item.title}</span>
                     </div>
                   )}
                   {item.questions && item.questions.length > 0 && item.title && item.title !== "Requirement" && (
-                    <span style={{ fontSize: "14px", fontWeight: 700, color: FG, display: "block", marginBottom: 6 }}>{item.title}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: FG, display: "block", marginBottom: 8, fontFamily: '"Inter", sans-serif' }}>{item.title}</span>
                   )}
                   {item.body && (
-                    <div style={{ fontSize: 13, color: M, lineHeight: 1.6, margin: 0, paddingLeft: (!item.questions || item.questions.length === 0) && item.title && item.title !== item.body ? 18 : 0 }}>
+                    <div style={{ fontSize: 13, color: M, lineHeight: 1.6, margin: 0, paddingLeft: (!item.questions || item.questions.length === 0) && item.title && item.title !== item.body ? 17 : 0, fontFamily: '"Inter", sans-serif' }}>
                       {category.title?.toLowerCase().includes('cancellation') && (item.body.includes('\n') || item.body.split('. ').filter(s => s.trim().length > 0).length > 1) ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
                           {(item.body.includes('\n') ? item.body.split('\n') : item.body.split('. ')).filter(s => s.trim().length > 0).map((sentence, idx) => (
                             <div key={idx} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                              <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
-                              <div style={{ flex: 1 }}>
+                              <div style={{ width: 5, height: 5, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
+                              <div style={{ flex: 1, fontSize: 13, color: M, lineHeight: 1.6, fontFamily: '"Inter", sans-serif' }}>
                                 {sentence.trim()}{(!item.body.includes('\n') && !sentence.trim().endsWith('.')) ? '.' : ''}
                               </div>
                             </div>
                           ))}
                         </div>
+                      ) : (!item.questions || item.questions.length === 0) && item.title && item.title !== item.body ? (
+                        <span style={{ display: "inline-block", fontSize: 12, padding: "3px 10px", borderRadius: 100, background: AL, color: A, fontWeight: 500 }}>
+                          {item.body}
+                        </span>
                       ) : (
-                        <p style={{ margin: 0, whiteSpace: "pre-line" }}>{item.body}</p>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <div style={{ width: 5, height: 5, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
+                          <div style={{ flex: 1, fontSize: 13, color: M, lineHeight: 1.6, fontFamily: '"Inter", sans-serif' }}>
+                            {item.body}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}
                   {item.questions && item.questions.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
                       {item.questions.map((q, j) => {
                         const questionTitle = q.title || q.question?.title;
                         const answerText = q.answer?.valueText || q.valueText;
                         return (
                           <div key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                            <div style={{ width: 6, height: 6, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
-                            <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-                              <span style={{ fontSize: 13, color: FG, lineHeight: 1.4, fontWeight: 500 }}>{questionTitle}</span>
+                            <div style={{ width: 5, height: 5, background: A, borderRadius: "50%", flexShrink: 0, marginTop: 7 }} />
+                            <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+                              <span style={{ fontSize: 13, color: M, lineHeight: 1.6, fontFamily: '"Inter", sans-serif' }}>{questionTitle}</span>
                               {answerText && (
-                                <span style={{ fontSize: 12, color: M, lineHeight: 1.4 }}>{answerText}</span>
+                                <div style={{ marginTop: 2 }}>
+                                  <span style={{ display: "inline-block", fontSize: 12, padding: "3px 10px", borderRadius: 100, background: AL, color: A, fontWeight: 500 }}>
+                                    {answerText}
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </div>
