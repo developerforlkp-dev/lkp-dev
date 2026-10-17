@@ -285,6 +285,17 @@ const transformListingToCard = (listing, section) => {
     comment: null,
     avatar: null,
     isClosed: Boolean(listing.isClosed),
+    itemType: entityType,
+    status: listing.status,
+    eventStatus: listing.eventStatus,
+    badge: listing.badge,
+    eventDate: listing.eventDate,
+    startDate: listing.startDate,
+    date: listing.date,
+    bookingEndDate: listing.bookingEndDate,
+    endDate: listing.endDate,
+    bookingClosedDate: listing.bookingClosedDate,
+    rawListing: listing,
   };
 };
 
