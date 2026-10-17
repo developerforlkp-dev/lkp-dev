@@ -25,68 +25,117 @@ function PolicyCategoryItem({ category }) {
   };
 
   return (
-    <motion.div
-      layout
-      style={{
-        background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
-        border: `1px solid ${B}`,
-        borderRadius: "16px",
-        overflow: "hidden",
-        marginBottom: "16px",
-        transition: "all 0.3s",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.02)"
-      }}
-      whileHover={{ borderColor: A, boxShadow: "0 8px 30px rgba(0,0,0,0.06)" }}
-    >
-      <div
-        onClick={() => setOp(!op)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "20px 24px",
-          cursor: "pointer",
-          textAlign: "left",
-          userSelect: "none",
-        }}
+    <>
+      <style>{`
+        .policy-cat-card {
+          border-radius: 16px;
+          margin-bottom: 16px;
+          border: 1px solid ${B};
+          background: ${theme === 'dark' ? '#0A0A0A' : '#FFFFFF'};
+          overflow: hidden;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .policy-cat-header {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 20px 24px;
+          cursor: pointer;
+          text-align: left;
+          user-select: none;
+        }
+        .policy-cat-iconbox {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          background: ${theme === 'dark' ? '#1E293B' : '#F0F9FA'};
+          flex-shrink: 0;
+        }
+        .policy-cat-title {
+          font-size: 16px;
+          font-weight: 500;
+          color: ${FG};
+          display: block;
+          font-family: "Inter", sans-serif;
+        }
+        .policy-cat-body {
+          padding: 0 24px 24px 80px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        @media (max-width: 1023px) {
+          .policy-cat-card {
+            border-radius: 12px !important;
+            margin-bottom: 0 !important;
+            box-shadow: none !important;
+          }
+          .policy-cat-header {
+            padding: 14px 16px !important;
+            gap: 12px !important;
+          }
+          .policy-cat-iconbox {
+            width: auto !important;
+            height: auto !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+          }
+          .policy-cat-iconbox svg {
+            width: 16px !important;
+            height: 16px !important;
+          }
+          .policy-cat-title {
+            font-size: 14px !important;
+            font-weight: 700 !important;
+          }
+          .policy-cat-body {
+            padding: 0 16px 16px 16px !important;
+            gap: 12px !important;
+          }
+        }
+      `}</style>
+      <motion.div
+        layout
+        className="policy-cat-card"
+        whileHover={{ borderColor: A, boxShadow: "0 8px 30px rgba(0,0,0,0.06)" }}
       >
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 40,
-          height: 40,
-          borderRadius: 8,
-          background: theme === 'dark' ? '#1E293B' : '#F0F9FA',
-          flexShrink: 0,
-        }}>
-          {getIcon()}
-        </div>
-
-        <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "16px", fontWeight: 500, color: FG, display: "block", fontFamily: '"Inter", sans-serif' }}>{category.title}</span>
-        </div>
-
-        <motion.div
-          animate={{ rotate: op ? 180 : 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: "50%", background: op ? W : "transparent" }}
+        <div
+          onClick={() => setOp(!op)}
+          className="policy-cat-header"
         >
-          <ChevronDown size={18} color={M} />
-        </motion.div>
-      </div>
+          <div className="policy-cat-iconbox">
+            {getIcon()}
+          </div>
 
-      <AnimatePresence initial={false}>
-        {op && (
+          <div style={{ flex: 1 }}>
+            <span className="policy-cat-title">{category.title}</span>
+          </div>
+
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            style={{ overflow: "hidden" }}
+            animate={{ rotate: op ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20 }}
           >
-            <div style={{ padding: "0 24px 24px 80px", display: "flex", flexDirection: "column", gap: 16 }}>
+            <ChevronDown size={16} color={M} />
+          </motion.div>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {op && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              style={{ overflow: "hidden" }}
+            >
+              <div className="policy-cat-body">
               {category.items.map((item, idx) => (
                 <div key={item.id || idx} style={{ borderBottom: idx === category.items.length - 1 ? "none" : `1px solid ${B}`, paddingBottom: idx === category.items.length - 1 ? 0 : 16, paddingTop: idx === 0 ? 0 : 16 }}>
                   {(!item.questions || item.questions.length === 0) && item.title && item.title !== item.body && (
@@ -154,7 +203,8 @@ function PolicyCategoryItem({ category }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
 
