@@ -881,29 +881,8 @@ function CulinaryHero({ food, galleryItems }) {
 
     return (
       <section className="hero-section-wrapper-mobile" style={{ background: BG, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", paddingBottom: "32px", paddingTop: "72px" }}>
-        {/* Top Action Navigation Bar */}
-        <div style={{ padding: "0 16px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 10 }}>
-          <button
-            type="button"
-            onClick={() => history.goBack()}
-            aria-label="Go back"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
-              border: `1px solid ${B}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: FG,
-              cursor: "pointer",
-              outline: "none"
-            }}
-          >
-            <ChevronLeft size={20} />
-          </button>
-
+        {/* Top Action Bar */}
+        <div style={{ padding: "0 16px 12px", display: "flex", alignItems: "center", justifyContent: "flex-end", position: "relative", zIndex: 10 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <Favorite itemType="food" itemId={id}>
               {({ saved, onClick }) => (
