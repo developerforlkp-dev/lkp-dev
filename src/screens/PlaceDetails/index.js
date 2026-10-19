@@ -1021,9 +1021,18 @@ function PlaceDescription({ place }) {
   const { isMobile } = useWindowSize();
   const description = place?.description || "Experience the local heritage, vibrant culture, and breathtaking landscapes of this select destination.";
 
+  const entryFeeDisplay = useMemo(() => {
+    const isFree = place?.entryType && String(place.entryType).toLowerCase() === "free";
+    if (isFree) return "Free Entry";
+    if (place?.entryFee && !isNaN(Number(place.entryFee))) {
+      return `₹${parseFloat(place.entryFee)}`;
+    }
+    return place?.entryFee || (place?.entryType ? `${place.entryType} Entry` : "Not Specified");
+  }, [place?.entryFee, place?.entryType]);
+
   const facts = [
     { label: "Timings", val: (place?.openingTime && place?.closingTime) ? `${place.openingTime} - ${place.closingTime}` : (place?.timings || place?.openingHours || "Not Specified"), icon: Clock },
-    { label: "Entry Fee", val: place?.entryFee || "Not Specified", icon: Ticket },
+    { label: "Entry Fee", val: entryFeeDisplay, icon: Ticket },
     { label: "Best Time", val: place?.bestTimeToVisit || "Not Specified", icon: Star },
     { label: "Rating", val: place?.rating || place?.averageRating ? `${place?.rating || place?.averageRating} Rating` : "Not Rated", icon: Check },
   ];
@@ -1504,9 +1513,10 @@ function VisitorInformation({ place }) {
   const { tokens: { A, B, FG, M, W, S } } = useTheme();
   const { isMobile } = useWindowSize();
   const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
 
   useEffect(() => {
-    if (showAllVehicles) {
+    if (showAllVehicles || showAllTickets) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -1514,7 +1524,7 @@ function VisitorInformation({ place }) {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showAllVehicles]);
+  }, [showAllVehicles, showAllTickets]);
 
   const formatList = (arr, singleStr, fallback, formatter) => {
     if (Array.isArray(arr) && arr.length > 0) {
@@ -1541,6 +1551,27 @@ function VisitorInformation({ place }) {
     const disp = toDisplayString(raw);
     return disp ? disp.split(',').map(t => t.trim()) : ["Not Specified"];
   }, [place?.suitableFor]);
+
+  const ticketCategories = useMemo(() => {
+    if (Array.isArray(place?.ticketCategories) && place.ticketCategories.length > 0) {
+      return place.ticketCategories;
+    }
+    if (typeof place?.ticketCategories === "string") {
+      try {
+        const parsed = JSON.parse(place.ticketCategories);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {}
+    }
+    return [];
+  }, [place?.ticketCategories]);
+
+  const hasTicketCategories = ticketCategories.length > 0;
+  const isFreeEntry = place?.entryType && String(place.entryType).toLowerCase() === "free";
+  const entryFeeDisplay = isFreeEntry 
+    ? "Free" 
+    : (place?.entryFee && !isNaN(Number(place.entryFee)) 
+        ? `₹${parseFloat(place.entryFee)}` 
+        : (place?.entryFee || (hasTicketCategories ? `From ₹${parseFloat(ticketCategories[0]?.price) || ticketCategories[0]?.price}` : null)));
 
   // Ticket notch decoration styles helper
   const ticketNotchStyle = (side) => ({
@@ -1611,26 +1642,26 @@ function VisitorInformation({ place }) {
               {/* Card content top */}
               <div style={{ padding: "32px 28px 20px 28px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.08)`, display: "flex", alignItems: "center", justifyContent: "center", color: A }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                     </div>
                     <div>
                       <span style={{ fontSize: 8, color: M, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Permit Category</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
                         <h4 style={{ fontSize: 16, fontWeight: 800, color: FG, margin: 0 }}>
                           {place?.entryType ? `${place.entryType} Entry` : (place?.entryFee ? "Paid Entry" : "Not Specified")}
                         </h4>
-                        {place?.entryFee && (!place?.entryType || place.entryType.toLowerCase() !== 'free') && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
-                            {place.entryFee}
+                        {entryFeeDisplay && (
+                          <span style={{ fontSize: 11, fontWeight: 750, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                            {entryFeeDisplay}
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     <div>
                       <span style={{ fontSize: 10, color: M, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 2 }}>Managed By</span>
                       <p style={{ fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>{place?.managedBy || "Not Specified"}</p>
@@ -1661,8 +1692,49 @@ function VisitorInformation({ place }) {
               {/* Card content bottom (Detached Stamp Stub) */}
               <div style={{ padding: "20px 28px 28px 28px", height: "30%", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "space-between", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.02)` }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <span style={{ fontSize: 9, color: M, textTransform: "uppercase", letterSpacing: "0.05em" }}>Log Status</span>
-                  <span style={{ fontWeight: 800, color: FG, fontSize: 12 }}>VERIFIED PERMIT</span>
+                  <span style={{ fontSize: 9, color: M, textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
+                    {hasTicketCategories ? "Ticket Categories" : "Log Status"}
+                  </span>
+                  {hasTicketCategories ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2, maxWidth: 180 }}>
+                      {ticketCategories.slice(0, 2).map((cat, idx) => (
+                        <span key={idx} style={{ padding: "2px 6px", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.1)`, borderRadius: 4, fontSize: 10, fontWeight: 700, color: A, whiteSpace: "nowrap" }}>
+                          {cat?.name || "General"} · ₹{parseFloat(cat?.price) || cat?.price}
+                        </span>
+                      ))}
+                      {ticketCategories.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllTickets(true)}
+                          style={{
+                            padding: "2px 8px",
+                            background: A,
+                            border: "none",
+                            borderRadius: 4,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: W,
+                            whiteSpace: "nowrap",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            zIndex: 10,
+                            position: "relative"
+                          }}
+                          onMouseOver={e => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)"; }}
+                          onMouseOut={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"; }}
+                        >
+                          +{ticketCategories.length - 2} More
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ fontWeight: 800, color: FG, fontSize: 12 }}>VERIFIED PERMIT</span>
+                  )}
                 </div>
 
                 {/* Stamp Clipart */}
@@ -1859,9 +1931,11 @@ function VisitorInformation({ place }) {
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
-                      <span style={{ fontSize: 12, color: M }}>Permit Category</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.entryFee || "Not Specified"}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
+                      <span style={{ fontSize: 12, color: M }}>Permit / Entry Fee</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>
+                        {entryFeeDisplay || (place?.entryType ? `${place.entryType} Entry` : "Not Specified")}
+                      </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Parking Place</span>
@@ -2054,6 +2128,55 @@ function VisitorInformation({ place }) {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="8" rx="2" /><circle cx="7" cy="19" r="2" /><circle cx="17" cy="19" r="2" /><path d="M4 11V7a2 2 0 0 1 2-2h4l4 4h7v2" /></svg>
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 700, color: FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{typeof v === 'string' ? v : v.name || v}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Ticket Categories Modal */}
+      <AnimatePresence>
+        {showAllTickets && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAllTickets(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              style={{ background: W, borderRadius: 28, padding: 32, width: "100%", maxWidth: 480, position: "relative", zIndex: 10000, boxShadow: "0 24px 48px rgba(0,0,0,0.15)", maxHeight: "80vh", display: "flex", flexDirection: "column" }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <span style={{ fontSize: 9, color: A, textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 800 }}>Admission Pricing</span>
+                  <h3 style={{ margin: "4px 0 0 0", fontSize: "clamp(1.5rem, 2.5vw, 2.2rem)", fontWeight: 700, color: FG, letterSpacing: "-0.02em", fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>Ticket Categories</h3>
+                </div>
+                <button onClick={() => setShowAllTickets(false)} style={{ background: S, border: "none", cursor: "pointer", color: FG, padding: 8, borderRadius: 50, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background = B} onMouseOut={e => e.currentTarget.style.background = S}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              </div>
+
+              <div className="no-scrollbars" style={{ overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingBottom: 12 }}>
+                {ticketCategories.map((cat, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: S, border: `1.5px solid ${B}`, borderRadius: 18, transition: "border-color 0.2s" }} onMouseOver={e => e.currentTarget.style.borderColor = A} onMouseOut={e => e.currentTarget.style.borderColor = B}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: FG }}>{cat?.name || "General"}</span>
+                      {cat?.guestCount && (
+                        <span style={{ fontSize: 11, color: M }}>
+                          Includes up to {cat.guestCount} {cat.guestCount === 1 ? "guest" : "guests"}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+                      <span style={{ fontSize: 20, fontWeight: 850, color: A }}>₹{parseFloat(cat?.price) || cat?.price}</span>
+                    </div>
                   </div>
                 ))}
               </div>
