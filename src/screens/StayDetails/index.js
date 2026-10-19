@@ -3071,7 +3071,7 @@ const StayDetails = () => {
         const tagsDuration = tagsDistance / 8; // constant speed of 8px/s
 
         return (
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
             <div style={{
               margin: "0",
               overflow: "hidden",
@@ -3444,7 +3444,7 @@ const StayDetails = () => {
         const tagsDuration = tagsDistance / 8; // constant speed of 8px/s
 
         return (
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
             <div style={{
               margin: "0",
               overflow: "hidden",
