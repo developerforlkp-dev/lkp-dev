@@ -4,7 +4,7 @@ import { useLocation, Link, useHistory } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Sparkles, Calendar, ArrowDown, ExternalLink, Map, Navigation,
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart, X, Building, ChevronDown
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart, X, Building, ChevronDown, Car
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
@@ -1030,11 +1030,30 @@ function PlaceDescription({ place }) {
     return place?.entryFee || (place?.entryType ? `${place.entryType} Entry` : "Not Specified");
   }, [place?.entryFee, place?.entryType]);
 
+  const parkingDisplay = useMemo(() => {
+    if (typeof place?.parkingAvailable === "boolean") {
+      return place.parkingAvailable ? "Available" : "Not Available";
+    }
+    if (typeof place?.isParkingAvailable === "boolean") {
+      return place.isParkingAvailable ? "Available" : "Not Available";
+    }
+    if (typeof place?.parking === "string" && place.parking.trim()) {
+      const val = place.parking.trim().toLowerCase();
+      if (val === "true" || val === "available" || val === "yes") return "Available";
+      if (val === "false" || val === "not available" || val === "no" || val === "none") return "Not Available";
+      return place.parking;
+    }
+    if (place?.parkingAvailable !== undefined && place?.parkingAvailable !== null) {
+      return place.parkingAvailable ? "Available" : "Not Available";
+    }
+    return "Not Specified";
+  }, [place?.parkingAvailable, place?.isParkingAvailable, place?.parking]);
+
   const facts = [
     { label: "Timings", val: (place?.openingTime && place?.closingTime) ? `${place.openingTime} - ${place.closingTime}` : (place?.timings || place?.openingHours || "Not Specified"), icon: Clock },
     { label: "Entry Fee", val: entryFeeDisplay, icon: Ticket },
     { label: "Best Time", val: place?.bestTimeToVisit || "Not Specified", icon: Star },
-    { label: "Rating", val: place?.rating || place?.averageRating ? `${place?.rating || place?.averageRating} Rating` : "Not Rated", icon: Check },
+    { label: "Parking", val: parkingDisplay, icon: Car },
   ];
 
   if (isMobile) {
@@ -1939,7 +1958,11 @@ function VisitorInformation({ place }) {
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Parking Place</span>
-                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>{place?.parking || "Not Specified"}</span>
+                      <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>
+                        {typeof place?.parkingAvailable === "boolean"
+                          ? (place.parkingAvailable ? "Available" : "Not Available")
+                          : (place?.parking || "Not Specified")}
+                      </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
                       <span style={{ fontSize: 12, color: M }}>Wheelchair</span>
