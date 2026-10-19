@@ -998,12 +998,16 @@ const FleetHome = () => {
                       <img src={filter.image} alt={filter.label} className={styles.mobileCategoryBg} />
                       <div className={styles.mobileCategoryOverlay} />
                       <div className={styles.mobileCategoryContent}>
-                        <div className={styles.mobileCategoryIcon}>
-                          {filter.id === "experience" && <Compass size={28} />}
-                          {filter.id === "events" && <Ticket size={28} />}
-                          {filter.id === "stays" && <Home size={28} />}
-                          {filter.id === "food" && <Utensils size={28} />}
-                          {filter.id === "places" && <MapPin size={28} />}
+                        <div
+                          className={cn(styles.mobileCategoryIcon, {
+                            [styles.mobileCategoryIconActive]: isActive,
+                          })}
+                        >
+                          {filter.id === "experience" && <Compass size={28} color={isActive ? "#0097B2" : "#ffffff"} />}
+                          {filter.id === "events" && <Ticket size={28} color={isActive ? "#0097B2" : "#ffffff"} />}
+                          {filter.id === "stays" && <Home size={28} color={isActive ? "#0097B2" : "#ffffff"} />}
+                          {filter.id === "food" && <Utensils size={28} color={isActive ? "#0097B2" : "#ffffff"} />}
+                          {filter.id === "places" && <MapPin size={28} color={isActive ? "#0097B2" : "#ffffff"} />}
                         </div>
                         <span className={styles.mobileCategoryLabel}>{filter.label}</span>
                       </div>
