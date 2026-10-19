@@ -1056,7 +1056,11 @@ function PlaceDescription({ place }) {
     { label: "Parking", val: parkingDisplay, icon: Car },
   ];
 
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+
   if (isMobile) {
+    const isLongDescription = description.length > 180;
+
     return (
       <section className="place-description-section" style={{ background: W, padding: "32px 16px", borderBottom: `1px solid ${B}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -1085,18 +1089,48 @@ function PlaceDescription({ place }) {
           </div>
 
           {/* Description Text */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <span style={{ fontSize: "10px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif' }}>About this place</span>
-            <p style={{
-              fontSize: 15,
-              lineHeight: 1.7,
-              color: FG,
-              margin: 0,
-              fontWeight: 400,
-              fontFamily: '"Inter", sans-serif'
-            }}>
-              {description}
-            </p>
+            <div style={{ position: "relative" }}>
+              <p style={{
+                fontSize: 15,
+                lineHeight: 1.7,
+                color: FG,
+                margin: 0,
+                fontWeight: 400,
+                fontFamily: '"Inter", sans-serif',
+                display: !isDescExpanded && isLongDescription ? "-webkit-box" : "block",
+                WebkitLineClamp: !isDescExpanded && isLongDescription ? 3 : "unset",
+                WebkitBoxOrient: "vertical",
+                overflow: !isDescExpanded && isLongDescription ? "hidden" : "visible",
+                transition: "all 0.3s ease"
+              }}>
+                {description}
+              </p>
+              {isLongDescription && (
+                <button
+                  type="button"
+                  onClick={() => setIsDescExpanded(!isDescExpanded)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: "8px 0 0 0",
+                    margin: 0,
+                    color: A,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    outline: "none"
+                  }}
+                >
+                  {isDescExpanded ? "Read Less" : "Read More"}
+                  <span style={{ fontSize: 12, transform: isDescExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>▼</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
