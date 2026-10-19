@@ -567,6 +567,8 @@ const ScopedStyles = () => (
         gap: 6px;
         text-align: center;
         border-right: 1px solid var(--B, #333);
+        height: 100%;
+        box-sizing: border-box;
       }
       .mobile-feature-grid .feature-card:last-child {
         border-right: none;
@@ -574,20 +576,27 @@ const ScopedStyles = () => (
       .mobile-feature-grid .feature-card .feature-icon {
         color: var(--A, #0097B2);
         margin-bottom: 2px;
+        flex-shrink: 0;
       }
       .mobile-feature-grid .feature-card .feature-value {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
         color: var(--FG, #fff);
         font-family: "Inter", sans-serif;
-        line-height: 1.3;
+        line-height: 1.25;
         word-break: break-word;
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .mobile-feature-grid .feature-card .feature-label {
         font-size: 10px;
         color: var(--M, #888);
         font-family: "Inter", sans-serif;
         text-transform: capitalize;
+        margin-top: auto;
+        white-space: nowrap;
       }
 
       /* Mobile About Section */
@@ -3062,7 +3071,7 @@ const StayDetails = () => {
         const tagsDuration = tagsDistance / 8; // constant speed of 8px/s
 
         return (
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
             <div style={{
               margin: "0",
               overflow: "hidden",
@@ -3435,7 +3444,7 @@ const StayDetails = () => {
         const tagsDuration = tagsDistance / 8; // constant speed of 8px/s
 
         return (
-          <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
             <div style={{
               margin: "0",
               overflow: "hidden",
