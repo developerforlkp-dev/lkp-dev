@@ -2189,12 +2189,15 @@ function VisitorInformation({ place }) {
 }
 
 function GoodToKnow({ place }) {
-  const { tokens: { A, B, BG, FG, M, W, S, AL } } = useTheme();
+  const { theme, tokens: { A, B, BG, FG, M, W, S, AL } } = useTheme();
+  const isDark = theme === "dark";
 
-  const warningBg = A === "#0097B2" ? "#fff5f5" : "rgba(239, 68, 68, 0.05)";
-  const warningBorder = A === "#0097B2" ? "#fee2e2" : "rgba(239, 68, 68, 0.2)";
-  const warningText = A === "#0097B2" ? "#b91c1c" : "#fca5a5";
-  const warningHeader = A === "#0097B2" ? "#991b1b" : "#f87171";
+  const warningBg = isDark ? "#120808" : "#fff5f5";
+  const warningBorder = isDark ? "rgba(239, 68, 68, 0.28)" : "#fee2e2";
+  const warningText = isDark ? "#fca5a5" : "#b91c1c";
+  const warningHeader = isDark ? "#f87171" : "#991b1b";
+  const warningItemBg = isDark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.03)";
+  const warningIconBg = isDark ? "#1a0f0f" : W;
 
   const carryItems = Array.isArray(place?.whatToCarry) && place.whatToCarry.length > 0 
     ? place.whatToCarry.map(i => typeof i === 'string' ? i : i.name || i)
@@ -2358,12 +2361,12 @@ function GoodToKnow({ place }) {
                           alignItems: "center",
                           gap: 10,
                           padding: "8px 12px",
-                          background: "rgba(239, 68, 68, 0.03)",
+                          background: warningItemBg,
                           borderRadius: 10,
                           border: `1px dashed ${warningBorder}`
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: W, flexShrink: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: warningIconBg, flexShrink: 0 }}>
                           <XCircle size={10} color="#ef4444" />
                         </div>
                         <span style={{ fontSize: 11, fontWeight: 700, color: warningText }}>{item}</span>
@@ -3129,12 +3132,15 @@ function MobileItinerary({ place }) {
 }
 
 function MobileGoodToKnow({ place }) {
-  const { tokens: { A, B, BG, FG, M, W, S, AL } } = useTheme();
+  const { theme, tokens: { A, B, BG, FG, M, W, S, AL } } = useTheme();
+  const isDark = theme === "dark";
 
-  const warningBg = A === "#0097B2" ? "#fff5f5" : "rgba(239, 68, 68, 0.05)";
-  const warningBorder = A === "#0097B2" ? "#fee2e2" : "rgba(239, 68, 68, 0.2)";
-  const warningText = A === "#0097B2" ? "#b91c1c" : "#fca5a5";
-  const warningHeader = A === "#0097B2" ? "#991b1b" : "#f87171";
+  const warningBg = isDark ? "#120808" : "#fff5f5";
+  const warningBorder = isDark ? "rgba(239, 68, 68, 0.28)" : "#fee2e2";
+  const warningText = isDark ? "#fca5a5" : "#b91c1c";
+  const warningHeader = isDark ? "#f87171" : "#991b1b";
+  const warningItemBg = isDark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.03)";
+  const warningIconBg = isDark ? "#1a0f0f" : W;
 
   const carryItems = ["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"];
   const avoidItems = ["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"];
