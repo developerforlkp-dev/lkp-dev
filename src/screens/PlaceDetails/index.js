@@ -1567,6 +1567,27 @@ function VisitorInformation({ place }) {
   const { isMobile } = useWindowSize();
   const [showAllVehicles, setShowAllVehicles] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const carouselTrackRef = useRef(null);
+
+  const handleMobileScroll = () => {
+    if (!carouselTrackRef.current) return;
+    const { scrollLeft, offsetWidth } = carouselTrackRef.current;
+    if (offsetWidth > 0) {
+      const idx = Math.round(scrollLeft / (offsetWidth * 0.85 + 16));
+      setActiveCardIndex(Math.min(3, Math.max(0, idx)));
+    }
+  };
+
+  const scrollToCard = (index) => {
+    if (!carouselTrackRef.current) return;
+    const width = carouselTrackRef.current.offsetWidth;
+    carouselTrackRef.current.scrollTo({
+      left: index * (width * 0.85 + 16),
+      behavior: "smooth"
+    });
+    setActiveCardIndex(index);
+  };
 
   useEffect(() => {
     if (showAllVehicles || showAllTickets) {
@@ -1642,26 +1663,62 @@ function VisitorInformation({ place }) {
   });
 
   return (
-    <section style={{ background: W, padding: isMobile ? "40px 16px" : "48px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <h3 style={{
-          fontSize: isMobile ? 32 : "clamp(2.5rem, 4vw, 3.5rem)",
-          fontWeight: 700,
-          color: FG,
-          lineHeight: 1.1,
-          letterSpacing: "-0.02em",
-          marginBottom: 32,
-          fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
-        }}>Visitor Guide</h3>
+    <section style={{ background: W, padding: isMobile ? "32px 0 24px" : "48px 80px" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto", padding: isMobile ? "0 16px" : 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: isMobile ? 18 : 32 }}>
+          <div>
+            {isMobile && (
+              <span style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 800, display: "block", marginBottom: 4 }}>
+                Essential Details
+              </span>
+            )}
+            <h3 style={{
+              fontSize: isMobile ? 26 : "clamp(2.5rem, 4vw, 3.5rem)",
+              fontWeight: 700,
+              color: FG,
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              margin: 0,
+              fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
+            }}>Visitor Guide</h3>
+          </div>
+          {isMobile && (
+            <span style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: A,
+              letterSpacing: "0.08em",
+              background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "0, 164, 196"}, 0.1)`,
+              padding: "4px 10px",
+              borderRadius: 20
+            }}>
+              {activeCardIndex + 1} / 4
+            </span>
+          )}
+        </div>
 
         <Soul y={30}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-            gap: 32,
-            width: "100%",
-            boxSizing: "border-box"
-          }}>
+          <div
+            ref={carouselTrackRef}
+            onScroll={isMobile ? handleMobileScroll : undefined}
+            style={isMobile ? {
+              display: "flex",
+              gap: 16,
+              overflowX: "auto",
+              scrollSnapType: "x mandatory",
+              padding: "8px 16px 16px 16px",
+              margin: "0 -16px",
+              WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none"
+            } : {
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 32,
+              width: "100%",
+              boxSizing: "border-box"
+            }}
+          >
             {/* Card 1: Official & Administrative Permit */}
             <motion.div
               whileHover={{ y: -8, boxShadow: "0 30px 60px rgba(0,0,0,0.06)" }}
@@ -1675,7 +1732,10 @@ function VisitorInformation({ place }) {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                minHeight: 480,
+                minHeight: isMobile ? 420 : 480,
+                flex: isMobile ? "0 0 85%" : undefined,
+                maxWidth: isMobile ? "330px" : undefined,
+                scrollSnapAlign: isMobile ? "start" : undefined,
                 boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
               }}
             >
@@ -1828,7 +1888,10 @@ function VisitorInformation({ place }) {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                minHeight: 480,
+                minHeight: isMobile ? 420 : 480,
+                flex: isMobile ? "0 0 85%" : undefined,
+                maxWidth: isMobile ? "330px" : undefined,
+                scrollSnapAlign: isMobile ? "start" : undefined,
                 boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
               }}
             >
@@ -1953,7 +2016,10 @@ function VisitorInformation({ place }) {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                minHeight: 480,
+                minHeight: isMobile ? 420 : 480,
+                flex: isMobile ? "0 0 85%" : undefined,
+                maxWidth: isMobile ? "330px" : undefined,
+                scrollSnapAlign: isMobile ? "start" : undefined,
                 boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
               }}
             >
@@ -2064,7 +2130,10 @@ function VisitorInformation({ place }) {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                minHeight: 480,
+                minHeight: isMobile ? 420 : 480,
+                flex: isMobile ? "0 0 85%" : undefined,
+                maxWidth: isMobile ? "330px" : undefined,
+                scrollSnapAlign: isMobile ? "start" : undefined,
                 boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
               }}
             >
@@ -2152,6 +2221,30 @@ function VisitorInformation({ place }) {
             </motion.div>
           </div>
         </Soul>
+
+        {/* Mobile Pagination Indicator Dots */}
+        {isMobile && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 14 }}>
+            {[0, 1, 2, 3].map((idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => scrollToCard(idx)}
+                aria-label={`Go to Visitor Guide Card ${idx + 1}`}
+                style={{
+                  width: activeCardIndex === idx ? 22 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                  background: activeCardIndex === idx ? A : B,
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Vehicle Access Modal */}
