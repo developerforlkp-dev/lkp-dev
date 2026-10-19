@@ -7,7 +7,8 @@ import Favorite from "../Favorite";
 
 export const getWishlistConfig = (item) => {
   if (item?.isCategoryCard || item?.isCategory) return null;
-  const explicitType = String(item?.wishlistItemType || item?.itemType || "").trim().toLowerCase();
+  const rawExplicitType = String(item?.wishlistItemType || item?.itemType || "").trim().toLowerCase();
+  const explicitType = rawExplicitType === "experience" || rawExplicitType === "experiences" ? "listing" : rawExplicitType;
   const explicitId = item?.wishlistItemId ?? item?.itemId ?? item?.listingId ?? item?.eventId ?? item?.stayId;
 
   if (explicitType && explicitId != null && explicitId !== "") {

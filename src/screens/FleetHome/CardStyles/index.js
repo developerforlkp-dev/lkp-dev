@@ -286,6 +286,8 @@ const transformListingToCard = (listing, section) => {
     avatar: null,
     isClosed: Boolean(listing.isClosed),
     itemType: entityType,
+    wishlistItemType: entityType === "experience" ? "listing" : entityType,
+    wishlistItemId: id,
     status: listing.status,
     eventStatus: listing.eventStatus,
     badge: listing.badge,
