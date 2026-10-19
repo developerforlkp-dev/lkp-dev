@@ -3011,34 +3011,67 @@ function MobileGallery({ galleryItems }) {
         </h3>
       </div>
 
-      {/* Horizontal Scroll Image Cards */}
-      <div style={{
-        display: "flex",
-        gap: 14,
-        overflowX: "auto",
-        padding: "0 16px 8px 16px",
-        scrollSnapType: "x mandatory"
-      }} className="no-scrollbar">
-        {galleryItems.map((img, i) => (
-          <div
-            key={i}
-            onClick={() => openLightbox(i)}
-            style={{
-              flexShrink: 0,
-              width: 240,
-              height: 160,
-              borderRadius: 20,
-              overflow: "hidden",
-              border: `1.5px solid ${B}`,
-              boxShadow: "0 10px 24px rgba(0,0,0,0.04)",
-              scrollSnapAlign: "start",
-              cursor: "pointer"
-            }}
-          >
-            <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+      {/* Auto Marquee Image Track */}
+      {(() => {
+        let baseList = [...galleryItems];
+        while (baseList.length < 6) {
+          baseList = [...baseList, ...galleryItems];
+        }
+        const doubledList = [...baseList, ...baseList];
+        const duration = Math.max(20, baseList.length * 6);
+
+        return (
+          <div style={{ position: "relative", overflow: "hidden", width: "100%", padding: "4px 0" }}>
+            <style>{`
+              @keyframes placeVisualJourneyMarquee {
+                0% { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-50%, 0, 0); }
+              }
+            `}</style>
+            <div
+              style={{
+                display: "flex",
+                gap: 14,
+                width: "max-content",
+                animation: `placeVisualJourneyMarquee ${duration}s linear infinite`,
+                willChange: "transform",
+                transform: "translate3d(0, 0, 0)",
+                WebkitTransform: "translate3d(0, 0, 0)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden"
+              }}
+            >
+              {doubledList.map((img, i) => {
+                const originalIndex = i % galleryItems.length;
+                return (
+                  <div
+                    key={i}
+                    onClick={() => openLightbox(originalIndex)}
+                    style={{
+                      flexShrink: 0,
+                      width: 240,
+                      height: 160,
+                      borderRadius: 20,
+                      overflow: "hidden",
+                      border: `1.5px solid ${B}`,
+                      boxShadow: "0 10px 24px rgba(0,0,0,0.04)",
+                      cursor: "pointer",
+                      position: "relative"
+                    }}
+                  >
+                    <img
+                      src={img}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      alt=""
+                      loading="lazy"
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* Lightbox Modal */}
       <AnimatePresence>
