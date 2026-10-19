@@ -2255,11 +2255,7 @@ function GoodToKnow({ place }) {
                     </div>
                   </div>
 
-                  {/* Flight Label Details */}
-                  <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px dashed ${B}`, paddingBottom: 6, marginBottom: 12, fontSize: 8, fontFamily: "monospace", color: M, letterSpacing: "0.05em" }}>
-                    <div>DEP: LKP-GATEWAY</div>
-                    <div>CLASS: FIRST</div>
-                  </div>
+
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {carryItems.map(item => (
