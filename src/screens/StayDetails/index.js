@@ -2064,7 +2064,7 @@ function StayPolicies({ stay }) {
   }, [stay]);
 
   return (
-    <section className="policies-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "32px 20px" : "64px 0" }}>
+    <section className="policies-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "12px 20px 32px" : "64px 0" }}>
       <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 20 : 64, alignItems: "start" }} className="pol-grid">
           <Rev delay={0.1}>
@@ -4799,7 +4799,7 @@ function StayLocation({ stay }) {
   const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=m&z=15&output=embed&iwloc=near`;
 
   return (
-    <section className="prep-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "48px 24px" : "64px 0" }}>
+    <section className="prep-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "24px 20px 12px" : "64px 0" }}>
       <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
 
         {/* Header Area */}
@@ -4826,7 +4826,7 @@ function StayLocation({ stay }) {
           padding: isMobile ? 0 : 16,
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          gap: isMobile ? 24 : 32,
+          gap: isMobile ? 16 : 32,
           boxShadow: isMobile || theme === 'dark' ? "none" : "0 8px 32px rgba(0,0,0,0.04)"
         }} className="prep-grid">
 
@@ -4867,11 +4867,11 @@ function StayLocation({ stay }) {
 
           {/* RIGHT: Details List */}
           <Rev delay={0.2} style={{ height: "100%" }}>
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: isMobile ? "0" : "16px 16px 16px 0", marginTop: isMobile ? 16 : 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", padding: isMobile ? "0" : "16px 16px 16px 0", marginTop: isMobile ? 12 : 0 }}>
               {isMobile && (
                 <button 
                   onClick={() => setDetailsExpanded(!detailsExpanded)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "transparent", border: `1px solid ${B}`, borderRadius: detailsExpanded ? "12px 12px 0 0" : 12, color: FG, cursor: "pointer", outline: "none", marginBottom: detailsExpanded ? 0 : 16 }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "transparent", border: `1px solid ${B}`, borderRadius: detailsExpanded ? "12px 12px 0 0" : 12, color: FG, cursor: "pointer", outline: "none", marginBottom: 0 }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <MapPin size={16} color={A} />
