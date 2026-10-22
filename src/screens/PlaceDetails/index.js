@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, createContext, useContext, useRef } from "react";
 import useDarkMode from "../../hooks/useDarkMode";
-import { useLocation, Link, useHistory } from "react-router-dom";
+import { useLocation, Link, useHistory, useParams } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Sparkles, Calendar, ArrowDown, ExternalLink, Map, Navigation,
@@ -22,6 +22,8 @@ import Icon from "../../components/Icon";
 import FullScreenImage from "../../components/FullScreenImage";
 import CuratedContent from "../../components/CuratedContent";
 import { getShareText } from "../../utils/shareUtils";
+import SEOHead from "../../components/SEOHead";
+import { buildPlaceSchema, buildBreadcrumbSchema } from "../../utils/schemaBuilder";
 
 /* ─── RESPONSIVE HOOK ─────────── */
 function useWindowSize() {
@@ -3843,8 +3845,9 @@ const PlaceDetails = () => {
   const { isMobile } = useWindowSize();
   const location = useLocation();
   const history = useHistory();
-  const params = new URLSearchParams(location.search);
-  const id = params.get("id");
+  const routeParams = useParams() || {};
+  const queryParams = new URLSearchParams(location.search);
+  const id = routeParams.slugOrId || queryParams.get("id");
 
   const [place, setPlace] = useState(null);
   const [hostData, setHostData] = useState(null);
@@ -3994,6 +3997,52 @@ const PlaceDetails = () => {
   const primaryCategoryId = place?.primaryCategoryId || place?.primaryCategory?.id || place?.categoryId || place?.category?.id;
   const currentListingId = place?.placeId || place?.id || id;
 
+  // Structured Data Schema for AEO / GEO (Called unconditionally)
+  const schemas = useMemo(() => {
+    if (!place) return [];
+    const placeName = place?.placeName || place?.name || place?.title;
+    const placeDescription = place?.seo_description || place?.seoDescription || place?.description || place?.placeDescription;
+    const identifier = place?.seo_slug || place?.seoSlug || currentListingId;
+    const canonicalUrl = `https://littleknownplanet.com/places/${identifier}`;
+
+    const mainSchema = buildPlaceSchema({
+      name: placeName,
+      description: placeDescription,
+      url: canonicalUrl,
+      images: galleryItems,
+      location: place?.city || place?.location,
+      latitude: place?.latitude || place?.lat,
+      longitude: place?.longitude || place?.lng,
+      openingHours: place?.openingHours || place?.timings,
+      entryFee: place?.entryFee,
+      rating: place?.rating || place?.reviewsCount?.rating,
+      reviewCount: place?.reviewsCount?.count,
+    });
+
+    const breadcrumbs = buildBreadcrumbSchema([
+      { name: "Home", url: "/" },
+      { name: "Places", url: "/places" },
+      { name: placeName, url: `/places/${identifier}` },
+    ]);
+
+    return [mainSchema, breadcrumbs].filter(Boolean);
+  }, [place, galleryItems, currentListingId]);
+
+  const seoElement = (
+    <SEOHead
+      seoSlug={place?.seo_slug || place?.seoSlug}
+      seoTitle={place?.seo_title || place?.seoTitle}
+      seoDescription={place?.seo_description || place?.seoDescription}
+      fallbackTitle={place?.placeName || place?.name || place?.title}
+      fallbackDescription={place?.description || place?.placeDescription}
+      fallbackId={currentListingId}
+      category="places"
+      image={galleryItems?.[0]}
+      location={place?.city || place?.location}
+      schemas={schemas}
+    />
+  );
+
   if (!place && !unavailablePopupOpen) {
     return (
       <div style={{ minHeight: '100vh' }}>
@@ -4014,6 +4063,7 @@ const PlaceDetails = () => {
   if (isMobile) {
     return (
       <ScopedThemeProvider>
+        {seoElement}
         <ScopedStyles />
         <ProgressBar />
         <MobilePlaceDetails
@@ -4031,6 +4081,7 @@ const PlaceDetails = () => {
 
   return (
     <ScopedThemeProvider>
+      {seoElement}
       <ScopedStyles />
       <ProgressBar />
       {unavailablePopup}
