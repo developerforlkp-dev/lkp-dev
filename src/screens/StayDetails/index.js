@@ -441,6 +441,61 @@ const ScopedStyles = () => (
       .highlights-banner { display: none !important; }
       .editorial-narrative-block { display: none !important; }
       .amenities-section-container { margin-top: 4px !important; }
+      .professional-amenities-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        margin-top: 8px !important;
+      }
+      .professional-amenity-card {
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 8px 4px !important;
+        min-height: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        box-shadow: none !important;
+      }
+      [data-theme="dark"] .professional-amenity-card {
+        background: transparent !important;
+        border: none !important;
+      }
+      .professional-amenity-card-icon {
+        width: auto !important;
+        height: auto !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: var(--A) !important;
+        flex-shrink: 0 !important;
+        padding: 0 !important;
+      }
+      .professional-amenity-card-label {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: var(--FG) !important;
+        background: transparent !important;
+        line-height: 1.3 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      }
+      .amenities-view-toggle-btn {
+        margin: 20px auto 0 auto !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        padding: 10px 28px !important;
+        border-radius: 30px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #111827 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+      }
+      [data-theme="dark"] .amenities-view-toggle-btn {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #f3f4f6 !important;
+      }
       .highlight-item { justify-content: flex-start !important; padding-bottom: 12px !important; border-bottom: 1px solid var(--B) !important; }
       .highlight-item:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
 
@@ -1565,10 +1620,18 @@ function StayAmenities({ stay }) {
     "shuttle": Plane, "airport": Plane, "transfer": Plane, "transport": Plane,
     "bar": GlassWater, "drink": GlassWater, "cocktail": GlassWater, "lounge": GlassWater,
     "restaurant": Utensils, "dining": Utensils, "food": Utensils, "breakfast": Utensils,
-    "parking": Car, "valet": Car, "garage": Car,
+    "parking": Car, "valet": Car, "garage": Car, "car": Car, "rental": Car,
     "ac": AirVent, "air": AirVent, "cooling": AirVent, "climate": AirVent,
-    "building": Building, "reception": Building, "concierge": Building, "front": Building,
-    "map": Map, "tour": Map, "excursion": Map,
+    "desk": Building, "front": Building, "reception": Building, "concierge": Building, "building": Building,
+    "tour": Map, "map": Map, "excursion": Map, "sightseeing": Map,
+    "security": ShieldCheck, "guard": ShieldCheck, "safe": ShieldCheck, "safety": ShieldCheck,
+    "laundry": Waves, "wash": Waves, "iron": Waves, "dry clean": Waves,
+    "luggage": Building, "baggage": Building, "storage": Building,
+    "medical": ShieldCheck, "doctor": ShieldCheck, "first aid": ShieldCheck, "health": ShieldCheck,
+    "assistance": CheckCircle,
+    "tv": Tv, "television": Tv,
+    "coffee": Coffee, "tea": Coffee,
+    "room": DoorOpen, "bed": Bed,
   };
 
   const getIcon = (label) => {
