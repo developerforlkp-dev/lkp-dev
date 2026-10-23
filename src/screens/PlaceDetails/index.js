@@ -1059,10 +1059,9 @@ function PlaceDescription({ place }) {
   ];
 
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const isLongDescription = description.length > (isMobile ? 180 : 360);
 
   if (isMobile) {
-    const isLongDescription = description.length > 180;
-
     return (
       <section className="place-description-section" style={{ background: W, padding: "32px 16px", borderBottom: `1px solid ${B}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -1091,46 +1090,57 @@ function PlaceDescription({ place }) {
           </div>
 
           {/* Description Text */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <span style={{ fontSize: "10px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: '"Inter", sans-serif' }}>About this place</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <span style={{ fontSize: "10px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: 6, fontFamily: '"Inter", sans-serif' }}>About this place</span>
+              <h3 style={{ fontSize: "24px", fontWeight: 700, color: FG, lineHeight: 1.2, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.01em", margin: 0 }}>
+                {place?.placeName ? `Discover ${place.placeName}` : "The Experience"}
+              </h3>
+            </div>
             <div style={{ position: "relative" }}>
-              <p style={{
-                fontSize: 15,
-                lineHeight: 1.7,
-                color: FG,
-                margin: 0,
-                fontWeight: 400,
-                fontFamily: '"Inter", sans-serif',
-                display: !isDescExpanded && isLongDescription ? "-webkit-box" : "block",
-                WebkitLineClamp: !isDescExpanded && isLongDescription ? 3 : "unset",
-                WebkitBoxOrient: "vertical",
-                overflow: !isDescExpanded && isLongDescription ? "hidden" : "visible",
-                transition: "all 0.3s ease"
+              <div style={{
+                maxHeight: !isDescExpanded && isLongDescription ? "140px" : "2000px",
+                overflow: "hidden",
+                transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                WebkitMaskImage: !isDescExpanded && isLongDescription ? "linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%)" : "none",
+                maskImage: !isDescExpanded && isLongDescription ? "linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%)" : "none"
               }}>
-                {description}
-              </p>
+                <p style={{
+                  fontSize: 15,
+                  lineHeight: 1.75,
+                  color: FG,
+                  margin: 0,
+                  fontWeight: 400,
+                  fontFamily: '"Inter", sans-serif',
+                  whiteSpace: "pre-line"
+                }}>
+                  {description}
+                </p>
+              </div>
               {isLongDescription && (
-                <button
-                  type="button"
-                  onClick={() => setIsDescExpanded(!isDescExpanded)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: "8px 0 0 0",
-                    margin: 0,
-                    color: A,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    outline: "none"
-                  }}
-                >
-                  {isDescExpanded ? "Read Less" : "Read More"}
-                  <span style={{ fontSize: 12, transform: isDescExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>▼</span>
-                </button>
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDescExpanded(!isDescExpanded)}
+                    style={{
+                      background: S,
+                      border: `1px solid ${B}`,
+                      borderRadius: 100,
+                      padding: "8px 18px",
+                      color: A,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+                    }}
+                  >
+                    <span>{isDescExpanded ? "Read Less" : "Read Full Story"}</span>
+                    <span style={{ fontSize: 10, transform: isDescExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}>▼</span>
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -1140,8 +1150,8 @@ function PlaceDescription({ place }) {
   }
 
   return (
-    <section className="place-description-section" style={{ background: W, padding: "60px 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto", display: "flex", flexDirection: "column", gap: 48 }}>
+    <section className="place-description-section" style={{ background: W, padding: "50px 80px 70px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
 
         {/* Horizontal facts row */}
         <div style={{
@@ -1150,8 +1160,9 @@ function PlaceDescription({ place }) {
           gap: 20,
           background: S,
           borderRadius: 24,
-          padding: "24px 40px",
-          border: `1px solid ${B}`
+          padding: "24px 36px",
+          border: `1px solid ${B}`,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.02)"
         }}>
           {facts.map((f, i) => {
             const IconComp = f.icon;
@@ -1175,24 +1186,89 @@ function PlaceDescription({ place }) {
           })}
         </div>
 
-        {/* Editorial text */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 900, margin: "0 auto", textAlign: "center", marginTop: 24 }}>
-          <div>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: A, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "16px", fontFamily: '"Inter", sans-serif' }}>About this place</span>
-            <h3 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em", margin: 0 }}>
+        {/* Editorial text card container */}
+        <div style={{
+          maxWidth: 960,
+          margin: "0 auto",
+          width: "100%",
+          background: S,
+          borderRadius: 28,
+          border: `1px solid ${B}`,
+          padding: "40px 48px 36px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+          boxShadow: "0 8px 30px rgba(0,0,0,0.03)"
+        }}>
+          <div style={{ textAlign: "center" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: A, letterSpacing: "0.18em", textTransform: "uppercase", display: "block", marginBottom: 10, fontFamily: '"Inter", sans-serif' }}>About this place</span>
+            <h3 style={{ fontSize: "clamp(2.2rem, 3.5vw, 3rem)", fontWeight: 700, color: FG, lineHeight: 1.15, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em", margin: 0 }}>
               {place?.placeName ? `Discover ${place.placeName}` : "The Experience"}
             </h3>
           </div>
-          <p style={{
-            fontSize: 16,
-            lineHeight: 1.8,
-            color: FG,
-            fontFamily: '"Inter", sans-serif',
-            fontWeight: 400,
-            margin: 0
-          }}>
-            {description}
-          </p>
+
+          <div style={{ position: "relative" }}>
+            <div style={{
+              maxHeight: !isDescExpanded && isLongDescription ? "190px" : "3000px",
+              overflow: "hidden",
+              transition: "max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
+              WebkitMaskImage: !isDescExpanded && isLongDescription ? "linear-gradient(to bottom, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)" : "none",
+              maskImage: !isDescExpanded && isLongDescription ? "linear-gradient(to bottom, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)" : "none"
+            }}>
+              <p style={{
+                fontSize: 16,
+                lineHeight: 1.85,
+                color: FG,
+                fontFamily: '"Inter", sans-serif',
+                fontWeight: 400,
+                margin: 0,
+                textAlign: "justify",
+                whiteSpace: "pre-line",
+                opacity: 0.92
+              }}>
+                {description}
+              </p>
+            </div>
+
+            {isLongDescription && (
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: !isDescExpanded ? 16 : 24
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setIsDescExpanded(!isDescExpanded)}
+                  style={{
+                    background: W,
+                    border: `1px solid ${B}`,
+                    borderRadius: 100,
+                    padding: "9px 24px",
+                    color: A,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.05)",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.08)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.05)";
+                  }}
+                >
+                  <span>{isDescExpanded ? "Read Less" : "Read Full Story"}</span>
+                  <span style={{ fontSize: 11, transform: isDescExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}>▼</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
