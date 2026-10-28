@@ -24,6 +24,7 @@ import CuratedContent from "../../components/CuratedContent";
 import { getShareText } from "../../utils/shareUtils";
 import SEOHead from "../../components/SEOHead";
 import { buildPlaceSchema, buildBreadcrumbSchema } from "../../utils/schemaBuilder";
+import { formatTime12h, formatTimingsRange } from "../../utils/timeUtils";
 
 /* ─── RESPONSIVE HOOK ─────────── */
 function useWindowSize() {
@@ -1052,7 +1053,7 @@ function PlaceDescription({ place }) {
   }, [place?.parkingAvailable, place?.isParkingAvailable, place?.parking]);
 
   const facts = [
-    { label: "Timings", val: (place?.openingTime && place?.closingTime) ? `${place.openingTime} - ${place.closingTime}` : (place?.timings || place?.openingHours || "Not Specified"), icon: Clock },
+    { label: "Timings", val: formatTimingsRange(place?.openingTime, place?.closingTime, place?.timings || place?.openingHours), icon: Clock },
     { label: "Entry Fee", val: entryFeeDisplay, icon: Ticket },
     { label: "Best Time", val: place?.bestTimeToVisit || "Not Specified", icon: Star },
     { label: "Parking", val: parkingDisplay, icon: Car },
@@ -2167,11 +2168,11 @@ function VisitorInformation({ place }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Opening Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.openingTime || "Not Specified"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{formatTime12h(place?.openingTime) || "Not Specified"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closing Hour</span>
-                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{place?.closingTime || place?.closeTime || "Not Specified"}</span>
+                      <span style={{ fontWeight: 800, color: FG, fontSize: 14, fontFamily: "var(--font-fraunces), Georgia, serif" }}>{formatTime12h(place?.closingTime || place?.closeTime) || "Not Specified"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: M }}>Closed On</span>
@@ -4013,7 +4014,7 @@ const PlaceDetails = () => {
       location: place?.city || place?.location,
       latitude: place?.latitude || place?.lat,
       longitude: place?.longitude || place?.lng,
-      openingHours: place?.openingHours || place?.timings,
+      openingHours: formatTimingsRange(place?.openingTime, place?.closingTime, place?.openingHours || place?.timings, null) || place?.openingHours || place?.timings,
       entryFee: place?.entryFee,
       rating: place?.rating || place?.reviewsCount?.rating,
       reviewCount: place?.reviewsCount?.count,

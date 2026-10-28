@@ -4020,7 +4020,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           ticketTypeId,
           selectedSlot: selectedEventSlot,
           selectedSlots: selectedEventSlots,
-          cancellationPolicySummary: listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText,
+          cancellationPolicySummary: isDirect ? null : (listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText),
           orderRequest: {
             ...payload,
             eventId: previewPriceRes?.eventId ? Number(previewPriceRes.eventId) : eventIdNum,
@@ -4274,7 +4274,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         guestCount: totalGuests,
         billableGuestCount: totalGuests
       },
-      cancellationPolicySummary: listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText,
+      cancellationPolicySummary: isDirect ? null : (listing?.cancellationPolicySummary || listing?.cancellationPolicy || listing?.cancellationPolicyText),
     };
     if (privateBooking) bookingData.privateBooking = true;
 

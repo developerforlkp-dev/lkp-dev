@@ -929,7 +929,7 @@ export default function MobileExperienceView({
                 });
               }
 
-              if (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) {
+              if (!isDirectBooking && (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy)) {
                 let rawPolicy = listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy;
                 if (rawPolicy && typeof rawPolicy === "string" && rawPolicy.toLowerCase().includes("no refunds are available for cancellations")) {
                   rawPolicy = "No cancellation policy is available for this experience.";
@@ -1049,7 +1049,7 @@ export default function MobileExperienceView({
                 <>
                   {renderAccordion("Experience Rules", experienceRuleItems.length > 0 ? experienceRuleItems : expItems, <ShieldCheck size={16} color={A} />)}
                   {renderAccordion("Guest Requirements", guestItems, <Users size={16} color={A} />)}
-                  {renderAccordion("Cancellation Policy", cancelItems, <Clock size={16} color={A} />)}
+                  {!isDirectBooking && renderAccordion("Cancellation Policy", cancelItems, <Clock size={16} color={A} />)}
                   {renderAccordion("Foreigner Guidelines", foreignerItems, <Info size={16} color={A} />)}
                 </>
               );
