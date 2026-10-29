@@ -432,8 +432,32 @@ const ScopedStyles = () => (
       .stay-details-premium .desk-only { display: none !important; }
       .pol-contact-grid, .amenities-grid, .location-grid, .reviews-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
       .property-stay-card { grid-template-columns: 1fr !important; }
-      .premium-hero-grid { padding: 0 !important; }
-      .hero-spotlight { border-radius: 0 0 24px 24px !important; }
+      .premium-hero-grid {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .hero-spotlight {
+        border-radius: 0 0 24px 24px !important;
+        border: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .hero-spotlight img {
+        border: none !important;
+        outline: none !important;
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+      }
       .hero-thumbnail-strip { display: none !important; }
       .hero-mini-thumb { width: 44px; height: 33px; border-radius: 6px; }
       .premium-view-all-btn { padding: 6px 10px; font-size: 10px; border-radius: 8px; }
@@ -1180,11 +1204,29 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
   };
 
   return (
-    <section ref={heroRef} style={{ position: "relative", height: isMobile ? "auto" : "75vh", background: "transparent", overflow: "visible", padding: "0", zIndex: 50 }}>
-      <div className="premium-hero-grid" style={isMobile ? { position: "relative", height: "55vh" } : {}}>
+    <section ref={heroRef} style={{ position: "relative", height: isMobile ? "auto" : "75vh", background: "transparent", overflow: "visible", padding: "0", margin: "0", width: "100%", zIndex: 50 }}>
+      <div className="premium-hero-grid" style={isMobile ? { position: "relative", height: "55vh", padding: 0, margin: 0, width: "100%" } : {}}>
 
         {/* Main Cover Image View */}
-        <div className="hero-spotlight" onClick={() => openFullscreen(activeIdx)} style={{ cursor: "pointer", height: isMobile ? "100%" : undefined }}>
+        <div
+          className="hero-spotlight"
+          onClick={() => openFullscreen(activeIdx)}
+          style={{
+            cursor: "pointer",
+            height: isMobile ? "100%" : undefined,
+            ...(isMobile ? {
+              border: "none",
+              borderLeft: "none",
+              borderRight: "none",
+              borderTop: "none",
+              borderBottom: "none",
+              boxShadow: "none",
+              margin: 0,
+              padding: 0,
+              width: "100%",
+            } : {})
+          }}
+        >
 
           {/* Mobile Top Controls */}
           {isMobile && (
@@ -1283,7 +1325,20 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                 x: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.25 },
               }}
-              style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                margin: 0,
+                padding: 0,
+                border: "none",
+                outline: "none"
+              }}
               alt={title}
             />
           </AnimatePresence>
