@@ -36,18 +36,31 @@ export function Hero({ posts = [], loading = false }) {
           border-radius: 0 0 40px 40px;
           overflow: hidden;
         }
-        .hero-text-mobile-white.title {
-          color: white !important;
-          text-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        
+        .hero-text-mobile-white.title,
+        body:not(.dark-mode) .hero-text-mobile-white.title {
+          color: #FFFFFF !important;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
         }
-        .hero-text-mobile-white.desc {
-          color: #f3f4f6 !important;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        .hero-text-mobile-white.desc,
+        body:not(.dark-mode) .hero-text-mobile-white.desc {
+          color: rgba(255, 255, 255, 0.95) !important;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
         }
-        .hero-text-mobile-white.label {
-          color: white !important;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        .hero-text-mobile-white.label,
+        body:not(.dark-mode) .hero-text-mobile-white.label {
+          color: #38bdf8 !important;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
         }
+        .hero-text-mobile-white .hero-accent,
+        body:not(.dark-mode) .hero-text-mobile-white .hero-accent {
+          color: #38bdf8 !important;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+        }
+
         /* Mobile Specific Overrides */
         @media (max-width: 1023px) {
           .hero-mobile-container {
@@ -68,22 +81,33 @@ export function Hero({ posts = [], loading = false }) {
 
         @media (min-width: 1024px) {
           .hero-mobile-container {
-            height: auto;
+            height: auto !important;
           }
           .hero-mobile-bg {
-            display: none;
+            display: none !important;
           }
-          .hero-text-mobile-white.title {
+          .hero-text-mobile-white.title,
+          body:not(.dark-mode) .hero-text-mobile-white.title {
             color: var(--blog-title-color) !important;
-            text-shadow: none;
+            text-shadow: none !important;
           }
-          .hero-text-mobile-white.desc {
+          .hero-text-mobile-white.desc,
+          body:not(.dark-mode) .hero-text-mobile-white.desc {
             color: var(--blog-desc-color) !important;
-            text-shadow: none;
+            text-shadow: none !important;
           }
-          .hero-text-mobile-white.label {
-            color: var(--blog-title-color) !important;
-            text-shadow: none;
+          .hero-text-mobile-white.label,
+          body:not(.dark-mode) .hero-text-mobile-white.label {
+            color: #00a4c4 !important;
+            text-shadow: none !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+          }
+          .hero-text-mobile-white .hero-accent,
+          body:not(.dark-mode) .hero-text-mobile-white .hero-accent {
+            color: #00a4c4 !important;
+            text-shadow: none !important;
           }
           .hero-desktop-images {
             display: flex;
@@ -106,7 +130,7 @@ export function Hero({ posts = [], loading = false }) {
             />
           ))
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none"></div>
         {/* Navigation Indicators */}
         {!loading && (
           <div className="absolute bottom-6 right-6 flex gap-2 z-20">
@@ -137,7 +161,7 @@ export function Hero({ posts = [], loading = false }) {
         
         <h1 className="hero-text-mobile-white title text-[42px] md:text-5xl lg:text-[64px] font-extrabold leading-[1.1]" style={{ marginBottom: "32px" }}>
           Stories that <br />
-          inspire <span className="italic font-light text-cyan-400 lg:text-[#00a4c4]">journeys</span>
+          inspire <span className="hero-accent italic font-light text-cyan-400 lg:text-[#00a4c4]">journeys</span>
         </h1>
         
         <p className="hero-text-mobile-white desc text-base md:text-lg max-w-md mx-auto lg:mx-0 mb-6" style={{ lineHeight: '1.6' }}>

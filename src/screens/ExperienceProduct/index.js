@@ -2154,7 +2154,7 @@ const ExperienceProduct = () => {
           );
         })()}
 
-        <ExperiencePolicies listing={listing} />
+        <ExperiencePolicies listing={listing} isDirectBooking={isDirectBooking} />
 
         {/* HOST & QUALITY ROW (40% / 60%) */}
         {listing && (
@@ -3746,7 +3746,7 @@ function QualityIndexSection({ qualityIndex }) {
 }
 
 
-function ExperiencePolicies({ listing }) {
+function ExperiencePolicies({ listing, isDirectBooking = false }) {
   const { theme, tokens: { FG, W, B, A, M, BG } } = useTheme();
 
   const policies = useMemo(() => {
@@ -3799,7 +3799,7 @@ function ExperiencePolicies({ listing }) {
       });
     }
 
-    if (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy) {
+    if (!isDirectBooking && (listing?.cancellationPolicySummary || listing?.cancellationPolicyText || listing?.cancellationPolicy)) {
       let rawPolicy = listing.cancellationPolicySummary || listing.cancellationPolicyText || listing.cancellationPolicy;
       if (rawPolicy && typeof rawPolicy === "string" && rawPolicy.toLowerCase().includes("no refunds are available for cancellations")) {
         rawPolicy = "No cancellation policy is available for this experience.";
@@ -3820,7 +3820,7 @@ function ExperiencePolicies({ listing }) {
     if (guestItems.length > 0) {
       categories.push({ id: 'cat-guest', title: "Guest Requirements", items: guestItems });
     }
-    if (cancelItems.length > 0) {
+    if (!isDirectBooking && cancelItems.length > 0) {
       categories.push({ id: 'cat-cancel', title: "Cancellation Policy", items: cancelItems });
     }
 
@@ -3844,7 +3844,7 @@ function ExperiencePolicies({ listing }) {
     }
 
     return categories;
-  }, [listing]);
+  }, [listing, isDirectBooking]);
 
   return (
     <section className="policies-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
@@ -3867,7 +3867,7 @@ function ExperiencePolicies({ listing }) {
             <div>
               {policies.length > 0 ? (
                 policies.map((category) => (
-                  <PolicyCategoryItem key={category.id} category={category} />
+                  <PolicyCategoryItem key={category.id} category={category} isDirectBooking={isDirectBooking} />
                 ))
               ) : (
                 <p style={{ color: M, fontSize: 14, padding: "40px 0" }}>No specific rules or requirements listed.</p>
