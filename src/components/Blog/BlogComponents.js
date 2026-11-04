@@ -79,7 +79,68 @@ export function Hero({ posts = [], loading = false }) {
           display: none;
         }
 
+        .hero-img-1 {
+          position: absolute;
+          top: 0;
+          left: 10%;
+          width: 80%;
+          height: 55%;
+          z-index: 10;
+          overflow: hidden;
+          border-radius: 140px 140px 20px 20px;
+        }
+
+        .hero-img-2 {
+          position: absolute;
+          bottom: 16px;
+          left: 0;
+          right: auto;
+          width: 45%;
+          height: 40%;
+          z-index: 20;
+          border-radius: 9999px;
+          overflow: hidden;
+          border: 6px solid white;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .hero-img-3 {
+          position: absolute;
+          bottom: 0;
+          right: 5%;
+          width: 45%;
+          height: 45%;
+          z-index: 20;
+          overflow: hidden;
+          border: 6px solid white;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+          border-radius: 60px 60px 40px 40px;
+        }
+
         @media (min-width: 1024px) {
+          .hero-img-1 {
+            top: 40px;
+            left: 0;
+            width: 60%;
+            height: 80%;
+            border-radius: 140px 40px 140px 40px;
+          }
+
+          .hero-img-2 {
+            top: 0;
+            bottom: auto;
+            left: auto;
+            right: 16px;
+            width: 45%;
+            height: 45%;
+          }
+
+          .hero-img-3 {
+            right: 0;
+            width: 55%;
+            height: 45%;
+            border-radius: 60px 100px 40px 120px;
+          }
           .hero-mobile-container {
             height: auto !important;
           }
@@ -170,15 +231,16 @@ export function Hero({ posts = [], loading = false }) {
       </motion.div>
 
       {/* Right Content - Images */}
-      <div className="hero-desktop-images flex-1 relative h-[380px] sm:h-[450px] lg:h-[500px] w-full items-center justify-center mt-8 lg:mt-0">
-
-        
+      <div 
+        className="hero-desktop-images flex-1 relative w-full items-center justify-center mt-8 lg:mt-0"
+        style={{ height: '500px' }}
+      >
         {/* Main Image */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9, x: -20 }}
           animate={{ opacity: 1, scale: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="absolute top-0 lg:top-10 left-[10%] lg:left-0 w-[80%] lg:w-[60%] h-[55%] lg:h-[80%] z-10 overflow-hidden rounded-[140px_140px_20px_20px] lg:rounded-[140px_40px_140px_40px]"
+          className="hero-img-1"
         >
           {loading ? (
              <div className="w-full h-full bg-gray-200 animate-pulse" />
@@ -196,8 +258,7 @@ export function Hero({ posts = [], loading = false }) {
           initial={{ opacity: 0, scale: 0.9, x: 20 }}
           animate={{ opacity: 1, scale: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="absolute bottom-4 left-0 lg:left-auto lg:top-0 right-auto lg:right-4 w-[45%] h-[40%] lg:h-[45%] z-20 rounded-full overflow-hidden shadow-xl"
-          style={{ border: '6px solid white', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}
+          className="hero-img-2"
         >
           {loading ? (
              <div className="w-full h-full bg-gray-200 animate-pulse" />
@@ -215,8 +276,7 @@ export function Hero({ posts = [], loading = false }) {
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="absolute bottom-0 right-[5%] lg:right-0 w-[45%] lg:w-[55%] h-[45%] lg:h-[45%] z-20 overflow-hidden shadow-xl rounded-[60px_60px_40px_40px] lg:rounded-[60px_100px_40px_120px]"
-          style={{ border: '6px solid white', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}
+          className="hero-img-3"
         >
           {loading ? (
              <div className="w-full h-full bg-gray-200 animate-pulse" />
@@ -247,7 +307,7 @@ const categories = [
 export function Filters({ searchQuery = "", setSearchQuery = () => {}, selectedCategory = "All Posts", setSelectedCategory = () => {} }) {
   return (
     <section 
-      className="w-full mx-auto flex flex-col md:flex-row md:items-center justify-between"
+      className="w-full mx-auto flex flex-col md:flex-row md:items-center justify-center"
       style={{ maxWidth: '1050px', marginTop: '32px', marginBottom: '64px', gap: '24px', paddingLeft: '24px', paddingRight: '24px' }}
     >
       <style>{`
@@ -258,17 +318,11 @@ export function Filters({ searchQuery = "", setSearchQuery = () => {}, selectedC
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-        .search-bar-responsive {
-          max-width: 100%;
-        }
         .pill-responsive {
           font-size: 13px !important;
           padding: 8px 16px !important;
         }
         @media (min-width: 768px) {
-          .search-bar-responsive {
-            max-width: 300px;
-          }
           .pill-responsive {
             font-size: 15px !important;
             padding: 10px 24px !important;
@@ -277,7 +331,7 @@ export function Filters({ searchQuery = "", setSearchQuery = () => {}, selectedC
       `}</style>
 
       {/* Category Pills */}
-      <div className="flex items-center w-full md:w-auto overflow-x-auto hide-scrollbar pb-2 md:pb-0" style={{ gap: '16px', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex items-center justify-start md:justify-center w-full overflow-x-auto hide-scrollbar pb-2 md:pb-0" style={{ gap: '16px', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
         {categories.map((category) => {
           const isActive = selectedCategory === category;
           return (
@@ -296,8 +350,6 @@ export function Filters({ searchQuery = "", setSearchQuery = () => {}, selectedC
           );
         })}
       </div>
-
-
     </section>
   );
 }

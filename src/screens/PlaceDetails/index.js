@@ -2417,6 +2417,43 @@ function VisitorInformation({ place }) {
   );
 }
 
+const DEFAULT_WHAT_TO_CARRY = ["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"];
+const DEFAULT_THINGS_TO_AVOID = ["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"];
+
+const parseGoodToKnowItems = (raw, defaults = []) => {
+  if (!raw) return defaults;
+  let items = [];
+  if (Array.isArray(raw)) {
+    items = raw.map(i => (typeof i === 'string' ? i : i?.name || String(i)));
+  } else if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return defaults;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        items = parsed.map(i => (typeof i === 'string' ? i : i?.name || String(i)));
+      } else if (parsed && typeof parsed === 'object') {
+        items = Object.values(parsed).map(i => (typeof i === 'string' ? i : i?.name || String(i)));
+      } else {
+        items = [String(parsed)];
+      }
+    } catch (_) {
+      let clean = trimmed;
+      if (clean.startsWith('[') && clean.endsWith(']')) {
+        clean = clean.slice(1, -1);
+      }
+      items = clean.split(',');
+    }
+  } else {
+    return defaults;
+  }
+  const cleanItems = items
+    .map(i => (typeof i === 'string' ? i : String(i)))
+    .map(i => i.replace(/^["'\s]+|["'\s]+$/g, '').trim())
+    .filter(Boolean);
+  return cleanItems.length > 0 ? cleanItems : defaults;
+};
+
 function GoodToKnow({ place }) {
   const { theme, tokens: { A, B, BG, FG, M, W, S, AL } } = useTheme();
   const isDark = theme === "dark";
@@ -2428,16 +2465,8 @@ function GoodToKnow({ place }) {
   const warningItemBg = isDark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.03)";
   const warningIconBg = isDark ? "#1a0f0f" : W;
 
-  const carryItems = Array.isArray(place?.whatToCarry) && place.whatToCarry.length > 0 
-    ? place.whatToCarry.map(i => typeof i === 'string' ? i : i.name || i)
-    : (typeof place?.whatToCarry === 'string' && place.whatToCarry.trim() !== '' 
-        ? place.whatToCarry.split(',').map(i => i.trim()) 
-        : ["Not Specified"]);
-  const avoidItems = Array.isArray(place?.thingsToAvoid) && place.thingsToAvoid.length > 0
-    ? place.thingsToAvoid.map(i => typeof i === 'string' ? i : i.name || i)
-    : (typeof place?.thingsToAvoid === 'string' && place.thingsToAvoid.trim() !== ''
-        ? place.thingsToAvoid.split(',').map(i => i.trim())
-        : ["Not Specified"]);
+  const carryItems = parseGoodToKnowItems(place?.whatToCarry, DEFAULT_WHAT_TO_CARRY);
+  const avoidItems = parseGoodToKnowItems(place?.thingsToAvoid, DEFAULT_THINGS_TO_AVOID);
 
   const feedbackBg = A === "#0097B2" ? "#f8f8f8" : S;
 
@@ -3404,8 +3433,8 @@ function MobileGoodToKnow({ place }) {
   const warningItemBg = isDark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.03)";
   const warningIconBg = isDark ? "#1a0f0f" : W;
 
-  const carryItems = ["Comfortable Shoes", "Water Bottle", "Camera", "Sun Protection"];
-  const avoidItems = ["Littering", "Unsafe Climbing", "Disrespecting Local Privacy"];
+  const carryItems = parseGoodToKnowItems(place?.whatToCarry, DEFAULT_WHAT_TO_CARRY);
+  const avoidItems = parseGoodToKnowItems(place?.thingsToAvoid, DEFAULT_THINGS_TO_AVOID);
 
   return (
     <section style={{ background: W, padding: "40px 16px", borderTop: `1px solid ${B}`, borderBottom: `1px solid ${B}` }}>

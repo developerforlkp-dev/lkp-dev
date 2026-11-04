@@ -2130,9 +2130,11 @@ function StayPolicies({ stay }) {
               <h3 style={{ fontSize: isMobile ? "clamp(1.6rem, 7vw, 2.2rem)" : "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 700, color: FG, lineHeight: 1.1, marginBottom: isMobile ? "12px" : "16px", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>
                 Things to Keep in Mind
               </h3>
-              <p style={{ color: M, fontSize: isMobile ? "14px" : "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
-                Please review these guidelines, requirements, and policies carefully to ensure a safe, smooth, and enjoyable stay.
-              </p>
+              {!isMobile && (
+                <p style={{ color: M, fontSize: "16px", lineHeight: "1.6", margin: 0, fontWeight: 400, fontFamily: '"Inter", sans-serif', maxWidth: 600 }}>
+                  Please review these guidelines, requirements, and policies carefully to ensure a safe, smooth, and enjoyable stay.
+                </p>
+              )}
             </div>
           </Rev>
           <Rev delay={0.2}>

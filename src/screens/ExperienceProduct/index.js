@@ -37,6 +37,7 @@ import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import useIsMobile from "../../hooks/useIsMobile";
 import MobileExperienceView from "./MobileExperienceView";
 import CuratedContent from "../../components/CuratedContent";
+import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
 const formatImageUrl = (url) => {
@@ -2786,6 +2787,14 @@ const ExperienceProduct = () => {
           hostAvatar={formatImageUrl(leadData?.profileImageUrl || hostData?.profileImageUrl || hostData?.host?.profileImageUrl || hostData?.avatar || hostData?.host?.avatar)}
           isDirectBooking={isDirectBooking}
         />
+
+        {!isDirectBooking && (
+          <ExperienceReelsCarousel
+            reelUrls={listing?.reelUrls || listing?.reels}
+            theme={theme}
+            tokens={{ FG, BG, M, A, B, W }}
+          />
+        )}
 
         {!isDirectBooking && (
           <div className="related-listings-wrapper" style={{ padding: "64px 0", background: theme === 'dark' ? BG : W }}>
