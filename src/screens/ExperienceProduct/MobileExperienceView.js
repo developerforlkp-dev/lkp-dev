@@ -13,6 +13,7 @@ import Icon from "../../components/Icon";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import CuratedContent from "../../components/CuratedContent";
+import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
 import { getShareText } from "../../utils/shareUtils";
 import "./MobileExperienceView.css";
 
@@ -1240,6 +1241,17 @@ export default function MobileExperienceView({
             </button>
           )}
         </div>
+      )}
+
+      {/* ╔═══════════════════════════════════╗
+          ║      EXPERIENCE REELS             ║
+          ╚═══════════════════════════════════╝ */}
+      {!isDirectBooking && (
+        <ExperienceReelsCarousel
+          reelUrls={listing?.reelUrls || listing?.reels}
+          theme={theme}
+          tokens={{ FG, BG, M, A, B, W }}
+        />
       )}
 
       {/* ╔═══════════════════════════════════╗
