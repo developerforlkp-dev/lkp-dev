@@ -404,6 +404,31 @@ export default function ExperienceReelsCarousel({
           .experience-reel-card:hover {
             transform: translateY(-4px);
           }
+          .experience-reels-eyebrow {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 12px;
+            font-family: "Inter", sans-serif;
+          }
+          .experience-reels-title {
+            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            font-family: "Cormorant Garamond", "Playfair Display", serif;
+            letter-spacing: -0.02em;
+            margin: 0;
+          }
+          .experience-reels-subtitle {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 12px 0 0 0;
+            font-weight: 400;
+            font-family: "Inter", sans-serif;
+            max-width: 600px;
+          }
           @media (max-width: 768px) {
             .experience-reels-inner {
               width: 100% !important;
@@ -412,7 +437,19 @@ export default function ExperienceReelsCarousel({
             .experience-reels-header {
               flex-direction: column !important;
               align-items: flex-start !important;
-              gap: 12px !important;
+              gap: 16px !important;
+            }
+            .experience-reels-eyebrow {
+              font-size: 11px !important;
+              margin-bottom: 8px !important;
+            }
+            .experience-reels-title {
+              font-size: clamp(1.6rem, 7vw, 2.2rem) !important;
+            }
+            .experience-reels-subtitle {
+              font-size: 14px !important;
+              line-height: 1.5 !important;
+              margin-top: 8px !important;
             }
           }
         `}</style>
@@ -428,42 +465,14 @@ export default function ExperienceReelsCarousel({
           }}
         >
           <div>
-            <span
-              style={{
-                fontSize: "12px",
-                fontWeight: 700,
-                color: A,
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                display: "block",
-                marginBottom: "8px",
-                fontFamily: '"Inter", sans-serif',
-              }}
-            >
+            <span className="experience-reels-eyebrow" style={{ color: A }}>
               Visual Highlights
             </span>
-            <h3
-              style={{
-                fontSize: "clamp(2rem, 3.5vw, 2.75rem)",
-                fontWeight: 700,
-                lineHeight: 1.15,
-                fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
-                letterSpacing: "-0.02em",
-                color: FG,
-                margin: 0,
-              }}
-            >
+            <h3 className="experience-reels-title" style={{ color: FG }}>
               {title}
             </h3>
             {subtitle && (
-              <p
-                style={{
-                  fontSize: 14,
-                  color: M,
-                  margin: "8px 0 0 0",
-                  fontFamily: '"Inter", sans-serif',
-                }}
-              >
+              <p className="experience-reels-subtitle" style={{ color: M }}>
                 {subtitle}
               </p>
             )}
