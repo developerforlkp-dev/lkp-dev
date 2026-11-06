@@ -265,7 +265,7 @@ export default function MobileExperienceView({
         <div className="mob-hero-bottom">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
+              {!isDirectBooking && listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
                 <div style={{
                   display: "inline-flex",
                   alignItems: "center",

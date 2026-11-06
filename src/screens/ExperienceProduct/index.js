@@ -923,7 +923,7 @@ const ExperienceProduct = () => {
             <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", width: "100%" }}>
 
               {/* Early Bird Ticker */}
-              {listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
+              {!isDirectBooking && listing?.earlyBirdDiscounts?.some(d => d.isActive) && (
                 <div style={{
                   display: "flex",
                   alignItems: "center",
