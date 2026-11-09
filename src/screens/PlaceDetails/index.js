@@ -4,7 +4,7 @@ import { useLocation, Link, useHistory, useParams } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Sparkles, Calendar, ArrowDown, ExternalLink, Map, Navigation,
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, ChevronRight, ChevronLeft, Share2, Camera, Heart, X, Building, ChevronDown, Car
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, Share2, Camera, Heart, X, Building, ChevronDown, Car
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
@@ -20,6 +20,7 @@ import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import Favorite from "../../components/Favorite";
 import Icon from "../../components/Icon";
 import FullScreenImage from "../../components/FullScreenImage";
+import TiltCascadeCarousel from "../../components/TiltCascadeCarousel";
 import CuratedContent from "../../components/CuratedContent";
 import { getShareText } from "../../utils/shareUtils";
 import SEOHead from "../../components/SEOHead";
@@ -131,7 +132,7 @@ const E = [0.22, 1, 0.36, 1];
 
 const ScopedStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
       .place-details-premium {
       font-family: 'DM Sans', sans-serif;
@@ -417,29 +418,9 @@ function SHdr({ idx, label }) {
 
 /* ─── PLACE SECTIONS ─────────── */
 function PlaceHero({ place, galleryItems, id }) {
-  const { theme, tokens: { A, FG, M, W, B, S } } = useTheme();
-  const { isMobile } = useWindowSize();
-  const r = useRef(null);
-  const sliderRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: r, offset: ["start start", "end start"] });
-  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
-  const scale = useTransform(smoothProgress, [0, 0.5], [1, 1.3]);
-  const rotate = useTransform(smoothProgress, [0, 0.5], [0, 3]);
-  const [hoveredImage, setHoveredImage] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { theme, tokens: { A, FG, W, B } } = useTheme();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [showArrows, setShowArrows] = useState(false);
-  const [isSliderHovered, setIsSliderHovered] = useState(false);
-  const arrowTimeoutRef = useRef(null);
-
-  const handleMouseMove = () => {
-    setShowArrows(true);
-    if (arrowTimeoutRef.current) clearTimeout(arrowTimeoutRef.current);
-    arrowTimeoutRef.current = setTimeout(() => {
-      setShowArrows(false);
-    }, 1500);
-  };
 
   // Take unique gallery items
   const baseItems = useMemo(() => {
@@ -449,72 +430,17 @@ function PlaceHero({ place, galleryItems, id }) {
     return galleryItems;
   }, [galleryItems]);
 
-  // Duplicate items multiple times to ensure seamless looping without getting stuck
-  const scrolledItems = useMemo(() => {
-    if (baseItems.length === 0) return [];
-    const repeats = Math.max(4, Math.ceil(15 / baseItems.length));
-    const items = [];
-    for (let i = 0; i < repeats; i++) {
-      items.push(...baseItems);
-    }
-    return items;
-  }, [baseItems]);
+  const cascadeItems = useMemo(() => baseItems.map((src, index) => ({
+    src,
+    title: `${place?.placeName || place?.title || "Place"} photo ${index + 1}`,
+    alt: `${place?.placeName || place?.title || "Place"} — photo ${index + 1}`,
+  })), [baseItems, place?.placeName, place?.title]);
 
   const placeName = place?.placeName || place?.title || "COASTAL GEM";
-
-  const fullDescription = place?.description || "Experience the local heritage, vibrant culture, and breathtaking landscapes of this select destination.";
-  const isDescriptionLong = fullDescription.length > 160;
-  const displayDescription = isDescriptionLong && !isExpanded
-    ? `${fullDescription.slice(0, 160)}...`
-    : fullDescription;
-
-  // Continuous smooth auto-scrolling loop (pauses completely when hovered or interacting)
-  useEffect(() => {
-    const el = sliderRef.current;
-    if (!el || lightboxOpen || isSliderHovered || showArrows) return;
-
-    let frameId;
-    const speed = 0.8; // Smooth scrolling speed in pixels/frame
-
-    const step = () => {
-      if (baseItems.length === 0) return;
-      const repeats = Math.max(4, Math.ceil(15 / baseItems.length));
-      const oneSetWidth = el.scrollWidth / repeats;
-
-      // Seamlessly wrap scroll position back once we pass one full set
-      if (el.scrollLeft >= oneSetWidth) {
-        el.scrollLeft = el.scrollLeft - oneSetWidth;
-      } else {
-        el.scrollLeft += speed;
-      }
-      frameId = requestAnimationFrame(step);
-    };
-
-    frameId = requestAnimationFrame(step);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [lightboxOpen, isSliderHovered, showArrows, baseItems]);
-
-  const scrollSlider = (direction) => {
-    if (sliderRef.current) {
-      const scrollAmount = direction === "left" ? -300 : 300;
-      sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
-  };
 
   const openLightbox = (index) => {
     setActiveIdx(index);
     setLightboxOpen(true);
-  };
-
-  const nextImg = () => {
-    setActiveIdx((prev) => (prev + 1) % baseItems.length);
-  };
-
-  const prevImg = () => {
-    setActiveIdx((prev) => (prev - 1 + baseItems.length) % baseItems.length);
   };
 
   const [shareCopied, setShareCopied] = useState(false);
@@ -541,92 +467,34 @@ function PlaceHero({ place, galleryItems, id }) {
     } catch (_) { }
   };
 
-  if (isMobile) {
-    return (
-      <section style={{ position: "relative", width: "100%", background: W, paddingBottom: 24 }}>
-        {/* Mobile Cover Image Wrapper */}
-        <div style={{ position: "relative", width: "100%", height: "40vh", overflow: "hidden" }}>
-           <motion.img 
-             key={activeIdx}
-             src={baseItems[activeIdx]} 
-             style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-             initial={{ opacity: 0.8 }}
-             animate={{ opacity: 1 }}
-             transition={{ duration: 0.3 }}
-             alt="Cover"
-           />
-           {/* Mobile Top Header Overlay */}
-           <div style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 12, zIndex: 50 }}>
-              <Favorite itemType="place" itemId={id}>
-                {({ saved, onClick }) => (
-                  <button onClick={(e) => { e.stopPropagation(); onClick(e); }} style={{ width: 40, height: 40, borderRadius: "50%", background: theme === "dark" ? "rgba(20,20,20,0.8)" : "rgba(255,255,255,0.9)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-                    <Icon name={saved ? "heart-fill" : "heart"} size={20} color={saved ? A : FG} />
-                  </button>
-                )}
-              </Favorite>
-              <button onClick={handleShare} style={{ width: 40, height: 40, borderRadius: "50%", background: theme === "dark" ? "rgba(20,20,20,0.8)" : "rgba(255,255,255,0.9)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-                <Share2 size={18} color={FG} />
-              </button>
-           </div>
-           
-           {/* Mobile Gradient Overlay */}
-           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)", pointerEvents: "none" }} />
-           
-           {/* Mobile Title */}
-           <div style={{ position: "absolute", bottom: 40, left: 20, right: 20, zIndex: 10 }}>
-              <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FFF", fontWeight: 700, marginBottom: 8, opacity: 0.8 }}>
-                {toDisplayString(place?.category) || "DESTINATION"}
-              </p>
-              <h1 className="hero-title" style={{ fontSize: "clamp(2rem, 8vw, 2.5rem)", fontWeight: 700, color: "#FFF", lineHeight: 1.1, margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.5)", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.01em" }}>
-                {placeName}
-              </h1>
-           </div>
-           
-           {/* Mobile Dots */}
-           {baseItems.length > 1 && (
-             <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, zIndex: 10 }}>
-               {baseItems.slice(0, 5).map((_, i) => (
-                 <div key={i} onClick={() => openLightbox(i)} style={{ width: activeIdx === i ? 20 : 8, height: 8, borderRadius: 4, background: activeIdx === i ? A : "rgba(255,255,255,0.5)", transition: "all 0.3s", cursor: "pointer" }} />
-               ))}
-             </div>
-           )}
-        </div>
-        
-        {/* Mobile Thumbnail Strip below image */}
-        <div className="hide-scrollbar" style={{ display: "flex", gap: 8, padding: "16px", overflowX: "auto" }}>
-          {baseItems.slice(0, 5).map((imgUrl, i) => (
-             <div key={i} onClick={() => setActiveIdx(i)} style={{ width: 64, height: 64, borderRadius: 12, overflow: "hidden", flexShrink: 0, border: activeIdx === i ? `2px solid ${A}` : "2px solid transparent", transition: "all 0.3s", cursor: "pointer" }}>
-               <img src={imgUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-             </div>
-          ))}
-          {baseItems.length > 5 && (
-             <div onClick={() => openLightbox(0)} style={{ width: 64, height: 64, borderRadius: 12, flexShrink: 0, background: S, border: `1px solid ${B}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: FG, cursor: "pointer" }}>
-               +{baseItems.length - 5}
-             </div>
-          )}
-        </div>
-
-        {/* Global Modal Trigger */}
-        <AnimatePresence>
-          {lightboxOpen && (
-            <FullScreenImage
-              src={baseItems[activeIdx]}
-              items={baseItems}
-              currentIndex={activeIdx}
-              onNavigate={setActiveIdx}
-              onClose={() => setLightboxOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-      </section>
-    );
-  }
-
   return (
-    <section ref={r} style={{ position: "relative", height: "70vh", background: W, overflow: "hidden", display: "flex", alignItems: "center", padding: "20px 0 40px", boxSizing: "border-box" }}>
-
-
-
+    <section style={{ position: "relative", height: "75vh", background: W, overflow: "hidden", display: "flex", alignItems: "center", padding: "20px 0 40px", boxSizing: "border-box" }}>
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
+        <AnimatePresence>
+          <motion.div
+            key={baseItems[activeIdx] || "place-hero-background"}
+            initial={{ opacity: 0, scale: 1.08 }}
+            animate={{ opacity: 1, scale: 1.03 }}
+            exit={{ opacity: 0, scale: 1.01 }}
+            transition={{ duration: 0.7, ease: E }}
+            style={{
+              position: "absolute",
+              inset: -24,
+              backgroundImage: `url(${JSON.stringify(baseItems[activeIdx])})`,
+              backgroundPosition: "72% center",
+              backgroundSize: "cover",
+              filter: "saturate(0.92)"
+            }}
+          />
+        </AnimatePresence>
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: theme === "dark"
+            ? "linear-gradient(90deg, rgba(8,8,8,.85) 0%, rgba(8,8,8,.55) 22%, rgba(8,8,8,.12) 38%, transparent 60%)"
+            : "linear-gradient(90deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.50) 22%, rgba(255,255,255,.10) 38%, transparent 60%)"
+        }} />
+      </div>
       <div style={{
         display: "flex",
         flexDirection: "row",
@@ -666,14 +534,25 @@ function PlaceHero({ place, galleryItems, id }) {
             }}>
               {toDisplayString(place?.category) || "DESTINATION"}
             </p>
-            <h1 className="hero-title" style={{
-              fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+            <style>{`
+              .place-hero-name::before {
+                content: "";
+                display: block;
+                width: 36px;
+                height: 2px;
+                margin-bottom: 12px;
+                background: ${A};
+              }
+            `}</style>
+            <h1 className="hero-title place-hero-name" style={{
+              fontSize: "clamp(26px, 2.8vw, 46px)",
               fontWeight: 700,
               color: FG,
-              lineHeight: 1.1,
-              letterSpacing: "-0.01em",
+              lineHeight: 1.05,
+              letterSpacing: "-0.035em",
               margin: "0 0 20px 0",
-              overflowWrap: "break-word"
+              whiteSpace: "nowrap",
+              fontFamily: "'Fraunces', Georgia, serif"
             }}>
               {placeName}
             </h1>
@@ -808,163 +687,38 @@ function PlaceHero({ place, galleryItems, id }) {
         </div>
 
         <div
-          onMouseMove={handleMouseMove}
-          onMouseEnter={() => setIsSliderHovered(true)}
-          onMouseLeave={() => {
-            setIsSliderHovered(false);
-            setShowArrows(false);
-          }}
           style={{
             width: "60%",
             minWidth: 0,
             height: "100%",
-            overflow: "hidden",
+            overflow: "visible",
             position: "relative",
             display: "flex",
             alignItems: "center"
           }}
         >
-          {/* Navigation Left Arrow */}
-          <AnimatePresence>
-            {showArrows && (
-              <motion.button
-                key="left-arrow"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                whileHover={{ scale: 1.05, backgroundColor: A, borderColor: A, color: "#FFF", boxShadow: `0 8px 24px ${A}40` }}
-                onClick={() => scrollSlider("left")}
-                style={{
-                  position: "absolute",
-                  left: 20,
-                  zIndex: 20,
-                  background: theme === "dark" ? "rgba(20, 20, 20, 0.6)" : "rgba(255, 255, 255, 0.85)",
-                  backdropFilter: "blur(12px)",
-                  border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)"}`,
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: FG,
-                  cursor: "pointer",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                  transition: "all 0.3s ease"
-                }}
-              >
-                <ChevronLeft size={24} />
-              </motion.button>
-            )}
-          </AnimatePresence>
-
-          {/* Navigation Right Arrow */}
-          <AnimatePresence>
-            {showArrows && (
-              <motion.button
-                key="right-arrow"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                whileHover={{ scale: 1.05, backgroundColor: A, borderColor: A, color: "#FFF", boxShadow: `0 8px 24px ${A}40` }}
-                onClick={() => scrollSlider("right")}
-                style={{
-                  position: "absolute",
-                  right: 20,
-                  zIndex: 20,
-                  background: theme === "dark" ? "rgba(20, 20, 20, 0.6)" : "rgba(255, 255, 255, 0.85)",
-                  backdropFilter: "blur(12px)",
-                  border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)"}`,
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: FG,
-                  cursor: "pointer",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                  transition: "all 0.3s ease"
-                }}
-              >
-                <ChevronRight size={24} />
-              </motion.button>
-            )}
-          </AnimatePresence>
-
-          {/* Images Slider Container */}
-          <div
-            ref={sliderRef}
-            className="no-scrollbar"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              height: "100%",
-              width: "100%",
-              overflowX: "auto",
-              padding: "0 8px"
-            }}
-          >
-            {scrolledItems.map((img, i) => {
-              const uniqueKey = `${img}-${i}`;
-              const isHovered = hoveredImage === uniqueKey;
-              const isAnyHovered = hoveredImage !== null;
-
-              return (
-                <div
-                  key={uniqueKey}
-                  onMouseEnter={() => setHoveredImage(uniqueKey)}
-                  onMouseLeave={() => setHoveredImage(null)}
-                  style={{
-                    flexShrink: 0,
-                    paddingRight: 16,
-                    height: "100%",
-                  }}
-                >
-                  <div
-                    onClick={() => openLightbox(i % baseItems.length)}
-                    style={{
-                      position: "relative",
-                      height: "100%",
-                      width: isHovered ? 480 : 160,
-                      borderRadius: 24,
-                      overflow: "hidden",
-                      border: `1px solid ${B}`,
-                      boxShadow: isHovered
-                        ? "0 40px 80px -20px rgba(0,0,0,0.2)"
-                        : "0 20px 40px -15px rgba(0,0,0,0.05)",
-                      cursor: "pointer",
-                      transition: "width 0.5s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
-                    }}
-                  >
-                  <motion.img
-                    src={img}
-                    animate={{
-                      scale: isHovered ? 1.06 : 1,
-                      filter: isAnyHovered && !isHovered ? "brightness(0.7) grayscale(0.1)" : "brightness(1) grayscale(0)"
-                    }}
-                    transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover"
-                    }}
-                    alt=""
-                  />
-
-                  <div style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(to bottom, transparent 70%, rgba(0,0,0,0.4) 100%)",
-                    opacity: isHovered ? 1 : 0.3,
-                    transition: "opacity 0.4s",
-                    pointerEvents: "none"
-                  }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <TiltCascadeCarousel
+            items={cascadeItems}
+            height="100%"
+            slideSize="clamp(220px, 22vw, 320px)"
+            slidePitch="clamp(220px, 22vw, 320px)"
+            angle={20}
+            drop={0.22}
+            inactiveScale={0.62}
+            visibleRange={1.6}
+            radius={24}
+            bounce={0.24}
+            duration={0.82}
+            loop
+            autoplay={1800}
+            controls
+            color={FG}
+            accent={A}
+            defaultIndex={0}
+            onIndexChange={setActiveIdx}
+            onSelect={(_, index) => openLightbox(index)}
+            ariaLabel={`${placeName} photo gallery`}
+          />
 
           {/* View All Badge - ExperienceProduct style */}
           <motion.button
@@ -2936,35 +2690,21 @@ function LocationSection({ place }) {
 
 function MobileHero({ place, galleryItems, id }) {
   const { theme, tokens } = useTheme();
-  const { A, FG, M, BG, W, B } = tokens;
-  const history = useHistory();
+  const { A, FG, BG, B } = tokens;
   const placeName = place?.placeName || place?.title || "COASTAL GEM";
 
-  const [shareCopied, setShareCopied] = useState(false);
-  const [shareHovered, setShareHovered] = useState(false);
-  const [shareRipple, setShareRipple] = useState(false);
-  const glow = A || "#0097B2";
+  const [activePhoto, setActivePhoto] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const handleShare = async () => {
-    setShareRipple(true);
-    setTimeout(() => setShareRipple(false), 700);
-    try {
-      if (navigator.share) {
-        const shareText = getShareText(place, "place");
-        await navigator.share({ 
-          title: place?.placeName || "Place", 
-          text: shareText ? `${shareText}\n${window.location.href}` : window.location.href 
-        });
-      } else {
-        const fallbackText = `${getShareText(place, "place")}\n${window.location.href}`;
-        await navigator.clipboard.writeText(fallbackText);
-        setShareCopied(true);
-        setTimeout(() => setShareCopied(false), 2400);
-      }
-    } catch (_) { }
-  };
-
-  const images = galleryItems && galleryItems.length ? galleryItems : ["https://picsum.photos/seed/destination/800/1000"];
+  const images = useMemo(
+    () => galleryItems && galleryItems.length ? galleryItems : ["https://picsum.photos/seed/destination/800/1000"],
+    [galleryItems],
+  );
+  const cascadeItems = useMemo(() => images.map((src, index) => ({
+    src,
+    title: `${placeName} photo ${index + 1}`,
+    alt: `${placeName} — photo ${index + 1}`,
+  })), [images, placeName]);
 
   return (
     <section style={{ background: BG, paddingTop: 0, position: "relative", overflow: "hidden" }}>
@@ -3006,74 +2746,61 @@ function MobileHero({ place, galleryItems, id }) {
         </div>
       </div>
 
-      {/* Auto Moving Hero Image Stack / Marquee */}
-      {(() => {
-        const baseHeroList = images.length > 0 ? images : ["https://picsum.photos/seed/destination/800/1000"];
-        let filledHero = [...baseHeroList];
-        while (filledHero.length < 6) {
-          filledHero = [...filledHero, ...baseHeroList];
-        }
-        const doubledHero = [...filledHero, ...filledHero];
-        const cardWidth = "calc(82vw)";
-        const heroDuration = filledHero.length * 9;
-
-        return (
-          <div style={{ position: "relative", overflow: "hidden", width: "100%", padding: "16px 0" }}>
-            <style>{`
-              @keyframes placeMobileHeroScroll {
-                0% { transform: translate3d(0, 0, 0); }
-                100% { transform: translate3d(-50%, 0, 0); }
-              }
-            `}</style>
-            <div
+      {/* Spring-driven tilted photo cascade in the existing hero footprint */}
+      <div style={{ position: "relative", overflow: "hidden", width: "100%", height: "calc(48svh + 28px)", minHeight: 390, maxHeight: 500 }}>
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+          <AnimatePresence>
+            <motion.div
+              key={images[activePhoto] || "place-mobile-background"}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1.03 }}
+              exit={{ opacity: 0, scale: 1.01 }}
+              transition={{ duration: 0.7, ease: E }}
               style={{
-                display: "flex",
-                gap: 16,
-                width: "max-content",
-                animation: `placeMobileHeroScroll ${heroDuration}s linear infinite`,
-                willChange: "transform",
-                transform: "translate3d(0, 0, 0)",
-                WebkitTransform: "translate3d(0, 0, 0)",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden"
+                position: "absolute",
+                inset: -20,
+                backgroundImage: `url(${JSON.stringify(images[activePhoto])})`,
+                backgroundPosition: "center 42%",
+                backgroundSize: "cover",
+                filter: "saturate(0.94) brightness(0.92)"
               }}
-            >
-              {doubledHero.map((img, i) => (
-                <div
-                  key={i}
-                  style={{
-                    flexShrink: 0,
-                    width: cardWidth,
-                    height: "45vh",
-                    borderRadius: 28,
-                    overflow: "hidden",
-                    border: `1.5px solid ${B}`,
-                    boxShadow: theme === "dark" ? "0 20px 40px rgba(0,0,0,0.5)" : "0 20px 40px rgba(0,0,0,0.08)",
-                    position: "relative",
-                    transform: "translateZ(0)",
-                    WebkitTransform: "translateZ(0)",
-                    WebkitMaskImage: "-webkit-radial-gradient(white, black)"
-                  }}
-                >
-                  <img
-                    src={img}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                    alt=""
-                    loading="eager"
-                  />
-                  {/* Subtle bottom shadow overlay inside card */}
-                  <div style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4) 100%)",
-                    pointerEvents: "none"
-                  }} />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
+            />
+          </AnimatePresence>
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            background: theme === "dark"
+              ? "linear-gradient(to bottom, rgba(8,8,8,.42), rgba(8,8,8,.14) 48%, rgba(8,8,8,.56))"
+              : "linear-gradient(to bottom, rgba(251,251,249,.42), rgba(251,251,249,.12) 48%, rgba(251,251,249,.58))"
+          }} />
+        </div>
+        <TiltCascadeCarousel
+          items={cascadeItems}
+          height="100%"
+          slideSize="clamp(230px, 68vw, 280px)"
+          slidePitch="clamp(215px, 66vw, 260px)"
+          angle={10}
+          drop={0.08}
+          inactiveScale={0.65}
+          visibleRange={1.15}
+          radius={24}
+          bounce={0.24}
+          duration={0.82}
+          loop
+          autoplay={1800}
+          controls
+          controlsBottom="76px"
+          color={FG}
+          accent={A}
+          defaultIndex={0}
+          onIndexChange={setActivePhoto}
+          onSelect={(_, index) => {
+            setActivePhoto(index);
+            setLightboxOpen(true);
+          }}
+          ariaLabel={`${placeName} photo gallery`}
+        />
+      </div>
 
       {/* Overlapping Content Card */}
       <motion.div
@@ -3081,16 +2808,16 @@ function MobileHero({ place, galleryItems, id }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: E, delay: 0.2 }}
         style={{
-          marginTop: "-48px",
-          marginLeft: 24,
-          marginRight: 24,
+          marginTop: "-36px",
+          marginLeft: 20,
+          marginRight: 20,
           marginBottom: 32,
-          padding: "24px 20px",
+          padding: "22px 20px 20px",
           borderRadius: 24,
-          background: theme === "dark" ? "rgba(10, 10, 10, 0.78)" : "rgba(255, 255, 255, 0.84)",
+          background: theme === "dark" ? "rgba(10, 10, 10, 0.88)" : "rgba(255, 255, 255, 0.92)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          border: `1.5px solid ${theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+          border: "none",
           boxShadow: theme === "dark" ? "0 25px 50px rgba(0,0,0,0.4)" : "0 25px 50px rgba(0,0,0,0.06)",
           zIndex: 10,
           position: "relative"
@@ -3107,16 +2834,17 @@ function MobileHero({ place, galleryItems, id }) {
           {toDisplayString(place?.category) || "DESTINATION"}
         </p>
 
+        <div style={{ width: 28, height: 2, marginBottom: 8, background: A }} />
         <h1 className="hero-title" style={{
-          fontSize: 24,
+          fontSize: "clamp(26px, 8vw, 32px)",
           fontWeight: 700,
           color: FG,
-          lineHeight: 1.3,
-          letterSpacing: "-0.01em",
+          lineHeight: 1.05,
+          letterSpacing: "-0.035em",
           margin: "0 0 14px 0",
-          fontFamily: '"Cormorant Garamond", "Playfair Display", serif'
+          fontFamily: "'Fraunces', Georgia, serif"
         }}>
-          {placeName.toUpperCase()}
+          {placeName}
         </h1>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -3137,6 +2865,18 @@ function MobileHero({ place, galleryItems, id }) {
           ))}
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {lightboxOpen && (
+          <FullScreenImage
+            src={images[activePhoto]}
+            items={images}
+            currentIndex={activePhoto}
+            onNavigate={setActivePhoto}
+            onClose={() => setLightboxOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

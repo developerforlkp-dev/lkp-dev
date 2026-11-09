@@ -1,51 +1,59 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-export function stepOf(i, active) {
-  return i < active ? -1 : i > active ? 1 : 0;
-}
+const wrapIndex = (index, length) => (length > 0 ? ((index % length) + length) % length : 0);
 
-export function slideTransform(i, active, step, inactiveScale, sideOffset = 0) {
-  const position = stepOf(i, active);
-  const horizontal = sideOffset ? `translateX(${position * sideOffset}px) ` : "";
-  return `${horizontal}translateY(${position * step * 100}%) scale(${position === 0 ? 1 : inactiveScale})`;
-}
+const offsetOf = (index, position, length, loop) => {
+  const distance = index - position;
+  return loop && length > 0
+    ? distance - length * Math.round(distance / length)
+    : distance;
+};
 
-export function springAt(t, bounce, duration) {
-  const zeta = 1 - Math.min(Math.max(bounce, 0), 0.9);
-  const w = (2 * Math.PI) / Math.max(duration, 0.05);
-  if (zeta >= 1) return 1 - Math.exp(-w * t) * (1 + w * t);
-  const wd = w * Math.sqrt(1 - zeta * zeta);
-  return 1 - Math.exp(-zeta * w * t) * (Math.cos(wd * t) + ((zeta * w) / wd) * Math.sin(wd * t));
-}
+const scaleAt = (distance, minimum) => 1 - (1 - minimum) * Math.min(Math.abs(distance), 1);
 
-export function springEasing(bounce, duration, samples = 48) {
-  const zeta = 1 - Math.min(Math.max(bounce, 0), 0.9);
-  const w = (2 * Math.PI) / Math.max(duration, 0.05);
-  const total = Math.log(1000) / (zeta * w);
-  const points = [];
-  for (let k = 0; k <= samples; k += 1) {
-    const value = k === samples ? 1 : springAt((k / samples) * total, bounce, duration);
-    points.push(String(+value.toFixed(4)));
+const springOf = (bounce, duration) => {
+  const clampedBounce = Math.min(Math.max(bounce, 0), 0.9);
+  return {
+    omega: (2 * Math.PI) / Math.max(duration, 0.1),
+    damping: 1 - clampedBounce / 2,
+  };
+};
+
+const springStep = (position, velocity, target, omega, damping, delta) => {
+  const steps = Math.max(1, Math.ceil(delta / (1 / 240)));
+  const dt = delta / steps;
+  let nextPosition = position;
+  let nextVelocity = velocity;
+
+  for (let k = 0; k < steps; k += 1) {
+    nextVelocity += (-omega * omega * (nextPosition - target) - 2 * damping * omega * nextVelocity) * dt;
+    nextPosition += nextVelocity * dt;
   }
-  return { easing: `linear(${points.join(", ")})`, ms: Math.round(total * 1000) };
-}
 
-export function clampIndex(i, n) {
-  return n <= 0 ? 0 : Math.min(Math.max(Math.round(i), 0), n - 1);
-}
+  return [nextPosition, nextVelocity];
+};
+
+const targetFor = (index, target, length, loop) => {
+  if (!loop) return Math.min(Math.max(index, 0), length - 1);
+  const current = Math.round(target);
+  let distance = index - wrapIndex(current, length);
+  distance -= length * Math.round(distance / length);
+  return current + distance;
+};
+
+const clampIndex = (i, n) => (n <= 0 ? 0 : Math.min(Math.max(Math.round(i), 0), n - 1));
+const pad = (n) => (n < 10 ? `0${n}` : String(n));
 
 const STYLES = `
   .food-staircase{position:relative;isolation:isolate;overflow:hidden;display:grid;place-items:center;width:100%;box-sizing:border-box;padding:128px 0 12px;color:var(--FG,#0f0f0f);background:var(--BG,#fbfbf9);user-select:none;-webkit-user-select:none;touch-action:pan-y;outline:none;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
   .food-staircase::before{content:"";position:absolute;inset:0;z-index:-2;background:radial-gradient(circle at 50% 46%,var(--AL,rgba(0,151,178,.08)),transparent 35%),linear-gradient(135deg,transparent 0 48%,color-mix(in srgb,var(--A,#0097b2) 5%,transparent) 48% 52%,transparent 52%);pointer-events:none}
   .food-staircase::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.16;background-image:radial-gradient(var(--M,#7a7a77) .7px,transparent .7px);background-size:16px 16px;mask-image:linear-gradient(to bottom,transparent,black 28%,black 72%,transparent);pointer-events:none}
   .food-staircase:focus-visible{box-shadow:inset 0 0 0 2px var(--A,#0097b2)}
-  .food-staircase__stage{position:relative;z-index:2}
-  .food-staircase__strip{display:flex;align-items:center;width:max-content}
-  .food-staircase__slide{position:relative;z-index:1;flex-shrink:0;display:block;margin:0;padding:0;border:0;aspect-ratio:1/1;overflow:hidden;cursor:pointer;will-change:transform;background:transparent;box-shadow:0 20px 54px rgba(15,15,15,.14);-webkit-tap-highlight-color:transparent}
-  .food-staircase__slide[aria-current="true"]{z-index:2;aspect-ratio:var(--food-staircase-active-ratio,var(--food-staircase-ratio,4/3));box-shadow:0 30px 90px rgba(15,15,15,.22)}
+  .food-staircase__stage{position:relative;z-index:2;display:flex;align-items:center;justify-content:center}
+  .food-staircase__slide{position:absolute;left:50%;top:50%;margin-left:calc(-0.5 * var(--food-staircase-width));margin-top:calc(-0.5 * var(--food-staircase-width) * (3/4));flex-shrink:0;display:block;padding:0;border:0;width:var(--food-staircase-width);aspect-ratio:var(--food-staircase-ratio,4/3);overflow:hidden;cursor:pointer;will-change:transform,opacity;background:transparent;box-shadow:0 20px 54px rgba(15,15,15,.14);-webkit-tap-highlight-color:transparent;transform-origin:50% 50%}
+  .food-staircase__slide[aria-current="true"]{box-shadow:0 30px 90px rgba(15,15,15,.22)}
   .food-staircase__slide:focus-visible{outline:2px solid var(--A,#0097b2);outline-offset:5px}
   .food-staircase__slide>img{width:100%;height:100%;max-width:none;display:block;object-fit:cover;pointer-events:none}
-  .food-staircase__slide[aria-current="true"]>img{object-fit:cover}
   .food-staircase__backdrops{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
   .food-staircase__backdrop{position:absolute;inset:0;background-position:center;background-size:cover;filter:none;transform:none;opacity:0;animation:food-staircase-backdrop-in 700ms ease both}
   .food-staircase__backdrop[data-out]{animation:food-staircase-backdrop-out 700ms ease both}
@@ -56,8 +64,6 @@ const STYLES = `
   .food-staircase__title{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;white-space:nowrap;font-family:'Fraunces',Georgia,serif;font-size:clamp(24px,2.3vw,38px);font-weight:700;letter-spacing:-.035em;transform-origin:0 50%}
   .food-staircase__title span{display:block;max-width:min(28vw,380px);white-space:normal;line-height:1.06}
   .food-staircase__title small{display:block;margin-bottom:10px;color:var(--A,#0097b2);font-family:'Inter',sans-serif;font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase}
-  @keyframes food-staircase-in{from{opacity:0;transform:scale(.5);filter:blur(2px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
-  @keyframes food-staircase-out{from{opacity:1;transform:scale(1);filter:blur(0)}to{opacity:0;transform:scale(.5);filter:blur(2px)}}
   .food-staircase__controls{position:absolute;bottom:var(--food-hero-control-bottom,28px);left:50%;transform:translateX(-50%) scale(var(--food-hero-scale,1));transform-origin:50% 100%;z-index:3;display:flex;align-items:center;gap:14px;padding:6px;border-radius:999px;color:var(--FG,#0f0f0f);background:color-mix(in srgb,var(--S,#f3f3f1) 82%,transparent);border:1px solid var(--B,#e6e6e3);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 8px 28px rgba(15,15,15,.1)}
   .food-staircase__button{display:grid;place-items:center;margin:0;padding:8px;border:0;border-radius:999px;background:transparent;color:inherit;cursor:pointer;transition:opacity .2s,transform .2s,background .2s}
   .food-staircase__button:not(:disabled):hover{background:var(--AL,rgba(0,151,178,.08));color:var(--A,#0097b2)}
@@ -70,8 +76,7 @@ const STYLES = `
   .food-staircase__dot[aria-current]{width:26px;opacity:1;background:var(--A,#0097b2)}
   .food-staircase__count{padding:0 18px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.08em}
   .food-staircase__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  @media(max-width:640px){.food-staircase{padding:82px 0 220px}.food-staircase__slide:not([aria-current="true"]){aspect-ratio:3/4}.food-staircase__titles{left:0;right:0;top:100%;bottom:auto;height:48px;margin:8px 0 0;z-index:1}.food-staircase__title{left:0;right:0;justify-content:center;text-align:center;transform-origin:50% 50%;font-size:17px}.food-staircase__title span{max-width:78vw;line-height:1.15}.food-staircase__title small{font-size:8px;margin-bottom:4px}.food-staircase__controls{display:none}.food-staircase__dots{min-width:112px}}
-  @media(prefers-reduced-motion:reduce){.food-staircase__strip,.food-staircase__slide{transition:none!important}.food-staircase__title{animation:none!important}.food-staircase__title[data-out]{display:none}.food-staircase__dot,.food-staircase__button{transition:none}}
+  @media(max-width:640px){.food-staircase{padding:82px 0 220px}.food-staircase__controls{display:none}.food-staircase__dots{min-width:112px}}
 `;
 
 function Chevron({ direction }) {
@@ -82,10 +87,8 @@ function Chevron({ direction }) {
   );
 }
 
-const pad = (n) => (n < 10 ? `0${n}` : String(n));
-
 export default function StaircaseCarousel({
-  items,
+  items = [],
   height = "100svh",
   slideWidth = "clamp(150px, 18vw, 230px)",
   slidePitch = slideWidth,
@@ -94,14 +97,13 @@ export default function StaircaseCarousel({
   sideOffset = 0,
   step = 0.58,
   radius = 26,
-  bounce = 0.1,
+  bounce = 0.12,
   duration = 0.8,
-  stepDuration = 0.6,
-  titles = true,
+  titles = false,
   controls = true,
   autoPlay = false,
   autoPlayInterval = 2800,
-  loop = false,
+  loop = true,
   index,
   defaultIndex = 0,
   onIndexChange,
@@ -109,146 +111,429 @@ export default function StaircaseCarousel({
   ariaLabel = "Food gallery",
   className = "",
 }) {
-  const count = items.length;
-  const initialIndex = clampIndex(index ?? defaultIndex, count);
-  const [inner, setInner] = useState(initialIndex);
-  const [trackIndex, setTrackIndex] = useState(loop && count > 1 ? count + initialIndex : initialIndex);
-  const [isRecentering, setIsRecentering] = useState(false);
-  const [imageRatios, setImageRatios] = useState({});
-  const active = index == null ? clampIndex(inner, count) : clampIndex(index, count);
-  const trackItems = loop && count > 1 ? [...items, ...items, ...items] : items;
-  const strip = useMemo(() => springEasing(bounce, duration), [bounce, duration]);
-  const pop = useMemo(() => springEasing(0.2, 0.8), []);
-  const swipe = useRef({ id: -1, x: 0, done: false });
-  const sequence = useRef(0);
-  const [shown, setShown] = useState([{ key: 0, i: active, out: false }]);
+  const length = items.length;
+  const initialIndex = clampIndex(index ?? defaultIndex, length);
+  const [active, setActive] = useState(initialIndex);
+  const [stopped, setStopped] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [visible, setVisible] = useState(true);
 
+  const rootRef = useRef(null);
+  const stageRef = useRef(null);
+  const slideRefs = useRef([]);
+  const callbacks = useRef({ active, onIndexChange });
+  callbacks.current = { active, onIndexChange };
+
+  const engine = useRef({
+    slide: initialIndex,
+    slideVelocity: 0,
+    target: initialIndex,
+    frame: 0,
+    last: 0,
+    size: 300,
+    drag: null,
+    blockClick: false,
+  }).current;
+
+  const config = useRef({ length, loop, step, inactiveScale, sideOffset, bounce, duration });
+  config.current = { length, loop, step, inactiveScale, sideOffset, bounce, duration };
+
+  const [shown, setShown] = useState([{ key: 0, i: active, out: false }]);
+  const sequence = useRef(0);
+
+  // Backdrop sync
   useEffect(() => {
     setShown((list) => {
-      const current = list.find((title) => !title.out);
-      if (current && current.i === active) return list;
+      const currentTitle = list.find((t) => !t.out);
+      if (currentTitle && currentTitle.i === active) return list;
       sequence.current += 1;
-      return [...list.map((title) => ({ ...title, out: true })), { key: sequence.current, i: active, out: false }];
+      return [...list.map((t) => ({ ...t, out: true })), { key: sequence.current, i: active, out: false }];
     });
-    const timer = window.setTimeout(() => setShown((list) => list.filter((title) => !title.out)), pop.ms);
+    const timer = window.setTimeout(() => setShown((list) => list.filter((t) => !t.out)), 700);
     return () => window.clearTimeout(timer);
-  }, [active, pop.ms]);
+  }, [active]);
 
-  const go = (nextIndex) => {
-    const next = loop && count > 0
-      ? ((Math.round(nextIndex) % count) + count) % count
-      : clampIndex(nextIndex, count);
-    if (next === active) return;
-    if (loop && count > 1) {
-      if (nextIndex === active + 1 || (active === count - 1 && next === 0)) {
-        setTrackIndex((current) => current + 1);
-      } else if (nextIndex === active - 1 || (active === 0 && next === count - 1)) {
-        setTrackIndex((current) => current - 1);
-      } else {
-        const candidates = [next, next + count, next + count * 2];
-        setTrackIndex((current) => candidates.reduce((closest, candidate) => Math.abs(candidate - current) < Math.abs(closest - current) ? candidate : closest));
-      }
-    } else {
-      setTrackIndex(next);
-    }
-    setInner(next);
-    onIndexChange?.(next);
+  // Transform calculation for a given slide at current slidePosition
+  const transformFor = (slideIndex, slidePosition) => {
+    const current = config.current;
+    if (!current.length) return { transform: "", zIndex: 0, hidden: true };
+
+    const offset = offsetOf(slideIndex, slidePosition, current.length, current.loop);
+    const absOffset = Math.abs(offset);
+
+    // Continuous forward staircase step positioning
+    // Cards smoothly interpolate into top row (offset < 0) or bottom row (offset > 0)
+    const stepProgress = Math.max(-1, Math.min(1, offset * 1.5));
+    const translateY = stepProgress * current.step * 100;
+    const translateX = offset;
+    const horizontalSide = current.sideOffset ? stepProgress * current.sideOffset : 0;
+    const scale = scaleAt(absOffset, current.inactiveScale);
+
+    return {
+      transform: `translate3d(calc(${translateX.toFixed(4)} * var(--food-staircase-pitch) + ${horizontalSide.toFixed(2)}px), ${translateY.toFixed(3)}%, 0) scale(${scale.toFixed(4)})`,
+      zIndex: 100 - Math.round(absOffset * 10),
+      hidden: absOffset > 3.2,
+      isCurrent: absOffset < 0.45,
+    };
   };
+
+  const paint = () => {
+    slideRefs.current.forEach((element, i) => {
+      if (!element) return;
+      const next = transformFor(i, engine.slide);
+      element.style.transform = next.transform;
+      element.style.zIndex = String(next.zIndex);
+      element.style.visibility = next.hidden ? "hidden" : "";
+      if (next.isCurrent) {
+        element.setAttribute("aria-current", "true");
+        element.tabIndex = 0;
+      } else {
+        element.removeAttribute("aria-current");
+        element.tabIndex = -1;
+      }
+    });
+  };
+
+  const runFrame = (now) => {
+    const delta = Math.min((now - (engine.last || now)) / 1000, 1 / 20);
+    engine.last = now;
+    const current = config.current;
+    const spring = springOf(current.bounce, current.duration);
+
+    if (!engine.drag) {
+      [engine.slide, engine.slideVelocity] = springStep(
+        engine.slide,
+        engine.slideVelocity,
+        engine.target,
+        spring.omega,
+        spring.damping,
+        delta
+      );
+    }
+
+    paint();
+
+    const settled =
+      !engine.drag &&
+      Math.abs(engine.slide - engine.target) < 0.001 &&
+      Math.abs(engine.slideVelocity) < 0.01;
+
+    if (settled) {
+      engine.slide = engine.target;
+      engine.slideVelocity = 0;
+      paint();
+      engine.frame = 0;
+      engine.last = 0;
+      return;
+    }
+    engine.frame = requestAnimationFrame(runFrame);
+  };
+
+  const kick = () => {
+    if (!engine.frame) engine.frame = requestAnimationFrame(runFrame);
+  };
+
+  const setTarget = (target) => {
+    const current = config.current;
+    if (!current.length) return;
+    engine.target = current.loop ? target : Math.min(Math.max(target, 0), current.length - 1);
+    const nextIndex = wrapIndex(Math.round(engine.target), current.length);
+    if (nextIndex !== callbacks.current.active) {
+      setActive(nextIndex);
+      callbacks.current.onIndexChange?.(nextIndex);
+    }
+    kick();
+  };
+
+  // Continuous loop movement: goTo finds the nearest forward/backward step seamlessly
+  const goTo = (targetIdx) => setTarget(targetFor(targetIdx, engine.target, config.current.length, config.current.loop));
+  // Continuous forward infinite progression
+  const stepBy = (amount) => setTarget(Math.round(engine.target) + amount);
+
+  // Sync when items load or change
+  const itemsSignature = useMemo(
+    () => `${length}:${defaultIndex}:${items.map((it) => it.src || it).join(",")}`,
+    [length, defaultIndex, items]
+  );
+  const prevSignature = useRef(itemsSignature);
 
   useEffect(() => {
-    if (!autoPlay || count < 2) return undefined;
-    if (!loop && active >= count - 1) return undefined;
+    if (prevSignature.current !== itemsSignature && length > 0) {
+      prevSignature.current = itemsSignature;
+      const targetIdx = clampIndex(index ?? defaultIndex, length);
+      engine.slide = targetIdx;
+      engine.target = targetIdx;
+      engine.slideVelocity = 0;
+      setActive(targetIdx);
+      paint();
+      kick();
+    }
+  }, [itemsSignature, length, defaultIndex, index]);
+
+  // Controlled index support
+  useEffect(() => {
+    if (index != null && length > 0) {
+      goTo(index);
+    }
+  }, [index, length]);
+
+  useEffect(() => {
+    paint();
+  }, [length, loop, step, inactiveScale, sideOffset]);
+
+  useEffect(() => () => cancelAnimationFrame(engine.frame), [engine]);
+
+  // Intersection observer for autoPlay
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !autoPlay) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting && !document.hidden));
+    observer.observe(root);
+    const onVisibility = () => setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [autoPlay]);
+
+  // Infinite Forward AutoPlay (Endless forward motion, no rewinding)
+  const isPlaying = autoPlay && length > 1 && !stopped && !dragging && visible;
+
+  useEffect(() => {
+    if (!stopped || !autoPlay) return undefined;
+    const timer = window.setTimeout(() => setStopped(false), Math.max(autoPlayInterval, 2500));
+    return () => window.clearTimeout(timer);
+  }, [stopped, autoPlay, autoPlayInterval]);
+
+  useEffect(() => {
+    if (!isPlaying) return undefined;
     const timer = window.setTimeout(() => {
-      const next = loop ? (active + 1) % count : active + 1;
-      setTrackIndex((current) => loop ? current + 1 : next);
-      setInner(next);
-      onIndexChange?.(next);
+      const current = config.current;
+      if (!current.loop && Math.round(engine.target) >= current.length - 1) {
+        goTo(0);
+      } else {
+        stepBy(1); // Endless forward step
+      }
     }, autoPlayInterval);
     return () => window.clearTimeout(timer);
-  }, [active, autoPlay, autoPlayInterval, count, index, loop, onIndexChange]);
+  }, [isPlaying, active, autoPlayInterval]);
+
+  // Pointer & Drag handling
+  const onPointerDown = (event) => {
+    if (event.button !== 0 || !length || event.target.closest(".food-staircase__controls")) return;
+    const stage = stageRef.current;
+    const width = stage ? stage.offsetWidth || 300 : 300;
+    engine.drag = {
+      id: event.pointerId,
+      origin: event.clientX,
+      slideStart: engine.slide,
+      time: performance.now(),
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragging(true);
+    setStopped(true);
+    kick();
+  };
+
+  const onPointerMove = (event) => {
+    if (!engine.drag || engine.drag.id !== event.pointerId) return;
+    const delta = event.clientX - engine.drag.origin;
+    if (Math.abs(delta) > 6) {
+      engine.drag.moved = true;
+      engine.blockClick = true;
+    }
+    const stageWidth = stageRef.current ? stageRef.current.offsetWidth || 300 : 300;
+    const slideDelta = -delta / (stageWidth * 0.75);
+    engine.slide = engine.drag.slideStart + slideDelta;
+    engine.target = engine.slide;
+    paint();
+  };
+
+  const onPointerUp = (event) => {
+    if (!engine.drag || engine.drag.id !== event.pointerId) return;
+    const moved = engine.drag.moved;
+    const durationMs = performance.now() - engine.drag.time;
+    const delta = event.clientX - engine.drag.origin;
+    engine.drag = null;
+    setDragging(false);
+
+    if (moved) {
+      const stageWidth = stageRef.current ? stageRef.current.offsetWidth || 300 : 300;
+      const velocity = -delta / Math.max(durationMs, 10);
+      const impulse = velocity * 4.5;
+      const target = Math.round(engine.slide + impulse);
+      setTarget(target);
+    } else {
+      setTarget(Math.round(engine.slide));
+    }
+
+    window.setTimeout(() => {
+      engine.blockClick = false;
+    }, 50);
+  };
 
   const onKeyDown = (event) => {
-    let next = -1;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = active + 1;
-    else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = active - 1;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = count - 1;
-    else return;
-    event.preventDefault();
-    go(next);
-  };
-
-  const onPointerDown = (event) => {
-    swipe.current = { id: event.pointerId, x: event.clientX, done: false };
-  };
-  const onPointerMove = (event) => {
-    const state = swipe.current;
-    if (state.id !== event.pointerId || state.done) return;
-    const delta = event.clientX - state.x;
-    if (Math.abs(delta) > 40) {
-      state.done = true;
-      go(active + (delta < 0 ? 1 : -1));
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      setStopped(true);
+      stepBy(1);
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setStopped(true);
+      stepBy(-1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      goTo(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      goTo(length - 1);
     }
-  };
-  const onPointerEnd = () => {
-    swipe.current.id = -1;
-    window.setTimeout(() => { swipe.current.done = false; }, 0);
   };
 
   const current = items[active];
-  const transition = `transform ${stepDuration * 1000}ms ease-in-out, aspect-ratio ${Math.max(stepDuration * 1000, 760)}ms cubic-bezier(.22,1,.36,1)`;
-  const recenterTrack = (event) => {
-    if (!loop || count < 2 || event.target !== event.currentTarget) return;
-    let centered = trackIndex;
-    if (trackIndex >= count * 2) centered = trackIndex - count;
-    else if (trackIndex < count) centered = trackIndex + count;
-    if (centered === trackIndex) return;
-    setIsRecentering(true);
-    setTrackIndex(centered);
-    window.requestAnimationFrame(() => window.requestAnimationFrame(() => setIsRecentering(false)));
-  };
 
   return (
-    <div className={`food-staircase ${className}`} style={{ height }} role="region" aria-roledescription="carousel" aria-label={ariaLabel} tabIndex={0} onKeyDown={onKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}>
+    <div
+      ref={rootRef}
+      className={`food-staircase ${className}`}
+      style={{ height }}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={ariaLabel}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
       <style>{STYLES}</style>
+
+      {/* Dynamic Ambient Backdrop */}
       <div className="food-staircase__backdrops" aria-hidden="true">
-        {shown.map((background) => {
-          const src = items[background.i]?.src;
-          return src ? <div key={background.key} className="food-staircase__backdrop" data-out={background.out ? "" : undefined} style={{ backgroundImage: `url(${JSON.stringify(src)})` }} /> : null;
+        {shown.map((bg) => {
+          const src = items[bg.i]?.src || items[0]?.src;
+          return src ? (
+            <div
+              key={bg.key}
+              className="food-staircase__backdrop"
+              data-out={bg.out ? "" : undefined}
+              style={{ backgroundImage: `url(${JSON.stringify(src)})` }}
+            />
+          ) : null;
         })}
       </div>
-      <div className="food-staircase__stage" style={{ width: slideWidth, "--food-staircase-width": slideWidth, "--food-staircase-pitch": slidePitch, "--food-staircase-ratio": slideAspectRatio }}>
-        <div className="food-staircase__strip" onTransitionEnd={recenterTrack} style={{ transform: `translateX(calc(${-trackIndex} * var(--food-staircase-pitch)))`, transition: isRecentering ? "none" : `transform ${strip.ms}ms ${strip.easing}` }}>
-          {trackItems.map((item, i) => {
-            const logicalIndex = count > 0 ? i % count : 0;
-            const isActive = i === trackIndex;
-            return (
-              <button key={`${item.src}-${i}`} type="button" className="food-staircase__slide" aria-label={`${logicalIndex + 1} of ${count}: ${item.title}`} aria-current={isActive ? "true" : undefined} tabIndex={isActive ? 0 : -1} onClick={() => { if (swipe.current.done) return; if (isActive) onSelect?.(item, logicalIndex); else { setTrackIndex(i); setInner(logicalIndex); onIndexChange?.(logicalIndex); } }} style={{ width: slideWidth, marginRight: `calc(${slidePitch} - ${slideWidth})`, borderRadius: radius, "--food-staircase-active-ratio": imageRatios[logicalIndex] || slideAspectRatio, transform: slideTransform(i, trackIndex, step, inactiveScale, sideOffset), transition: isRecentering ? "none" : transition }}>
-                <img src={item.src} alt={item.alt || item.title} draggable={false} decoding="async" width="405" height="540" onError={(event) => { const fallback = items.find((candidate) => candidate.src && candidate.src !== item.src)?.src; if (fallback && event.currentTarget.dataset.fallback !== "true") { event.currentTarget.dataset.fallback = "true"; event.currentTarget.src = fallback; } else { event.currentTarget.alt = ""; event.currentTarget.style.opacity = "0"; } }} onLoad={(event) => { const { naturalWidth, naturalHeight } = event.currentTarget; if (!naturalWidth || !naturalHeight) return; const ratio = naturalWidth / naturalHeight; setImageRatios((current) => current[logicalIndex] === ratio ? current : { ...current, [logicalIndex]: ratio }); }} />
-              </button>
-            );
-          })}
-        </div>
-        {titles ? (
-          <div className="food-staircase__titles" aria-hidden="true">
-            {shown.map((title) => (
-              <div key={title.key} className="food-staircase__title" data-out={title.out ? "" : undefined} style={{ animation: `${title.out ? "food-staircase-out" : "food-staircase-in"} ${pop.ms}ms ${pop.easing} both` }}>
-                <span><small>{items[title.i]?.eyebrow || "The culinary edit"}</small>{items[title.i]?.title}</span>
-              </div>
-            ))}
-          </div>
-        ) : null}
+
+      {/* Continuous Infinite Staircase Stage */}
+      <div
+        ref={stageRef}
+        className="food-staircase__stage"
+        style={{
+          width: slideWidth,
+          height: "100%",
+          "--food-staircase-width": slideWidth,
+          "--food-staircase-pitch": slidePitch,
+          "--food-staircase-ratio": slideAspectRatio,
+        }}
+      >
+        {items.map((item, i) => {
+          const isActive = i === active;
+          return (
+            <button
+              key={`${item.src}-${i}`}
+              ref={(el) => {
+                slideRefs.current[i] = el;
+              }}
+              type="button"
+              className="food-staircase__slide"
+              aria-label={`${i + 1} of ${length}: ${item.title}`}
+              aria-current={isActive ? "true" : undefined}
+              tabIndex={isActive ? 0 : -1}
+              style={{ borderRadius: radius }}
+              onClick={() => {
+                if (engine.blockClick) return;
+                if (isActive) {
+                  onSelect?.(item, i);
+                } else {
+                  setStopped(true);
+                  goTo(i);
+                }
+              }}
+            >
+              <img
+                src={item.src}
+                alt={item.alt || item.title}
+                draggable={false}
+                decoding="async"
+                onError={(event) => {
+                  const fallback = items.find((candidate) => candidate.src && candidate.src !== item.src)?.src;
+                  if (fallback && event.currentTarget.dataset.fallback !== "true") {
+                    event.currentTarget.dataset.fallback = "true";
+                    event.currentTarget.src = fallback;
+                  }
+                }}
+              />
+            </button>
+          );
+        })}
       </div>
-      {controls && count > 1 ? (
-        <div className="food-staircase__controls" onPointerDown={(event) => event.stopPropagation()}>
-          <button type="button" className="food-staircase__button" aria-label="Previous photo" disabled={!loop && active <= 0} onClick={() => go(active - 1)}><Chevron direction={-1} /></button>
+
+      {/* Controls */}
+      {controls && length > 1 ? (
+        <div className="food-staircase__controls" onPointerDown={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="food-staircase__button"
+            aria-label="Previous photo"
+            disabled={!loop && active <= 0}
+            onClick={() => {
+              setStopped(true);
+              stepBy(-1);
+            }}
+          >
+            <Chevron direction={-1} />
+          </button>
           <div className="food-staircase__dots">
-            {count > 10 ? <span className="food-staircase__count">{pad(active + 1)} / {pad(count)}</span> : items.map((item, i) => <button key={i} type="button" className="food-staircase__dot" aria-label={`Go to photo ${i + 1}: ${item.title}`} aria-current={i === active ? "true" : undefined} onClick={() => go(i)} />)}
+            {length > 10 ? (
+              <span className="food-staircase__count">
+                {pad(active + 1)} / {pad(length)}
+              </span>
+            ) : (
+              items.map((item, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="food-staircase__dot"
+                  aria-label={`Go to photo ${i + 1}: ${item.title}`}
+                  aria-current={i === active ? "true" : undefined}
+                  onClick={() => {
+                    setStopped(true);
+                    goTo(i);
+                  }}
+                />
+              ))
+            )}
           </div>
-          <button type="button" className="food-staircase__button" aria-label="Next photo" disabled={!loop && active >= count - 1} onClick={() => go(active + 1)}><Chevron direction={1} /></button>
+          <button
+            type="button"
+            className="food-staircase__button"
+            aria-label="Next photo"
+            disabled={!loop && active >= length - 1}
+            onClick={() => {
+              setStopped(true);
+              stepBy(1);
+            }}
+          >
+            <Chevron direction={1} />
+          </button>
         </div>
       ) : null}
-      <div className="food-staircase__sr" aria-live="polite" aria-atomic="true">{current ? `Photo ${active + 1} of ${count}: ${current.title}` : ""}</div>
+
+      <div className="food-staircase__sr" aria-live="polite" aria-atomic="true">
+        {current ? `Photo ${active + 1} of ${length}: ${current.title}` : ""}
+      </div>
     </div>
   );
 }
