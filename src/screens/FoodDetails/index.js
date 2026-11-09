@@ -25,6 +25,7 @@ import { getShareText } from "../../utils/shareUtils";
 import { formatTimingsRange } from "../../utils/timeUtils";
 import SocialCards from "./SocialCards";
 import keralaFoodBg from "./kerala-culinary-bg.webp";
+import keralaFoodBgDark from "./kerala-culinary-bg-dark.webp";
 
 const toDisplayString = (value) => {
   if (!value) return "";
@@ -893,7 +894,7 @@ function CulinaryHero({ food, galleryItems }) {
         maxWidth: expandedDesktop ? 1320 : "none",
         margin: expandedDesktop ? "0 auto" : 0,
         background: theme === "dark"
-          ? "linear-gradient(160deg, #051017 0%, #081d29 55%, #051017 100%)"
+          ? (BG || "#080808")
           : "#daf4f8",
         minHeight: isMobile ? "auto" : "90vh",
         display: "flex",
@@ -905,18 +906,16 @@ function CulinaryHero({ food, galleryItems }) {
         overflow: "hidden"
       }}
     >
-      {/* Culinary Doodle Background Layer - 404-style dark mode adaptation */}
+      {/* Culinary Doodle Background Layer - Crisp Cyan Doodles on Transparent Canvas */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `url(${keralaFoodBg})`,
+          backgroundImage: `url(${theme === "dark" ? keralaFoodBgDark : keralaFoodBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
-          opacity: theme === "dark" ? 0.9 : 0.85,
-          filter: theme === "dark" ? "invert(1) hue-rotate(180deg)" : "none",
-          mixBlendMode: theme === "dark" ? "screen" : "normal",
+          opacity: theme === "dark" ? 0.75 : 0.85,
           pointerEvents: "none",
           zIndex: 1
         }}
@@ -926,7 +925,7 @@ function CulinaryHero({ food, galleryItems }) {
         position: "absolute",
         inset: 0,
         background: theme === "dark"
-          ? "radial-gradient(ellipse at 50% 35%, rgba(5, 16, 23, 0.08) 0%, rgba(5, 16, 23, 0.35) 100%)"
+          ? "radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(8, 8, 8, 0.4) 100%)"
           : "radial-gradient(ellipse at 50% 35%, rgba(220, 244, 250, 0.1) 0%, rgba(220, 244, 250, 0.45) 100%)",
         pointerEvents: "none",
         zIndex: 2,
