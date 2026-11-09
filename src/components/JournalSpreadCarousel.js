@@ -3,7 +3,7 @@
 import * as React from "react"
 
 // #region pose
-const OPEN = 5 // the centre spread's slight V at the spine, degrees
+const OPEN = 0 // the centre spread sits flat in the middle (no seam/crease line)
 const SIDE = 80 // how far a stacked page turns towards the middle
 const FOLD = 174 // a page folding shut over its partner
 
@@ -103,18 +103,16 @@ const CSS =
   ".jsc-view{position:absolute;inset:0;perspective:calc(var(--jsc-w) * 2.3);perspective-origin:50% 46%}" +
   ".jsc-scene{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}" +
   ".jsc-item{position:absolute;left:0;top:0;transform-style:preserve-3d;visibility:hidden}" +
-  ".jsc-page{position:absolute;top:calc(var(--jsc-h) * -.5);width:calc(var(--jsc-w) * .5);height:var(--jsc-h);overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;" +
-  "background:#efebe3;box-shadow:0 1px 0 rgba(255,255,255,.35) inset}" +
+  ".jsc-page{position:absolute;top:calc(var(--jsc-h) * -.5);width:calc(var(--jsc-w) * .5 + 0.75px);height:var(--jsc-h);overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;" +
+  "background:#efebe3;box-shadow:none}" +
   ".jsc-page[data-side=l]{left:calc(var(--jsc-w) * -.5);transform-origin:100% 50%;border-radius:calc(var(--jsc-w) * .034) 0 0 calc(var(--jsc-w) * .034)}" +
-  ".jsc-page[data-side=r]{left:0;transform-origin:0 50%;border-radius:0 calc(var(--jsc-w) * .034) calc(var(--jsc-w) * .034) 0}" +
+  ".jsc-page[data-side=r]{left:-0.75px;transform-origin:0 50%;border-radius:0 calc(var(--jsc-w) * .034) calc(var(--jsc-w) * .034) 0}" +
   ".jsc-sheet{position:absolute;top:0;width:var(--jsc-w);height:var(--jsc-h);pointer-events:none}" +
   ".jsc-page[data-side=l]>.jsc-sheet{left:0}" +
   ".jsc-page[data-side=r]>.jsc-sheet{left:calc(var(--jsc-w) * -.5)}" +
   ".jsc-bg{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;display:block}" +
-  ".jsc-gutter{position:absolute;inset:0}" +
-  ".jsc-page[data-side=l] .jsc-gutter{background:linear-gradient(90deg,rgba(255,255,255,0) 82%,rgba(20,18,30,.08) 93%,rgba(20,18,30,.26))}" +
-  ".jsc-page[data-side=r] .jsc-gutter{background:linear-gradient(270deg,rgba(255,255,255,0) 82%,rgba(20,18,30,.08) 93%,rgba(20,18,30,.26))}" +
-  ".jsc-shade{position:absolute;inset:0;background:#141729;opacity:var(--jsc-s,0)}" +
+  ".jsc-gutter{display:none}" +
+  ".jsc-shade{display:none}" +
   ".jsc-print{position:absolute;margin:0;background:#fbfaf6;padding:3.5% 3.5% 0;box-shadow:0 .4em 1em rgba(18,16,30,.28),0 .1em .2em rgba(18,16,30,.2);font-size:calc(var(--jsc-w) * .01)}" +
   ".jsc-print img{display:block;width:100%;height:auto;max-width:none;aspect-ratio:4/5;object-fit:cover}" +
   ".jsc-print figcaption{font-family:'JSC Hand',cursive;font-weight:600;color:#2a2c3e;text-align:center;font-size:calc(var(--jsc-w) * .024);line-height:1;padding:.32em 0 .4em}" +
@@ -253,6 +251,7 @@ export default function JournalSpreadCarousel({
   className,
   topSlot,
   barSlot,
+  carouselRef,
 }) {
   const n = spreads.length
   const start = clamp(Math.round(initialIndex), 0, Math.max(0, n - 1))
@@ -334,6 +333,22 @@ export default function JournalSpreadCarousel({
     },
     [n, kick],
   )
+
+  React.useImperativeHandle(carouselRef, () => ({
+    next: () => {
+      stop()
+      go(target.current >= n - 1 ? 0 : target.current + 1)
+    },
+    prev: () => {
+      stop()
+      go(target.current <= 0 ? n - 1 : target.current - 1)
+    },
+    goTo: (idx) => {
+      stop()
+      go(idx)
+    },
+    getIndex: () => target.current
+  }), [n, go])
 
   React.useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
