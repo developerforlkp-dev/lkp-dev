@@ -57,9 +57,9 @@ export function settle(pos, velocity, n) {
   return clamp(Math.round(pos + clamp(velocity * 0.18, -1.5, 1.5)), 0, Math.max(0, n - 1))
 }
 
-/** Tween length for a jump of `steps` spreads; longer jumps riffle faster per page. */
+/** Tween length for a jump of `steps` spreads; fast responsive flips. */
 export function durationFor(steps) {
-  return steps <= 0 ? 0 : Math.round(560 * Math.sqrt(Math.min(steps, 12)))
+  return steps <= 0 ? 0 : Math.round(260 * Math.sqrt(Math.min(steps, 6)))
 }
 
 export function easeInOut(t) {
@@ -113,9 +113,9 @@ const CSS =
   ".jsc-bg{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;display:block}" +
   ".jsc-gutter{display:none}" +
   ".jsc-shade{display:none}" +
-  ".jsc-print{position:absolute;margin:0;background:#fbfaf6;padding:3.5% 3.5% 0;box-shadow:0 .4em 1em rgba(18,16,30,.28),0 .1em .2em rgba(18,16,30,.2);font-size:calc(var(--jsc-w) * .01)}" +
-  ".jsc-print img{display:block;width:100%;height:auto;max-width:none;aspect-ratio:4/5;object-fit:cover}" +
-  ".jsc-print figcaption{font-family:'JSC Hand',cursive;font-weight:600;color:#2a2c3e;text-align:center;font-size:calc(var(--jsc-w) * .024);line-height:1;padding:.32em 0 .4em}" +
+  ".jsc-print{position:absolute;margin:0;background:#fbfaf6;padding:1.5% 1.5% 0;box-shadow:0 .3em .8em rgba(18,16,30,.22),0 .1em .2em rgba(18,16,30,.15);border-radius:3px;font-size:calc(var(--jsc-w) * .01)}" +
+  ".jsc-print img{display:block;width:100%;height:auto;max-width:none;aspect-ratio:4/5;object-fit:cover;border-radius:2px}" +
+  ".jsc-print figcaption{font-family:'JSC Hand',cursive;font-weight:600;color:#2a2c3e;text-align:center;font-size:calc(var(--jsc-w) * .022);line-height:1;padding:.18em 0 .22em}" +
   ".jsc-print[data-tape]{padding:0;background:none}" +
   ".jsc-print[data-tape]::before{content:'';position:absolute;left:50%;top:-6%;width:46%;height:11%;transform:translateX(-50%) rotate(-3deg);background:rgba(236,226,196,.78);box-shadow:0 1px 2px rgba(0,0,0,.12)}" +
   ".jsc-print[data-tape] figcaption{position:absolute;left:0;right:0;bottom:-1.1em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55)}" +
@@ -322,12 +322,10 @@ export default function JournalSpreadCarousel({
   const go = React.useCallback(
     (to, ease = easeInOut) => {
       const next = clamp(to, 0, Math.max(0, n - 1))
-      if (next !== target.current) {
-        target.current = next
-        setIndex(next)
-        onIndexRef.current?.(next)
-      }
-      const dur = reducedRef.current ? 0 : durationFor(Math.abs(next - pos.current))
+      target.current = next
+      setIndex(next)
+      onIndexRef.current?.(next)
+      const dur = reducedRef.current ? 0 : Math.min(320, durationFor(Math.abs(next - pos.current)))
       tween.current = { from: pos.current, to: next, t0: performance.now(), dur, ease }
       kick()
     },
@@ -337,11 +335,13 @@ export default function JournalSpreadCarousel({
   React.useImperativeHandle(carouselRef, () => ({
     next: () => {
       stop()
-      go(target.current >= n - 1 ? 0 : target.current + 1)
+      const next = (target.current + 1) % n
+      go(next)
     },
     prev: () => {
       stop()
-      go(target.current <= 0 ? n - 1 : target.current - 1)
+      const prev = target.current <= 0 ? n - 1 : target.current - 1
+      go(prev)
     },
     goTo: (idx) => {
       stop()

@@ -22,6 +22,7 @@ import Icon from "../../components/Icon";
 import FullScreenImage from "../../components/FullScreenImage";
 import JournalSpreadCarousel from "../../components/JournalSpreadCarousel";
 import CuratedContent from "../../components/CuratedContent";
+import topographyBg from "./misty-blue-mountain-topography.webp";
 import { getShareText } from "../../utils/shareUtils";
 import SEOHead from "../../components/SEOHead";
 import { buildPlaceSchema, buildBreadcrumbSchema } from "../../utils/schemaBuilder";
@@ -557,16 +558,46 @@ function PlaceHero({ place, galleryItems, id }) {
         alignItems: "stretch"
       }}
     >
+      {/* Misty Blue Mountain Topography Background Layer */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${topographyBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "left bottom",
+          backgroundRepeat: "no-repeat",
+          opacity: isDark ? 0.65 : 0.95,
+          pointerEvents: "none",
+          zIndex: 1
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: isDark
+            ? `linear-gradient(90deg, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.4) 40%, ${BG} 90%)`
+            : `linear-gradient(90deg, rgba(251,251,249,0.15) 0%, rgba(251,251,249,0.35) 40%, ${BG} 90%)`,
+          pointerEvents: "none",
+          zIndex: 2
+        }}
+      />
+
       <div
         style={{
           width: "100%",
-          padding: "0 80px",
+          maxWidth: 1320,
+          margin: "0 auto",
+          padding: "0 24px",
           display: "grid",
           gridTemplateColumns: "minmax(340px, 42%) minmax(0, 58%)",
           gap: 40,
           alignItems: "center",
           height: "100%",
-          boxSizing: "border-box"
+          boxSizing: "border-box",
+          position: "relative",
+          zIndex: 5
         }}
       >
         {/* Left Column: Place Information & Primary Controls */}
@@ -825,17 +856,17 @@ function PlaceHero({ place, galleryItems, id }) {
               padding: "6px 14px",
               borderRadius: "999px",
               color: FG,
-              background: `color-mix(in srgb, ${S} 82%, transparent)`,
+              background: isDark ? "rgba(20, 20, 20, 0.85)" : "#FFFFFF",
               border: `1px solid ${B}`,
               WebkitBackdropFilter: "blur(12px)",
               backdropFilter: "blur(12px)",
-              boxShadow: "0 8px 28px rgba(15,15,15,0.08)"
+              boxShadow: isDark ? "0 8px 24px rgba(0,0,0,0.4)" : "0 8px 24px rgba(15,15,15,0.06)"
             }}
           >
             {/* Previous Page arrow button */}
             <motion.button
               type="button"
-              whileTap={{ scale: 0.88 }}
+              whileTap={{ scale: 0.84 }}
               onClick={() => carouselControlRef.current?.prev?.()}
               style={{
                 display: "grid",
@@ -845,13 +876,14 @@ function PlaceHero({ place, galleryItems, id }) {
                 border: 0,
                 borderRadius: "999px",
                 background: "transparent",
-                color: "inherit",
+                color: A || "#0097B2",
                 cursor: "pointer",
-                outline: "none"
+                outline: "none",
+                transition: "color 0.2s ease, transform 0.15s ease"
               }}
               aria-label="Previous photo"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6" />
               </svg>
             </motion.button>
@@ -869,7 +901,9 @@ function PlaceHero({ place, galleryItems, id }) {
                     color: FG
                   }}
                 >
-                  {String(activeIdx + 1).padStart(2, "0")} / {String(spreads.length).padStart(2, "0")}
+                  <span style={{ color: A || "#0097B2" }}>{String(activeIdx + 1).padStart(2, "0")}</span>
+                  <span style={{ opacity: 0.4, margin: "0 4px" }}>/</span>
+                  <span>{String(spreads.length).padStart(2, "0")}</span>
                 </span>
               ) : (
                 spreads.map((_, i) => (
@@ -885,11 +919,11 @@ function PlaceHero({ place, galleryItems, id }) {
                       padding: 0,
                       border: 0,
                       borderRadius: "999px",
-                      background: i === activeIdx ? A : FG,
+                      background: i === activeIdx ? (A || "#0097B2") : FG,
                       opacity: i === activeIdx ? 1 : 0.25,
                       cursor: "pointer",
                       outline: "none",
-                      transition: "width 0.3s ease, opacity 0.3s ease, background 0.3s ease"
+                      transition: "width 0.2s ease, opacity 0.2s ease, background 0.2s ease"
                     }}
                     aria-label={`Go to spread ${i + 1}`}
                   />
@@ -900,7 +934,7 @@ function PlaceHero({ place, galleryItems, id }) {
             {/* Next Page arrow button */}
             <motion.button
               type="button"
-              whileTap={{ scale: 0.88 }}
+              whileTap={{ scale: 0.84 }}
               onClick={() => carouselControlRef.current?.next?.()}
               style={{
                 display: "grid",
@@ -910,13 +944,14 @@ function PlaceHero({ place, galleryItems, id }) {
                 border: 0,
                 borderRadius: "999px",
                 background: "transparent",
-                color: "inherit",
+                color: A || "#0097B2",
                 cursor: "pointer",
-                outline: "none"
+                outline: "none",
+                transition: "color 0.2s ease, transform 0.15s ease"
               }}
               aria-label="Next photo"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </motion.button>
