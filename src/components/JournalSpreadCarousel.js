@@ -321,6 +321,27 @@ export default function JournalSpreadCarousel({
     if (!raf.current) raf.current = requestAnimationFrame(frame)
   }, [frame])
 
+  const resumeTimer = React.useRef(null)
+  const isInteracting = React.useRef(false)
+
+  const pauseAutoPlay = React.useCallback(() => {
+    isInteracting.current = true
+    if (resumeTimer.current) {
+      window.clearTimeout(resumeTimer.current)
+      resumeTimer.current = null
+    }
+  }, [])
+
+  const resumeAutoPlay = React.useCallback((delay = 2000) => {
+    if (resumeTimer.current) {
+      window.clearTimeout(resumeTimer.current)
+    }
+    resumeTimer.current = window.setTimeout(() => {
+      isInteracting.current = false
+      resumeTimer.current = null
+    }, delay)
+  }, [])
+
   const go = React.useCallback(
     (to, customDuration = null, ease = smoothEase) => {
       const next = clamp(to, 0, Math.max(0, n - 1))
@@ -405,27 +426,6 @@ export default function JournalSpreadCarousel({
     if (pos.current > n - 1) go(n - 1)
     else paint()
   }, [n, go, paint])
-
-  const resumeTimer = React.useRef(null)
-  const isInteracting = React.useRef(false)
-
-  const pauseAutoPlay = React.useCallback(() => {
-    isInteracting.current = true
-    if (resumeTimer.current) {
-      window.clearTimeout(resumeTimer.current)
-      resumeTimer.current = null
-    }
-  }, [])
-
-  const resumeAutoPlay = React.useCallback((delay = 2000) => {
-    if (resumeTimer.current) {
-      window.clearTimeout(resumeTimer.current)
-    }
-    resumeTimer.current = window.setTimeout(() => {
-      isInteracting.current = false
-      resumeTimer.current = null
-    }, delay)
-  }, [])
 
   // Turns pages on its own; pauses when interacting or off-screen, then automatically resumes.
   React.useEffect(() => {
