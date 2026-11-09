@@ -62,11 +62,13 @@ export function durationFor(steps) {
   return steps <= 0 ? 0 : Math.round(260 * Math.sqrt(Math.min(steps, 6)))
 }
 
-export function easeInOut(t) {
+/** Smooth cubic easing with gentle deceleration for fluid page turns */
+export function smoothEase(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
 
-export function easeOut(t) {
+/** Easing function for organic decelerating coasting */
+export function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3)
 }
 // #endregion
@@ -320,12 +322,16 @@ export default function JournalSpreadCarousel({
   }, [frame])
 
   const go = React.useCallback(
-    (to, ease = easeInOut) => {
+    (to, customDuration = null, ease = smoothEase) => {
       const next = clamp(to, 0, Math.max(0, n - 1))
       target.current = next
       setIndex(next)
       onIndexRef.current?.(next)
-      const dur = reducedRef.current ? 0 : Math.min(320, durationFor(Math.abs(next - pos.current)))
+      const dur = reducedRef.current
+        ? 0
+        : customDuration != null
+          ? customDuration
+          : Math.min(650, Math.max(480, Math.round(520 * Math.sqrt(Math.abs(next - pos.current)))))
       tween.current = { from: pos.current, to: next, t0: performance.now(), dur, ease }
       kick()
     },
@@ -334,21 +340,24 @@ export default function JournalSpreadCarousel({
 
   React.useImperativeHandle(carouselRef, () => ({
     next: () => {
-      stop()
+      pauseAutoPlay()
       const next = (target.current + 1) % n
-      go(next)
+      go(next, 380, easeOutCubic)
+      resumeAutoPlay(3000)
     },
     prev: () => {
-      stop()
+      pauseAutoPlay()
       const prev = target.current <= 0 ? n - 1 : target.current - 1
-      go(prev)
+      go(prev, 380, easeOutCubic)
+      resumeAutoPlay(3000)
     },
     goTo: (idx) => {
-      stop()
-      go(idx)
+      pauseAutoPlay()
+      go(idx, 450, smoothEase)
+      resumeAutoPlay(3000)
     },
     getIndex: () => target.current
-  }), [n, go])
+  }), [n, go, pauseAutoPlay, resumeAutoPlay])
 
   React.useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -397,7 +406,28 @@ export default function JournalSpreadCarousel({
     else paint()
   }, [n, go, paint])
 
-  // Turns pages on its own until someone touches it; pauses off-screen and in a hidden tab.
+  const resumeTimer = React.useRef(null)
+  const isInteracting = React.useRef(false)
+
+  const pauseAutoPlay = React.useCallback(() => {
+    isInteracting.current = true
+    if (resumeTimer.current) {
+      window.clearTimeout(resumeTimer.current)
+      resumeTimer.current = null
+    }
+  }, [])
+
+  const resumeAutoPlay = React.useCallback((delay = 2000) => {
+    if (resumeTimer.current) {
+      window.clearTimeout(resumeTimer.current)
+    }
+    resumeTimer.current = window.setTimeout(() => {
+      isInteracting.current = false
+      resumeTimer.current = null
+    }, delay)
+  }, [])
+
+  // Turns pages on its own; pauses when interacting or off-screen, then automatically resumes.
   React.useEffect(() => {
     const root = rootRef.current
     if (!autoPlay || reduced || n < 2 || !root) return
@@ -407,22 +437,19 @@ export default function JournalSpreadCarousel({
     })
     io.observe(root)
     const id = window.setInterval(() => {
-      if (touched.current || !visible || document.hidden || drag.current) return
+      if (isInteracting.current || !visible || document.hidden || drag.current) return
       go(target.current >= n - 1 ? 0 : target.current + 1)
     }, autoPlay)
     return () => {
       window.clearInterval(id)
       io.disconnect()
+      if (resumeTimer.current) window.clearTimeout(resumeTimer.current)
     }
   }, [autoPlay, reduced, n, go])
 
-  const stop = () => {
-    touched.current = true
-  }
-
   const onPointerDown = (e) => {
     if (e.button !== 0 || n < 1) return
-    stop()
+    pauseAutoPlay()
     tween.current = null
     drag.current = { id: e.pointerId, x: e.clientX, from: pos.current, lastX: e.clientX, lastT: e.timeStamp, v: 0, moved: false }
   }
@@ -454,12 +481,14 @@ export default function JournalSpreadCarousel({
     drag.current = null
     setDragging(false)
     if (d.moved) {
-      go(settle(pos.current, d.v, n), easeOut)
+      go(settle(pos.current, d.v, n), 520, easeOutCubic)
+      resumeAutoPlay(2200)
       return
     }
     const hit = e.target.closest?.("[data-i]")
     const i = hit ? Number(hit.getAttribute("data-i")) : target.current
-    go(i)
+    go(i, 450, smoothEase)
+    resumeAutoPlay(2200)
   }
 
   const onKeyDown = (e) => {
@@ -470,7 +499,8 @@ export default function JournalSpreadCarousel({
     else if (e.key === "End") go(n - 1)
     else return
     e.preventDefault()
-    stop()
+    pauseAutoPlay()
+    resumeAutoPlay(2600)
   }
 
   // Trackpads swipe sideways; a vertical wheel is left to scroll the page.

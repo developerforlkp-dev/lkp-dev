@@ -563,22 +563,41 @@ function PlaceHero({ place, galleryItems, id }) {
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `url(${topographyBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "left bottom",
-          backgroundRepeat: "no-repeat",
-          opacity: isDark ? 0.65 : 0.95,
+          display: "flex",
+          justifyContent: "center",
+          overflow: "hidden",
           pointerEvents: "none",
           zIndex: 1
         }}
-      />
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 1320,
+            height: "100%",
+            position: "relative"
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${topographyBg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "left bottom",
+              backgroundRepeat: "no-repeat",
+              opacity: isDark ? 0.65 : 0.95
+            }}
+          />
+        </div>
+      </div>
       <div
         style={{
           position: "absolute",
           inset: 0,
           background: isDark
-            ? `linear-gradient(90deg, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.4) 40%, ${BG} 90%)`
-            : `linear-gradient(90deg, rgba(251,251,249,0.15) 0%, rgba(251,251,249,0.35) 40%, ${BG} 90%)`,
+            ? `linear-gradient(90deg, rgba(8,8,8,0.15) 0%, rgba(8,8,8,0.35) 40%, ${BG} 90%)`
+            : `linear-gradient(90deg, rgba(251,251,249,0.1) 0%, rgba(251,251,249,0.3) 40%, ${BG} 90%)`,
           pointerEvents: "none",
           zIndex: 2
         }}
@@ -829,7 +848,7 @@ function PlaceHero({ place, galleryItems, id }) {
               meta={locationString}
               height="100%"
               initialIndex={0}
-              autoPlay={3400}
+              autoPlay={3000}
               onIndexChange={setActiveIdx}
               topSlot={null}
               barSlot={null}
