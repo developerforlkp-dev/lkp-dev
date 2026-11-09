@@ -4,7 +4,7 @@ import { useLocation, Link, useHistory, useParams } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, animate, useAnimationFrame } from "framer-motion";
 import {
   MapPin, Clock, Ticket, Star, Sparkles, Calendar, ArrowDown, ExternalLink, Map, Navigation,
-  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, Share2, Camera, Heart, X, Building, ChevronDown, Car
+  Phone, Globe, Send, Info, User, Check, XCircle, Briefcase, Share2, Camera, Heart, X, Building, ChevronDown, Car, ShieldAlert
 } from "lucide-react";
 import cn from "classnames";
 import Loader from "../../components/Loader";
@@ -1717,7 +1717,7 @@ function VisitorInformation({ place }) {
   });
 
   return (
-    <section style={{ background: W, padding: isMobile ? "32px 0 24px" : "48px 80px" }}>
+    <section style={{ background: W, padding: isMobile ? "32px 0 12px" : "48px 80px 16px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto", padding: isMobile ? "0 16px" : 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: isMobile ? 18 : 32 }}>
           <div>
@@ -2429,6 +2429,11 @@ const parseGoodToKnowItems = (raw, defaults = []) => {
   return cleanItems.length > 0 ? cleanItems : defaults;
 };
 
+const parseSpecialRules = (raw) => {
+  if (!raw) return [];
+  return parseGoodToKnowItems(raw, []);
+};
+
 function GoodToKnow({ place }) {
   const { theme, tokens: { A, B, BG, FG, M, W, S, AL } } = useTheme();
   const isDark = theme === "dark";
@@ -2442,6 +2447,7 @@ function GoodToKnow({ place }) {
 
   const carryItems = parseGoodToKnowItems(place?.whatToCarry, DEFAULT_WHAT_TO_CARRY);
   const avoidItems = parseGoodToKnowItems(place?.thingsToAvoid, DEFAULT_THINGS_TO_AVOID);
+  const specialRules = parseSpecialRules(place?.specialRules || place?.specialRule || place?.rules);
 
   const feedbackBg = A === "#0097B2" ? "#f8f8f8" : S;
 
@@ -2620,6 +2626,101 @@ function GoodToKnow({ place }) {
                 }} />
               </motion.div>
             </div>
+
+            {/* Special Rules Card (displayed when specialRules are provided from backend) */}
+            {specialRules.length > 0 && (
+              <div style={{ position: "relative" }}>
+                <motion.div
+                  whileHover={{ scale: 1.02, boxShadow: "0 20px 40px rgba(0,151,178,0.15)" }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  style={{
+                    background: isDark ? "rgba(0, 151, 178, 0.05)" : "#f0fafd",
+                    border: `1.5px solid ${isDark ? "rgba(0, 151, 178, 0.3)" : "rgba(0, 151, 178, 0.25)"}`,
+                    borderRadius: 24,
+                    padding: "28px 24px 20px 24px",
+                    position: "relative",
+                    overflow: "hidden",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.01)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    boxSizing: "border-box",
+                    height: "100%"
+                  }}
+                >
+                  {/* Top accent line */}
+                  <div style={{
+                    height: 4,
+                    background: `repeating-linear-gradient(-45deg, ${A}, ${A} 6px, transparent 6px, transparent 12px)`,
+                    width: "100%",
+                    position: "absolute",
+                    top: 0,
+                    left: 0
+                  }} />
+
+                  {/* Stamp Badge */}
+                  <div style={{
+                    border: `2px double ${A}`,
+                    color: A,
+                    fontFamily: "monospace",
+                    fontSize: 8,
+                    fontWeight: 900,
+                    padding: "4px 8px",
+                    borderRadius: 2,
+                    position: "absolute",
+                    top: 10,
+                    right: 14,
+                    transform: "rotate(6deg)",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    background: isDark ? "#0d1f26" : "#e6f7fa",
+                    zIndex: 5
+                  }}>
+                    OFFICIAL
+                  </div>
+
+                  <div>
+                    <div style={{ marginBottom: 14 }}>
+                      <span style={{ fontSize: 9, color: A, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 800 }}>Site Guidelines</span>
+                      <h4 style={{ fontSize: 18, fontWeight: 700, color: FG, margin: "2px 0 0 0", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: "-0.02em" }}>Special Rules</h4>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {specialRules.map((rule, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 10,
+                            padding: "8px 12px",
+                            background: isDark ? "rgba(0, 151, 178, 0.08)" : "rgba(255, 255, 255, 0.7)",
+                            borderRadius: 10,
+                            border: `1px dashed ${isDark ? "rgba(0, 151, 178, 0.25)" : "rgba(0, 151, 178, 0.2)"}`
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: isDark ? "#08242d" : W, flexShrink: 0, marginTop: 1 }}>
+                            <ShieldAlert size={11} color={A} />
+                          </div>
+                          <span style={{ fontSize: 11.5, fontWeight: 600, color: FG, lineHeight: 1.4 }}>{rule}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bottom accent line */}
+                  <div style={{
+                    height: 4,
+                    background: `repeating-linear-gradient(-45deg, ${A}, ${A} 6px, transparent 6px, transparent 12px)`,
+                    width: "100%",
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    opacity: 0.7
+                  }} />
+                </motion.div>
+              </div>
+            )}
 
           </div>
         </Rev>
@@ -3513,6 +3614,7 @@ function MobileGoodToKnow({ place }) {
 
   const carryItems = parseGoodToKnowItems(place?.whatToCarry, DEFAULT_WHAT_TO_CARRY);
   const avoidItems = parseGoodToKnowItems(place?.thingsToAvoid, DEFAULT_THINGS_TO_AVOID);
+  const specialRules = parseSpecialRules(place?.specialRules || place?.specialRule || place?.rules);
 
   return (
     <section style={{ background: W, padding: "40px 16px", borderTop: `1px solid ${B}`, borderBottom: `1px solid ${B}` }}>
@@ -3640,6 +3742,74 @@ function MobileGoodToKnow({ place }) {
             ))}
           </div>
         </div>
+
+        {/* Special Rules - Mobile Site Guidelines Card (when provided) */}
+        {specialRules.length > 0 && (
+          <div style={{
+            background: isDark ? "rgba(0, 151, 178, 0.05)" : "#f0fafd",
+            border: `1.5px solid ${isDark ? "rgba(0, 151, 178, 0.3)" : "rgba(0, 151, 178, 0.25)"}`,
+            borderRadius: 24,
+            padding: "24px 20px 20px 20px",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.01)"
+          }}>
+            {/* Top accent line */}
+            <div style={{
+              height: 5,
+              background: `repeating-linear-gradient(-45deg, ${A}, ${A} 5px, transparent 5px, transparent 10px)`,
+              width: "100%",
+              position: "absolute",
+              top: 0,
+              left: 0
+            }} />
+
+            {/* Rotated Badge */}
+            <div style={{
+              border: `1.5px dashed ${A}`,
+              color: A,
+              fontFamily: "monospace",
+              fontSize: 7,
+              fontWeight: 900,
+              padding: "2px 6px",
+              borderRadius: 3,
+              position: "absolute",
+              top: 14,
+              right: 14,
+              transform: "rotate(6deg)",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              background: isDark ? "#0d1f26" : "#e6f7fa"
+            }}>
+              Official
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: 8, color: A, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 800, display: "block", marginBottom: 2 }}>Site Guidelines</span>
+              <h4 style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, color: FG, margin: 0 }}>
+                <ShieldAlert size={16} color={A} /> Special Rules
+              </h4>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {specialRules.map((rule, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    padding: "8px 0",
+                    borderBottom: idx === specialRules.length - 1 ? "none" : `1px dashed ${isDark ? "rgba(0, 151, 178, 0.25)" : "rgba(0, 151, 178, 0.2)"}`
+                  }}
+                >
+                  <ShieldAlert size={14} color={A} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: FG, lineHeight: 1.4 }}>{rule}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </section>
@@ -3849,7 +4019,7 @@ function VisitingNotes({ place }) {
   const displayText = expanded ? rawText : (isLong ? rawText.substring(0, 250) + "..." : rawText);
 
   return (
-    <section style={{ background: W, padding: isMobile ? "32px 16px" : "48px 80px" }}>
+    <section style={{ background: W, padding: isMobile ? "12px 16px 24px" : "16px 80px 36px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <Soul y={30}>
           <div style={{
