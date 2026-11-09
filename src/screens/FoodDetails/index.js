@@ -893,12 +893,8 @@ function CulinaryHero({ food, galleryItems }) {
         maxWidth: expandedDesktop ? 1320 : "none",
         margin: expandedDesktop ? "0 auto" : 0,
         background: theme === "dark"
-          ? "linear-gradient(160deg, #0a1a24 0%, #0d2535 60%, #0a1f2e 100%)"
+          ? "linear-gradient(160deg, #051017 0%, #081d29 55%, #051017 100%)"
           : "#daf4f8",
-        backgroundImage: `url(${keralaFoodBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundRepeat: "no-repeat",
         minHeight: isMobile ? "auto" : "90vh",
         display: "flex",
         flexDirection: "column",
@@ -909,15 +905,31 @@ function CulinaryHero({ food, galleryItems }) {
         overflow: "hidden"
       }}
     >
-      {/* Background overlay for contrast */}
+      {/* Culinary Doodle Background Layer - 404-style dark mode adaptation */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${keralaFoodBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          opacity: theme === "dark" ? 0.9 : 0.85,
+          filter: theme === "dark" ? "invert(1) hue-rotate(180deg)" : "none",
+          mixBlendMode: theme === "dark" ? "screen" : "normal",
+          pointerEvents: "none",
+          zIndex: 1
+        }}
+      />
+      {/* Background vignette & atmospheric gradient for perfect readability */}
       <div style={{
         position: "absolute",
         inset: 0,
         background: theme === "dark"
-          ? "rgba(8, 20, 30, 0.72)"
-          : "rgba(220, 244, 250, 0.45)",
+          ? "radial-gradient(ellipse at 50% 35%, rgba(5, 16, 23, 0.08) 0%, rgba(5, 16, 23, 0.35) 100%)"
+          : "radial-gradient(ellipse at 50% 35%, rgba(220, 244, 250, 0.1) 0%, rgba(220, 244, 250, 0.45) 100%)",
         pointerEvents: "none",
-        zIndex: 1,
+        zIndex: 2,
       }} />
 
       <style>{`

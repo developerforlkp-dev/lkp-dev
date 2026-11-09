@@ -566,7 +566,7 @@ function PlaceHero({ place, galleryItems, id }) {
         alignItems: "stretch"
       }}
     >
-      {/* Misty Blue Mountain Topography Background Layer */}
+      {/* Misty Blue Mountain Topography Background Layer - 404-style dark mode adaptation */}
       <div
         style={{
           position: "absolute",
@@ -575,7 +575,9 @@ function PlaceHero({ place, galleryItems, id }) {
           backgroundSize: "cover",
           backgroundPosition: "left bottom",
           backgroundRepeat: "no-repeat",
-          opacity: isDark ? 0.65 : 0.95,
+          opacity: isDark ? 0.85 : 0.95,
+          filter: isDark ? "invert(1) hue-rotate(180deg)" : "none",
+          mixBlendMode: isDark ? "screen" : "normal",
           pointerEvents: "none",
           zIndex: 1
         }}
@@ -585,7 +587,7 @@ function PlaceHero({ place, galleryItems, id }) {
           position: "absolute",
           inset: 0,
           background: isDark
-            ? `linear-gradient(90deg, rgba(8,8,8,0.12) 0%, rgba(8,8,8,0.3) 38%, ${BG} 85%)`
+            ? `linear-gradient(90deg, rgba(8,8,8,0.35) 0%, rgba(8,8,8,0.15) 38%, ${BG} 85%)`
             : `linear-gradient(90deg, rgba(251,251,249,0.08) 0%, rgba(251,251,249,0.25) 38%, ${BG} 85%)`,
           pointerEvents: "none",
           zIndex: 2
@@ -628,17 +630,17 @@ function PlaceHero({ place, galleryItems, id }) {
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color: A,
-                background: AL || "rgba(0,151,178,0.08)",
+                background: isDark ? "rgba(0,151,178,0.18)" : (AL || "rgba(0,151,178,0.08)"),
                 padding: "4px 12px",
                 borderRadius: 20,
-                border: `1px solid ${A}30`,
+                border: `1px solid ${A}45`,
                 display: "inline-block"
               }}
             >
               {categoryName}
             </span>
             {place?.placeType && (
-              <span style={{ fontSize: 12, fontWeight: 500, color: M }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: isDark ? "rgba(235,235,230,0.72)" : M }}>
                 • {toDisplayString(place.placeType)}
               </span>
             )}
@@ -670,7 +672,7 @@ function PlaceHero({ place, galleryItems, id }) {
                 gap: 8,
                 fontSize: 14,
                 fontWeight: 500,
-                color: M,
+                color: isDark ? "rgba(235, 235, 230, 0.88)" : M,
                 marginBottom: 20
               }}
             >
@@ -684,7 +686,7 @@ function PlaceHero({ place, galleryItems, id }) {
             style={{
               fontSize: 14,
               lineHeight: 1.65,
-              color: M,
+              color: isDark ? "rgba(235, 235, 230, 0.78)" : M,
               margin: "0 0 26px 0",
               maxWidth: 480,
               display: "-webkit-box",
@@ -3348,7 +3350,7 @@ function MobileHero({ place, galleryItems, id }) {
 
   return (
     <section style={{ background: BG, paddingTop: 0, position: "relative", overflow: "hidden" }}>
-      {/* Topography Mountain Background for Mobile Hero */}
+      {/* Topography Mountain Background for Mobile Hero - 404-style dark mode adaptation */}
       <div
         style={{
           position: "absolute",
@@ -3360,7 +3362,9 @@ function MobileHero({ place, galleryItems, id }) {
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
-          opacity: isDark ? 0.35 : 0.75,
+          opacity: isDark ? 0.85 : 0.75,
+          filter: isDark ? "invert(1) hue-rotate(180deg)" : "none",
+          mixBlendMode: isDark ? "screen" : "normal",
           pointerEvents: "none",
           zIndex: 1
         }}
@@ -3371,7 +3375,7 @@ function MobileHero({ place, galleryItems, id }) {
           position: "absolute",
           inset: 0,
           background: isDark
-            ? `linear-gradient(180deg, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.5) 40%, ${BG} 90%)`
+            ? `linear-gradient(180deg, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.35) 40%, ${BG} 90%)`
             : `linear-gradient(180deg, rgba(251,251,249,0.15) 0%, rgba(251,251,249,0.4) 40%, ${BG} 90%)`,
           pointerEvents: "none",
           zIndex: 2
