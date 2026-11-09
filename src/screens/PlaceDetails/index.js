@@ -13,6 +13,7 @@ import Browse from "../../components/Browse";
 import { browse2 } from "../../mocks/browse";
 import { Footer } from "../../components/JUI/Footer";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
+import ExperienceReelsCarousel, { extractInstagramReelId } from "../../components/ExperienceReelsCarousel";
 import { getPlaceDetails, getHost, getHostContent } from "../../utils/api";
 import ShareButton from "../../components/ShareButton";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -4133,8 +4134,12 @@ function MobilePlaceDetails({
   hostAvatar,
   primaryCategoryId,
   currentListingId,
-  unavailablePopup
+  unavailablePopup,
+  placeReels
 }) {
+  const { theme, tokens } = useTheme();
+  const { FG, BG, M, A, B, W } = tokens || {};
+
   return (
     <>
       {unavailablePopup}
@@ -4170,6 +4175,14 @@ function MobilePlaceDetails({
         width="100%"
       />
       <LocationSection place={place} />
+
+      <ExperienceReelsCarousel
+        reelUrls={placeReels}
+        title="Place Reels"
+        subtitle="Watch real moments & highlights from this place"
+        theme={theme}
+        tokens={{ FG, BG, M, A, B, W }}
+      />
 
       {/* Community Feedback */}
       {/* <MobileCommunityFeedback /> */}
@@ -4209,6 +4222,49 @@ const PlaceDetails = () => {
   const [loading, setLoading] = useState(true);
   const [unavailablePopupOpen, setUnavailablePopupOpen] = useState(false);
   const unavailableRedirectRef = useRef(false);
+
+  const { theme, tokens } = useTheme();
+  const { FG, BG, M, A, B, W } = tokens || {};
+
+  // Reels / Social media links from place details
+  const placeReels = useMemo(() => {
+    const candidates = [
+      place?.socialMediaLinks,
+      place?.social_media_links,
+      place?.data?.socialMediaLinks,
+      place?.data?.social_media_links,
+      place?.reelUrls,
+      place?.reels,
+    ];
+
+    const allItems = [];
+    candidates.forEach((cand) => {
+      if (!cand) return;
+      if (Array.isArray(cand)) {
+        allItems.push(...cand);
+      } else if (typeof cand === "string" && cand.trim()) {
+        try {
+          const parsed = JSON.parse(cand);
+          if (Array.isArray(parsed)) allItems.push(...parsed);
+          else allItems.push(cand);
+        } catch (_) {
+          cand.split(",").forEach((s) => allItems.push(s.trim()));
+        }
+      }
+    });
+
+    return Array.from(
+      new Set(
+        allItems
+          .map((link) => {
+            if (!link) return null;
+            const urlStr = typeof link === "string" ? link : link?.url || link?.link || link?.href || "";
+            return extractInstagramReelId(urlStr) || urlStr;
+          })
+          .filter(Boolean)
+      )
+    );
+  }, [place]);
 
   // Dynamic browser tab title
   useDocumentTitle(place?.placeName || place?.title, "Places");
@@ -4428,6 +4484,7 @@ const PlaceDetails = () => {
           primaryCategoryId={primaryCategoryId}
           currentListingId={currentListingId}
           unavailablePopup={unavailablePopup}
+          placeReels={placeReels}
         />
       </ScopedThemeProvider>
     );
@@ -4463,6 +4520,14 @@ const PlaceDetails = () => {
         width="100%"
       />
       <LocationSection place={place} />
+
+      <ExperienceReelsCarousel
+        reelUrls={placeReels}
+        title="Place Reels"
+        subtitle="Watch real moments & highlights from this place"
+        theme={theme}
+        tokens={{ FG, BG, M, A, B, W }}
+      />
 
       {/* <CommunityFeedback /> */}
 
