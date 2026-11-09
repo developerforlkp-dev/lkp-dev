@@ -1655,22 +1655,114 @@ function VisitorInformation({ place }) {
     };
   }, [showAllVehicles, showAllTickets]);
 
-  const formatList = (arr, singleStr, fallback, formatter) => {
-    if (Array.isArray(arr) && arr.length > 0) {
-      return arr.map(item => {
-        const name = typeof item === 'string' ? item : item?.name || "";
-        return formatter ? formatter(name) : name;
-      }).filter(Boolean).join(', ');
+  const formatDistanceValue = (rawDist) => {
+    if (rawDist === null || rawDist === undefined || rawDist === "") return "";
+    const str = String(rawDist).trim();
+    if (!str || str.toLowerCase() === "null" || str.toLowerCase() === "undefined") return "";
+    // If it already contains units (e.g., "15 km" or "15km"), return cleaned up
+    if (/km/i.test(str)) {
+      return str;
     }
-    if (typeof singleStr === 'string' && singleStr.trim()) {
-      return formatter ? formatter(singleStr) : singleStr;
+    // If it's a numeric string / number
+    const num = parseFloat(str);
+    if (!isNaN(num) && num > 0) {
+      return `${num} km`;
     }
-    return fallback;
+    return str;
   };
 
-  const formattedTowns = formatList(place?.nearestTowns, place?.nearestTown, "Not Specified", (name) => name.split('/')[0]?.trim());
-  const formattedAirports = formatList(place?.nearestAirports, place?.nearestAirport, "Not Specified", (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase());
-  const formattedRailways = formatList(place?.nearestRailwayStations, place?.nearestRailway, "Not Specified", (name) => name.split('(')[0].replace(/Railway Station/i, "").trim());
+  const formatTransportItem = (item, formatter, specificDistance) => {
+    if (!item) return "";
+    let name = "";
+    let dist = "";
+
+    if (typeof item === "string") {
+      name = item;
+      // Check if distance is embedded in string e.g. "Kochi (45 km)" or "Kochi - 45km"
+      const match = name.match(/\((\d+(?:\.\d+)?\s*(?:km|kms)?)\)/i) || name.match(/[-–]\s*(\d+(?:\.\d+)?\s*(?:km|kms)?)/i);
+      if (match) {
+        dist = formatDistanceValue(match[1]);
+        name = name.replace(match[0], "").trim();
+      }
+    } else if (typeof item === "object") {
+      name = item?.name || item?.title || item?.stationName || item?.airportName || item?.townName || "";
+      const itemDist = item?.distance ?? item?.distanceInKm ?? item?.dist ?? item?.distanceKm;
+      dist = formatDistanceValue(itemDist);
+    }
+
+    if (!dist && specificDistance) {
+      dist = formatDistanceValue(specificDistance);
+    }
+
+    const cleanedName = formatter ? formatter(name) : name;
+    if (!cleanedName) return "";
+    return dist ? `${cleanedName} (${dist})` : cleanedName;
+  };
+
+  const formatTransportListItems = (arr, singleStr, fallback, formatter, specificDistance) => {
+    let rawItems = [];
+    if (Array.isArray(arr) && arr.length > 0) {
+      rawItems = arr;
+    } else if (typeof singleStr === 'string' && singleStr.trim()) {
+      // Could be comma-separated string e.g. "Vagamon, Elappara"
+      rawItems = singleStr.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    if (!rawItems.length) {
+      return [{ name: fallback, distance: "" }];
+    }
+
+    const parsedList = rawItems.map(item => {
+      let name = "";
+      let dist = "";
+
+      if (typeof item === "string") {
+        name = item;
+        const match = name.match(/\((\d+(?:\.\d+)?\s*(?:km|kms)?)\)/i) || name.match(/[-–]\s*(\d+(?:\.\d+)?\s*(?:km|kms)?)/i);
+        if (match) {
+          dist = formatDistanceValue(match[1]);
+          name = name.replace(match[0], "").trim();
+        }
+      } else if (typeof item === "object") {
+        name = item?.name || item?.title || item?.stationName || item?.airportName || item?.townName || "";
+        const itemDist = item?.distance ?? item?.distanceInKm ?? item?.dist ?? item?.distanceKm;
+        dist = formatDistanceValue(itemDist);
+      }
+
+      if (!dist && specificDistance) {
+        dist = formatDistanceValue(specificDistance);
+      }
+
+      const cleanedName = formatter ? formatter(name) : name;
+      return { name: cleanedName, distance: dist };
+    }).filter(i => Boolean(i.name));
+
+    return parsedList.length > 0 ? parsedList : [{ name: fallback, distance: "" }];
+  };
+
+  const townItems = formatTransportListItems(
+    place?.nearestTowns,
+    place?.nearestTown,
+    "Not Specified",
+    (name) => name.split('/')[0]?.trim(),
+    place?.nearestTownDistance || place?.townDistance || place?.distanceFromNearestTown
+  );
+
+  const airportItems = formatTransportListItems(
+    place?.nearestAirports,
+    place?.nearestAirport,
+    "Not Specified",
+    (name) => name.split('(')[0].replace(/International Airport/i, "").trim().toUpperCase(),
+    place?.nearestAirportDistance || place?.airportDistance || place?.distanceFromNearestAirport
+  );
+
+  const railwayItems = formatTransportListItems(
+    place?.nearestRailwayStations,
+    place?.nearestRailway,
+    "Not Specified",
+    (name) => name.split('(')[0].replace(/Railway Station/i, "").trim(),
+    place?.nearestRailwayDistance || place?.railwayDistance || place?.distanceFromNearestRailway || place?.stationDistance
+  );
 
   const suitabilityTags = useMemo(() => {
     const raw = place?.suitableFor;
@@ -1975,32 +2067,70 @@ function VisitorInformation({ place }) {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ color: A, marginTop: 2 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* Nearest Town Row */}
+                    <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
+                      <div style={{ color: A, marginTop: 2, flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                       </div>
-                      <div>
-                        <span style={{ fontSize: 9, color: M, display: "block" }}>Nearest Town</span>
-                        <span style={{ fontWeight: 700, color: FG, fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{formattedTowns}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: 9, color: M, display: "block", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>Nearest Town</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2 }}>
+                          {townItems.map((t, idx) => (
+                            <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                              <span style={{ fontWeight: 700, color: FG, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
+                              {t.distance ? (
+                                <span style={{ fontSize: 10.5, fontWeight: 750, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.08)`, padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap", flexShrink: 0 }}>
+                                  {t.distance}
+                                </span>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ color: A, marginTop: 2 }}>
+
+                    {/* Railway Terminal Row */}
+                    <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: 6, borderBottom: `1px solid ${B}` }}>
+                      <div style={{ color: A, marginTop: 2, flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="4" y="3" width="16" height="18" rx="2" /><rect x="8" y="7" width="8" height="4" /><circle cx="10" cy="16" r="1" /><circle cx="14" cy="16" r="1" /></svg>
                       </div>
-                      <div>
-                        <span style={{ fontSize: 9, color: M, display: "block" }}>Railway Terminal</span>
-                        <span style={{ fontWeight: 700, color: FG, fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{formattedRailways}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: 9, color: M, display: "block", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>Railway Terminal</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2 }}>
+                          {railwayItems.map((r, idx) => (
+                            <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                              <span style={{ fontWeight: 700, color: FG, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
+                              {r.distance ? (
+                                <span style={{ fontSize: 10.5, fontWeight: 750, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.08)`, padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap", flexShrink: 0 }}>
+                                  {r.distance}
+                                </span>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ color: A, marginTop: 2 }}>
+
+                    {/* Airport Terminal Row */}
+                    <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <div style={{ color: A, marginTop: 2, flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z" /></svg>
                       </div>
-                      <div>
-                        <span style={{ fontSize: 9, color: M, display: "block" }}>Airport Terminal</span>
-                        <span style={{ fontWeight: 700, color: FG, fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{formattedAirports}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: 9, color: M, display: "block", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>Airport Terminal</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2 }}>
+                          {airportItems.map((a, idx) => (
+                            <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                              <span style={{ fontWeight: 700, color: FG, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.name}</span>
+                              {a.distance ? (
+                                <span style={{ fontSize: 10.5, fontWeight: 750, color: A, background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.08)`, padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap", flexShrink: 0 }}>
+                                  {a.distance}
+                                </span>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
