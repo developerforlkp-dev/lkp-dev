@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 
-const MAX_VISIBLE = 7;
-const HALF = 3;
+const MAX_VISIBLE_DESKTOP = 7;
+const MAX_VISIBLE_MOBILE  = 5;
+const HALF_DESKTOP = 3;
+const HALF_MOBILE  = 2;
 
-const FAN_POSITIONS = [
+// 7-card fan (desktop)
+const FAN_POSITIONS_7 = [
   { rot: -21, scale: 0.7756, x: -30, y: 7.3, zIndex: 1 },
   { rot: -14, scale: 0.8498, x: -22, y: 4.0, zIndex: 2 },
   { rot: -7,  scale: 0.9346, x: -11, y: 1.3, zIndex: 3 },
@@ -14,8 +17,26 @@ const FAN_POSITIONS = [
   { rot: 21,  scale: 0.7756, x: 30,  y: 7.3, zIndex: 1 },
 ];
 
+// 5-card fan (mobile) — same U-curve arc as desktop, scaled for small screens
+const FAN_POSITIONS_5 = [
+  { rot: -18, scale: 0.820, x: -28, y: 6.0, zIndex: 2  },
+  { rot:  -9, scale: 0.920, x: -14, y: 1.8, zIndex: 3  },
+  { rot:   0, scale: 1.000, x:   0, y: 0.0, zIndex: 10 },
+  { rot:   9, scale: 0.920, x:  14, y: 1.8, zIndex: 3  },
+  { rot:  18, scale: 0.820, x:  28, y: 6.0, zIndex: 2  },
+];
+
+function isMobileViewport() {
+  return typeof window !== "undefined" && window.innerWidth < 640;
+}
+
+function getMaxVisible() { return isMobileViewport() ? MAX_VISIBLE_MOBILE : MAX_VISIBLE_DESKTOP; }
+function getHalf()       { return isMobileViewport() ? HALF_MOBILE        : HALF_DESKTOP; }
+function getFanPositions(){ return isMobileViewport() ? FAN_POSITIONS_5    : FAN_POSITIONS_7; }
+
 function getResponsiveMultiplier(width) {
-  if (width < 480) return 0.28;
+  if (width < 400) return 0.26;
+  if (width < 480) return 0.30;
   if (width < 640) return 0.38;
   if (width < 768) return 0.5;
   if (width < 1024) return 0.75;
@@ -24,8 +45,9 @@ function getResponsiveMultiplier(width) {
 
 function getHeightMultiplier(width) {
   let idealPx;
-  if (width < 480) idealPx = 22 * 16;
-  else if (width < 640) idealPx = 26 * 16;
+  if (width < 400) idealPx = 18 * 16;
+  else if (width < 480) idealPx = 20 * 16;
+  else if (width < 640) idealPx = 24 * 16;
   else if (width < 768) idealPx = 28 * 16;
   else if (width < 1024) idealPx = 34 * 16;
   else idealPx = 38 * 16;
@@ -35,10 +57,11 @@ function getHeightMultiplier(width) {
   return Math.max(0.65, available / idealPx);
 }
 
-function getSlotConfig(totalCards, slot) {
-  if (totalCards >= MAX_VISIBLE) return FAN_POSITIONS[slot];
-  const center = totalCards >> 1;
-  const distance = totalCards > 1 ? (slot - center) / center : 0;
+function getSlotConfig(totalSlots, slot) {
+  const positions = getFanPositions();
+  if (totalSlots >= positions.length) return positions[slot];
+  const center = totalSlots >> 1;
+  const distance = totalSlots > 1 ? (slot - center) / center : 0;
   const absDistance = Math.abs(distance);
   return {
     rot: distance * 21,
@@ -63,21 +86,35 @@ export default function SocialCards({
   const directionRef = useRef(null);
   const prevVisible = useRef(new Set());
 
+  // Track viewport bucket so we re-render when crossing mobile/desktop boundary
+  const [isMobileLayout, setIsMobileLayout] = useState(isMobileViewport);
+  useEffect(() => {
+    const onResize = () => setIsMobileLayout(isMobileViewport());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const totalCards = cards.length;
-  const needsPagination = totalCards > MAX_VISIBLE;
-  const [centerIndex, setCenterIndex] = useState(needsPagination ? HALF : totalCards >> 1);
+
+  // Viewport-sensitive values — recalculated whenever isMobileLayout changes
+  const maxVisible = isMobileLayout ? MAX_VISIBLE_MOBILE : MAX_VISIBLE_DESKTOP;
+  const half       = isMobileLayout ? HALF_MOBILE        : HALF_DESKTOP;
+  const needsPagination = totalCards > maxVisible;
+  const [centerIndex, setCenterIndex] = useState(needsPagination ? half : totalCards >> 1);
 
   const getVisibleMap = useCallback((center) => {
+    const mv = isMobileLayout ? MAX_VISIBLE_MOBILE : MAX_VISIBLE_DESKTOP;
+    const hf = isMobileLayout ? HALF_MOBILE        : HALF_DESKTOP;
     const map = new Map();
-    if (!needsPagination) {
+    if (totalCards <= mv) {
       cards.forEach((_, i) => map.set(i, i));
       return map;
     }
-    for (let slot = 0; slot < MAX_VISIBLE; slot++) {
-      map.set(((center + slot - HALF) % totalCards + totalCards) % totalCards, slot);
+    for (let slot = 0; slot < mv; slot++) {
+      map.set(((center + slot - hf) % totalCards + totalCards) % totalCards, slot);
     }
     return map;
-  }, [totalCards, needsPagination, cards]);
+  }, [totalCards, cards, isMobileLayout]);
 
   const cycle = useCallback((direction) => {
     if (isAnimating.current || !needsPagination) return;
@@ -110,7 +147,7 @@ export default function SocialCards({
     const isFirstMount = !hasEntered.current;
     const multiplier = getResponsiveMultiplier(window.innerWidth);
     const hMult = getHeightMultiplier(window.innerWidth);
-    const slotCount = needsPagination ? MAX_VISIBLE : totalCards;
+    const slotCount = needsPagination ? maxVisible : totalCards;
     const config = (slot) => getSlotConfig(slotCount, slot);
 
     if (isFirstMount) isAnimating.current = true;
@@ -270,7 +307,7 @@ export default function SocialCards({
       window.removeEventListener("resize", onResize);
       if (leaveTimer) clearTimeout(leaveTimer);
     };
-  }, [centerIndex, totalCards, getVisibleMap, needsPagination]);
+  }, [centerIndex, totalCards, getVisibleMap, needsPagination, isMobileLayout]);
 
   if (!totalCards) return null;
 
@@ -331,37 +368,9 @@ export default function SocialCards({
         .card-fan-carousel-wrapper .fan-card-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.1) 40%, transparent 70%);
+          background: linear-gradient(to top, rgba(0,0,0,0.25) 0%, transparent 40%);
           pointer-events: none;
           z-index: 2;
-        }
-        .card-fan-carousel-wrapper .fan-card-meta {
-          position: absolute;
-          left: 12px;
-          right: 12px;
-          bottom: 12px;
-          z-index: 3;
-          pointer-events: none;
-          color: #FFFFFF;
-        }
-        .card-fan-carousel-wrapper .fan-card-eyebrow {
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #00E5FF;
-          display: block;
-          margin-bottom: 2px;
-        }
-        .card-fan-carousel-wrapper .fan-card-title {
-          font-size: clamp(12px, 1.2vw, 14px);
-          font-weight: 700;
-          line-height: 1.2;
-          color: #FFFFFF;
-          margin: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         .card-fan-arrow-btn {
           position: relative;
@@ -393,15 +402,15 @@ export default function SocialCards({
         }
         @media (max-width: 640px) {
           .card-fan-carousel-wrapper .fan-layout {
-            height: clamp(230px, 36vh, 320px);
+            height: clamp(200px, 48vw, 290px);
           }
           .card-fan-carousel-wrapper .fan-card {
-            width: clamp(120px, 28vw, 150px);
-            border-radius: 14px;
+            width: clamp(96px, 22vw, 130px);
+            border-radius: 12px;
           }
           .card-fan-arrow-btn {
-            width: 38px;
-            height: 38px;
+            width: 34px;
+            height: 34px;
           }
         }
       `}</style>
@@ -417,12 +426,6 @@ export default function SocialCards({
                   alt={card.alt || card.title || `Card ${index}`}
                 />
                 <div className="fan-card-overlay" />
-                {(card.title || card.eyebrow) && (
-                  <div className="fan-card-meta">
-                    {card.eyebrow && <span className="fan-card-eyebrow">{card.eyebrow}</span>}
-                    {card.title && <h4 className="fan-card-title">{card.title}</h4>}
-                  </div>
-                )}
               </div>
             );
 

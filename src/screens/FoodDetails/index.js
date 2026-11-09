@@ -903,7 +903,7 @@ function CulinaryHero({ food, galleryItems }) {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: isMobile ? "80px 16px 40px" : "100px 24px 48px",
+        padding: isMobile ? "60px 16px 32px" : "100px 24px 48px",
         boxSizing: "border-box",
         overflow: "hidden"
       }}
@@ -999,38 +999,32 @@ function CulinaryHero({ food, galleryItems }) {
         }
         @media (max-width: 640px) {
           .food-fan-hero__actions {
-            top: 16px;
-            right: 16px;
+            top: 14px;
+            right: 14px;
             gap: 8px;
           }
           .food-fan-hero__save {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
           }
           .food-fan-hero__header {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+            max-width: 100%;
+            padding: 0 8px;
+          }
+          .food-fan-hero__meta {
+            gap: 6px;
+            margin-bottom: 10px;
           }
           .food-fan-hero__title {
-            font-size: clamp(24px, 7vw, 36px);
+            font-size: clamp(22px, 6.5vw, 32px);
+            letter-spacing: -0.02em;
           }
-          .food-fan-hero__meta-pill {
-            font-size: 9px;
-            padding: 3px 10px;
-            min-height: 24px;
+          .food-fan-hero__hint {
+            display: none;
           }
         }
       `}</style>
-
-      {/* Back Button */}
-      <button
-        type="button"
-        className="premium-back-button"
-        onClick={() => history.goBack()}
-        aria-label="Go back"
-        style={{ zIndex: 40 }}
-      >
-        <ChevronLeft size={20} />
-      </button>
 
       {/* Action Buttons (Save & Share) */}
       <div className="food-fan-hero__actions">
