@@ -2476,7 +2476,7 @@ function GoodToKnow({ place }) {
                   background: W,
                   border: `1px solid ${B}`,
                   borderRadius: 24,
-                  padding: "24px 24px 20px 24px",
+                  padding: "28px 24px 20px 24px",
                   position: "relative",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.01)",
                   height: "100%",
@@ -2500,36 +2500,27 @@ function GoodToKnow({ place }) {
 
 
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {carryItems.map(item => (
                       <div
                         key={item}
                         style={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          padding: "8px 10px",
+                          alignItems: "flex-start",
+                          gap: 10,
+                          padding: "8px 12px",
                           background: `${S}80`,
-                          borderRadius: 10
+                          borderRadius: 10,
+                          border: `1px dashed ${B}`
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: W, border: `1px solid ${B}`, flexShrink: 0 }}>
-                          <Check size={8} color={A} strokeWidth={3} />
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: W, border: `1px solid ${B}`, flexShrink: 0, marginTop: 1 }}>
+                          <Check size={9} color={A} strokeWidth={3} />
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: FG }}>{item}</span>
+                        <span style={{ fontSize: 11.5, fontWeight: 600, color: FG, lineHeight: 1.4 }}>{item}</span>
                       </div>
                     ))}
                   </div>
-                </div>
-
-                {/* Baggage Barcode Illustration */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 20 }}>
-                  <div style={{ display: "flex", gap: 2, alignItems: "center", height: 16, opacity: 0.8 }}>
-                    {[2, 4, 1, 3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 1, 3, 4, 1, 2, 3, 1, 4, 2].map((w, idx) => (
-                      <div key={idx} style={{ width: w, height: "100%", background: FG, opacity: idx % 3 === 0 ? 0.3 : 0.8 }} />
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 8, fontFamily: "monospace", color: M, letterSpacing: "0.2em" }}>*LKP-{place?.id || "CURATOR"}*</span>
                 </div>
               </motion.div>
             </div>
@@ -3135,36 +3126,39 @@ function MobileHero({ place, galleryItems, id }) {
             type="button"
             onClick={(e) => { e.stopPropagation(); onClick(e); }}
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               borderRadius: "50%",
-              background: "rgba(0,0,0,0.45)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              border: `1px solid ${A}`,
+              background: theme === "dark" ? "rgba(20,20,20,0.85)" : "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: `1.5px solid ${A}55`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              boxShadow: "0 6px 18px rgba(15,15,15,0.18)",
               outline: "none",
-              cursor: "pointer"
+              cursor: "pointer",
+              color: theme === "dark" ? FG : A,
+              transition: "transform 0.2s ease, border-color 0.2s ease"
             }}
-            aria-label="Save"
+            aria-label={saved ? "Remove from favorites" : "Save to favorites"}
           >
             <style>{`
               .mobile-save-icon-alt-${id} svg {
-                fill: ${saved ? (A || "#0097B2") : "#FFFFFF"};
+                fill: ${saved ? (A || "#0097B2") : "none"};
+                stroke: ${saved ? (A || "#0097B2") : "currentColor"};
                 transition: fill 0.3s ease;
               }
             `}</style>
             <div className={`mobile-save-icon-alt-${id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name={saved ? "heart-fill" : "heart"} size={18} />
+              <Icon name={saved ? "heart-fill" : "heart"} size={20} />
             </div>
           </button>
         )}
       </Favorite>
 
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <button
           type="button"
           onClick={() => {
@@ -3172,55 +3166,90 @@ function MobileHero({ place, galleryItems, id }) {
             setLightboxOpen(true);
           }}
           style={{
-            height: 40,
-            borderRadius: 20,
+            height: 44,
+            borderRadius: 22,
             padding: "0 14px",
-            background: "rgba(0,0,0,0.45)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.25)",
-            color: "#FFFFFF",
+            background: theme === "dark" ? "rgba(20,20,20,0.85)" : "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: `1.5px solid ${A}40`,
+            color: FG,
             display: "flex",
             alignItems: "center",
             gap: 6,
             fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer"
+            fontWeight: 700,
+            cursor: "pointer",
+            boxShadow: "0 6px 18px rgba(15,15,15,0.15)"
           }}
         >
-          <Camera size={14} />
+          <Camera size={15} color={A} />
           {images.length}
         </button>
         <button
           type="button"
           onClick={handleMobileShare}
           style={{
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             borderRadius: "50%",
-            background: "rgba(0,0,0,0.45)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            border: `1px solid ${A}`,
+            background: theme === "dark" ? "rgba(20,20,20,0.85)" : "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: `1.5px solid ${A}55`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            boxShadow: "0 6px 18px rgba(15,15,15,0.18)",
             outline: "none",
-            cursor: "pointer"
+            cursor: "pointer",
+            color: theme === "dark" ? FG : A,
+            transition: "transform 0.2s ease, border-color 0.2s ease"
           }}
           aria-label="Share"
         >
-          <Share2 size={18} color="#FFFFFF" />
+          <Share2 size={19} color={theme === "dark" ? FG : A} />
         </button>
       </div>
     </div>
   );
 
+  const isDark = theme === "dark";
+
   return (
     <section style={{ background: BG, paddingTop: 0, position: "relative", overflow: "hidden" }}>
+      {/* Topography Mountain Background for Mobile Hero */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "100%",
+          backgroundImage: `url(${topographyBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          opacity: isDark ? 0.35 : 0.75,
+          pointerEvents: "none",
+          zIndex: 1
+        }}
+      />
+      {/* Subtle overlay gradient to keep text and cards perfectly legible */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: isDark
+            ? `linear-gradient(180deg, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.5) 40%, ${BG} 90%)`
+            : `linear-gradient(180deg, rgba(251,251,249,0.15) 0%, rgba(251,251,249,0.4) 40%, ${BG} 90%)`,
+          pointerEvents: "none",
+          zIndex: 2
+        }}
+      />
+
       {/* Journal Spread Carousel in mobile hero */}
-      <div style={{ position: "relative", overflow: "hidden", width: "100%", height: "clamp(380px, 58svh, 480px)", background: BG }}>
+      <div style={{ position: "relative", overflow: "hidden", width: "100%", height: "clamp(380px, 58svh, 480px)", background: "transparent", zIndex: 3 }}>
         <JournalSpreadCarousel
           spreads={spreads}
           title={placeName}
@@ -3663,18 +3692,6 @@ function MobileGoodToKnow({ place }) {
                   <span style={{ fontSize: 12, fontWeight: 600, color: FG }}>{item}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Baggage Barcode */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 18, opacity: 0.7 }}>
-              <div style={{
-                width: 110,
-                height: 20,
-                color: FG,
-                opacity: 0.15,
-                backgroundImage: `repeating-linear-gradient(90deg, currentColor, currentColor 1px, transparent 1px, transparent 3px, currentColor 3px, currentColor 4px, transparent 4px, transparent 6px)`
-              }} />
-              <span style={{ fontSize: 8, fontFamily: "monospace", color: M, letterSpacing: "0.1em" }}>*BAG-LKP-${place?.id || "PACK"}*</span>
             </div>
           </div>
         </div>
