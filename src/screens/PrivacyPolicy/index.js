@@ -295,7 +295,7 @@ const AccordionItem = ({ item, isOpen, onClick, themeTokens }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "24px 32px",
+          padding: "clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 32px)",
           background: "transparent",
           border: "none",
           cursor: "pointer",
@@ -303,7 +303,7 @@ const AccordionItem = ({ item, isOpen, onClick, themeTokens }) => {
           outline: "none"
         }}
       >
-        <span style={{ fontSize: "clamp(1.1rem, 2vw, 1.3rem)", fontWeight: isOpen ? 600 : 500, color: isOpen ? A : FG, transition: "color 0.3s ease" }}>
+        <span style={{ fontSize: "clamp(1rem, 2vw, 1.25rem)", fontWeight: isOpen ? 600 : 500, color: isOpen ? A : FG, transition: "color 0.3s ease" }}>
           {item.title}
         </span>
         <motion.div
@@ -322,7 +322,7 @@ const AccordionItem = ({ item, isOpen, onClick, themeTokens }) => {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div style={{ padding: "0px 32px 32px 32px", color: M, fontSize: "1.1rem", lineHeight: 1.9 }}>
+            <div style={{ padding: "0px clamp(16px, 3vw, 32px) clamp(20px, 3vw, 32px) clamp(16px, 3vw, 32px)", color: M, fontSize: "clamp(0.95rem, 1.5vw, 1.05rem)", lineHeight: 1.8 }}>
               {item.contentHtml ? (
                 <div 
                   className="policy-rich-text"
@@ -623,32 +623,33 @@ const PrivacyPolicy = () => {
         }
       `}</style>
 
-      <div style={{ background: tokens.BG, minHeight: "100vh", paddingTop: "100px", paddingBottom: "80px", color: tokens.FG }}>
-        <div style={{ maxWidth: "1320px", margin: "0 auto", padding: "0 36px" }}>
+      <div style={{ background: tokens.BG, minHeight: "100vh", paddingTop: "clamp(24px, 3.5vw, 40px)", paddingBottom: "clamp(40px, 6vw, 80px)", color: tokens.FG }}>
+        <div style={{ maxWidth: "1320px", margin: "0 auto", padding: "0 clamp(16px, 3vw, 36px)" }}>
           
           <motion.div 
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            style={{ textAlign: "center", marginBottom: "40px" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{ textAlign: "center", marginBottom: "clamp(24px, 3vw, 36px)" }}
           >
             <h1 className="font-display" style={{ 
-              fontSize: "clamp(3.5rem, 7vw, 5.5rem)", 
+              fontSize: "clamp(2.2rem, 5vw, 4rem)", 
               fontWeight: 400, 
               color: tokens.A, 
               letterSpacing: "-0.02em",
-              marginBottom: "16px",
+              marginBottom: "10px",
+              lineHeight: 1.15,
               fontFamily: "Georgia, serif"
             }}>
               {title}
             </h1>
-            <p style={{ fontSize: "1.1rem", color: tokens.M, maxWidth: "600px", margin: "0 auto", lineHeight: 1.6 }}>
+            <p style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.05rem)", color: tokens.M, maxWidth: "600px", margin: "0 auto", lineHeight: 1.5 }}>
               How we collect, use, and protect your information.
             </p>
           </motion.div>
 
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
               <p style={{ color: tokens.M, fontSize: "16px" }}>Loading...</p>
             </div>
           ) : parsedSectionsData && parsedSectionsData.sections.length > 0 ? (
@@ -657,14 +658,14 @@ const PrivacyPolicy = () => {
                 <div 
                   className="policy-rich-text"
                   style={{
-                    marginBottom: "24px",
-                    padding: "24px 32px",
+                    marginBottom: "20px",
+                    padding: "clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 32px)",
                     borderRadius: "12px",
                     background: tokens.BG,
                     border: `1px solid ${tokens.B}`,
                     color: tokens.FG,
-                    fontSize: "16px",
-                    lineHeight: 1.9,
+                    fontSize: "clamp(0.95rem, 1.4vw, 1rem)",
+                    lineHeight: 1.8,
                     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)",
                   }}
                   dangerouslySetInnerHTML={{ __html: parsedSectionsData.introHtml }}
