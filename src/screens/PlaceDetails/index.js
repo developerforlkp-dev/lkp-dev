@@ -2371,15 +2371,11 @@ function VisitorInformation({ place }) {
 
               {/* Card content bottom (Detached Stamp Stub) */}
               <div style={{ padding: "20px 28px 28px 28px", height: "30%", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "space-between", background: `rgba(${A === "#0097B2" ? "0, 151, 178" : "17, 17, 17"}, 0.02)` }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{
-                    width: 90,
-                    height: 24,
-                    background: FG,
-                    opacity: 0.1,
-                    backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 1px, ${FG} 1px, ${FG} 3px, transparent 3px, transparent 4px, ${FG} 4px, ${FG} 5px)`
-                  }} />
-                  <span className="font-mono" style={{ fontSize: 7, color: M }}>LKP-{place?.id || "99812"}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 9, color: M, display: "block" }}>Entry Verification</span>
+                  <span style={{ fontWeight: 700, color: FG, fontSize: 12 }}>
+                    {place?.placeCode || place?.code || (place?.id ? `LKP-${place.id}` : "Verified Location")}
+                  </span>
                 </div>
 
                 {/* Stamp Clipart */}
