@@ -25,6 +25,7 @@ import { getShareText } from "../../utils/shareUtils";
 import { formatTimingsRange } from "../../utils/timeUtils";
 import SocialCards from "./SocialCards";
 import keralaFoodBg from "./kerala-culinary-bg.webp";
+import keralaFoodBgDark from "./kerala-culinary-bg-dark.webp";
 
 const toDisplayString = (value) => {
   if (!value) return "";
@@ -893,12 +894,8 @@ function CulinaryHero({ food, galleryItems }) {
         maxWidth: expandedDesktop ? 1320 : "none",
         margin: expandedDesktop ? "0 auto" : 0,
         background: theme === "dark"
-          ? "linear-gradient(160deg, #0a1a24 0%, #0d2535 60%, #0a1f2e 100%)"
+          ? (BG || "#080808")
           : "#daf4f8",
-        backgroundImage: `url(${keralaFoodBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundRepeat: "no-repeat",
         minHeight: isMobile ? "auto" : "90vh",
         display: "flex",
         flexDirection: "column",
@@ -909,15 +906,29 @@ function CulinaryHero({ food, galleryItems }) {
         overflow: "hidden"
       }}
     >
-      {/* Background overlay for contrast */}
+      {/* Culinary Doodle Background Layer - Crisp Cyan Doodles on Transparent Canvas */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${theme === "dark" ? keralaFoodBgDark : keralaFoodBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          opacity: theme === "dark" ? 0.75 : 0.85,
+          pointerEvents: "none",
+          zIndex: 1
+        }}
+      />
+      {/* Background vignette & atmospheric gradient for perfect readability */}
       <div style={{
         position: "absolute",
         inset: 0,
         background: theme === "dark"
-          ? "rgba(8, 20, 30, 0.72)"
-          : "rgba(220, 244, 250, 0.45)",
+          ? "radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(8, 8, 8, 0.4) 100%)"
+          : "radial-gradient(ellipse at 50% 35%, rgba(220, 244, 250, 0.1) 0%, rgba(220, 244, 250, 0.45) 100%)",
         pointerEvents: "none",
-        zIndex: 1,
+        zIndex: 2,
       }} />
 
       <style>{`

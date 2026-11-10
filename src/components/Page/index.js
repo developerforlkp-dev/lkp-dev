@@ -218,6 +218,30 @@ const Page = ({
           .slim-header-wrapper.is-detail-page [class*="Header_burger"], .slim-header-wrapper.is-blog-page [class*="Header_burger"], .slim-header-wrapper.is-filter-page [class*="Header_burger"] {
              transform: none;
              margin-top: 0;
+             margin-left: 10px !important;
+             width: 34px !important;
+             height: 34px !important;
+             border-radius: 50% !important;
+          }
+          .slim-header-wrapper.is-detail-page [class*="Header_login"],
+          .slim-header-wrapper.is-blog-page [class*="Header_login"],
+          .slim-header-wrapper.is-filter-page [class*="Header_login"],
+          .slim-header-wrapper.is-detail-page [class*="User_head"],
+          .slim-header-wrapper.is-blog-page [class*="User_head"],
+          .slim-header-wrapper.is-filter-page [class*="User_head"] {
+             width: 34px !important;
+             height: 34px !important;
+             border-radius: 50% !important;
+             flex-shrink: 0 !important;
+          }
+          .slim-header-wrapper.is-detail-page [class*="Header_login"] svg,
+          .slim-header-wrapper.is-blog-page [class*="Header_login"] svg,
+          .slim-header-wrapper.is-filter-page [class*="Header_login"] svg,
+          .slim-header-wrapper.is-detail-page [class*="User_head"] svg,
+          .slim-header-wrapper.is-blog-page [class*="User_head"] svg,
+          .slim-header-wrapper.is-filter-page [class*="User_head"] svg {
+             width: 20px !important;
+             height: 20px !important;
           }
         }
       `}</style>
