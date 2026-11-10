@@ -4680,8 +4680,8 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                 return (
                   <motion.div
                     key={idx}
-                    whileHover={{ y: -8, scale: 1.02 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    whileHover={{ y: -6, borderColor: A, boxShadow: `0 20px 40px ${A}0f` }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
                     style={{
                       width: "360px",
                       background: theme === "dark"
@@ -4701,8 +4701,6 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                       overflow: "hidden",
                       boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.boxShadow = `0 20px 40px ${A}0f`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.02)"; }}
                   >
                     {/* Stylized background quote mark */}
                     <span style={{
@@ -4755,8 +4753,8 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
               })}
               {displayReviews.length > 8 && (
                 <motion.div
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  whileHover={{ y: -6, borderColor: A, boxShadow: `0 20px 40px ${A}0f` }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
                   onClick={() => setReviewsModalOpen(true)}
                   style={{
                     width: "360px",
@@ -4776,8 +4774,6 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                     cursor: "pointer",
                     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)"
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = A; e.currentTarget.style.boxShadow = `0 20px 40px ${A}0f`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = B; e.currentTarget.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.02)"; }}
                 >
                   <span style={{ fontSize: 18, fontWeight: 700, color: A }}>View all {displayReviews.length} reviews &rarr;</span>
                 </motion.div>
