@@ -459,6 +459,24 @@ const EventSkeleton = () => (
   </div>
 );
 
+const PolicySkeleton = ({ count = 6 }) => (
+  <div className={styles.policySkeleton}>
+    <div className={styles.policyHeader}>
+      <Shimmer className={styles.policyHeaderTitle} />
+      <Shimmer className={styles.policyHeaderSubtitle} />
+    </div>
+    <div className={styles.policySectionsList}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Shimmer
+          key={i}
+          className={styles.policyItemSkeleton}
+          style={{ height: i === 0 ? 140 : 72 }}
+        />
+      ))}
+    </div>
+  </div>
+);
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const LoadingSkeleton = ({ variant = "homepage", count, sections }) => {
@@ -488,6 +506,8 @@ const LoadingSkeleton = ({ variant = "homepage", count, sections }) => {
         return <FoodSkeleton />;
       case "event":
         return <EventSkeleton />;
+      case "policy":
+        return <PolicySkeleton count={count || 6} />;
       case "completed":
         return <CompletedSkeleton count={count || 3} />;
       case "cards":

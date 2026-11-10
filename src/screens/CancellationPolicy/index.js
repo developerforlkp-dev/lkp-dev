@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ArrowUp } from "lucide-react";
 import Page from "../../components/Page";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { getPolicyDocuments } from "../../utils/api";
 import { useTheme } from "../../components/JUI/Theme";
 
@@ -482,88 +483,90 @@ const CancellationPolicy = () => {
       <div style={{ background: tokens.BG, minHeight: "100vh", paddingTop: "clamp(24px, 3.5vw, 40px)", paddingBottom: "clamp(40px, 6vw, 80px)", color: tokens.FG, fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <div style={{ maxWidth: "1320px", margin: "0 auto", padding: "0 clamp(16px, 3vw, 36px)" }}>
           
-          <motion.div 
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            style={{ textAlign: "center", marginBottom: "clamp(24px, 3vw, 36px)" }}
-          >
-            <h1 className="font-display" style={{ 
-              fontSize: "clamp(2.2rem, 5vw, 4rem)",
-              fontWeight: 400, 
-              color: tokens.A, 
-              letterSpacing: "-0.02em",
-              marginBottom: "10px",
-              lineHeight: 1.15,
-              fontFamily: "Georgia, serif"
-            }}>
-              {title}
-            </h1>
-            <p style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.05rem)", color: tokens.M, maxWidth: "600px", margin: "0 auto", lineHeight: 1.5 }}>
-              Review our cancellation, refund, and modification guidelines.
-            </p>
-          </motion.div>
-
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
-              <p style={{ color: tokens.M, fontSize: "16px" }}>Loading...</p>
-            </div>
-          ) : parsedSectionsData && parsedSectionsData.sections.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {parsedSectionsData.introHtml && (
+            <LoadingSkeleton variant="policy" />
+          ) : (
+            <>
+              <motion.div 
+                initial={{ opacity: 0, y: -16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{ textAlign: "center", marginBottom: "clamp(24px, 3vw, 36px)" }}
+              >
+                <h1 className="font-display" style={{ 
+                  fontSize: "clamp(2.2rem, 5vw, 4rem)",
+                  fontWeight: 400, 
+                  color: tokens.A, 
+                  letterSpacing: "-0.02em",
+                  marginBottom: "10px",
+                  lineHeight: 1.15,
+                  fontFamily: "Georgia, serif"
+                }}>
+                  {title}
+                </h1>
+                <p style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.05rem)", color: tokens.M, maxWidth: "600px", margin: "0 auto", lineHeight: 1.5 }}>
+                  Review our cancellation, refund, and modification guidelines.
+                </p>
+              </motion.div>
+
+              {parsedSectionsData && parsedSectionsData.sections.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {parsedSectionsData.introHtml && (
+                    <div 
+                      className="policy-rich-text"
+                      style={{
+                        marginBottom: "20px",
+                        padding: "clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 32px)",
+                        borderRadius: "12px",
+                        background: tokens.BG,
+                        border: `1px solid ${tokens.B}`,
+                        color: tokens.FG,
+                        fontSize: "clamp(0.95rem, 1.4vw, 1rem)",
+                        lineHeight: 1.8,
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)",
+                      }}
+                      dangerouslySetInnerHTML={{ __html: parsedSectionsData.introHtml }}
+                    />
+                  )}
+                  {parsedSectionsData.sections.map((item, index) => (
+                    <AccordionItem
+                      key={index}
+                      item={item}
+                      isOpen={openIndices.includes(index)}
+                      onClick={() => toggleAccordion(index)}
+                      themeTokens={tokens}
+                    />
+                  ))}
+                </div>
+              ) : documentHtml ? (
                 <div 
                   className="policy-rich-text"
-                  style={{
-                    marginBottom: "20px",
-                    padding: "clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 32px)",
-                    borderRadius: "12px",
-                    background: tokens.BG,
+                  style={{ 
+                    background: tokens.BG, 
+                    padding: "40px", 
+                    borderRadius: "12px", 
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)", 
                     border: `1px solid ${tokens.B}`,
-                    color: tokens.FG,
-                    fontSize: "clamp(0.95rem, 1.4vw, 1rem)",
-                    lineHeight: 1.8,
-                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)",
+                    color: tokens.FG, 
+                    fontSize: "16px", 
+                    lineHeight: 1.9,
                   }}
-                  dangerouslySetInnerHTML={{ __html: parsedSectionsData.introHtml }}
+                  dangerouslySetInnerHTML={{ __html: documentHtml }} 
                 />
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {accordionData.map((item, index) => (
+                    <AccordionItem
+                      key={index}
+                      item={item}
+                      isOpen={openIndices.includes(index)}
+                      onClick={() => toggleAccordion(index)}
+                      themeTokens={tokens}
+                    />
+                  ))}
+                </div>
               )}
-              {parsedSectionsData.sections.map((item, index) => (
-                <AccordionItem
-                  key={index}
-                  item={item}
-                  isOpen={openIndices.includes(index)}
-                  onClick={() => toggleAccordion(index)}
-                  themeTokens={tokens}
-                />
-              ))}
-            </div>
-          ) : documentHtml ? (
-            <div 
-              className="policy-rich-text"
-              style={{ 
-                background: tokens.BG, 
-                padding: "40px", 
-                borderRadius: "12px", 
-                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)", 
-                border: `1px solid ${tokens.B}`,
-                color: tokens.FG, 
-                fontSize: "16px", 
-                lineHeight: 1.9,
-              }}
-              dangerouslySetInnerHTML={{ __html: documentHtml }} 
-            />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {accordionData.map((item, index) => (
-                <AccordionItem
-                  key={index}
-                  item={item}
-                  isOpen={openIndices.includes(index)}
-                  onClick={() => toggleAccordion(index)}
-                  themeTokens={tokens}
-                />
-              ))}
-            </div>
+            </>
           )}
 
         </div>
