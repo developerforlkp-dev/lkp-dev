@@ -218,6 +218,7 @@ const Page = ({
           .slim-header-wrapper.is-detail-page [class*="Header_burger"], .slim-header-wrapper.is-blog-page [class*="Header_burger"], .slim-header-wrapper.is-filter-page [class*="Header_burger"] {
              transform: none;
              margin-top: 0;
+             margin-left: 10px !important;
           }
         }
       `}</style>
