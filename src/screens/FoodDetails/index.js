@@ -1121,7 +1121,8 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
     ? `${hostData.host.firstName} ${hostData.host.lastName || ''}`.trim() 
     : (hostData?.host?.displayName || hostData?.displayName || food?.host?.displayName || "Master Chef");
 
-  const chefStory = food?.chefOwnerStory || hostData?.host?.bio || hostData?.bio || food?.chefStory || food?.ownerStory || food?.story || food?.host?.about || "Our culinary philosophy is rooted in heritage and innovation.";
+  const rawChefStory = food?.chefOwnerStory || hostData?.host?.bio || hostData?.bio || food?.chefStory || food?.ownerStory || food?.story || food?.host?.about || "";
+  const chefStory = typeof rawChefStory === "string" ? rawChefStory.trim() : "";
   
   const detailedDescription = food?.detailedDescription || food?.description || "Experience the perfect harmony of seasonal ingredients, local spices, and refined culinary design.";
 
@@ -1146,12 +1147,14 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
           <div style={{ width: 40, height: 3, background: A, margin: "32px auto 0 auto", borderRadius: 1.5 }} />
         </div>
 
-        {/* 2-Column Grid: Detailed Description & Chef's Story */}
+        {/* Grid: Detailed Description & optional Chef's Story */}
         <div style={{ 
           display: "grid", 
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", 
+          gridTemplateColumns: !chefStory ? "1fr" : (isMobile ? "1fr" : "1fr 1fr"), 
           gap: isMobile ? "32px" : "48px",
-          alignItems: "stretch"
+          alignItems: "stretch",
+          maxWidth: !chefStory ? 840 : "100%",
+          margin: !chefStory ? "0 auto" : undefined
         }}>
           
           {/* Detailed Description: The Alchemy */}
@@ -1199,60 +1202,61 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
             </motion.div>
           </Rev>
 
-          {/* Chef's Story: The Creator */}
-          <Rev delay={0.2} style={{ display: "flex" }}>
-            <motion.div
-              whileHover={{
-                scale: 1.015,
-                borderColor: A,
-                boxShadow: `0 20px 48px ${AL}`
-              }}
-              transition={{ duration: 0.35, ease: E }}
-              style={{
-                background: S,
-                border: `1.5px solid ${B}`,
-                borderRadius: 28,
-                padding: 36,
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                position: "relative",
-                cursor: "pointer",
-                transition: "border-color 0.3s ease, box-shadow 0.3s ease"
-              }}
-              onClick={() => setIsChefStoryExpanded(!isChefStoryExpanded)}
-            >
-              <div style={{ position: "absolute", top: 16, right: 32, fontSize: 80, color: A, opacity: 0.12, fontFamily: "serif" }}>&ldquo;</div>
-              <div>
-                <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 800 }}>The Creator</span>
-                <h4 className="font-display" style={{ fontSize: 22, color: FG, marginTop: 12, marginBottom: 20 }}>Chef's Story</h4>
-                <p style={{ fontSize: 13.5, color: M, lineHeight: 1.75, fontStyle: "italic", margin: 0 }}>
-                  {chefStory.length > 250 && !isChefStoryExpanded 
-                    ? `${chefStory.substring(0, 250)}...` 
-                    : chefStory}
-                </p>
-                {chefStory.length > 250 && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setIsChefStoryExpanded(!isChefStoryExpanded); }}
-                    style={{ background: "transparent", border: "none", padding: 0, color: A, fontSize: 11, fontWeight: 800, marginTop: 12, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}
-                  >
-                    {isChefStoryExpanded ? "Read Less" : "Read More"}
-                  </button>
-                )}
-              </div>
-              <div style={{ marginTop: 24, borderTop: `1px solid ${B}`, paddingTop: 20, display: "flex", gap: 12, alignItems: "center" }}>
-                {hostAvatar && (
-                  <img src={hostAvatar} alt={chefName} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${A}` }} />
-                )}
+          {/* Chef's Story: The Creator (Only displayed if chefStory exists) */}
+          {chefStory && (
+            <Rev delay={0.2} style={{ display: "flex" }}>
+              <motion.div
+                whileHover={{
+                  scale: 1.015,
+                  borderColor: A,
+                  boxShadow: `0 20px 48px ${AL}`
+                }}
+                transition={{ duration: 0.35, ease: E }}
+                style={{
+                  background: S,
+                  border: `1.5px solid ${B}`,
+                  borderRadius: 28,
+                  padding: 36,
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  position: "relative",
+                  cursor: "pointer",
+                  transition: "border-color 0.3s ease, box-shadow 0.3s ease"
+                }}
+                onClick={() => setIsChefStoryExpanded(!isChefStoryExpanded)}
+              >
+                <div style={{ position: "absolute", top: 16, right: 32, fontSize: 80, color: A, opacity: 0.12, fontFamily: "serif" }}>&ldquo;</div>
                 <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: FG, display: "block" }}>{chefName}</span>
-                  <span className="font-cursive" style={{ fontSize: 18, color: A, display: "block", marginTop: 2 }}>- Chef Owner</span>
+                  <span style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: A, fontWeight: 800 }}>The Creator</span>
+                  <h4 className="font-display" style={{ fontSize: 22, color: FG, marginTop: 12, marginBottom: 20 }}>Chef's Story</h4>
+                  <p style={{ fontSize: 13.5, color: M, lineHeight: 1.75, fontStyle: "italic", margin: 0 }}>
+                    {chefStory.length > 250 && !isChefStoryExpanded 
+                      ? `${chefStory.substring(0, 250)}...` 
+                      : chefStory}
+                  </p>
+                  {chefStory.length > 250 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setIsChefStoryExpanded(!isChefStoryExpanded); }}
+                      style={{ background: "transparent", border: "none", padding: 0, color: A, fontSize: 11, fontWeight: 800, marginTop: 12, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}
+                    >
+                      {isChefStoryExpanded ? "Read Less" : "Read More"}
+                    </button>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          </Rev>
-
+                <div style={{ marginTop: 24, borderTop: `1px solid ${B}`, paddingTop: 20, display: "flex", gap: 12, alignItems: "center" }}>
+                  {hostAvatar && (
+                    <img src={hostAvatar} alt={chefName} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${A}` }} />
+                  )}
+                  <div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: FG, display: "block" }}>{chefName}</span>
+                    <span className="font-cursive" style={{ fontSize: 18, color: A, display: "block", marginTop: 2 }}>- Chef Owner</span>
+                  </div>
+                </div>
+              </motion.div>
+            </Rev>
+          )}
         </div>
       </div>
     </section>
