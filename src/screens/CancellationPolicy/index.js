@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet";
-import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ArrowUp } from "lucide-react";
 import Page from "../../components/Page";
 import { getPolicyDocuments } from "../../utils/api";
@@ -241,13 +241,6 @@ const CancellationPolicy = () => {
   const [loading, setLoading] = useState(true);
   const [openIndices, setOpenIndices] = useState([0]);
   const [showTopBtn, setShowTopBtn] = useState(false);
-  
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -403,21 +396,6 @@ const CancellationPolicy = () => {
         <title>{title} | Little Known Planet</title>
         <meta name="description" content={`Review the ${title} for Little Known Planet.`} />
       </Helmet>
-      
-      {/* Top Progress Bar */}
-      <motion.div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "4px",
-          background: tokens.A,
-          transformOrigin: "0%",
-          scaleX,
-          zIndex: 9999
-        }}
-      />
 
       <style>{`
         .policy-rich-text {
