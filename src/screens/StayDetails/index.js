@@ -3233,15 +3233,16 @@ const StayDetails = () => {
 
         const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
         const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-        const tagsDuration = tagsDistance / 8; // constant speed of 8px/s
+        // Match Experience Details mobile marquee speed on mobile devices
+        const tagsDuration = isMobile ? rawTags.length * 4 * 1.8 : tagsDistance / 8;
 
         return (
-          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0" : "0", boxSizing: "border-box" }}>
             <div style={{
               margin: "0",
               overflow: "hidden",
               position: "relative",
-              padding: "20px 0",
+              padding: isMobile ? "14px 0" : "20px 0",
               background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
               borderTop: `1px solid ${B}`,
               borderBottom: `1px solid ${B}`,
@@ -3260,14 +3261,14 @@ const StayDetails = () => {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "24px",
+                        gap: isMobile ? "16px" : "24px",
                         whiteSpace: "nowrap",
-                        marginRight: "32px"
+                        marginRight: isMobile ? "24px" : "32px"
                       }}
                     >
                       <span
                         style={{
-                          fontSize: "18px",
+                          fontSize: isMobile ? "14px" : "18px",
                           fontWeight: isEven ? 700 : 300,
                           color: isEven ? FG : M,
                           fontFamily: "Poppins, sans-serif",
@@ -3278,7 +3279,7 @@ const StayDetails = () => {
                       >
                         {tag}
                       </span>
-                      <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
+                      <Sparkles size={isMobile ? 11 : 14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
                     </div>
                   );
                 })}
@@ -3616,15 +3617,16 @@ const StayDetails = () => {
 
         const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
         const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-        const tagsDuration = tagsDistance / 8; // constant speed of 8px/s
+        // Match Experience Details mobile marquee speed on mobile devices
+        const tagsDuration = isMobile ? rawTags.length * 4 * 1.8 : tagsDistance / 8;
 
         return (
-          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
+          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0" : "0", boxSizing: "border-box" }}>
             <div style={{
               margin: "0",
               overflow: "hidden",
               position: "relative",
-              padding: "20px 0",
+              padding: isMobile ? "14px 0" : "20px 0",
               background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
               borderTop: `1px solid ${B}`,
               borderBottom: `1px solid ${B}`,
@@ -3643,14 +3645,14 @@ const StayDetails = () => {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "24px",
+                        gap: isMobile ? "16px" : "24px",
                         whiteSpace: "nowrap",
-                        marginRight: "32px"
+                        marginRight: isMobile ? "24px" : "32px"
                       }}
                     >
                       <span
                         style={{
-                          fontSize: "18px",
+                          fontSize: isMobile ? "14px" : "18px",
                           fontWeight: isEven ? 700 : 300,
                           color: isEven ? FG : M,
                           fontFamily: "Poppins, sans-serif",
@@ -3661,7 +3663,7 @@ const StayDetails = () => {
                       >
                         {tag}
                       </span>
-                      <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
+                      <Sparkles size={isMobile ? 11 : 14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
                     </div>
                   );
                 })}
