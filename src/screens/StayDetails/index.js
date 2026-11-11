@@ -4498,8 +4498,8 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
   if (!hasReviews && eligibleBookings.length === 0) return null;
 
   return (
-    <section className="testimonials-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0", overflow: "hidden" }}>
-      <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+    <section className="testimonials-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "40px 0" : "64px 0", overflow: "hidden" }}>
+      <div style={{ width: isMobile ? "calc(100% - 32px)" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
 
         {/* Header and Scroll Buttons */}
         {hasReviews && (
@@ -4513,7 +4513,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                   What people say
                 </h3>
               </div>
-              <div style={{ display: "flex", gap: 12 }}>
+              {!isMobile && <div style={{ display: "flex", gap: 12 }}>
                 <button
                   type="button"
                   onClick={() => scrollSlider("left")}
@@ -4540,7 +4540,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                 >
                   <ChevronRight size={18} />
                 </button>
-              </div>
+              </div>}
             </div>
 
             <ReviewRatingSummary reviews={displayReviews} summary={reviews} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "rgba(255,255,255,0.04)" : W} />
