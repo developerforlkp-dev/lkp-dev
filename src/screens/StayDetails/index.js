@@ -2237,7 +2237,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                   left: 0,
                   right: 0,
                   height: 3,
-                  background: `linear-gradient(90deg, ${A} 0%, #8B5CF6 100%)`
+                  background: `linear-gradient(90deg, ${A} 0%, #00D2FF 100%)`
                 }} />
 
                 <div style={{
@@ -2259,7 +2259,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                       height: 52,
                       borderRadius: "50%",
                       padding: "2px",
-                      background: `linear-gradient(135deg, ${A} 0%, #8B5CF6 100%)`,
+                      background: `linear-gradient(135deg, ${A} 0%, #00D2FF 100%)`,
                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                       flexShrink: 0
                     }}>
@@ -2323,9 +2323,9 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                         fontSize: "8.5px",
                         letterSpacing: "0.04em",
                         textTransform: "uppercase",
-                        color: "#7C3AED",
-                        background: theme === "dark" ? "rgba(139, 92, 246, 0.15)" : "rgba(139, 92, 246, 0.08)",
-                        border: `1px solid ${theme === "dark" ? "rgba(139, 92, 246, 0.25)" : "rgba(139, 92, 246, 0.18)"}`,
+                        color: "#0097B2",
+                        background: theme === "dark" ? "rgba(0, 151, 178, 0.15)" : "rgba(0, 151, 178, 0.08)",
+                        border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.25)" : "rgba(0, 151, 178, 0.18)"}`,
                         borderRadius: "5px",
                         padding: "1px 6px",
                         fontWeight: 700,
@@ -2416,7 +2416,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                         left: 0,
                         right: 0,
                         height: 3,
-                        background: `linear-gradient(90deg, #8B5CF6 0%, ${A} 100%)`
+                        background: `linear-gradient(90deg, #00D2FF 0%, ${A} 100%)`
                       }} />
 
                       {/* Background Ambient Glow under the circle */}
@@ -2492,7 +2492,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                       {/* Right: Narrative Details & Verification Checks */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
                         <div>
-                          <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
+                          <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#0097B2", display: "block", marginBottom: 4 }}>Quality Index</span>
                           <h4 style={{ fontSize: 18, fontWeight: 800, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Verified Trust Score</h4>
                         </div>
 

@@ -1093,7 +1093,7 @@ export default function MobileExperienceView({
                   {/* Right: Narrative Details & Verification Checks (Mobile Stacked) */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", textAlign: "center", alignItems: "center" }}>
                     <div>
-                      <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
+                      <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#0097B2", display: "block", marginBottom: 4 }}>Quality Index</span>
                       <h4 style={{ fontSize: 18, fontWeight: 600, color: FG, margin: 0, fontFamily: '"Inter", sans-serif' }}>Verified Trust Score</h4>
                     </div>
 
