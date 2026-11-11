@@ -33,6 +33,7 @@ import Favorite from "../../components/Favorite";
 import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import FullScreenImage from "../../components/FullScreenImage";
 import PolicyCategoryItem from "../../components/PolicyCategoryItem";
+import DetailMarquee from "../../components/DetailMarquee";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
 const fixImageUrl = (url) => {
@@ -3228,65 +3229,7 @@ const StayDetails = () => {
           ? stay.tags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
           : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection", "Luxury Accommodations", "Stunning Views", "Premium Amenities"];
 
-        // Duplicate to ensure infinite seamless scrolling loop
-        const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-        const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-        const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-        // Match Experience Details mobile marquee speed on mobile devices
-        const tagsDuration = isMobile ? rawTags.length * 4 * 1.8 : tagsDistance / 8;
-
-        return (
-          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0" : "0", boxSizing: "border-box" }}>
-            <div style={{
-              margin: "0",
-              overflow: "hidden",
-              position: "relative",
-              padding: isMobile ? "14px 0" : "20px 0",
-              background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-              borderTop: `1px solid ${B}`,
-              borderBottom: `1px solid ${B}`,
-            }}>
-              {/* Left & Right Edge Fades removed as per request */}
-              <motion.div
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-                style={{ display: "flex", alignItems: "center", width: "max-content" }}
-              >
-                {loopedTags.map((tag, idx) => {
-                  const isEven = idx % 2 === 0;
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: isMobile ? "16px" : "24px",
-                        whiteSpace: "nowrap",
-                        marginRight: isMobile ? "24px" : "32px"
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: isMobile ? "14px" : "18px",
-                          fontWeight: isEven ? 700 : 300,
-                          color: isEven ? FG : M,
-                          fontFamily: "Poppins, sans-serif",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          opacity: isEven ? 1 : 0.75
-                        }}
-                      >
-                        {tag}
-                      </span>
-                      <Sparkles size={isMobile ? 11 : 14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={rawTags} />;
       })()}
 
       {/* ADDONS SECTION */}
@@ -3612,65 +3555,7 @@ const StayDetails = () => {
             ? stay.whatsSpecial.split(",").map((s) => s.trim()).filter(Boolean)
             : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection", "Luxury Accommodations", "Stunning Views", "Premium Amenities"];
 
-        // Duplicate to ensure infinite seamless scrolling loop
-        const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-        const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-        const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-        // Match Experience Details mobile marquee speed on mobile devices
-        const tagsDuration = isMobile ? rawTags.length * 4 * 1.8 : tagsDistance / 8;
-
-        return (
-          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0" : "0", boxSizing: "border-box" }}>
-            <div style={{
-              margin: "0",
-              overflow: "hidden",
-              position: "relative",
-              padding: isMobile ? "14px 0" : "20px 0",
-              background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-              borderTop: `1px solid ${B}`,
-              borderBottom: `1px solid ${B}`,
-            }}>
-              {/* Left & Right Edge Fades removed as per request */}
-              <motion.div
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-                style={{ display: "flex", alignItems: "center", width: "max-content" }}
-              >
-                {loopedTags.map((tag, idx) => {
-                  const isEven = idx % 2 === 0;
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: isMobile ? "16px" : "24px",
-                        whiteSpace: "nowrap",
-                        marginRight: isMobile ? "24px" : "32px"
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: isMobile ? "14px" : "18px",
-                          fontWeight: isEven ? 700 : 300,
-                          color: isEven ? FG : M,
-                          fontFamily: "Poppins, sans-serif",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          opacity: isEven ? 1 : 0.75
-                        }}
-                      >
-                        {tag}
-                      </span>
-                      <Sparkles size={isMobile ? 11 : 14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={rawTags} />;
       })()}
 
       <CuratedContent 

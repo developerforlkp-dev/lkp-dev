@@ -21,6 +21,7 @@ import CuratedContent from "../../../components/CuratedContent";
 import ExperienceReelsCarousel, { extractInstagramReelId } from "../../../components/ExperienceReelsCarousel";
 import { getShareText } from "../../../utils/shareUtils";
 import { isDirectBookingPathOrState } from "../../../utils/directBooking";
+import DetailMarquee from "../../../components/DetailMarquee";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -1639,69 +1640,9 @@ function Hero({ event, heroRef }) {
   );
 }
 
-function PremiumMarquee({ items, isMobile }) {
-  const { theme, tokens: { B, BG, FG, M } } = useTheme();
-
+function PremiumMarquee({ items }) {
   const rawTags = items && items.length > 0 ? items : ["Experience", "Premium", "Event", "Curated", "Editorial"];
-  // Duplicate to ensure infinite seamless scrolling loop
-  const loopedTags = Array(24).fill(rawTags).flat();
-
-  const estimatedTagWidth = (tag) => String(tag).length * 9.5 + 75; // text width + margin + icon + padding
-  const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 12; // offset 50% is 12 copies
-  const tagsDuration = tagsDistance / 60; // constant speed of 60px/s
-
-  return (
-    <div style={{ padding: isMobile ? "0 20px" : "0 80px", width: "100%", boxSizing: "border-box" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-        <div style={{
-          overflow: "hidden",
-          position: "relative",
-          padding: "20px 0",
-          background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-          borderTop: `1px solid ${B}`,
-          borderBottom: `1px solid ${B}`,
-        }}>
-
-          <motion.div
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-            style={{ display: "flex", alignItems: "center", width: "max-content" }}
-          >
-            {loopedTags.map((tag, idx) => {
-              const isEven = idx % 2 === 0;
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "24px",
-                    whiteSpace: "nowrap",
-                    marginRight: "32px"
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "18px",
-                      fontWeight: isEven ? 700 : 300,
-                      color: isEven ? FG : M,
-                      fontFamily: "Poppins, sans-serif",
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      opacity: isEven ? 1 : 0.75
-                    }}
-                  >
-                    {tag}
-                  </span>
-                  <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                </div>
-              );
-            })}
-          </motion.div>
-        </div>
-      </div>
-    </div>
-  );
+  return <DetailMarquee items={rawTags} />;
 }
 
 function About({ event }) {

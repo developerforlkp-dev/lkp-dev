@@ -14,6 +14,7 @@ import { BookingSystem } from "../../components/JUI/BookingSystem";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import CuratedContent from "../../components/CuratedContent";
 import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
+import DetailMarquee from "../../components/DetailMarquee";
 import { getShareText } from "../../utils/shareUtils";
 import "./MobileExperienceView.css";
 
@@ -501,18 +502,7 @@ export default function MobileExperienceView({
           ║       MARQUEE (Tags)              ║
           ╚═══════════════════════════════════╝ */}
       {rawTags.length > 0 && (
-        <div className="mob-marquee" style={{ borderColor: B, background: isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.005)" }}>
-          <div className="mob-marquee-track" style={{ "--marquee-duration": `${rawTags.length * 4 * 1.8}s` }}>
-            {[...rawTags, ...rawTags, ...rawTags, ...rawTags].map((tag, i) => (
-              <div key={i} className="mob-marquee-item">
-                <span className="mob-marquee-text" style={{ fontWeight: i % 2 === 0 ? 700 : 300, color: i % 2 === 0 ? FG : M, opacity: i % 2 === 0 ? 1 : 0.75 }}>
-                  {tag}
-                </span>
-                <Sparkles size={11} color={A} fill={A} style={{ opacity: 0.6 }} />
-              </div>
-            ))}
-          </div>
-        </div>
+        <DetailMarquee items={rawTags} />
       )}
 
       {/* ╔═══════════════════════════════════╗
@@ -826,27 +816,7 @@ export default function MobileExperienceView({
             : [listing?.category, listing?.subCategory].filter(Boolean).map(getCatName).filter(Boolean);
 
         const displayCats = rawCats.length > 0 ? rawCats : ["Nature", "Adventure"];
-        const repeatedCats = Array(12).fill(displayCats).flat();
-
-        return (
-          <div className="mob-marquee" style={{
-            borderColor: B,
-            background: isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.005)",
-            borderTop: `1px solid ${B}`,
-            borderBottom: `1px solid ${B}`
-          }}>
-            <div className="mob-marquee-track" style={{ "--marquee-duration": `${displayCats.length * 12 * 1.8}s` }}>
-              {repeatedCats.map((cat, i) => (
-                <div key={i} className="mob-marquee-item">
-                  <span className="mob-marquee-text" style={{ fontWeight: i % 2 === 0 ? 700 : 300, color: i % 2 === 0 ? FG : M, opacity: i % 2 === 0 ? 1 : 0.75 }}>
-                    {cat}
-                  </span>
-                  <Sparkles size={11} color={A} fill={A} style={{ opacity: 0.6 }} />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={displayCats} />;
       })()}
 
       {/* ╔═══════════════════════════════════╗

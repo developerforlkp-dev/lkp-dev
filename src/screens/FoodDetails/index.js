@@ -26,6 +26,7 @@ import { formatTimingsRange } from "../../utils/timeUtils";
 import SocialCards from "./SocialCards";
 import keralaFoodBg from "./kerala-culinary-bg.webp";
 import keralaFoodBgDark from "./kerala-culinary-bg-dark.webp";
+import DetailMarquee from "../../components/DetailMarquee";
 
 const toDisplayString = (value) => {
   if (!value) return "";
@@ -2348,63 +2349,7 @@ const FoodDetails = () => {
             ? food.tags.split(",").map((s) => s.trim()).filter(Boolean)
             : ["Culinary Art", "Taste", "Philosophy", "Epicurean", "Experience", "Gastronomy"];
         
-        // Duplicate to ensure infinite seamless scrolling loop
-        const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-        const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-        const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 3; // offset 50% is half of the clones
-        const tagsDuration = tagsDistance / 60; // constant speed of 60px/s
-
-        return (
-          <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 20px", boxSizing: "border-box", width: "100%" }}>
-            <div style={{
-              overflow: "hidden",
-              position: "relative",
-              padding: "20px 0",
-              background: "var(--BG)",
-              borderTop: `1px solid var(--B)`,
-              borderBottom: `1px solid var(--B)`,
-            }}>
-
-            <motion.div
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-              style={{ display: "flex", alignItems: "center", width: "max-content" }}
-            >
-              {loopedTags.map((tag, idx) => {
-                const isEven = idx % 2 === 0;
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "24px",
-                      whiteSpace: "nowrap",
-                      marginRight: "32px"
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: isEven ? 700 : 300,
-                        color: isEven ? "var(--FG)" : "var(--M)",
-                        fontFamily: "Poppins, sans-serif",
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        opacity: isEven ? 1 : 0.75
-                      }}
-                    >
-                      {tag}
-                    </span>
-                    <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                  </div>
-                );
-              })}
-            </motion.div>
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={rawTags} />;
       })()}
 
       <FoodMetadataCard food={food} />
@@ -2417,59 +2362,7 @@ const FoodDetails = () => {
         const items = dishes.map(d => typeof d === "string" ? d.trim() : d?.name || d?.title || "").filter(Boolean);
         const marqueeItems = items.length > 0 ? items : ["Heritage Taste", "Liquid Alchemy", "Curated Palette", "Biological Response"];
         
-        const loopedDishes = Array(12).fill(marqueeItems).flat();
-        const estimatedDishWidth = (dish) => dish.length * 9.5 + 75;
-        const dishesDistance = marqueeItems.reduce((sum, dish) => sum + estimatedDishWidth(dish), 0) * 6;
-        const dishesDuration = dishesDistance / 60;
-
-        return (
-          <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 20px", boxSizing: "border-box", width: "100%" }}>
-            <div style={{
-              overflow: "hidden",
-              position: "relative",
-              padding: "20px 0",
-              background: "var(--BG)",
-              borderTop: `1px solid var(--B)`,
-            }}>
-
-            <motion.div
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ repeat: Infinity, ease: "linear", duration: dishesDuration }}
-              style={{ display: "flex", alignItems: "center", gap: 32, width: "max-content" }}
-            >
-              {loopedDishes.map((dish, idx) => {
-                const isEven = idx % 2 === 0;
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "24px",
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: isEven ? 700 : 300,
-                        color: isEven ? "var(--FG)" : "var(--M)",
-                        fontFamily: '"Inter", sans-serif',
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        opacity: isEven ? 1 : 0.75
-                      }}
-                    >
-                      {dish}
-                    </span>
-                    <Sparkles size={14} color={A || "#0097B2"} fill={A || "#0097B2"} style={{ opacity: 0.6 }} />
-                  </div>
-                );
-              })}
-            </motion.div>
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={marqueeItems} />;
       })()}
 
 
