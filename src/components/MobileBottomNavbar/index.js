@@ -224,6 +224,7 @@ export default function MobileBottomNavbar() {
     const checkModal = () => {
       const open = (
         document.body.style.overflow === "hidden" ||
+        document.body.classList.contains("mobile-nav-drawer-open") ||
         !!document.querySelector('[class*="Modal_modal"]') ||
         !!document.querySelector('[class*="PhotoView_modal"]')
       );
