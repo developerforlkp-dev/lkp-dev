@@ -984,3 +984,43 @@ button.actionButton.button.button-small
         max-width: calc(100% - 40px)
     & > div
         padding: 0
+
+// Mobile booking card presentation overrides.
+// Keep these last so shared/global button and icon styles cannot win.
+@media (max-width: 767px)
+    .list,
+    .card
+        width: 100%
+        min-width: 0
+        box-sizing: border-box
+
+    .card .type,
+    .card .type + .dot
+        display: none !important
+
+    .card .locationRow
+        width: 100%
+        min-width: 0
+        overflow: hidden
+        flex-wrap: nowrap
+
+    .card .locationRow > span
+        display: block
+        min-width: 0
+        max-width: 100%
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+
+    .actions
+        grid-template-columns: none !important
+        grid-auto-flow: column
+        grid-auto-columns: minmax(0, 1fr)
+
+    .actions .actionIcon,
+    .actions .actionIcon path,
+    .actions .actionIcon circle,
+    .actions .actionIcon line,
+    .actions .actionIcon polyline
+        fill: none !important
+        stroke: currentColor !important
