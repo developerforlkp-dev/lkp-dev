@@ -1619,7 +1619,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     });
   }, [isSingleEventSchedule, lockedSingleEventDate]);
 
-  const resetBookingFormState = useCallback(() => {
+  const resetBookingFormState = useCallback(({ preserveAddons = false } = {}) => {
     if (isSingleEventSchedule && lockedSingleEventDate) {
       setStartDate(lockedSingleEventDate.clone());
     } else if (initialDate) {
@@ -1653,6 +1653,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     setApiPayableLoading(false);
     setErrorPopup({ visible: false, title: "", message: "", reason: "", ctaLabel: "Adjust Now" });
 
+    if (preserveAddons) return;
+
     if (typeof onClearAddons === "function") {
       onClearAddons();
     } else if (Array.isArray(selectedAddOns) && selectedAddOns.length > 0 && typeof onUpdateAddonQuantity === "function") {
@@ -1679,7 +1681,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   useEffect(() => {
     if (externalOpen === true && !show && !externalOpenHandledRef.current) {
       externalOpenHandledRef.current = true;
-      resetBookingFormState();
+      resetBookingFormState({ preserveAddons: true });
       setShow(true);
     }
   }, [externalOpen, show, resetBookingFormState]);
@@ -4648,7 +4650,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
   const handleOpenBooking = useCallback(() => {
     if (triggerDisabled) return;
-    resetBookingFormState();
+    resetBookingFormState({ preserveAddons: true });
     setShow(true);
 
     if (isEventBooking || (!listingId && !directToken) || !slotsLookupEndDate) return;
