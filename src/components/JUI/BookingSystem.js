@@ -4852,7 +4852,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 <>
                   {/* Header */}
                   <div className="booking-modal-header" style={{ padding: "16px 28px", borderBottom: `1px solid ${B}88`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
-                    <div style={{ flexShrink: 0 }}>
+                    <div className="booking-modal-heading" style={{ flexShrink: 0 }}>
                       <h2 style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 2, lineHeight: "1.2" }}>
                         {isEventBooking ? "Reserve Your Event" : "Reserve Your Experience"}
                       </h2>
@@ -4894,12 +4894,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       </div>
                     </div>
 
-                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
+                    <div className="booking-modal-actions" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
                       {!isDirect && experienceSupportsPrivateBooking && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 8 }}>
+                        <div className="booking-private-control" style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 8 }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>Private Booking</span>
                           <button
+                            className="booking-private-switch"
                             type="button"
+                            aria-label="Toggle private booking"
+                            aria-pressed={privateBooking}
                             onClick={() => {
                               setPrivateBooking((value) => !value);
                               setCalculateError(null);
@@ -4922,7 +4925,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           </button>
                         </div>
                       )}
-                      <button type="button" onClick={closeBookingModal} style={{ background: S, border: `1px solid ${B}`, padding: 8, borderRadius: 100, cursor: "pointer", color: FG, display: "flex", alignItems: "center", justifyContent: "center", transition: "0.3s" }}>
+                      <button className="booking-modal-close" type="button" aria-label="Close booking" onClick={closeBookingModal} style={{ background: S, border: `1px solid ${B}`, padding: 8, borderRadius: 100, cursor: "pointer", color: FG, display: "flex", alignItems: "center", justifyContent: "center", transition: "0.3s" }}>
                         <X size={18} />
                       </button>
                     </div>
@@ -6499,7 +6502,42 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             grid-template-columns: 1fr !important;
           }
           .booking-grid { grid-template-columns: 1fr !important; }
-          .booking-modal-header { padding: 14px 20px 12px !important; gap: 12px !important; }
+          .booking-modal-header {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            grid-template-areas:
+              "heading close"
+              "private private" !important;
+            align-items: start !important;
+            padding: 14px 20px 12px !important;
+            gap: 10px 12px !important;
+          }
+          .booking-modal-heading {
+            grid-area: heading;
+            min-width: 0 !important;
+            flex-shrink: 1 !important;
+          }
+          .booking-modal-actions { display: contents !important; }
+          .booking-private-control {
+            grid-area: private;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            justify-content: space-between !important;
+            margin: 0 !important;
+            padding: 9px 11px !important;
+            border: 1px solid ${B} !important;
+            border-radius: 12px !important;
+            background: ${S} !important;
+          }
+          .booking-private-switch { flex: 0 0 auto !important; }
+          .booking-modal-close {
+            grid-area: close;
+            width: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+            flex: 0 0 32px !important;
+          }
           .booking-modal-column { padding: 16px 20px !important; gap: 10px !important; border-bottom: 1px solid ${B}88 !important; }
           .booking-modal-column:last-child { border-bottom: 0 !important; }
           .booking-grid { gap: 0 !important; }
