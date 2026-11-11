@@ -441,7 +441,7 @@ export default function MobileExperienceView({
               { icon: <Zap size={15} color={A} />, label: listing?.difficultyLevel || "Moderate" },
               { icon: <Baby size={15} color={A} />, label: listing?.allowsInfants || listing?.infantsAllowed ? "Infants OK" : "No Infants" },
               { icon: <Languages size={15} color={A} />, label: (() => { const l = Array.isArray(listing?.languagesOffered) && listing.languagesOffered.length > 0 ? listing.languagesOffered : (typeof listing?.languages === "string" && listing.languages.trim() ? listing.languages.split(",").map(s => s.trim()) : []); return l.length > 0 ? l.join(", ") : "Flexible"; })() },
-              { icon: <ShieldCheck size={15} color={A} />, label: listing?.privateOptionAvailable ? "Private Tour" : "Group Tour" },
+              ...(listing?.privateOptionAvailable ? [{ icon: <ShieldCheck size={15} color={A} />, label: "Private Tour" }] : []),
               { icon: <Users size={15} color={A} />, label: `Max ${displayMaxGuests || 15} Guests` },
             ].map((fact, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
