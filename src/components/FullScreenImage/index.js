@@ -309,9 +309,10 @@ const FullScreenImage = ({ src, items = [], currentIndex = 0, onNavigate, onClos
           .fs-modal-box {
             flex-direction: column;
             height: 90vh;
-            border-radius: 24px 24px 0 0;
-            margin-top: auto;
-            align-self: flex-end;
+            height: min(90dvh, calc(100dvh - 32px));
+            max-height: calc(100dvh - 32px);
+            border-radius: 24px;
+            align-self: center;
           }
           
           .fs-right-pane {
