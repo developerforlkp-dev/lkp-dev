@@ -316,6 +316,8 @@ $drawer-accent: #0097B2
     background: $n7
     border: none
     cursor: pointer
+    touch-action: manipulation
+    -webkit-tap-highlight-color: transparent
     transition: background 0.18s ease
     +dark
         background: rgba(255,255,255,0.06)
@@ -351,6 +353,15 @@ $drawer-accent: #0097B2
         display: block
         margin: auto
         object-fit: contain
+
+@keyframes themeIconTurn
+    from
+        transform: rotate(-90deg) scale(0.86)
+    to
+        transform: rotate(0deg) scale(1)
+
+:global(html.theme-transitioning) .themeIcon
+    animation: themeIconTurn 380ms cubic-bezier(0.4, 0, 0.2, 1)
 
 // Login button
 .loginBtn
