@@ -12,6 +12,7 @@ import Rating from "../../../components/Rating";
 import LoadingSkeleton from "../../../components/LoadingSkeleton";
 import { BookingSystem as ReBookingSystem } from "../../../components/JUI/ReBookingSystem";
 import StayReBookingSystem from "../../StayDetails/StayReBookingSystem";
+import { Eye, MessageCircle, XCircle, Star, RefreshCw } from "lucide-react";
 
 // Helper function to format image URLs
 const formatImageUrl = (url) => {
@@ -808,6 +809,28 @@ const actionsByStatus = {
   Cancelled: [
     { label: "View Details", variant: "primary" },
   ],
+};
+
+const actionPresentation = {
+  "View Details": { label: "View", Icon: Eye },
+  "Message Host": { label: "Message", Icon: MessageCircle },
+  "Cancel Booking": { label: "Cancel", Icon: XCircle },
+  "Leave review": { label: "Review", Icon: Star },
+  "Check Availability": { label: "Check", Icon: RefreshCw },
+};
+
+const renderActionContent = (actionLabel, displayLabel = actionLabel) => {
+  const presentation = actionPresentation[actionLabel] || {};
+  const ActionIcon = presentation.Icon;
+  const mobileLabel = displayLabel === actionLabel ? (presentation.label || displayLabel) : displayLabel;
+
+  return (
+    <>
+      {ActionIcon && <ActionIcon className={styles.actionIcon} size={18} strokeWidth={2.2} aria-hidden="true" />}
+      <span className={styles.actionLabelDesktop}>{displayLabel}</span>
+      <span className={styles.actionLabelMobile}>{mobileLabel}</span>
+    </>
+  );
 };
 
 const isPastStayCheckInTime = (booking) => {
@@ -2062,14 +2085,15 @@ const Main = ({
     }
   };
 
-  const getButtonClassName = (variant) => {
+  const getButtonClassName = (variant, actionLabel) => {
+    const actionStateClass = actionLabel === "Cancel Booking" ? styles.cancelAction : null;
     switch (variant) {
       case "secondary":
-        return cn("button-stroke", "button-small", styles.actionButton);
+        return cn("button-stroke", "button-small", styles.actionButton, actionStateClass);
       case "ghost":
-        return cn("button-stroke", "button-small", styles.ghostButton, styles.actionButton);
+        return cn("button-stroke", "button-small", styles.ghostButton, styles.actionButton, actionStateClass);
       default:
-        return cn("button", "button-small", styles.actionButton);
+        return cn("button", "button-small", styles.actionButton, actionStateClass);
     }
   };
 
@@ -2476,7 +2500,7 @@ const Main = ({
                               <span className={styles.dot} aria-hidden="true">
                                 •
                               </span>
-                              <span style={{
+                              <span className={styles.statusBadge} style={{
                                 display: "inline-flex",
                                 alignItems: "center",
                                 padding: "4px 8px",
@@ -2545,9 +2569,9 @@ const Main = ({
                                   search,
                                   state: { sourceTab: displayedTab },
                                 }}
-                                className={getButtonClassName(action.variant)}
+                                className={getButtonClassName(action.variant, action.label)}
                               >
-                                {action.label}
+                                {renderActionContent(action.label)}
                               </Link>
                             );
                           }
@@ -2557,11 +2581,11 @@ const Main = ({
                               <button
                                 type="button"
                                 key={`${booking.id}-${action.label}`}
-                                className={getButtonClassName(action.variant)}
+                                className={getButtonClassName(action.variant, action.label)}
                                 onClick={() => handleCheckAvailability(booking)}
                                 disabled={isCheckingAvailability}
                               >
-                                {isChecking ? "Checking..." : action.label}
+                                {renderActionContent(action.label, isChecking ? "Checking..." : action.label)}
                               </button>
                             );
                           }
@@ -2570,10 +2594,10 @@ const Main = ({
                               <button
                                 type="button"
                                 key={`${booking.id}-${action.label}`}
-                                className={getButtonClassName(action.variant)}
+                                className={getButtonClassName(action.variant, action.label)}
                                 onClick={() => handleMessageHostClick(booking)}
                               >
-                                {action.label}
+                                {renderActionContent(action.label)}
                               </button>
                             );
                           }
@@ -2582,10 +2606,10 @@ const Main = ({
                               <button
                                 type="button"
                                 key={`${booking.id}-${action.label}`}
-                                className={getButtonClassName(action.variant)}
+                                className={getButtonClassName(action.variant, action.label)}
                                 onClick={() => handleCancelBookingClick(booking)}
                               >
-                                {action.label}
+                                {renderActionContent(action.label)}
                               </button>
                             );
                           }
@@ -2594,10 +2618,10 @@ const Main = ({
                               <button
                                 type="button"
                                 key={`${booking.id}-${action.label}`}
-                                className={getButtonClassName(action.variant)}
+                                className={getButtonClassName(action.variant, action.label)}
                                 onClick={() => handleLeaveReviewClick(booking)}
                               >
-                                {action.label}
+                                {renderActionContent(action.label)}
                               </button>
                             );
                           }
@@ -2605,9 +2629,9 @@ const Main = ({
                             <button
                               type="button"
                               key={`${booking.id}-${action.label}`}
-                              className={getButtonClassName(action.variant)}
+                              className={getButtonClassName(action.variant, action.label)}
                             >
-                              {action.label}
+                              {renderActionContent(action.label)}
                             </button>
                           );
                         })}
