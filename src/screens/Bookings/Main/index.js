@@ -2093,7 +2093,7 @@ const Main = ({
       case "ghost":
         return cn("button-stroke", "button-small", styles.ghostButton, styles.actionButton, actionStateClass);
       default:
-        return cn("button", "button-small", styles.actionButton, actionStateClass);
+        return cn("button", "button-small", styles.actionButton, styles.primaryAction, actionStateClass);
     }
   };
 

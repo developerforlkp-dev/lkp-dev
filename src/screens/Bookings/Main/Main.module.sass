@@ -1,5 +1,7 @@
 @import ../../../styles/helpers
 
+$bookings-accent: #0097B2
+
 .section
     padding-top: 40px
     padding-bottom: 80px
@@ -138,18 +140,18 @@
 
 .tabActive
     color: $n2
-    border-bottom-color: $p4
+    border-bottom-color: $bookings-accent
     +dark
         color: $n8
-        border-bottom-color: $p4
+        border-bottom-color: $bookings-accent
     +m
-        background: $p4
+        background: $bookings-accent
         color: $n8
-        border-color: $p4
+        border-color: $bookings-accent
         +dark
-            background: $p4
+            background: $bookings-accent
             color: $n8
-            border-color: $p4
+            border-color: $bookings-accent
     &:hover
         color: $n2
         +dark
@@ -176,7 +178,7 @@
         font-size: 11px
 
 .tabActive .count
-    background: $p4
+    background: $bookings-accent
     color: $n8
     +m
         background: $n8
@@ -237,10 +239,10 @@
             box-shadow: 0 12px 32px rgba(0, 0, 0, .28)
     &:hover
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)
-        border-color: $p4
+        border-color: $bookings-accent
         +dark
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3)
-            border-color: $p4
+            border-color: $bookings-accent
 
 .media
     flex: 0 0 180px
@@ -434,6 +436,14 @@
 
 .actionLabelDesktop
     display: inline
+
+.primaryAction
+    background: $bookings-accent !important
+    border-color: $bookings-accent !important
+    color: $n8 !important
+    &:hover
+        background: darken($bookings-accent, 5%) !important
+        border-color: darken($bookings-accent, 5%) !important
 
 // Specific class for action buttons to ensure uniform dimensions
 // Target all possible combinations to override global styles
@@ -729,11 +739,11 @@ button.actionButton.button.button-small
         border-color: $n3
         background-color: $n1
     &.active
-        border-color: $p4
-        background-color: rgba($p4, 0.05)
+        border-color: $bookings-accent
+        background-color: rgba($bookings-accent, 0.05)
         +dark
-            border-color: $p4
-            background-color: rgba($p4, 0.1)
+            border-color: $bookings-accent
+            background-color: rgba($bookings-accent, 0.1)
 
 .reasonText
     font-size: 15px
@@ -758,13 +768,13 @@ button.actionButton.button.button-small
         background-color: $n1
         border-color: $n4
     &.active
-        border-color: $p4
+        border-color: $bookings-accent
 
 .reasonRadioInner
     width: 10px
     height: 10px
     border-radius: 50%
-    background-color: $p4
+    background-color: $bookings-accent
 
 .cancelPolicyText
     +body-2
@@ -851,8 +861,8 @@ button.actionButton.button.button-small
         color: $n8
     &:focus
         outline: none
-        border-color: $p4
-        box-shadow: 0 0 0 3px rgba($p4, 0.1)
+        border-color: $bookings-accent
+        box-shadow: 0 0 0 3px rgba($bookings-accent, 0.1)
     &:disabled
         opacity: 0.6
         cursor: not-allowed
@@ -883,13 +893,13 @@ button.actionButton.button.button-small
         color: $n8
     &:hover
         .cancelModalCheckbox
-            border-color: $p4
+            border-color: $bookings-accent
 
 .cancelModalCheckbox
     width: 18px
     height: 18px
     cursor: pointer
-    accent-color: $p4
+    accent-color: $bookings-accent
     &:disabled
         opacity: 0.6
         cursor: not-allowed
