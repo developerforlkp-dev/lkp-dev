@@ -4908,20 +4908,22 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                               setCalculateError(null);
                             }}
                             style={{
-                              width: 36,
-                              height: 20,
+                              width: 42,
+                              height: 24,
                               borderRadius: 999,
-                              background: privateBooking ? A : B,
+                              background: privateBooking ? `linear-gradient(135deg, ${A}, ${AH})` : S,
                               padding: 2,
                               display: "flex",
-                              justifyContent: privateBooking ? "flex-end" : "flex-start",
-                              transition: "0.2s",
+                              justifyContent: "flex-start",
+                              transition: "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
                               cursor: "pointer",
-                              border: "none",
-                              alignItems: "center"
+                              border: `1px solid ${privateBooking ? A : B}`,
+                              alignItems: "center",
+                              boxShadow: privateBooking ? `0 0 0 3px ${AL}, inset 0 1px 0 rgba(255,255,255,0.22)` : `inset 0 1px 2px ${B}`,
+                              WebkitTapHighlightColor: "transparent"
                             }}
                           >
-                            <span style={{ width: 16, height: 16, borderRadius: "50%", background: W, display: "block" }} />
+                            <span style={{ width: 18, height: 18, borderRadius: "50%", background: W, display: "block", transform: privateBooking ? "translateX(18px)" : "translateX(0)", transition: "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }} />
                           </button>
                         </div>
                       )}
@@ -6461,6 +6463,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           border-radius: 12px !important;
           overflow: hidden !important;
           position: relative !important;
+        }
+
+        .booking-private-switch:focus-visible {
+          outline: 2px solid ${A} !important;
+          outline-offset: 3px !important;
         }
 
         .SingleDatePicker_picker,
