@@ -2158,7 +2158,7 @@ const ExperienceProduct = () => {
         <ExperiencePolicies listing={listing} isDirectBooking={isDirectBooking} />
 
         {/* HOST & QUALITY ROW (40% / 60%) */}
-        {listing && (
+        {!isDirectBooking && listing && (
           <section className="host-quality-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0" }}>
             <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
               <div

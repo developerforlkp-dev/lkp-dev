@@ -852,7 +852,7 @@ export default function MobileExperienceView({
       {/* ╔═══════════════════════════════════╗
           ║        HOST SECTION               ║
           ╚═══════════════════════════════════╝ */}
-      {listing && (
+      {!isDirectBooking && listing && (
         <div className="mob-section" style={{ background: BG }}>
           <span className="mob-section-eyebrow" style={{ color: A }}>Your Host</span>
           <h2 className="mob-section-title" style={{ color: FG }}>Meet the Expert</h2>

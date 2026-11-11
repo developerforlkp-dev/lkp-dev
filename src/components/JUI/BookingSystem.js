@@ -3345,6 +3345,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       };
       calculationFn = calculateEventTotal;
     } else if (isDirect && directToken) {
+      // Wait for the slot-loading effect so the first preview uses settled
+      // slot data rather than requesting again when that data arrives.
+      if (slotsLoading || !dateFilteredSlotsLoaded) {
+        calculationVersionRef.current += 1;
+        if (calculateDebounceTimerRef.current) clearTimeout(calculateDebounceTimerRef.current);
+        lastCalculatedPayloadRef.current = "";
+        return;
+      }
+
       const adultCount = Number(guests?.adults || 0);
       const childCount = Number(guests?.children || 0);
       const totalGuests = (adultCount + childCount) || 1;
@@ -4653,18 +4662,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
     resetBookingFormState({ preserveAddons: true });
     setShow(true);
 
-    if (isEventBooking || (!listingId && !directToken) || !slotsLookupEndDate) return;
-
-    if (isDirect && directToken) {
-      getPublicDirectBookingOfflineReservationSlots(directToken)
-        .then((payload) => {
-          setDirectOfflineSlotsData(payload);
-          const slots = unwrapSlotsPayload(payload);
-          setAllFetchedSlots(slots);
-        })
-        .catch((e) => console.error("[BookingSystem] Error fetching direct slots", e));
-      return;
-    }
+    // Direct slots are loaded by the effect shared with external modal opens.
+    if (isDirect || isEventBooking || !listingId || !slotsLookupEndDate) return;
 
     getListingSlots(listingId, getIndiaDateKey(), slotsLookupEndDate)
       .then((payload) => {
@@ -4678,7 +4677,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
         if (hasPrivate) setHasAnyPrivateBookingAvailable(true);
       })
       .catch((e) => console.error("[BookingSystem] Error fetching slots for private booking check", e));
-  }, [isEventBooking, listingId, selectedDateKey, slotsLookupEndDate, triggerDisabled]);
+  }, [isDirect, isEventBooking, listingId, slotsLookupEndDate, triggerDisabled, resetBookingFormState]);
 
   // Check if all experience dates/slots are in the past
   const isExperienceClosed = useMemo(() => {
@@ -6249,7 +6248,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
                         // Keep the confirmed total in place while refreshing it to avoid
                         // replacing the price with a shimmer on every guest change.
-                        if (apiPayableLoading && apiPayableAmount == null) {
+                        if (apiPayableAmount == null && (apiPayableLoading || (isDirect && currentTotalGuests > 0 && !calculateError && !slotsError))) {
                           return (
                             <>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, height: 26, marginTop: 4 }}>
@@ -6270,7 +6269,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                           );
                         }
 
-                        if (isDirect && currentTotalGuests > 0 && finalTotal != null && Number.isFinite(finalTotal) && finalTotal > 0) {
+                        if (isDirect && currentTotalGuests > 0 && (calculateError || slotsError) && finalTotal != null && Number.isFinite(finalTotal) && finalTotal > 0) {
                           return (
                             <>
                               <span style={{ fontSize: 22, fontWeight: 800, color: FG }}>₹{Number(finalTotal).toFixed(2)}</span>
