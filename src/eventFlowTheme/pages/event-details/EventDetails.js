@@ -922,8 +922,25 @@ function MobileHero({ event, heroRef }) {
   };
   const bgImage = formatImageUrl(getImageUrl(event));
 
-  const words = title.split(' ');
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  const titleWordCount = words.length;
+  const titleCharacterCount = title.replace(/\s/g, '').length;
+  const hasLongTitle = titleCharacterCount > 34 || titleWordCount > 5;
+  const hasExtraLongTitle = titleCharacterCount > 58 || titleWordCount > 9;
   const lastWord = words.length >= 2 ? words.pop() : "";
+
+  const heroHeight = hasExtraLongTitle
+    ? "clamp(610px, 76vh, 720px)"
+    : hasLongTitle
+      ? "clamp(550px, 68vh, 640px)"
+      : "max(450px, 60vh)";
+  const ringTop = hasExtraLongTitle ? "27%" : hasLongTitle ? "31%" : "40%";
+  const ringScale = hasExtraLongTitle ? 0.4 : hasLongTitle ? 0.46 : 0.55;
+  const titleFontSize = hasExtraLongTitle
+    ? "clamp(28px, 7.6vw, 33px)"
+    : hasLongTitle
+      ? "clamp(31px, 8.3vw, 35px)"
+      : 38;
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
@@ -978,7 +995,7 @@ function MobileHero({ event, heroRef }) {
       position: "relative",
       width: "100%",
       minHeight: "450px",
-      height: "60vh",
+      height: heroHeight,
       backgroundImage: bgImage ? `url(${bgImage})` : "none",
       backgroundSize: "cover",
       backgroundPosition: "center",
@@ -996,9 +1013,9 @@ function MobileHero({ event, heroRef }) {
       {/* Image Ring Overlay for Mobile */}
       <div style={{
         position: "absolute",
-        top: "40%",
+        top: ringTop,
         right: "15px",
-        transform: "translateY(-50%) scale(0.55)",
+        transform: `translateY(-50%) scale(${ringScale})`,
         transformOrigin: "center right",
         zIndex: 5,
         pointerEvents: "none"
@@ -1031,8 +1048,8 @@ function MobileHero({ event, heroRef }) {
       </div>
 
       {/* Title */}
-      <div style={{ position: "relative", zIndex: 10, marginBottom: 16 }}>
-        <h1 style={{ fontSize: 38, fontWeight: 700, color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: 1.1, margin: 0 }}>
+      <div style={{ position: "relative", zIndex: 10, marginBottom: 16, maxWidth: "100%" }}>
+        <h1 style={{ fontSize: titleFontSize, fontWeight: 700, color: "#FFFFFF", WebkitTextFillColor: "#FFFFFF", fontFamily: '"Cormorant Garamond", "Playfair Display", serif', lineHeight: hasLongTitle ? 1.06 : 1.1, letterSpacing: hasLongTitle ? "-0.015em" : "normal", textShadow: "0 2px 18px rgba(0,0,0,0.55)", overflowWrap: "anywhere", margin: 0 }}>
           {words.join(' ')}{' '}
           <span style={{ fontStyle: "italic", color: A, WebkitTextFillColor: A }}>
             {lastWord}
