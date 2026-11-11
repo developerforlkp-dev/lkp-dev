@@ -21,6 +21,8 @@ $drawer-accent: #0097B2
     backdrop-filter: blur(3px)
     -webkit-backdrop-filter: blur(3px)
     pointer-events: all
+    touch-action: none
+    overscroll-behavior: contain
 
 // ─── Drawer Shell — MOBILE ONLY (≤767px) ────────────────────────────────────────
 .drawer
@@ -124,6 +126,8 @@ $drawer-accent: #0097B2
     overflow-y: auto
     overflow-x: clip
     -webkit-overflow-scrolling: touch
+    touch-action: pan-y
+    overscroll-behavior: contain
     display: flex
     flex-direction: column
     // Thin scrollbar

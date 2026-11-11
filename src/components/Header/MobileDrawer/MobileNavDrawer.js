@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { disableBodyScroll, enableBodyScroll } from "body-scroll-lock";
 import { NavLink } from "react-router-dom";
 import { Heart } from "lucide-react";
 import cn from "classnames";
@@ -58,17 +57,6 @@ const MobileNavDrawer = ({
     };
   }, [visible, handleKeyDown]);
 
-  // Lock body scroll while open
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (visible && el) {
-      disableBodyScroll(el, { reserveScrollBarGap: true });
-    }
-    return () => {
-      if (el) enableBodyScroll(el);
-    };
-  }, [visible]);
-
   const handleLogout = () => {
     localStorage.removeItem("jwtToken");
     localStorage.removeItem("userInfo");
@@ -85,6 +73,8 @@ const MobileNavDrawer = ({
       <div
         className={cn(styles.overlay, { [styles.overlayVisible]: visible })}
         onClick={onClose}
+        onWheel={(event) => event.preventDefault()}
+        onTouchMove={(event) => event.preventDefault()}
         aria-hidden="true"
       />
 
