@@ -529,23 +529,37 @@ const ScopedStyles = () => (
       /* Mobile Carousel Dots */
       .mobile-carousel-dots {
         display: flex;
+        align-items: center;
         justify-content: center;
-        gap: 6px;
-        padding: 12px 0 4px 0;
+        gap: 2px;
+        min-height: 12px;
+        padding: 0;
       }
       .mobile-carousel-dots .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--M, #888);
-        opacity: 0.35;
-        transition: all 0.3s ease;
+        width: 20px;
+        height: 12px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
       }
-      .mobile-carousel-dots .dot.active {
+      .mobile-carousel-dots .dot::after {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.58);
+        opacity: 0.72;
+        transition: width 0.25s ease, background-color 0.25s ease, opacity 0.25s ease;
+      }
+      .mobile-carousel-dots .dot.active::after {
         background: var(--A, #0097B2);
         opacity: 1;
-        width: 20px;
-        border-radius: 4px;
+        width: 18px;
       }
 
       /* Mobile Thumbnail Strip Below Hero */
@@ -1162,6 +1176,20 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
 
   const thumbnailItems = useMemo(() => allImages.slice(0, 5), [allImages]);
 
+  const visibleCarouselIndexes = useMemo(() => {
+    const maxIndicators = 5;
+    if (allImages.length <= maxIndicators) {
+      return allImages.map((_, index) => index);
+    }
+
+    const start = Math.min(
+      Math.max(activeIdx - Math.floor(maxIndicators / 2), 0),
+      allImages.length - maxIndicators
+    );
+
+    return Array.from({ length: maxIndicators }, (_, index) => start + index);
+  }, [activeIdx, allImages]);
+
   useEffect(() => {
     if (showFsViewer || allImages.length <= 1) return;
     const interval = setInterval(() => {
@@ -1549,8 +1577,18 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
           {/* Mobile Carousel Dots */}
           {isMobile && allImages.length > 1 && (
             <div className="mobile-carousel-dots" style={{ position: "absolute", bottom: 12, left: 0, right: 0, zIndex: 45 }}>
-              {allImages.slice(0, Math.min(allImages.length, 5)).map((_, i) => (
-                <div key={i} className={`dot ${activeIdx === i ? "active" : ""}`} onClick={(e) => { e.stopPropagation(); handleThumbnailClick(i); }} style={{ cursor: "pointer" }} />
+              {visibleCarouselIndexes.map((imageIndex) => (
+                <button
+                  key={imageIndex}
+                  type="button"
+                  aria-label={`Show image ${imageIndex + 1}`}
+                  aria-current={activeIdx === imageIndex ? "true" : undefined}
+                  className={`dot ${activeIdx === imageIndex ? "active" : ""}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleThumbnailClick(imageIndex);
+                  }}
+                />
               ))}
             </div>
           )}
