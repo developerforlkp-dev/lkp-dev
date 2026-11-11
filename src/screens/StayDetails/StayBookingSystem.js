@@ -3746,28 +3746,30 @@ const StayBookingSystem = ({
         }
 
         @media(max-width: 900px) {
+          .booking-modal-wrapper { padding: 0 !important; align-items: flex-end !important; }
           .booking-modal-container { 
             width: 100% !important; 
-            height: 100% !important; 
-            max-height: 100vh !important; 
-            border-radius: 0 !important; 
+            height: 88dvh !important;
+            min-height: 0 !important;
+            max-height: 88dvh !important;
+            border-radius: 24px 24px 0 0 !important;
             margin: 0 !important;
           }
-          .booking-grid { grid-template-columns: 1fr !important; }
-          .booking-modal-header { padding: 24px 20px !important; }
-          .booking-modal-column { padding: 32px 20px !important; }
+          .booking-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+          .booking-modal-header { padding: 14px 20px 12px !important; }
+          .booking-modal-column { padding: 16px 20px !important; gap: 10px !important; border-bottom: 1px solid ${B}88 !important; }
           .booking-modal-footer { 
             flex-direction: column !important; 
-            gap: 24px !important; 
-            padding: 24px 20px !important; 
+            gap: 10px !important;
+            padding: 12px 20px max(12px, env(safe-area-inset-bottom)) !important;
             align-items: stretch !important;
             text-align: center !important;
             position: sticky !important;
             bottom: 0 !important;
             background: ${BG} !important;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08) !important;
           }
-          .booking-modal-footer button { width: 100% !important; }
+          .booking-modal-footer button { width: 100% !important; padding: 12px 20px !important; font-size: 15px !important; }
           
           .stay-booking-trigger-wrapper {
             bottom: 24px !important;
@@ -3948,7 +3950,7 @@ const StayBookingSystem = ({
 
       <AnimatePresence>
         {show && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", padding: window.innerWidth <= 768 ? 0 : 20, overflowY: "auto", overflowX: "hidden" }}>
+          <div className="booking-modal-wrapper" style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", padding: window.innerWidth <= 768 ? 0 : 20, overflowY: "auto", overflowX: "hidden" }}>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

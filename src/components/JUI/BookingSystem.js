@@ -6487,8 +6487,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           .booking-modal-wrapper { padding: 0 !important; align-items: flex-end !important; }
           .booking-modal-container { 
             width: 100% !important; 
-            height: 95vh !important; 
-            max-height: 100vh !important; 
+            height: 88dvh !important;
+            max-height: 88dvh !important;
             border-radius: 24px 24px 0 0 !important; 
             margin: 0 !important;
           }
@@ -6499,20 +6499,22 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             grid-template-columns: 1fr !important;
           }
           .booking-grid { grid-template-columns: 1fr !important; }
-          .booking-modal-header { padding: 24px 20px !important; }
-          .booking-modal-column { padding: 32px 20px !important; }
+          .booking-modal-header { padding: 14px 20px 12px !important; gap: 12px !important; }
+          .booking-modal-column { padding: 16px 20px !important; gap: 10px !important; border-bottom: 1px solid ${B}88 !important; }
+          .booking-modal-column:last-child { border-bottom: 0 !important; }
+          .booking-grid { gap: 0 !important; }
           .booking-modal-footer { 
             flex-direction: column !important; 
-            gap: 16px !important; 
-            padding: 20px !important; 
+            gap: 10px !important;
+            padding: 12px 20px max(12px, env(safe-area-inset-bottom)) !important;
             align-items: stretch !important;
             text-align: center !important;
             flex-shrink: 0 !important;
             background: ${BG} !important;
-            box-shadow: 0 -8px 24px rgba(0,0,0,0.12) !important;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08) !important;
             border-top: 1px solid ${B} !important;
           }
-          .booking-modal-footer button { width: 100% !important; padding: 14px 20px !important; font-size: 16px !important; }
+          .booking-modal-footer button { width: 100% !important; padding: 12px 20px !important; font-size: 15px !important; }
           .booking-modal-closed { padding: 40px 20px !important; }
           
           .booking-trigger {
