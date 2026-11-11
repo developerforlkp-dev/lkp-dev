@@ -4852,7 +4852,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                 <>
                   {/* Header */}
                   <div className="booking-modal-header" style={{ padding: "16px 28px", borderBottom: `1px solid ${B}88`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
-                    <div style={{ flexShrink: 0 }}>
+                    <div className="booking-modal-heading" style={{ flexShrink: 0 }}>
                       <h2 style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.2em", color: A, marginBottom: 2, lineHeight: "1.2" }}>
                         {isEventBooking ? "Reserve Your Event" : "Reserve Your Experience"}
                       </h2>
@@ -4894,35 +4894,40 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                       </div>
                     </div>
 
-                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
+                    <div className="booking-modal-actions" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
                       {!isDirect && experienceSupportsPrivateBooking && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 8 }}>
+                        <div className="booking-private-control" style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 8 }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: FG }}>Private Booking</span>
                           <button
+                            className="booking-private-switch"
                             type="button"
+                            aria-label="Toggle private booking"
+                            aria-pressed={privateBooking}
                             onClick={() => {
                               setPrivateBooking((value) => !value);
                               setCalculateError(null);
                             }}
                             style={{
-                              width: 36,
-                              height: 20,
+                              width: 42,
+                              height: 24,
                               borderRadius: 999,
-                              background: privateBooking ? A : B,
+                              background: privateBooking ? `linear-gradient(135deg, ${A}, ${AH})` : S,
                               padding: 2,
                               display: "flex",
-                              justifyContent: privateBooking ? "flex-end" : "flex-start",
-                              transition: "0.2s",
+                              justifyContent: "flex-start",
+                              transition: "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
                               cursor: "pointer",
-                              border: "none",
-                              alignItems: "center"
+                              border: `1px solid ${privateBooking ? A : B}`,
+                              alignItems: "center",
+                              boxShadow: privateBooking ? `0 0 0 3px ${AL}, inset 0 1px 0 rgba(255,255,255,0.22)` : `inset 0 1px 2px ${B}`,
+                              WebkitTapHighlightColor: "transparent"
                             }}
                           >
-                            <span style={{ width: 16, height: 16, borderRadius: "50%", background: W, display: "block" }} />
+                            <span style={{ width: 18, height: 18, borderRadius: "50%", background: W, display: "block", transform: privateBooking ? "translateX(18px)" : "translateX(0)", transition: "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }} />
                           </button>
                         </div>
                       )}
-                      <button type="button" onClick={closeBookingModal} style={{ background: S, border: `1px solid ${B}`, padding: 8, borderRadius: 100, cursor: "pointer", color: FG, display: "flex", alignItems: "center", justifyContent: "center", transition: "0.3s" }}>
+                      <button className="booking-modal-close" type="button" aria-label="Close booking" onClick={closeBookingModal} style={{ background: S, border: `1px solid ${B}`, padding: 8, borderRadius: 100, cursor: "pointer", color: FG, display: "flex", alignItems: "center", justifyContent: "center", transition: "0.3s" }}>
                         <X size={18} />
                       </button>
                     </div>
@@ -6460,6 +6465,11 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           position: relative !important;
         }
 
+        .booking-private-switch:focus-visible {
+          outline: 2px solid ${A} !important;
+          outline-offset: 3px !important;
+        }
+
         .SingleDatePicker_picker,
         .SingleDatePickerPortal,
         .DateRangePicker_picker,
@@ -6487,8 +6497,8 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           .booking-modal-wrapper { padding: 0 !important; align-items: flex-end !important; }
           .booking-modal-container { 
             width: 100% !important; 
-            height: 95vh !important; 
-            max-height: 100vh !important; 
+            height: 88dvh !important;
+            max-height: 88dvh !important;
             border-radius: 24px 24px 0 0 !important; 
             margin: 0 !important;
           }
@@ -6499,20 +6509,57 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             grid-template-columns: 1fr !important;
           }
           .booking-grid { grid-template-columns: 1fr !important; }
-          .booking-modal-header { padding: 24px 20px !important; }
-          .booking-modal-column { padding: 32px 20px !important; }
+          .booking-modal-header {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            grid-template-areas:
+              "heading close"
+              "private private" !important;
+            align-items: start !important;
+            padding: 14px 20px 12px !important;
+            gap: 10px 12px !important;
+          }
+          .booking-modal-heading {
+            grid-area: heading;
+            min-width: 0 !important;
+            flex-shrink: 1 !important;
+          }
+          .booking-modal-actions { display: contents !important; }
+          .booking-private-control {
+            grid-area: private;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            justify-content: space-between !important;
+            margin: 0 !important;
+            padding: 9px 11px !important;
+            border: 1px solid ${B} !important;
+            border-radius: 12px !important;
+            background: ${S} !important;
+          }
+          .booking-private-switch { flex: 0 0 auto !important; }
+          .booking-modal-close {
+            grid-area: close;
+            width: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+            flex: 0 0 32px !important;
+          }
+          .booking-modal-column { padding: 16px 20px !important; gap: 10px !important; border-bottom: 1px solid ${B}88 !important; }
+          .booking-modal-column:last-child { border-bottom: 0 !important; }
+          .booking-grid { gap: 0 !important; }
           .booking-modal-footer { 
             flex-direction: column !important; 
-            gap: 16px !important; 
-            padding: 20px !important; 
+            gap: 10px !important;
+            padding: 12px 20px max(12px, env(safe-area-inset-bottom)) !important;
             align-items: stretch !important;
             text-align: center !important;
             flex-shrink: 0 !important;
             background: ${BG} !important;
-            box-shadow: 0 -8px 24px rgba(0,0,0,0.12) !important;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08) !important;
             border-top: 1px solid ${B} !important;
           }
-          .booking-modal-footer button { width: 100% !important; padding: 14px 20px !important; font-size: 16px !important; }
+          .booking-modal-footer button { width: 100% !important; padding: 12px 20px !important; font-size: 15px !important; }
           .booking-modal-closed { padding: 40px 20px !important; }
           
           .booking-trigger {

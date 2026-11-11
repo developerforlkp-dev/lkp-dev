@@ -28,6 +28,7 @@ import { getShareText } from "../../utils/shareUtils";
 import SEOHead from "../../components/SEOHead";
 import { buildPlaceSchema, buildBreadcrumbSchema } from "../../utils/schemaBuilder";
 import { formatTime12h, formatTimingsRange } from "../../utils/timeUtils";
+import DetailMarquee from "../../components/DetailMarquee";
 
 /* ─── RESPONSIVE HOOK ─────────── */
 function useWindowSize() {
@@ -4213,65 +4214,12 @@ function VisitingNotes({ place }) {
   );
 }
 
-function PremiumMarquee({ items, isMobile, fallbackItems }) {
-  const { theme, tokens } = useTheme();
-  const { A, B, BG, FG, M } = tokens;
-  
+function PremiumMarquee({ items, fallbackItems }) {
   const rawTags = Array.isArray(items) && items.length > 0
     ? items.map((t) => (typeof t === "string" ? t : t?.name || t?.title || t?.tag || t?.label || t?.value || "")).filter(Boolean)
     : (typeof items === "string" ? items.split(",").map(s=>s.trim()).filter(Boolean) : fallbackItems);
-    
   const marqueeItems = rawTags.length > 0 ? rawTags : fallbackItems;
-  const loopedTags = Array(12).fill(marqueeItems).flat();
-  const estimatedTagWidth = (tag) => tag.length * 9.5 + 75;
-  const tagsDistance = marqueeItems.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 6;
-  const tagsDuration = Math.max(tagsDistance / 60, 10);
-
-  return (
-    <div style={{ padding: isMobile ? "0 24px" : "0 80px" }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto", boxSizing: "border-box", width: "100%" }}>
-        <div style={{
-          margin: "0",
-          overflow: "hidden",
-          position: "relative",
-          padding: "20px 0",
-          background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-          borderTop: `1px solid ${B}`,
-          borderBottom: `1px solid ${B}`,
-        }}>
-
-
-          <motion.div
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-            style={{ display: "flex", alignItems: "center", width: "max-content" }}
-          >
-            {loopedTags.map((tag, idx) => {
-              const isEven = idx % 2 === 0;
-              return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 24, marginRight: 32, whiteSpace: "nowrap" }}>
-                  <span
-                    style={{
-                      fontFamily: '"Inter", sans-serif',
-                      fontSize: isMobile ? "14px" : "18px",
-                      fontWeight: isEven ? 700 : 300,
-                      color: isEven ? FG : M,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      opacity: isEven ? 1 : 0.75
-                    }}
-                  >
-                    {tag}
-                  </span>
-                  <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                </div>
-              );
-            })}
-          </motion.div>
-        </div>
-      </div>
-    </div>
-  );
+  return <DetailMarquee items={marqueeItems} />;
 }
 
 function MobilePlaceDetails({

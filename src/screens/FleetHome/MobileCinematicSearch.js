@@ -1394,7 +1394,7 @@ export default function MobileCinematicSearch({
   } else {
     stickySummaryParts.push("Any date");
   }
-  stickySummaryParts.push(gTotal > 0 ? `${gTotal} Guest${gTotal > 1 ? "s" : ""}` : "1 Guest");
+  stickySummaryParts.push(gTotal > 1 ? `${gTotal} Guests` : "Guest");
   const stickySummary = stickySummaryParts.join(" • ");
 
   const openSheet = () => setSheetOpen(true);

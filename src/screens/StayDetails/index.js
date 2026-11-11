@@ -33,6 +33,8 @@ import Favorite from "../../components/Favorite";
 import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import FullScreenImage from "../../components/FullScreenImage";
 import PolicyCategoryItem from "../../components/PolicyCategoryItem";
+import DetailMarquee from "../../components/DetailMarquee";
+import ReviewRatingSummary from "../../components/ReviewRatingSummary";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
 const fixImageUrl = (url) => {
@@ -527,23 +529,37 @@ const ScopedStyles = () => (
       /* Mobile Carousel Dots */
       .mobile-carousel-dots {
         display: flex;
+        align-items: center;
         justify-content: center;
-        gap: 6px;
-        padding: 12px 0 4px 0;
+        gap: 2px;
+        min-height: 12px;
+        padding: 0;
       }
       .mobile-carousel-dots .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--M, #888);
-        opacity: 0.35;
-        transition: all 0.3s ease;
+        width: 20px;
+        height: 12px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
       }
-      .mobile-carousel-dots .dot.active {
+      .mobile-carousel-dots .dot::after {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.58);
+        opacity: 0.72;
+        transition: width 0.25s ease, background-color 0.25s ease, opacity 0.25s ease;
+      }
+      .mobile-carousel-dots .dot.active::after {
         background: var(--A, #0097B2);
         opacity: 1;
-        width: 20px;
-        border-radius: 4px;
+        width: 18px;
       }
 
       /* Mobile Thumbnail Strip Below Hero */
@@ -1160,6 +1176,20 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
 
   const thumbnailItems = useMemo(() => allImages.slice(0, 5), [allImages]);
 
+  const visibleCarouselIndexes = useMemo(() => {
+    const maxIndicators = 5;
+    if (allImages.length <= maxIndicators) {
+      return allImages.map((_, index) => index);
+    }
+
+    const start = Math.min(
+      Math.max(activeIdx - Math.floor(maxIndicators / 2), 0),
+      allImages.length - maxIndicators
+    );
+
+    return Array.from({ length: maxIndicators }, (_, index) => start + index);
+  }, [activeIdx, allImages]);
+
   useEffect(() => {
     if (showFsViewer || allImages.length <= 1) return;
     const interval = setInterval(() => {
@@ -1547,8 +1577,18 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
           {/* Mobile Carousel Dots */}
           {isMobile && allImages.length > 1 && (
             <div className="mobile-carousel-dots" style={{ position: "absolute", bottom: 12, left: 0, right: 0, zIndex: 45 }}>
-              {allImages.slice(0, Math.min(allImages.length, 5)).map((_, i) => (
-                <div key={i} className={`dot ${activeIdx === i ? "active" : ""}`} onClick={(e) => { e.stopPropagation(); handleThumbnailClick(i); }} style={{ cursor: "pointer" }} />
+              {visibleCarouselIndexes.map((imageIndex) => (
+                <button
+                  key={imageIndex}
+                  type="button"
+                  aria-label={`Show image ${imageIndex + 1}`}
+                  aria-current={activeIdx === imageIndex ? "true" : undefined}
+                  className={`dot ${activeIdx === imageIndex ? "active" : ""}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleThumbnailClick(imageIndex);
+                  }}
+                />
               ))}
             </div>
           )}
@@ -2236,7 +2276,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                   left: 0,
                   right: 0,
                   height: 3,
-                  background: `linear-gradient(90deg, ${A} 0%, #8B5CF6 100%)`
+                  background: `linear-gradient(90deg, ${A} 0%, #00D2FF 100%)`
                 }} />
 
                 <div style={{
@@ -2258,7 +2298,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                       height: 52,
                       borderRadius: "50%",
                       padding: "2px",
-                      background: `linear-gradient(135deg, ${A} 0%, #8B5CF6 100%)`,
+                      background: `linear-gradient(135deg, ${A} 0%, #00D2FF 100%)`,
                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                       flexShrink: 0
                     }}>
@@ -2322,9 +2362,9 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                         fontSize: "8.5px",
                         letterSpacing: "0.04em",
                         textTransform: "uppercase",
-                        color: "#7C3AED",
-                        background: theme === "dark" ? "rgba(139, 92, 246, 0.15)" : "rgba(139, 92, 246, 0.08)",
-                        border: `1px solid ${theme === "dark" ? "rgba(139, 92, 246, 0.25)" : "rgba(139, 92, 246, 0.18)"}`,
+                        color: "#0097B2",
+                        background: theme === "dark" ? "rgba(0, 151, 178, 0.15)" : "rgba(0, 151, 178, 0.08)",
+                        border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.25)" : "rgba(0, 151, 178, 0.18)"}`,
                         borderRadius: "5px",
                         padding: "1px 6px",
                         fontWeight: 700,
@@ -2415,7 +2455,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                         left: 0,
                         right: 0,
                         height: 3,
-                        background: `linear-gradient(90deg, #8B5CF6 0%, ${A} 100%)`
+                        background: `linear-gradient(90deg, #00D2FF 0%, ${A} 100%)`
                       }} />
 
                       {/* Background Ambient Glow under the circle */}
@@ -2491,7 +2531,7 @@ function StayHostQuality({ stay, hostData, hostAvatar }) {
                       {/* Right: Narrative Details & Verification Checks */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
                         <div>
-                          <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
+                          <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#0097B2", display: "block", marginBottom: 4 }}>Quality Index</span>
                           <h4 style={{ fontSize: 18, fontWeight: 800, color: FG, margin: 0, fontFamily: "Poppins, sans-serif" }}>Verified Trust Score</h4>
                         </div>
 
@@ -3228,65 +3268,7 @@ const StayDetails = () => {
           ? stay.tags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
           : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection", "Luxury Accommodations", "Stunning Views", "Premium Amenities"];
 
-        // Duplicate to ensure infinite seamless scrolling loop
-        const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-        const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-        const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-        // Match Experience Details mobile marquee speed on mobile devices
-        const tagsDuration = isMobile ? rawTags.length * 4 * 1.8 : tagsDistance / 8;
-
-        return (
-          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0" : "0", boxSizing: "border-box" }}>
-            <div style={{
-              margin: "0",
-              overflow: "hidden",
-              position: "relative",
-              padding: isMobile ? "14px 0" : "20px 0",
-              background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-              borderTop: `1px solid ${B}`,
-              borderBottom: `1px solid ${B}`,
-            }}>
-              {/* Left & Right Edge Fades removed as per request */}
-              <motion.div
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-                style={{ display: "flex", alignItems: "center", width: "max-content" }}
-              >
-                {loopedTags.map((tag, idx) => {
-                  const isEven = idx % 2 === 0;
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: isMobile ? "16px" : "24px",
-                        whiteSpace: "nowrap",
-                        marginRight: isMobile ? "24px" : "32px"
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: isMobile ? "14px" : "18px",
-                          fontWeight: isEven ? 700 : 300,
-                          color: isEven ? FG : M,
-                          fontFamily: "Poppins, sans-serif",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          opacity: isEven ? 1 : 0.75
-                        }}
-                      >
-                        {tag}
-                      </span>
-                      <Sparkles size={isMobile ? 11 : 14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={rawTags} />;
       })()}
 
       {/* ADDONS SECTION */}
@@ -3612,65 +3594,7 @@ const StayDetails = () => {
             ? stay.whatsSpecial.split(",").map((s) => s.trim()).filter(Boolean)
             : ["Bespoke Service", "Privacy Guaranteed", "Direct Connection", "Luxury Accommodations", "Stunning Views", "Premium Amenities"];
 
-        // Duplicate to ensure infinite seamless scrolling loop
-        const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-        const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-        const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-        // Match Experience Details mobile marquee speed on mobile devices
-        const tagsDuration = isMobile ? rawTags.length * 4 * 1.8 : tagsDistance / 8;
-
-        return (
-          <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0" : "0", boxSizing: "border-box" }}>
-            <div style={{
-              margin: "0",
-              overflow: "hidden",
-              position: "relative",
-              padding: isMobile ? "14px 0" : "20px 0",
-              background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-              borderTop: `1px solid ${B}`,
-              borderBottom: `1px solid ${B}`,
-            }}>
-              {/* Left & Right Edge Fades removed as per request */}
-              <motion.div
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-                style={{ display: "flex", alignItems: "center", width: "max-content" }}
-              >
-                {loopedTags.map((tag, idx) => {
-                  const isEven = idx % 2 === 0;
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: isMobile ? "16px" : "24px",
-                        whiteSpace: "nowrap",
-                        marginRight: isMobile ? "24px" : "32px"
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: isMobile ? "14px" : "18px",
-                          fontWeight: isEven ? 700 : 300,
-                          color: isEven ? FG : M,
-                          fontFamily: "Poppins, sans-serif",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          opacity: isEven ? 1 : 0.75
-                        }}
-                      >
-                        {tag}
-                      </span>
-                      <Sparkles size={isMobile ? 11 : 14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </div>
-          </div>
-        );
+        return <DetailMarquee items={rawTags} />;
       })()}
 
       <CuratedContent 
@@ -4612,8 +4536,8 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
   if (!hasReviews && eligibleBookings.length === 0) return null;
 
   return (
-    <section className="testimonials-section" style={{ background: theme === 'dark' ? BG : W, padding: "64px 0", overflow: "hidden" }}>
-      <div style={{ width: "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
+    <section className="testimonials-section" style={{ background: theme === 'dark' ? BG : W, padding: isMobile ? "40px 0" : "64px 0", overflow: "hidden" }}>
+      <div style={{ width: isMobile ? "calc(100% - 32px)" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto" }}>
 
         {/* Header and Scroll Buttons */}
         {hasReviews && (
@@ -4627,7 +4551,7 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                   What people say
                 </h3>
               </div>
-              <div style={{ display: "flex", gap: 12 }}>
+              {!isMobile && <div style={{ display: "flex", gap: 12 }}>
                 <button
                   type="button"
                   onClick={() => scrollSlider("left")}
@@ -4654,8 +4578,10 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                 >
                   <ChevronRight size={18} />
                 </button>
-              </div>
+              </div>}
             </div>
+
+            <ReviewRatingSummary reviews={displayReviews} summary={reviews} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "rgba(255,255,255,0.04)" : W} />
 
             {/* Reviews Slider */}
             <div

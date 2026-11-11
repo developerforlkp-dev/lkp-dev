@@ -7,6 +7,8 @@ import { ArrowDown, Check, Zap, MapPin, ChevronDown, Clock, User, Users, Camera,
 import PolicyCategoryItem from "../../components/PolicyCategoryItem";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
+import DetailMarquee from "../../components/DetailMarquee";
+import ReviewRatingSummary from "../../components/ReviewRatingSummary";
 import ShareButton from "../../components/ShareButton";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
@@ -1429,63 +1431,7 @@ const ExperienceProduct = () => {
               ? displayTags.map((t) => (typeof t === "string" ? t : t?.name || t?.tag || t?.label || t?.value || "")).filter(Boolean)
               : ["Valparai Trekking", "Nature & Wildlife", "Mountain Adventure", "Western Ghats Trails", "Scenic Tea Estates", "Eco Tourism India"]);
 
-          // Duplicate to ensure infinite seamless scrolling loop
-          const loopedTags = [...rawTags, ...rawTags, ...rawTags, ...rawTags];
-
-          const estimatedTagWidth = (tag) => tag.length * 9.5 + 75; // text width + margin + icon + padding
-          const tagsDistance = rawTags.reduce((sum, tag) => sum + estimatedTagWidth(tag), 0) * 2; // offset 50% is rawTags * 2
-          const tagsDuration = tagsDistance / 8; // ultra-slow marquee speed (8px/s) for very calm, subtle motion
-
-          return (
-            <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
-              <div style={{
-                width: "100%",
-                overflow: "hidden",
-                position: "relative",
-                padding: "20px 0",
-                background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-                borderTop: `1px solid ${B}`,
-                borderBottom: `1px solid ${B}`,
-              }}>
-                <motion.div
-                  animate={{ x: ["0%", "-50%"] }}
-                  transition={{ repeat: Infinity, ease: "linear", duration: tagsDuration }}
-                  style={{ display: "flex", alignItems: "center", width: "max-content" }}
-                >
-                  {loopedTags.map((tag, idx) => {
-                    const isEven = idx % 2 === 0;
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "24px",
-                          whiteSpace: "nowrap",
-                          marginRight: "32px"
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "18px",
-                            fontWeight: isEven ? 700 : 300,
-                            color: isEven ? FG : M,
-                            fontFamily: '"Inter", sans-serif',
-                            letterSpacing: "0.12em",
-                            textTransform: "uppercase",
-                            opacity: isEven ? 1 : 0.75
-                          }}
-                        >
-                          {tag}
-                        </span>
-                        <Sparkles size={14} color="#08B5D6" fill="#08B5D6" style={{ opacity: 0.6 }} />
-                      </div>
-                    );
-                  })}
-                </motion.div>
-              </div>
-            </div>
-          );
+          return <DetailMarquee items={rawTags} />;
         })()}
 
 
@@ -2097,62 +2043,7 @@ const ExperienceProduct = () => {
               ? listing.whatsSpecial.split(",").map(s => s.trim()).filter(Boolean)
               : [listing?.category, listing?.subCategory].filter(Boolean).map(getCatName).filter(Boolean);
           const displayCats = rawCats.length > 0 ? rawCats : ["Nature", "Adventure"];
-          const loopedCats = Array(12).fill(displayCats).flat();
-
-          const estimatedCatWidth = (cat) => cat.length * 9.5 + 75; // text width + gap + icon + margin
-          const catsDistance = displayCats.reduce((sum, cat) => sum + estimatedCatWidth(cat), 0) * 6; // offset 50% is displayCats * 6
-          const catsDuration = catsDistance / 8; // ultra-slow marquee speed (8px/s) for very calm, subtle motion
-
-          return (
-            <div style={{ width: isMobile ? "100%" : "calc(100% - 80px)", maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 16px" : "0", boxSizing: "border-box" }}>
-              <div style={{
-                width: "100%",
-                overflow: "hidden",
-                position: "relative",
-                padding: "20px 0",
-                background: theme === "dark" ? "rgba(255, 255, 255, 0.01)" : "rgba(0, 0, 0, 0.005)",
-                borderTop: `1px solid ${B}`,
-                borderBottom: `1px solid ${B}`,
-              }}>
-                <motion.div
-                  animate={{ x: ["0%", "-50%"] }}
-                  transition={{ repeat: Infinity, ease: "linear", duration: catsDuration }}
-                  style={{ display: "flex", alignItems: "center", width: "max-content" }}
-                >
-                  {loopedCats.map((cat, idx) => {
-                    const isEven = idx % 2 === 0;
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "24px",
-                          whiteSpace: "nowrap",
-                          marginRight: "32px"
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "18px",
-                            fontWeight: isEven ? 700 : 300,
-                            color: isEven ? FG : M,
-                            fontFamily: '"Inter", sans-serif',
-                            letterSpacing: "0.12em",
-                            textTransform: "uppercase",
-                            opacity: isEven ? 1 : 0.75
-                          }}
-                        >
-                          {cat}
-                        </span>
-                        <Sparkles size={14} color={A} fill={A} style={{ opacity: 0.6 }} />
-                      </div>
-                    );
-                  })}
-                </motion.div>
-              </div>
-            </div>
-          );
+          return <DetailMarquee items={displayCats} />;
         })()}
 
         <ExperiencePolicies listing={listing} isDirectBooking={isDirectBooking} />
@@ -2215,7 +2106,7 @@ const ExperienceProduct = () => {
                         left: 0,
                         right: 0,
                         height: 3,
-                        background: `linear-gradient(90deg, ${A} 0%, #8B5CF6 100%)`
+                        background: `linear-gradient(90deg, ${A} 0%, #00D2FF 100%)`
                       }} />
 
                       {/* Top Section: Avatar, Name & Metrics (With subtle tint background) */}
@@ -2239,7 +2130,7 @@ const ExperienceProduct = () => {
                             height: 52,
                             borderRadius: "50%",
                             padding: "2px",
-                            background: `linear-gradient(135deg, ${A} 0%, #8B5CF6 100%)`,
+                            background: `linear-gradient(135deg, ${A} 0%, #00D2FF 100%)`,
                             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                             flexShrink: 0
                           }}>
@@ -2307,9 +2198,9 @@ const ExperienceProduct = () => {
                               fontSize: "8.5px",
                               letterSpacing: "0.04em",
                               textTransform: "uppercase",
-                              color: "#7C3AED",
-                              background: theme === "dark" ? "rgba(139, 92, 246, 0.15)" : "rgba(139, 92, 246, 0.08)",
-                              border: `1px solid ${theme === "dark" ? "rgba(139, 92, 246, 0.25)" : "rgba(139, 92, 246, 0.18)"}`,
+                              color: "#0097B2",
+                              background: theme === "dark" ? "rgba(0, 151, 178, 0.15)" : "rgba(0, 151, 178, 0.08)",
+                              border: `1px solid ${theme === "dark" ? "rgba(0, 151, 178, 0.25)" : "rgba(0, 151, 178, 0.18)"}`,
                               borderRadius: "5px",
                               padding: "1px 6px",
                               fontWeight: 700,
@@ -2400,7 +2291,7 @@ const ExperienceProduct = () => {
                               left: 0,
                               right: 0,
                               height: 3,
-                              background: `linear-gradient(90deg, #8B5CF6 0%, ${A} 100%)`
+                              background: `linear-gradient(90deg, #00D2FF 0%, ${A} 100%)`
                             }} />
 
                             {/* Background Ambient Glow under the circle */}
@@ -2476,7 +2367,7 @@ const ExperienceProduct = () => {
                             {/* Right: Narrative Details & Verification Checks */}
                             <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
                               <div>
-                                <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#8B5CF6", display: "block", marginBottom: 4 }}>Quality Index</span>
+                                <span style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 800, color: "#0097B2", display: "block", marginBottom: 4 }}>Quality Index</span>
                                 <h4 style={{ fontSize: 18, fontWeight: 600, color: FG, margin: 0, fontFamily: '"Inter", sans-serif' }}>Verified Trust Score</h4>
                               </div>
 
@@ -2622,6 +2513,8 @@ const ExperienceProduct = () => {
                         </button>
                       </div>
                     </div>
+
+                    <ReviewRatingSummary reviews={normalizedReviews} summary={reviewSummary} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "rgba(255,255,255,0.035)" : W} />
 
                     <div
                       ref={sliderRef}
@@ -2930,21 +2823,7 @@ const ExperienceProduct = () => {
               </div>
               
               <div style={{ padding: 24, overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
-                {reviewSummary?.averageRating && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8, padding: 20, borderRadius: 16, border: `1px solid ${B}`, background: theme === "dark" ? "#1A1A1A" : "#F9FAFB" }}>
-                    <span style={{ fontSize: 40, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
-                    <div>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={18} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} fill={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent"} />
-                        ))}
-                      </div>
-                      <p style={{ fontSize: 13, color: M, fontWeight: 600, margin: "6px 0 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                        {reviewSummary.totalReviews || normalizedReviews.length} reviews
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <ReviewRatingSummary reviews={normalizedReviews} summary={reviewSummary} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "#1A1A1A" : "#F9FAFB"} style={{ marginBottom: 8 }} />
                 
                 {normalizedReviews.map((rev, i) => {
                   const name = rev.customerName || rev.author || "Verified Guest";

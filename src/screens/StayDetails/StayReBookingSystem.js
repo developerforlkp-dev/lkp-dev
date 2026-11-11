@@ -5307,15 +5307,7 @@ const StayBookingSystem = ({
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={selectionMode}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
-                  >
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: FG, display: "flex", alignItems: "center", gap: 8 }}>
                       {selectionMode === "check-in" ? (
                         <span style={{ color: A }}>
@@ -5326,11 +5318,7 @@ const StayBookingSystem = ({
                           <span style={{ color: A }}>
                             Step 2: Check-out
                           </span>
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
-                            style={{
+                          <div style={{
                               background: A,
                               color: BG,
                               fontSize: 10,
@@ -5341,15 +5329,14 @@ const StayBookingSystem = ({
                             }}
                           >
                             Next
-                          </motion.div>
+                          </div>
                         </>
                       )}
                     </h3>
                     <p style={{ margin: 0, fontSize: 13, color: M, fontWeight: 600 }}>
                       {selectionMode === "check-in" ? "When will you arrive?" : "When will you leave?"}
                     </p>
-                  </motion.div>
-                </AnimatePresence>
+                </div>
 
                 <button onClick={() => setShowCalendarModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: M, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 4 }}>
                   <X size={20} />
