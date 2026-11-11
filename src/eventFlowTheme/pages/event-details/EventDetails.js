@@ -22,6 +22,7 @@ import ExperienceReelsCarousel, { extractInstagramReelId } from "../../../compon
 import { getShareText } from "../../../utils/shareUtils";
 import { isDirectBookingPathOrState } from "../../../utils/directBooking";
 import DetailMarquee from "../../../components/DetailMarquee";
+import ReviewRatingSummary from "../../../components/ReviewRatingSummary";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -3116,6 +3117,8 @@ function EventReviews({ reviews = [] }) {
         <span className="mob-section-eyebrow" style={{ color: A }}>Guest Feedback</span>
         <h2 className="mob-section-title" style={{ color: FG }}>What people say</h2>
 
+        <ReviewRatingSummary reviews={displayReviews} summary={reviews} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={isDark ? "#111" : "#FAFAFA"} />
+
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16, msOverflowStyle: "none", scrollbarWidth: "none", scrollSnapType: "x mandatory" }} className="hide-scroll">
           {displayReviews.map((rev, idx) => {
             const name = rev.customerName || rev.reviewerName || rev.author || "Guest";
@@ -3192,6 +3195,7 @@ function EventReviews({ reviews = [] }) {
             </button>
           </div>
         </div>
+        <ReviewRatingSummary reviews={displayReviews} summary={reviews} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={isDark ? "rgba(255,255,255,0.04)" : W} />
 
         <div
           ref={sliderRef}

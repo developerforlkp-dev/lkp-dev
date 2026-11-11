@@ -34,6 +34,7 @@ import DetailPageNavPortal from "../../components/DetailPageNavPortal";
 import FullScreenImage from "../../components/FullScreenImage";
 import PolicyCategoryItem from "../../components/PolicyCategoryItem";
 import DetailMarquee from "../../components/DetailMarquee";
+import ReviewRatingSummary from "../../components/ReviewRatingSummary";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
 const fixImageUrl = (url) => {
@@ -4541,6 +4542,8 @@ function StayReviews({ reviews = [], stayId, eligibleBookings = [], onReviewSubm
                 </button>
               </div>
             </div>
+
+            <ReviewRatingSummary reviews={displayReviews} summary={reviews} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "rgba(255,255,255,0.04)" : W} />
 
             {/* Reviews Slider */}
             <div

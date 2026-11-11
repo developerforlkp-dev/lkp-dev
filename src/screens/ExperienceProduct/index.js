@@ -8,6 +8,7 @@ import PolicyCategoryItem from "../../components/PolicyCategoryItem";
 import { useTheme } from "../../components/JUI/Theme";
 import { Cursor, ProgressBar, Rev, Chars, Mq, SHdr, E, Soul } from "../../components/JUI/UI";
 import DetailMarquee from "../../components/DetailMarquee";
+import ReviewRatingSummary from "../../components/ReviewRatingSummary";
 import ShareButton from "../../components/ShareButton";
 import { BookingSystem } from "../../components/JUI/BookingSystem";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
@@ -2513,6 +2514,8 @@ const ExperienceProduct = () => {
                       </div>
                     </div>
 
+                    <ReviewRatingSummary reviews={normalizedReviews} summary={reviewSummary} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "rgba(255,255,255,0.035)" : W} />
+
                     <div
                       ref={sliderRef}
                       style={{
@@ -2820,21 +2823,7 @@ const ExperienceProduct = () => {
               </div>
               
               <div style={{ padding: 24, overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
-                {reviewSummary?.averageRating && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8, padding: 20, borderRadius: 16, border: `1px solid ${B}`, background: theme === "dark" ? "#1A1A1A" : "#F9FAFB" }}>
-                    <span style={{ fontSize: 40, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
-                    <div>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={18} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} fill={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent"} />
-                        ))}
-                      </div>
-                      <p style={{ fontSize: 13, color: M, fontWeight: 600, margin: "6px 0 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                        {reviewSummary.totalReviews || normalizedReviews.length} reviews
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <ReviewRatingSummary reviews={normalizedReviews} summary={reviewSummary} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={theme === "dark" ? "#1A1A1A" : "#F9FAFB"} style={{ marginBottom: 8 }} />
                 
                 {normalizedReviews.map((rev, i) => {
                   const name = rev.customerName || rev.author || "Verified Guest";

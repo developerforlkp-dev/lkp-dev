@@ -15,6 +15,7 @@ import RelatedListingsStrip from "../../components/RelatedListingsStrip";
 import CuratedContent from "../../components/CuratedContent";
 import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
 import DetailMarquee from "../../components/DetailMarquee";
+import ReviewRatingSummary from "../../components/ReviewRatingSummary";
 import { getShareText } from "../../utils/shareUtils";
 import "./MobileExperienceView.css";
 
@@ -1164,21 +1165,7 @@ export default function MobileExperienceView({
           <span className="mob-section-eyebrow" style={{ color: A }}>Guest Reviews</span>
           <h2 className="mob-section-title" style={{ color: FG }}>What People Say</h2>
 
-          {reviewSummary?.averageRating && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, padding: "14px 16px", borderRadius: 12, border: `1px solid ${B}`, background: isDark ? "#111" : W }}>
-              <span style={{ fontSize: 28, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
-              <div>
-                <div style={{ display: "flex", gap: 2 }}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} fill={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent"} />
-                  ))}
-                </div>
-                <p style={{ fontSize: 11, color: M, fontWeight: 600, margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                  {reviewSummary.totalReviews || revs.length} reviews
-                </p>
-              </div>
-            </div>
-          )}
+          <ReviewRatingSummary reviews={revs} summary={reviewSummary} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={isDark ? "#111" : W} />
 
           <div className="mob-reviews-list">
             {revs.slice(0, 3).map((rev, i) => (
@@ -1347,21 +1334,7 @@ export default function MobileExperienceView({
               </button>
             </div>
             <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-              {reviewSummary?.averageRating && (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, padding: "16px", borderRadius: 12, border: `1px solid ${B}`, background: isDark ? "#111" : W }}>
-                  <span style={{ fontSize: 32, fontWeight: 800, color: A }}>{Number(reviewSummary.averageRating).toFixed(1)}</span>
-                  <div>
-                    <div style={{ display: "flex", gap: 2 }}>
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={16} color={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "#CBD5E1"} fill={i < Math.round(reviewSummary.averageRating) ? "#F59E0B" : "transparent"} />
-                      ))}
-                    </div>
-                    <p style={{ fontSize: 12, color: M, fontWeight: 600, margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                      {reviewSummary.totalReviews || revs.length} reviews
-                    </p>
-                  </div>
-                </div>
-              )}
+              <ReviewRatingSummary reviews={revs} summary={reviewSummary} accentColor={A} foregroundColor={FG} mutedColor={M} borderColor={B} backgroundColor={isDark ? "#111" : W} style={{ marginBottom: 10 }} />
               {revs.map((rev, i) => (
                 <div key={i} style={{ borderRadius: 16, border: `1px solid ${B}`, padding: 20, background: isDark ? "#111" : W }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
