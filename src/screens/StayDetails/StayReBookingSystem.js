@@ -4123,7 +4123,7 @@ const StayBookingSystem = ({
           .booking-modal-footer button { width: 100% !important; }
           
           .stay-booking-trigger-wrapper {
-            bottom: 24px !important;
+            bottom: max(24px, env(safe-area-inset-bottom, 0px)) !important;
             right: 0 !important;
             left: 0 !important;
             width: calc(100% - 40px) !important;
@@ -4140,8 +4140,8 @@ const StayBookingSystem = ({
           .stay-booking-trigger {
             width: 100% !important;
             justify-content: center !important;
-            padding: 16px 32px !important;
-            font-size: 16px !important;
+            padding: 0 24px !important;
+            font-size: 15px !important;
             font-weight: 800 !important;
             letter-spacing: 0.05em !important;
             text-transform: uppercase !important;
@@ -4265,7 +4265,7 @@ const StayBookingSystem = ({
                 boxShadow: `0 20px 35px -8px rgba(0,0,0,0.15), 0 30px 60px -10px ${A}55, 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.35)`
               }}
               whileTap={{ scale: 0.96 }}
-              className="stay-booking-trigger"
+              className="stay-booking-trigger mobile-reserve-cta"
               style={{
                 position: "relative",
                 bottom: "auto",
@@ -4289,8 +4289,9 @@ const StayBookingSystem = ({
                 opacity: 1,
               }}
             >
-              <Bed size={22} />
-              Reserve Now
+              <Bed className="mobile-reserve-cta__icon" size={22} fill="none" aria-hidden="true" />
+              <span className="mobile-reserve-cta__label mobile-reserve-cta__desktop-label">Reserve Now</span>
+              <span className="mobile-reserve-cta__label mobile-reserve-cta__mobile-label">Reserve Stay</span>
             </motion.button>
           </div>
         );

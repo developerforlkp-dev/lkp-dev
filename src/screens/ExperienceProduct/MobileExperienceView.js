@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft, ChevronDown, Clock, User, Users, Zap, Baby, Languages,
-  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Compass, Heart, Building, Map, Globe, Camera, X
+  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Heart, Building, Map, Globe, Camera, X
 } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import PhotoView from "../../components/PhotoView";
@@ -1284,9 +1284,10 @@ export default function MobileExperienceView({
           WebkitBackdropFilter: "none",
           pointerEvents: "none"
         }}>
-          <button className="mob-cta-btn" style={{ background: A, boxShadow: `0 8px 30px ${A}60`, width: "100%", pointerEvents: "auto" }}
+          <button className="mob-cta-btn mobile-reserve-cta" style={{ background: A, boxShadow: `0 8px 30px ${A}60`, width: "100%", pointerEvents: "auto" }}
             onClick={() => setBookingOpen(true)}>
-            Reserve Now
+            <Sparkles className="mobile-reserve-cta__icon" fill="none" aria-hidden="true" />
+            <span className="mobile-reserve-cta__label">Reserve Experience</span>
           </button>
         </div>
       )}

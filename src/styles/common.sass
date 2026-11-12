@@ -137,6 +137,10 @@ img
         &:active
             background: rgba(0, 0, 0, 0.6) !important
 
+// Alternate mobile CTA copy stays hidden on desktop.
+.mobile-reserve-cta__mobile-label
+    display: none
+
 // Activity description text color overrides to ensure standard font colors
 .activity-item p,
 .activity-item p *,
@@ -178,6 +182,50 @@ img
         stroke-width: 2 !important
         stroke-linecap: round
         stroke-linejoin: round
+
+    // Shared geometry for the fixed reserve CTA used by mobile Experience,
+    // Event, and Stay detail pages. Position and theme color remain owned by
+    // each module; the visible button is deliberately identical.
+    .mobile-reserve-cta.mobile-reserve-cta
+        height: 48px !important
+        min-height: 48px !important
+        padding: 0 24px !important
+        display: flex !important
+        align-items: center !important
+        justify-content: center !important
+        gap: 10px !important
+        box-sizing: border-box !important
+        border: 0 !important
+        border-radius: 100px !important
+        color: #FFFFFF !important
+        font-size: 15px !important
+        font-weight: 800 !important
+        line-height: 1 !important
+        letter-spacing: 0.04em !important
+        text-align: center !important
+        text-transform: uppercase !important
+        white-space: nowrap !important
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24) !important
+
+        > svg,
+        .mobile-reserve-cta__icon
+            width: 20px !important
+            height: 20px !important
+            margin: 0 !important
+            flex: 0 0 20px !important
+            fill: none !important
+            stroke-width: 2 !important
+
+            :where(path, circle, rect, polygon, polyline, line, ellipse)
+                fill: none !important
+
+    .mobile-reserve-cta__label
+        display: block !important
+        line-height: 1 !important
+        text-align: center !important
+
+    .mobile-reserve-cta__desktop-label
+        display: none !important
 
     .slick-arrow
         display: flex !important

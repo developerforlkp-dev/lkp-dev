@@ -4733,7 +4733,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           whileTap={triggerDisabled ? undefined : { scale: 0.96 }}
           disabled={triggerDisabled}
           title={isFreeEvent ? "Free Event" : (triggerDisabled ? ticketSaleWindow.message : undefined)}
-          className="booking-trigger"
+          className="booking-trigger mobile-reserve-cta"
           style={{
             position: "fixed",
             bottom: 30,
@@ -4758,8 +4758,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
             transition: "background-color 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.2s cubic-bezier(0.25, 1, 0.5, 1)"
           }}
         >
-          <IconComp size={22} />
-          {isFreeEvent ? "Free Event" : (triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : triggerLabel)}
+          <IconComp className="mobile-reserve-cta__icon" size={22} fill="none" aria-hidden="true" />
+          <span className="mobile-reserve-cta__label mobile-reserve-cta__desktop-label">
+            {isFreeEvent ? "Free Event" : (triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : triggerLabel)}
+          </span>
+          <span className="mobile-reserve-cta__label mobile-reserve-cta__mobile-label">
+            {isFreeEvent ? "Free Event" : (triggerDisabled ? (ticketSaleWindow.status === "upcoming" ? "Booking Not Open" : "Booking Closed") : (type === "event" ? "Reserve Event" : triggerLabel))}
+          </span>
         </motion.button>
       )}
       {!hideTrigger && triggerDisabled && !isFreeEvent && (
@@ -6563,13 +6568,13 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
           .booking-modal-closed { padding: 40px 20px !important; }
           
           .booking-trigger {
-            bottom: 24px !important;
+            bottom: max(24px, env(safe-area-inset-bottom, 0px)) !important;
             right: 20px !important;
             left: 20px !important;
             width: calc(100% - 40px) !important;
             justify-content: center !important;
-            padding: 16px 32px !important;
-            font-size: 16px !important;
+            padding: 0 24px !important;
+            font-size: 15px !important;
             font-weight: 800 !important;
             letter-spacing: 0.05em !important;
             text-transform: uppercase !important;
