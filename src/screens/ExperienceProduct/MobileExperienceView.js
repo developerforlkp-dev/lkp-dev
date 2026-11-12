@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft, ChevronDown, Clock, User, Users, Zap, Baby, Languages,
-  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Compass, Heart, Building, Map, Globe, Camera, X
+  ShieldCheck, MapPin, Phone, Mail, Star, Sparkles, Share2, Info, Heart, Building, Map, Globe, Camera, X
 } from "lucide-react";
 import { useTheme } from "../../components/JUI/Theme";
 import PhotoView from "../../components/PhotoView";
@@ -342,7 +342,8 @@ export default function MobileExperienceView({
                   gap: gap,
                   width: "max-content",
                   animation: `expMobMarqueeScroll ${galleryDuration}s linear infinite`,
-                  willChange: "transform",
+                  animationPlayState: photoVisible ? "paused" : "running",
+                  willChange: photoVisible ? "auto" : "transform",
                   transform: "translate3d(0, 0, 0)",
                   WebkitTransform: "translate3d(0, 0, 0)",
                   backfaceVisibility: "hidden",
@@ -356,9 +357,13 @@ export default function MobileExperienceView({
                   }
                 `}</style>
                 {doubledItems.map((img, i) => (
-                  <div
+                  <button
+                    type="button"
                     key={i}
-                    onClick={() => {
+                    aria-label={`Open gallery image ${(i % (imgs.length || 1)) + 1}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
                       setPhotoIndex(i % (imgs.length || 1));
                       setPhotoVisible(true);
                     }}
@@ -369,6 +374,8 @@ export default function MobileExperienceView({
                       overflow: "hidden",
                       flexShrink: 0,
                       border: `1px solid ${B}`,
+                      padding: 0,
+                      background: "transparent",
                       cursor: "pointer",
                       transform: "translateZ(0)",
                       WebkitTransform: "translateZ(0)",
@@ -379,9 +386,10 @@ export default function MobileExperienceView({
                       src={img}
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       alt="Gallery"
-                      loading="eager"
+                      loading={i < 3 ? "eager" : "lazy"}
+                      decoding="async"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             );
@@ -389,7 +397,10 @@ export default function MobileExperienceView({
 
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={() => {
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
               setPhotoIndex(0);
               setPhotoVisible(true);
             }}
@@ -1273,9 +1284,10 @@ export default function MobileExperienceView({
           WebkitBackdropFilter: "none",
           pointerEvents: "none"
         }}>
-          <button className="mob-cta-btn" style={{ background: A, boxShadow: `0 8px 30px ${A}60`, width: "100%", pointerEvents: "auto" }}
+          <button className="mob-cta-btn mobile-reserve-cta" style={{ background: A, boxShadow: `0 8px 30px ${A}60`, width: "100%", pointerEvents: "auto" }}
             onClick={() => setBookingOpen(true)}>
-            Reserve Now
+            <Sparkles className="mobile-reserve-cta__icon" fill="none" aria-hidden="true" />
+            <span className="mobile-reserve-cta__label">Reserve Experience</span>
           </button>
         </div>
       )}
