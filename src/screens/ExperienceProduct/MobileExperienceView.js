@@ -342,7 +342,8 @@ export default function MobileExperienceView({
                   gap: gap,
                   width: "max-content",
                   animation: `expMobMarqueeScroll ${galleryDuration}s linear infinite`,
-                  willChange: "transform",
+                  animationPlayState: photoVisible ? "paused" : "running",
+                  willChange: photoVisible ? "auto" : "transform",
                   transform: "translate3d(0, 0, 0)",
                   WebkitTransform: "translate3d(0, 0, 0)",
                   backfaceVisibility: "hidden",
@@ -356,9 +357,13 @@ export default function MobileExperienceView({
                   }
                 `}</style>
                 {doubledItems.map((img, i) => (
-                  <div
+                  <button
+                    type="button"
                     key={i}
-                    onClick={() => {
+                    aria-label={`Open gallery image ${(i % (imgs.length || 1)) + 1}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
                       setPhotoIndex(i % (imgs.length || 1));
                       setPhotoVisible(true);
                     }}
@@ -369,6 +374,8 @@ export default function MobileExperienceView({
                       overflow: "hidden",
                       flexShrink: 0,
                       border: `1px solid ${B}`,
+                      padding: 0,
+                      background: "transparent",
                       cursor: "pointer",
                       transform: "translateZ(0)",
                       WebkitTransform: "translateZ(0)",
@@ -379,9 +386,10 @@ export default function MobileExperienceView({
                       src={img}
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       alt="Gallery"
-                      loading="eager"
+                      loading={i < 3 ? "eager" : "lazy"}
+                      decoding="async"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             );
@@ -389,7 +397,10 @@ export default function MobileExperienceView({
 
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={() => {
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
               setPhotoIndex(0);
               setPhotoVisible(true);
             }}
