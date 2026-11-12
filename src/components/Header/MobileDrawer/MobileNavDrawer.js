@@ -217,8 +217,8 @@ const MobileNavDrawer = ({
                 onLoginClick();
               }}
             >
-              <Icon name="user" size="18" />
-              Sign in
+              <Icon className={styles.loginIcon} name="user" size="18" />
+              <span className={styles.loginLabel}>Sign in</span>
             </button>
           )}
         </div>
