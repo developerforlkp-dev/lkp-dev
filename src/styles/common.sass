@@ -153,6 +153,51 @@ img
             display: none !important
         -ms-overflow-style: none !important
         scrollbar-width: none !important
+
+    // Shared mobile icon geometry. Component-specific colors remain untouched.
+    :root
+        --mobile-action-control-size: 40px
+        --mobile-action-icon-size: 20px
+        --mobile-quantity-control-size: 36px
+        --mobile-quantity-icon-size: 16px
+        --mobile-carousel-icon-size: 16px
+
+    :where(svg.lucide, svg.app-icon)
+        display: block
+        flex: 0 0 auto
+        vertical-align: middle
+
+    // Lucide icons are outline icons by default. Prevent later component rules
+    // from painting their transparent interiors white, while preserving icons
+    // that explicitly opt into a fill (saved hearts, play buttons, etc.).
+    svg.lucide[fill="none"],
+    svg.lucide:not([fill])
+        fill: none !important
+
+    :where(button, a, [role="button"]) > :where(svg.lucide, svg.app-icon):only-child
+        margin: auto
+
+    :where(button, a, [role="button"]) > :where(svg.lucide, svg.app-icon):only-child,
+    :where(button, a, [role="button"]) > :where(span, div):only-child > :where(svg.lucide, svg.app-icon):only-child
+        align-self: center
+
+    :where(button, a, [role="button"]) :where(svg.lucide[fill="none"], svg.lucide:not([fill]))
+        stroke-width: 2 !important
+        stroke-linecap: round
+        stroke-linejoin: round
+
+    .slick-arrow
+        display: flex !important
+        align-items: center
+        justify-content: center
+        padding: 0
+        line-height: 1
+
+        svg
+            display: block
+            width: var(--mobile-carousel-icon-size)
+            height: var(--mobile-carousel-icon-size)
+            margin: auto
 svg.lucide
     fill: none
 

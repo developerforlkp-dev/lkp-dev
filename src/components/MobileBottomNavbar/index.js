@@ -369,7 +369,7 @@ export default function MobileBottomNavbar() {
 
               <div className={styles.mobileNavItemInner}>
                 <IconComponent
-                  size={isActive ? 22 : 18}
+                  size={20}
                   className={cn(styles.mobileNavIcon, {
                     [styles.mobileNavIconActive]: isActive,
                   })}
