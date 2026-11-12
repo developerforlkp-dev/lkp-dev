@@ -730,15 +730,24 @@ const ScopedStyles = () => (
       /* Mobile Floating Badge */
       .mobile-floating-badge {
         position: absolute;
-        bottom: 32px;
-        right: 24px;
+        bottom: 38px;
+        right: 18px;
         z-index: 60;
         pointer-events: none;
-        width: 70px;
-        height: 70px;
+        width: 64px;
+        height: 64px;
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      .mobile-floating-badge-label {
+        width: 46px;
+        max-height: 28px;
+        padding: 0 2px;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        font-size: 7.5px !important;
+        line-height: 1.15 !important;
       }
 
       /* Hide desktop overlay elements on mobile */
@@ -746,11 +755,30 @@ const ScopedStyles = () => (
       .hero-badge-desktop { display: none !important; }
       .hero-overlay-details-desktop {
         display: flex !important;
-        padding: 24px 20px !important;
+        padding: 24px 20px 34px !important;
         background: transparent !important;
+        box-sizing: border-box;
+      }
+      .hero-overlay-content {
+        width: 100%;
+        min-width: 0;
       }
       .hero-overlay-details-desktop .hero-title {
-        font-size: clamp(2rem, 8vw, 3rem) !important;
+        max-width: calc(100% - 88px);
+        font-size: clamp(1.85rem, 8vw, 2.5rem) !important;
+        line-height: 1.08 !important;
+        overflow-wrap: anywhere;
+      }
+      .hero-location-row {
+        max-width: calc(100% - 88px);
+        min-width: 0;
+      }
+      .hero-location-text {
+        display: block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
     @media(min-width:769px){
@@ -767,6 +795,21 @@ const ScopedStyles = () => (
     
     @media(max-width:480px){
       .stay-details-premium .section-padding { padding: 60px 20px !important; }
+    }
+    @media(max-width:360px){
+      .mobile-floating-badge {
+        width: 56px;
+        height: 56px;
+        right: 14px;
+      }
+      .mobile-floating-badge-label {
+        width: 40px;
+        font-size: 6.5px !important;
+      }
+      .hero-overlay-details-desktop .hero-title,
+      .hero-location-row {
+        max-width: calc(100% - 72px);
+      }
     }
   `}</style>
 );
@@ -1472,7 +1515,7 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
             justifyContent: "flex-end",
             height: "60%"
           }}>
-            <motion.div style={{ opacity: 1, y: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            <motion.div className="hero-overlay-content" style={{ opacity: 1, y: 0, display: "flex", flexDirection: "column", gap: 10 }}>
 
               {/* Mobile-only Early Bird Discount Badge just above stay title */}
               {isMobile && stay?.earlyBirdDiscounts?.some(d => d.isActive) && (
@@ -1548,12 +1591,12 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
               })()}
 
               {/* Location */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", WebkitTextFillColor: "#E0E0E0", fontSize: "14px", fontWeight: 500, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
+              <div className="hero-location-row" style={{ display: "flex", alignItems: "center", gap: 8, color: "#E0E0E0", WebkitTextFillColor: "#E0E0E0", fontSize: "14px", fontWeight: 500, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="transparent" stroke={A || "#0097B2"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: "transparent", filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))" }}>
                   <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="transparent" />
                   <circle cx="12" cy="10" r="3" fill="transparent" />
                 </svg>
-                <span style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.55)", WebkitTextFillColor: "#E0E0E0" }}>{locationText}</span>
+                <span className="hero-location-text" style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.55)", WebkitTextFillColor: "#E0E0E0" }}>{locationText}</span>
               </div>
 
             </motion.div>
@@ -1569,7 +1612,7 @@ function StayHeroCarousel({ stay, galleryItems = [], heroRef }) {
                 </text>
               </svg>
             </motion.div>
-            <span style={{ fontSize: 9, fontWeight: 800, color: A || "#0097B2", textTransform: "uppercase", textAlign: "center", letterSpacing: "0.1em", lineHeight: 1.2, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
+            <span className="mobile-floating-badge-label" style={{ fontSize: 9, fontWeight: 800, color: A || "#0097B2", textTransform: "uppercase", textAlign: "center", letterSpacing: "0.1em", lineHeight: 1.2, fontFamily: '"Inter", "Plus Jakarta Sans", sans-serif' }}>
               {toDisplayString(stay?.propertyType) || "LUXURY"}
             </span>
           </div>
