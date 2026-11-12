@@ -594,6 +594,12 @@
   margin-left: auto;
   transition: transform 0.3s ease;
   flex-shrink: 0;
+  fill: none !important;
+}
+
+.mob-tip-chevron path,
+.mob-tip-chevron polyline {
+  fill: none !important;
 }
 
 .mob-tip-chevron.open {
