@@ -171,8 +171,14 @@ img
     // from painting their transparent interiors white, while preserving icons
     // that explicitly opt into a fill (saved hearts, play buttons, etc.).
     svg.lucide[fill="none"],
+    svg.lucide[fill="transparent"],
     svg.lucide:not([fill])
         fill: none !important
+
+        // Some screen-level rules target SVG child shapes directly. Clear
+        // those fills as well so outline icons remain hollow everywhere.
+        :where(path, circle, rect, polygon, polyline, line, ellipse)
+            fill: none !important
 
     :where(button, a, [role="button"]) > :where(svg.lucide, svg.app-icon):only-child
         margin: auto
@@ -181,7 +187,7 @@ img
     :where(button, a, [role="button"]) > :where(span, div):only-child > :where(svg.lucide, svg.app-icon):only-child
         align-self: center
 
-    :where(button, a, [role="button"]) :where(svg.lucide[fill="none"], svg.lucide:not([fill]))
+    :where(button, a, [role="button"]) :where(svg.lucide[fill="none"], svg.lucide[fill="transparent"], svg.lucide:not([fill]))
         stroke-width: 2 !important
         stroke-linecap: round
         stroke-linejoin: round

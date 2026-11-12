@@ -57,6 +57,13 @@
 
 .searchIcon
     color: #0097B2
+    fill: none !important
+    stroke: currentColor
+
+    path,
+    circle,
+    line
+        fill: none !important
 
 .searchText
     display: flex
@@ -91,6 +98,17 @@
     padding: 0
     line-height: 1
     flex-shrink: 0
+    svg
+        fill: none !important
+        stroke: currentColor
+        path,
+        circle,
+        rect,
+        polygon,
+        polyline,
+        line,
+        ellipse
+            fill: none !important
     border-radius: 50%
     border: 1.5px solid rgba(0,0,0,0.06)
     background: rgba(255, 255, 255, 0.85)
