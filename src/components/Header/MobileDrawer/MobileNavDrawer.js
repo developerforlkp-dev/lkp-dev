@@ -101,7 +101,7 @@ const MobileNavDrawer = ({
             onClick={onClose}
             aria-label="Close menu"
           >
-            <Icon name="close" size="16" />
+            <Icon name="close" size="20" />
           </button>
         </div>
 
