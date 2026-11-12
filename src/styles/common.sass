@@ -167,13 +167,6 @@ img
         flex: 0 0 auto
         vertical-align: middle
 
-    // Lucide icons are outline icons by default. Prevent later component rules
-    // from painting their transparent interiors white, while preserving icons
-    // that explicitly opt into a fill (saved hearts, play buttons, etc.).
-    svg.lucide[fill="none"],
-    svg.lucide:not([fill])
-        fill: none !important
-
     :where(button, a, [role="button"]) > :where(svg.lucide, svg.app-icon):only-child
         margin: auto
 
@@ -181,7 +174,7 @@ img
     :where(button, a, [role="button"]) > :where(span, div):only-child > :where(svg.lucide, svg.app-icon):only-child
         align-self: center
 
-    :where(button, a, [role="button"]) :where(svg.lucide[fill="none"], svg.lucide:not([fill]))
+    :where(button, a, [role="button"]) :where(svg.lucide[fill="none"], svg.lucide[fill="transparent"], svg.lucide:not([fill]))
         stroke-width: 2 !important
         stroke-linecap: round
         stroke-linejoin: round
@@ -198,8 +191,17 @@ img
             width: var(--mobile-carousel-icon-size)
             height: var(--mobile-carousel-icon-size)
             margin: auto
-svg.lucide
-    fill: none
+// Lucide icons whose markup declares no fill must stay as outline icons across
+// every module. The child-shape rule prevents page-level `svg`/`path` styles
+// from turning chevrons into triangles or painting circles and paths white.
+// Explicitly filled icons (saved states, ratings, play buttons) do not match.
+svg.lucide[fill="none"],
+svg.lucide[fill="transparent"],
+svg.lucide:not([fill])
+    fill: none !important
+
+    :where(path, circle, rect, polygon, polyline, line, ellipse)
+        fill: none !important
 
 // View Transition styles are now dynamically injected by useDarkMode.js
 // to prevent 1-frame flashes and allow dynamic clip-path coordinates.
