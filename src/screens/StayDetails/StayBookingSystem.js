@@ -1084,11 +1084,14 @@ const StayBookingSystem = ({
           const restoredRooms = getStoredStayRooms(stored.selectedRooms, stay);
           if (restoredRooms.length > 0) setSelectedRooms(restoredRooms);
           setShow(true);
+          if (onExternalOpenChange) {
+            onExternalOpenChange(true);
+          }
           localStorage.removeItem("frontendPendingBookingState");
         }
       }
     } catch (e) { }
-  }, [setCheckInDate, setCheckOutDate, setGuests, setChildAges, setSelectedRooms, stay, stay?.stayId, stay?.id]);
+  }, [setCheckInDate, setCheckOutDate, setGuests, setChildAges, setSelectedRooms, stay, stay?.stayId, stay?.id, onExternalOpenChange]);
 
   useEffect(() => {
     if (show) {
@@ -3811,7 +3814,7 @@ const StayBookingSystem = ({
       `}</style>
 
       {/* Floating Trigger */}
-      {(() => {
+      {!show && (() => {
         const isPropertyBased = isPropertyBasedBooking(stay);
         const hasRoomSelected = isPropertyBased || selectedRooms.length > 0;
 

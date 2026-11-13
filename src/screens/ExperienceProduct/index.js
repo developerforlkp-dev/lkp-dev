@@ -54,6 +54,35 @@ const formatImageUrl = (url) => {
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${encodedPath}${queryPart ? `?${queryPart}` : ""}`;
 };
 
+const preloadImage = (src) => {
+  if (!src || typeof Image === "undefined") return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+
+    image.onload = async () => {
+      if (typeof image.decode === "function") {
+        try {
+          await image.decode();
+        } catch (_) {
+          // A successful load is enough when decode is unsupported or rejects.
+        }
+      }
+      finish();
+    };
+    image.onerror = finish;
+    image.src = src;
+
+    if (image.complete) finish();
+  });
+};
+
 const getActivityImageUrl = (activity) => {
   const firstImage = Array.isArray(activity?.images) ? activity.images[0] : null;
   if (!firstImage) return null;
@@ -310,6 +339,7 @@ const ExperienceProduct = () => {
   const isDirectBooking = useMemo(() => {
     return Boolean(directToken) || isDirectBookingPathOrState(location);
   }, [location, directToken]);
+  const listingRequestKey = `${isEventDetailPage ? "event" : "experience"}:${directToken || id || "pending"}`;
 
   useEffect(() => {
     if (isDirectBooking) {
@@ -323,6 +353,7 @@ const ExperienceProduct = () => {
 
   const { tokens: { A, FG, M, B, W, BG, S, AL, AH }, theme } = useTheme();
   const [listing, setListing] = useState(null);
+  const [loadedListingRequestKey, setLoadedListingRequestKey] = useState(null);
   const [hostData, setHostData] = useState(null);
   const [leadData, setLeadData] = useState(null);
   const [galleryItems, setGalleryItems] = useState([]);
@@ -398,6 +429,7 @@ const ExperienceProduct = () => {
   const [eligibleBookings, setEligibleBookings] = useState([]);
   const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
   const unavailableRedirectRef = useRef(false);
+  const activeListingRequestKeyRef = useRef(null);
   const hostLeadUserId = hostData?.host?.leadUserId || hostData?.leadUserId || listing?.leadUserId || listing?.host?.leadUserId || listing?.hostId || listing?.host?.id;
   const leadIdForProfile = leadData?.leadId || leadData?.id || listing?.leadId || listing?.lead_id || listing?.host?.leadId || null;
   const displayHostName =
@@ -520,6 +552,27 @@ const ExperienceProduct = () => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
+
+    const isNewListingRequest = activeListingRequestKeyRef.current !== listingRequestKey;
+    activeListingRequestKeyRef.current = listingRequestKey;
+
+    if (isNewListingRequest) {
+      // Do not let any part of the previous experience survive a client-side
+      // route change while the next experience is being fetched.
+      setListing(null);
+      setLoadedListingRequestKey(null);
+      setGalleryItems([]);
+      setHostData(null);
+      setLeadData(null);
+      setReviews([]);
+      setReviewSummary(null);
+      setReviewsLoading(true);
+      setEligibleBookings([]);
+      setSelectedAddOns([]);
+      setExpandedActivities({});
+      setPhotoVisible(false);
+      setActivityPhotoVisible(false);
+    }
 
     const load = async () => {
       try {
@@ -671,7 +724,14 @@ const ExperienceProduct = () => {
             if (directData.leadName) data.leadName = directData.leadName;
             if (directData.upiId) data.upiId = directData.upiId;
           }
+
+          // Keep the route skeleton mounted until the incoming hero image is
+          // ready, so the old experience image can never remain on screen.
+          await preloadImage(formatImageUrl(data.coverPhotoUrl));
+          if (!mounted) return;
+
           setListing(data);
+          setLoadedListingRequestKey(listingRequestKey);
           const galleryImages = [];
           if (data.coverPhotoUrl) {
             const formattedUrl = formatImageUrl(data.coverPhotoUrl);
@@ -783,7 +843,7 @@ const ExperienceProduct = () => {
     };
     load();
     return () => { mounted = false; };
-  }, [history, id, isEventDetailPage, location.pathname, directToken, isDirectBooking]);
+  }, [history, id, isEventDetailPage, location.pathname, directToken, isDirectBooking, listingRequestKey]);
 
   const handleUnavailablePopupClose = () => {
     setUnavailablePopupOpen(false);
@@ -799,9 +859,13 @@ const ExperienceProduct = () => {
   const fade = useTransform(heroProgress, [0, 0.6], [1, 0]);
   const isMobile = useIsMobile();
 
-  if (loading && !listing) {
+  const isCurrentListingReady = Boolean(
+    listing && loadedListingRequestKey === listingRequestKey
+  );
+
+  if (!isCurrentListingReady && !unavailablePopupOpen) {
     return (
-      <div style={{ minHeight: '100vh', background: BG }}>
+      <div aria-busy={loading || !isCurrentListingReady} style={{ minHeight: '100vh', background: BG }}>
         <LoadingSkeleton variant="experience" />
       </div>
     );

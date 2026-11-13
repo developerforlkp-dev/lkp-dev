@@ -1905,12 +1905,15 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
           // Open the booking form automatically to deliver a flawless, continuous UX
           setShow(true);
+          if (onExternalOpenChange) {
+            onExternalOpenChange(true);
+          }
         }
       }
     } catch (e) {
       console.error("Failed to restore booking state:", e);
     }
-  }, [listing?.listingId, listing?.id, listing?.eventId, listing?.stayId]);
+  }, [listing?.listingId, listing?.id, listing?.eventId, listing?.stayId, onExternalOpenChange]);
 
   const selectedTicket = useMemo(() => {
     if (!isEventBooking) return null;
