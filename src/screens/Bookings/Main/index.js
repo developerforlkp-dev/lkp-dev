@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import cn from "classnames";
 import styles from "./Main.module.sass";
 import Icon from "../../../components/Icon";
@@ -35,6 +36,37 @@ const formatImageUrl = (url) => {
 
   // Default fallback
   return "";
+};
+
+const getCancellationReasonText = (reason) =>
+  typeof reason === "object"
+    ? (reason?.displayName || reason?.reason || reason?.name || JSON.stringify(reason))
+    : String(reason || "");
+
+const sortCancellationReasons = (reasons) =>
+  [...reasons].sort((a, b) => {
+    const aText = getCancellationReasonText(a);
+    const bText = getCancellationReasonText(b);
+    const aIsOther = /\bother\b/i.test(aText);
+    const bIsOther = /\bother\b/i.test(bText);
+
+    if (aIsOther !== bIsOther) return aIsOther ? 1 : -1;
+    return (Number(a?.sortOrder) || 0) - (Number(b?.sortOrder) || 0);
+  });
+
+const cancelStepVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? 48 : -48,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction) => ({
+    x: direction > 0 ? -40 : 40,
+    opacity: 0,
+  }),
 };
 
 const formatCancelPreviewMoney = (amount) => {
@@ -1113,6 +1145,7 @@ const Main = ({
   const [cancellationReasons, setCancellationReasons] = useState([]);
   const [selectedReason, setSelectedReason] = useState("");
   const [confirmCancelModalVisible, setConfirmCancelModalVisible] = useState(false);
+  const [cancelFlowDirection, setCancelFlowDirection] = useState(1);
   const [rawBookings, setRawBookings] = useState([]);
   const [rawCompletedBookings, setRawCompletedBookings] = useState([]);
   const [paginatedTransformedBookings, setPaginatedTransformedBookings] = useState([]);
@@ -2127,6 +2160,7 @@ const Main = ({
   };
 
   const handleCancelBookingClick = async (booking) => {
+    setCancelFlowDirection(1);
     let bookingTypeName = "experience";
     if (booking?.category === "EVENTS" || booking?.bookingData?.eventId != null || booking?.isEventOrder) {
       bookingTypeName = "event";
@@ -2295,6 +2329,7 @@ const Main = ({
       booking: bookingToCancel,
       reason: finalReason,
     });
+    setCancelFlowDirection(1);
     setCancelError(null);
     setCancelModalVisible(false);
     setConfirmCancelModalVisible(true);
@@ -2302,6 +2337,7 @@ const Main = ({
 
   const handleCloseConfirmCancelModal = () => {
     if (isCancelling) return;
+    setCancelFlowDirection(-1);
     setConfirmCancelModalVisible(false);
     setCancelModalVisible(true);
   };
@@ -2691,17 +2727,33 @@ const Main = ({
       </div>
 
       <Modal
-        visible={cancelModalVisible}
-        onClose={handleCloseCancelModal}
-        outerClassName={styles.cancelModalOuter}
+        visible={cancelModalVisible || confirmCancelModalVisible}
+        onClose={confirmCancelModalVisible ? handleCloseConfirmCancelModal : handleCloseCancelModal}
+        outerClassName={confirmCancelModalVisible ? styles.confirmCancelModalOuter : styles.cancelModalOuter}
       >
-        <div className={cn(styles.cancelModalContent, styles.cancelModalContentScrollable)}>
+        <motion.div
+          layout
+          className={styles.cancelFlowStage}
+          transition={{ layout: { type: "spring", stiffness: 320, damping: 30, mass: 0.85 } }}
+        >
+        <AnimatePresence initial={false} custom={cancelFlowDirection}>
+          {cancelModalVisible ? (
+        <motion.div
+          key="cancel-reason-step"
+          custom={cancelFlowDirection}
+          variants={cancelStepVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
+          className={cn(styles.cancelModalContent, styles.cancelModalContentScrollable, styles.bookingCancelModal)}
+        >
           <div className={styles.cancelModalHeader}>
             <h2 className={styles.cancelModalTitle}>
               Cancel Booking
             </h2>
             <p className={styles.cancelModalDescription}>
-              We're sorry to see you go. Please let us know<br />why you're cancelling this booking.
+              We're sorry to see you go. Please let us know why you're cancelling this booking.
             </p>
           </div>
           <div className={cn(styles.cancelModalBody, styles.cancelModalBodyScrollable)}>
@@ -2711,16 +2763,21 @@ const Main = ({
               </div>
               {cancellationReasons.length > 0 ? (
                 <div className={styles.reasonList}>
-                  {[...cancellationReasons]
-                    .sort((a, b) => (a?.sortOrder || 0) - (b?.sortOrder || 0))
+                  {sortCancellationReasons(cancellationReasons)
                     .map((reason, idx) => {
-                      const reasonText = typeof reason === 'object' ? (reason.displayName || reason.reason || reason.name || JSON.stringify(reason)) : reason;
+                      const reasonText = getCancellationReasonText(reason);
                       const isSelected = selectedReason === reasonText;
                       return (
-                        <div
-                          key={idx}
-                          onClick={() => setSelectedReason(reasonText)}
+                        <button
+                          type="button"
+                          key={`${reasonText}-${idx}`}
+                          onClick={() => {
+                            setSelectedReason(reasonText);
+                            setCancelError(null);
+                          }}
                           className={cn(styles.reasonItem, { [styles.active]: isSelected })}
+                          role="radio"
+                          aria-checked={isSelected}
                         >
                           <span className={cn(styles.reasonText, { [styles.active]: isSelected })}>
                             {reasonText}
@@ -2730,7 +2787,7 @@ const Main = ({
                               <div className={styles.reasonRadioInner} />
                             )}
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                 </div>
@@ -2742,8 +2799,8 @@ const Main = ({
             </div>
 
             {selectedReason && selectedReason.toLowerCase().includes("other") && (
-              <div className={styles.cancelModalFormGroup} style={{ marginTop: "24px" }}>
-                <label htmlFor="cancelReason" className={styles.cancelModalLabel} style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", color: "#B1B5C3", marginBottom: "12px" }}>
+              <div className={cn(styles.cancelModalFormGroup, styles.otherReasonGroup)}>
+                <label htmlFor="cancelReason" className={cn(styles.cancelModalLabel, styles.otherReasonLabel)}>
                   Additional details (optional)
                 </label>
                 <textarea
@@ -2751,7 +2808,6 @@ const Main = ({
                   className={cn(styles.cancelModalInput, styles.cancelModalTextarea, {
                     [styles.inputError]: cancelError && !cancelReason.trim(),
                   })}
-                  style={{ borderRadius: "8px", border: "1px solid #E6E8EC", padding: "16px", minHeight: "100px", resize: "none" }}
                   value={cancelReason}
                   onChange={(e) => {
                     setCancelReason(e.target.value);
@@ -2761,7 +2817,7 @@ const Main = ({
                   maxLength={250}
                   disabled={isCancelling}
                 />
-                <div style={{ textAlign: "right", fontSize: "12px", color: "#B1B5C3", marginTop: "4px" }}>
+                <div className={styles.characterCount}>
                   {cancelReason.length}/250
                 </div>
               </div>
@@ -2772,11 +2828,10 @@ const Main = ({
               </div>
             )}
           </div>
-          <div className={styles.cancelModalFooter} style={{ padding: "24px 32px", borderTop: "1px solid #E6E8EC", display: "flex", gap: "16px", justifyContent: "flex-end" }}>
+          <div className={cn(styles.cancelModalFooter, styles.bookingCancelFooter)}>
             <button
               type="button"
-              className={cn("button-stroke")}
-              style={{ flex: 1, borderRadius: "24px", padding: "12px 24px", height: "48px" }}
+              className={cn("button-stroke", styles.bookingCancelSecondaryButton)}
               onClick={handleCloseCancelModal}
               disabled={isCancelling}
             >
@@ -2784,23 +2839,25 @@ const Main = ({
             </button>
             <button
               type="button"
-              className={cn("button")}
-              style={{ flex: 1, borderRadius: "24px", padding: "12px 24px", height: "48px", backgroundColor: "#0097B2", color: "white", border: "none" }}
+              className={cn("button", styles.bookingCancelPrimaryButton)}
               onClick={handleConfirmCancel}
               disabled={isCancelling || !selectedReason}
             >
               {isCancelling ? "Submitting..." : "Submit Cancellation"}
             </button>
           </div>
-        </div>
-      </Modal>
-
-      <Modal
-        visible={confirmCancelModalVisible}
-        onClose={handleCloseConfirmCancelModal}
-        outerClassName={styles.confirmCancelModalOuter}
-      >
-        <div className={styles.confirmCancelModalContent}>
+        </motion.div>
+          ) : confirmCancelModalVisible ? (
+        <motion.div
+          key="cancel-confirmation-step"
+          custom={cancelFlowDirection}
+          variants={cancelStepVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
+          className={styles.confirmCancelModalContent}
+        >
           <div className={styles.cancelModalHeader}>
             <h2 className={styles.cancelModalTitle}>Confirm Cancellation</h2>
           </div>
@@ -2849,7 +2906,10 @@ const Main = ({
               {isCancelling ? "Cancelling..." : "Yes, Cancel Booking"}
             </button>
           </div>
-        </div>
+        </motion.div>
+          ) : null}
+        </AnimatePresence>
+        </motion.div>
       </Modal>
 
       <Modal
