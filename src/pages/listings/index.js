@@ -893,7 +893,8 @@ const Listings = () => {
                 {searchLocation || "Where to?"}
               </span>
               <span className={styles.compactSearchSub}>
-                {formattedDate !== "Add dates" ? formattedDate : "Any week"} • {guestCountText !== "Add guests" ? guestCountText : "Add guests"}
+                {formattedDate !== "Add dates" ? formattedDate : "Any week"}
+                {!isFoodOrPlace && <> • {guestCountText !== "Add guests" ? guestCountText : "Add guests"}</>}
               </span>
             </div>
           </div>
