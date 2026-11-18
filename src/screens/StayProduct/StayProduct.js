@@ -3,6 +3,7 @@ import { useLocation, useHistory } from "react-router-dom";
 import { ChevronLeft, AlertCircle, Sparkles, Plus, Minus, Info, Baby } from "lucide-react";
 import cn from "classnames";
 import moment from "moment";
+import { readStaySearch } from "../../utils/staySearch";
 import styles from "./StayProduct.module.sass";
 import Icon from "../../components/Icon";
 import InlineDatePicker from "../../components/InlineDatePicker";
@@ -2008,9 +2009,10 @@ const StayProduct = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   // Booking state
-  const [checkInDate, setCheckInDate] = useState("");
-  const [checkOutDate, setCheckOutDate] = useState("");
-  const [guests, setGuests] = useState({ adults: 1, children: 0 });
+  const searchBooking = readStaySearch(location.search);
+  const [checkInDate, setCheckInDate] = useState(() => searchBooking.checkInDate?.format("YYYY-MM-DD") || "");
+  const [checkOutDate, setCheckOutDate] = useState(() => searchBooking.checkOutDate?.format("YYYY-MM-DD") || "");
+  const [guests, setGuests] = useState(() => searchBooking.guests);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [availableRooms, setAvailableRooms] = useState([]);

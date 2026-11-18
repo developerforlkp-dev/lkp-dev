@@ -19,6 +19,7 @@ import StayNotFound from "./StayNotFound";
 import roomStyles from "./RoomCards.module.sass";
 import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview, getReviewErrorMessage } from "../../utils/api";
 import ExperienceReelsCarousel, { extractInstagramReelId } from "../../components/ExperienceReelsCarousel";
+import { readStaySearch } from "../../utils/staySearch";
 import StayBookingSystem from "./StayBookingSystem";
 import StayItinerary from "./StayItinerary";
 import CuratedContent from "../../components/CuratedContent";
@@ -2893,9 +2894,10 @@ const StayDetails = () => {
   useDocumentTitle(stay?.propertyName || stay?.title, "Stays");
 
   // Booking State
-  const [checkInDate, setCheckInDate] = useState(null);
-  const [checkOutDate, setCheckOutDate] = useState(null);
-  const [guests, setGuests] = useState({ adults: 1, children: 0 });
+  const searchBooking = useMemo(() => readStaySearch(location.search), [location.search]);
+  const [checkInDate, setCheckInDate] = useState(searchBooking.checkInDate);
+  const [checkOutDate, setCheckOutDate] = useState(searchBooking.checkOutDate);
+  const [guests, setGuests] = useState(searchBooking.guests);
   const [childAges, setChildAges] = useState([]);
   const [selectedRooms, setSelectedRooms] = useState([]); // Array of {roomId, mealPlan, count}
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -2904,14 +2906,14 @@ const StayDetails = () => {
   const [currentAddonIndex, setCurrentAddonIndex] = useState(2);
 
   const resetStayBookingState = useCallback(() => {
-    setCheckInDate(null);
-    setCheckOutDate(null);
-    setGuests({ adults: 1, children: 0 });
+    setCheckInDate(searchBooking.checkInDate?.clone() ?? null);
+    setCheckOutDate(searchBooking.checkOutDate?.clone() ?? null);
+    setGuests(searchBooking.guests);
     setChildAges([]);
     setSelectedRooms([]);
     setSelectedAddOns([]);
     setAddOnQuantities({});
-  }, []);
+  }, [searchBooking]);
 
   const handleExternalOpenChange = useCallback((isOpen) => {
     setBookingModalOpen(isOpen);
@@ -3687,6 +3689,7 @@ const StayDetails = () => {
         setCheckInDate={setCheckInDate}
         checkOutDate={checkOutDate}
         setCheckOutDate={setCheckOutDate}
+        searchGuests={params.has("adults") || params.has("guests") || params.has("children") ? searchBooking.guests : undefined}
         guests={guests}
         setGuests={setGuests}
         childAges={childAges}
