@@ -18,7 +18,7 @@ import RoomCards from "./RoomCards";
 import StayNotFound from "./StayNotFound";
 import roomStyles from "./RoomCards.module.sass";
 import { getStayDetails, getHost, getHostContent, createStayOrder, getStayReviews, getEligibleBookings, submitOrderReview, getReviewErrorMessage } from "../../utils/api";
-import ExperienceReelsCarousel, { extractInstagramReelId } from "../../components/ExperienceReelsCarousel";
+import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
 import { readStaySearch } from "../../utils/staySearch";
 import StayBookingSystem from "./StayBookingSystem";
 import StayItinerary from "./StayItinerary";
@@ -2877,17 +2877,7 @@ const StayDetails = () => {
       }
     });
 
-    return Array.from(
-      new Set(
-        allItems
-          .map((link) => {
-            if (!link) return null;
-            const urlStr = typeof link === "string" ? link : link?.url || link?.link || link?.href || "";
-            return extractInstagramReelId(urlStr) || urlStr;
-          })
-          .filter(Boolean)
-      )
-    );
+    return allItems;
   }, [reviews, stay]);
 
   // Dynamic browser tab title

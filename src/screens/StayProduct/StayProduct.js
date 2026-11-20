@@ -11,7 +11,7 @@ import Loader from "../../components/Loader";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import ChildAgeSelect from "../../components/ChildAgeSelect";
 import { getStayDetails, getStayRoomAvailability, getStayBedAvailability, getStayPropertyAvailability, createStayOrder, getStayReviews, getStayHotelRoomAvailability, getStayHostelAvailability, previewOrderPrice, getStayHotelRoomPrices, getStayHostelRoomPrices } from "../../utils/api";
-import ExperienceReelsCarousel, { extractInstagramReelId } from "../../components/ExperienceReelsCarousel";
+import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
 import { clearPendingCheckoutState, persistPendingCheckout } from "../../utils/paymentSession";
 import { useTheme } from "../../components/JUI/Theme";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2061,17 +2061,7 @@ const StayProduct = () => {
       }
     });
 
-    return Array.from(
-      new Set(
-        allItems
-          .map((link) => {
-            if (!link) return null;
-            const urlStr = typeof link === "string" ? link : link?.url || link?.link || link?.href || "";
-            return extractInstagramReelId(urlStr) || urlStr;
-          })
-          .filter(Boolean)
-      )
-    );
+    return allItems;
   }, [reviews, stay]);
   const [roomsCount, setRoomsCount] = useState(1);
 
