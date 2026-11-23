@@ -5,6 +5,7 @@ import styles from "./Card.module.sass";
 import Icon from "../Icon";
 import { getListingSearchUrl } from "../../utils/staySearch";
 import Favorite from "../Favorite";
+import { isEventCardClosed } from "../../utils/eventCardStatus";
 
 export const getWishlistConfig = (item) => {
   if (item?.isCategoryCard || item?.isCategory) return null;
@@ -73,12 +74,6 @@ const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
 
   const isClosedEvent = (() => {
     const raw = item?.rawListing || {};
-    // Check if the API explicitly sent isClosed or badge
-    if (item.isClosed === true || raw.isClosed === true) return true;
-    if (typeof item.badge === "string" && item.badge.trim().toLowerCase() === "closed") return true;
-    if (typeof raw.badge === "string" && raw.badge.trim().toLowerCase() === "closed") return true;
-
-    // Only apply to events
     const isEvent =
       wishlistConfig?.itemType === "event" ||
       (item.url && item.url.includes("/event")) ||
@@ -87,30 +82,7 @@ const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
       raw.event_id != null ||
       String(raw.businessInterestCode || raw.businessInterest || "").toUpperCase().includes("EVENT") ||
       (typeof window !== "undefined" && window.location.search.toUpperCase().includes("EVENT"));
-    if (!isEvent) return false;
-
-    const now = new Date();
-    
-    // Explicit status check
-    const statusVal = item.status || raw.status;
-    if (statusVal && String(statusVal).trim().toLowerCase() === "closed") return true;
-    const badgeVal = item.badge || raw.badge;
-    if (badgeVal && String(badgeVal).trim().toLowerCase() === "closed") return true;
-    const eventStatusVal = item.eventStatus || raw.eventStatus;
-    if (eventStatusVal && String(eventStatusVal).trim().toLowerCase() === "closed") return true;
-    
-    // Check various end dates to see if booking/ticketing is closed
-    const bookingEndDateVal = item.bookingEndDate || raw.bookingEndDate || item.bookingClosedDate || raw.bookingClosedDate;
-    if (bookingEndDateVal && new Date(bookingEndDateVal) < now) return true;
-    const endDateVal = item.endDate || raw.endDate || raw.eventEndDate;
-    if (endDateVal && new Date(endDateVal) < now) return true;
-    const eventDateVal = item.eventDate || raw.eventDate || item.startDate || raw.startDate || item.date || raw.date;
-    if (eventDateVal) {
-      const parsedDate = new Date(eventDateVal);
-      if (!isNaN(parsedDate.getTime()) && parsedDate < now) return true;
-    }
-
-    return false;
+    return isEventCardClosed(item, raw, isEvent);
   })();
 
   const canShowNewBadge = !location.pathname.includes('/listings') || isStayCard;

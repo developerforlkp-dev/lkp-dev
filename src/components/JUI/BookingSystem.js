@@ -1563,6 +1563,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
   const billableAdults = guests.adults;
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showTicketPicker, setShowTicketPicker] = useState(false);
+  const [draftTicketTypeId, setDraftTicketTypeId] = useState("");
   const [dateFilteredSlots, setDateFilteredSlots] = useState([]);
   const [dateFilteredSlotsLoaded, setDateFilteredSlotsLoaded] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -2563,7 +2564,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
 
     if (!pendingRestoreRef.current) {
       setStartTime(null);
-      setShowTimePicker(false);
+      setSelectedSlotId(null);
     }
 
     if (!show || (isDirect ? !directToken : (!listingId || !selectedDateKey || !slotsLookupEndDate))) {
@@ -5366,6 +5367,45 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                   </p>
                                 </div>
                               </div>
+                              {isEventBooking && selectedEventSlotId && (
+                                <div style={{ marginTop: 10, padding: "12px 14px", borderRadius: 16, border: `1px solid ${validationErrors.ticketType ? E : B}`, background: BG }}>
+                                  <div style={{ fontSize: 10, fontWeight: 800, color: M, textTransform: "uppercase", marginBottom: 4 }}>Ticket</div>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                                    {selectedTicketTypeId && selectedTicket ? (
+                                      <>
+                                        <div style={{ minWidth: 0 }}>
+                                          <div style={{ fontSize: 14, fontWeight: 800, color: FG }}>{getTicketName(selectedTicket, eventTickets.indexOf(selectedTicket))}</div>
+                                          {selectedTicket.description && (
+                                            <div style={{ fontSize: 12, color: M, marginTop: 2 }}>{selectedTicket.description}</div>
+                                          )}
+                                        </div>
+                                        <div style={{ fontSize: 14, fontWeight: 800, color: FG }}>{"\u20B9"}{Number(eventPrice || 0).toFixed(2)}</div>
+                                      </>
+                                    ) : (
+                                      <div style={{ fontSize: 13, color: M }}>
+                                        {ticketsForSelectedSlot.length === 0 ? "No tickets available for this slot." : "Choose a ticket type."}
+                                      </div>
+                                    )}
+                                    {ticketsForSelectedSlot.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDraftTicketTypeId(selectedTicketTypeId);
+                                          setShowTicketPicker(true);
+                                        }}
+                                        style={{ padding: "6px 10px", border: `1px solid ${B}`, borderRadius: 8, background: W, color: A, fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+                                      >
+                                        {selectedTicketTypeId && selectedTicket ? "Change ticket" : "Select ticket"}
+                                      </button>
+                                    )}
+                                  </div>
+                                  {selectedTicketTypeId && selectedTicket && (eventAvailabilityLoading || selectedTicketSoldOut) && (
+                                    <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: eventAvailabilityLoading ? M : E }}>
+                                      {eventAvailabilityLoading ? "Checking availability..." : "Ticket sold out."}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               {privateBookingWarning && (
                                 <div
                                   style={{
@@ -5433,6 +5473,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                       onDateSelect={(date) => {
                                         setStartDate(date);
                                         setShowDatePicker(false);
+                                        if (!isEventBooking) setShowTimePicker(true);
                                         setShowDateWarning(false);
                                         setValidationErrors(prev => {
                                           const next = { ...prev };
@@ -5602,6 +5643,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                                           return next;
                                                         });
                                                         setShowTimePicker(false);
+                                                        setDraftTicketTypeId("");
                                                         setShowTicketPicker(true);
                                                       }
                                                     }}
@@ -5633,7 +5675,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                         </div>
                                       ) : (
                                         <div style={{ position: "relative" }}>
-                                          <TimeSlotsPicker
+                                          {!slotsLoading && <TimeSlotsPicker
                                             visible={true}
                                             onClose={() => setShowTimePicker(false)}
                                             onTimeSelect={(t, slotObj) => {
@@ -5661,7 +5703,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                             timeSlots={timeSlots}
                                             selectedDate={startDate}
                                             plain
-                                          />
+                                          />}
                                           {slotsLoading && (
                                             <div style={{ marginTop: 10, fontSize: 12, color: M, fontWeight: 700 }}>
                                               Checking slot availability...
@@ -5685,7 +5727,7 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                             </AnimatePresence>
 
                             <AnimatePresence>
-                              {showTicketPicker && isEventBooking && (
+                              {showTicketPicker && isEventBooking && ticketsForSelectedSlot.length > 1 && (
                                 <motion.div
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
@@ -5728,116 +5770,98 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                     </div>
 
                                     <div style={{ overflowY: "auto", paddingRight: 8, margin: "0 -8px 0 0", flex: 1 }}>
-                                      {ticketsForSelectedSlot.length > 0 ? (
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                          {ticketsForSelectedSlot.map((ticket, index) => {
-                                            const ticketId = String(ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`);
-                                            const isSelected = String(selectedTicketTypeId) === ticketId;
-                                            const originalIndex = eventTickets.findIndex(t => String(t.id ?? t.ticketTypeId ?? t.typeId ?? "") === ticketId);
-                                            const priceCandidate =
-                                              apiTicketPrices[ticketId] ??
-                                              apiTicketPrices[String(ticket.ticketTypeId)] ??
-                                              apiTicketPrices[String(ticket.ticket_type_id)] ??
-                                              apiTicketPrices[String(ticket.ticketId)] ??
-                                              apiTicketPrices[String(ticket.ticket_id)] ??
-                                              apiTicketPrices[String(ticket.id)] ??
-                                              apiTicketPrices[String(ticket.typeId)] ??
-                                              apiTicketPrices[String(ticket.name || "").toLowerCase().trim()] ??
-                                              apiTicketPrices[String(ticket.ticketName || "").toLowerCase().trim()] ??
-                                              apiTicketPrices[String(ticket.ticketTypeName || "").toLowerCase().trim()] ??
-                                              (originalIndex >= 0 ? apiTicketPrices[`ticket-${originalIndex}`] : undefined) ??
-                                              (originalIndex >= 0 ? apiTicketPrices[String(originalIndex)] : undefined) ??
-                                              apiTicketPrices[`ticket-${index}`] ??
-                                              apiTicketPrices[String(index)];
-                                            const ticketBasePrice = getTicketPrice(ticket, 0);
-                                            const ticketEffectivePrice = getEffectiveTicketPrice(ticket, billableAdults, ticketBasePrice).price;
-                                            const ticketGuestPrice = calculateEventGuestPricing(
-                                              ticketEffectivePrice,
-                                              listing?.pricing,
-                                              listing?.earlyBirdDiscounts,
-                                              startDate,
-                                              priceCandidate !== undefined && priceCandidate !== null ? Number(priceCandidate) : null
-                                            ).finalUnitPrice;
-                                            const displayPrice = priceCandidate !== undefined && priceCandidate !== null
-                                              ? Number(priceCandidate)
-                                              : (ticketGuestPrice !== undefined && ticketGuestPrice !== null ? Number(ticketGuestPrice) : Number(ticketBasePrice || 0));
-                                            return (
-                                              <div
-                                                key={ticketId}
-                                                onClick={() => {
-                                                  setSelectedTicketTypeId(ticketId);
-                                                  setValidationErrors(prev => {
-                                                    const next = { ...prev };
-                                                    delete next.ticketType;
-                                                    return next;
-                                                  });
-                                                }}
-                                                style={{
-                                                  padding: "12px 16px",
-                                                  borderRadius: 16,
-                                                  border: `1.5px solid ${isSelected ? A : B}`,
-                                                  background: isSelected ? AL : BG,
-                                                  cursor: "pointer",
-                                                  display: "flex",
-                                                  justifyContent: "space-between",
-                                                  alignItems: "center",
-                                                  transition: "0.2s",
-                                                  boxShadow: isSelected ? `0 4px 12px ${A}11` : "none"
-                                                }}
-                                              >
-                                                <div>
-                                                  <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? A : FG }}>
-                                                    {getTicketName(ticket, index)}
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                        {ticketsForSelectedSlot.map((ticket, index) => {
+                                          const ticketId = String(ticket.id ?? ticket.ticketTypeId ?? ticket.typeId ?? `ticket-${index}`);
+                                          const isSelected = draftTicketTypeId === ticketId;
+                                          const originalIndex = eventTickets.findIndex(t => String(t.id ?? t.ticketTypeId ?? t.typeId ?? "") === ticketId);
+                                          const priceCandidate =
+                                            apiTicketPrices[ticketId] ??
+                                            apiTicketPrices[String(ticket.ticketTypeId)] ??
+                                            apiTicketPrices[String(ticket.ticket_type_id)] ??
+                                            apiTicketPrices[String(ticket.ticketId)] ??
+                                            apiTicketPrices[String(ticket.ticket_id)] ??
+                                            apiTicketPrices[String(ticket.id)] ??
+                                            apiTicketPrices[String(ticket.typeId)] ??
+                                            apiTicketPrices[String(ticket.name || "").toLowerCase().trim()] ??
+                                            apiTicketPrices[String(ticket.ticketName || "").toLowerCase().trim()] ??
+                                            apiTicketPrices[String(ticket.ticketTypeName || "").toLowerCase().trim()] ??
+                                            (originalIndex >= 0 ? apiTicketPrices[`ticket-${originalIndex}`] : undefined) ??
+                                            (originalIndex >= 0 ? apiTicketPrices[String(originalIndex)] : undefined) ??
+                                            apiTicketPrices[`ticket-${index}`] ??
+                                            apiTicketPrices[String(index)];
+                                          const ticketBasePrice = getTicketPrice(ticket, 0);
+                                          const ticketEffectivePrice = getEffectiveTicketPrice(ticket, billableAdults, ticketBasePrice).price;
+                                          const ticketGuestPrice = calculateEventGuestPricing(
+                                            ticketEffectivePrice,
+                                            listing?.pricing,
+                                            listing?.earlyBirdDiscounts,
+                                            startDate,
+                                            priceCandidate !== undefined && priceCandidate !== null ? Number(priceCandidate) : null
+                                          ).finalUnitPrice;
+                                          const displayPrice = priceCandidate !== undefined && priceCandidate !== null
+                                            ? Number(priceCandidate)
+                                            : (ticketGuestPrice !== undefined && ticketGuestPrice !== null ? Number(ticketGuestPrice) : Number(ticketBasePrice || 0));
+                                          return (
+                                            <div
+                                              key={ticketId}
+                                              onClick={() => setDraftTicketTypeId(ticketId)}
+                                              style={{
+                                                padding: "12px 16px",
+                                                borderRadius: 16,
+                                                border: `1.5px solid ${isSelected ? A : B}`,
+                                                background: isSelected ? AL : BG,
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                transition: "0.2s",
+                                                boxShadow: isSelected ? `0 4px 12px ${A}11` : "none"
+                                              }}
+                                            >
+                                              <div>
+                                                <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? A : FG }}>
+                                                  {getTicketName(ticket, index)}
+                                                </div>
+                                                {ticket.description && (
+                                                  <div style={{ fontSize: 11, color: M, marginTop: 2 }}>
+                                                    {ticket.description}
                                                   </div>
-                                                  {ticket.description && (
-                                                    <div style={{ fontSize: 11, color: M, marginTop: 2 }}>
-                                                      {ticket.description}
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? A : FG }}>
-                                                  ₹{Number(displayPrice || 0).toFixed(2)}
-                                                </div>
+                                                )}
                                               </div>
-                                            );
-                                          })}
-                                          {selectedTicketTypeId && selectedTicket && (
-                                            <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 4 }}>
-                                              {eventAvailabilityLoading && (
-                                                <div style={{ fontSize: 11, color: M, fontWeight: 700 }}>
-                                                  Checking availability...
-                                                </div>
-                                              )}
-                                              {!eventAvailabilityLoading && selectedTicketSoldOut && (
-                                                <div style={{ fontSize: 11, color: "#d14343", fontWeight: 800 }}>
-                                                  Ticket sold out.
-                                                </div>
-                                              )}
+                                              <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? A : FG }}>
+                                                ₹{Number(displayPrice || 0).toFixed(2)}
+                                              </div>
                                             </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <div style={{ padding: "12px 16px", background: BG, border: `1px solid ${B}`, borderRadius: 16, fontSize: 12, color: M, opacity: 0.65, fontWeight: 600, fontStyle: "italic" }}>
-                                          No tickets available for this slot.
-                                        </div>
-                                      )}
+                                          );
+                                        })}
+                                      </div>
                                     </div>
                                     <div style={{ marginTop: 16 }}>
                                       <button
-                                        onClick={() => setShowTicketPicker(false)}
-                                        disabled={!selectedTicketTypeId}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedTicketTypeId(draftTicketTypeId);
+                                          setShowTicketPicker(false);
+                                          setValidationErrors(prev => {
+                                            const next = { ...prev };
+                                            delete next.ticketType;
+                                            return next;
+                                          });
+                                        }}
+                                        disabled={!draftTicketTypeId}
                                         style={{
                                           width: "100%",
                                           padding: "14px 20px",
                                           borderRadius: 16,
-                                          background: selectedTicketTypeId ? A : B,
-                                          color: selectedTicketTypeId ? W : M,
+                                          background: draftTicketTypeId ? A : B,
+                                          color: draftTicketTypeId ? W : M,
                                           border: "none",
                                           fontSize: 14,
                                           fontWeight: 800,
-                                          cursor: selectedTicketTypeId ? "pointer" : "not-allowed",
+                                          cursor: draftTicketTypeId ? "pointer" : "not-allowed",
                                           transition: "0.2s",
-                                          opacity: selectedTicketTypeId ? 1 : 0.5
+                                          opacity: draftTicketTypeId ? 1 : 0.5
                                         }}
                                       >
                                         Confirm Ticket
@@ -6196,33 +6220,6 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
                                     </button>
                                   </div>
                                 </div>
-                              </div>
-                            )}
-
-                            {/* Ticket Applied Details */}
-                            {isEventBooking && selectedTicketTypeId && selectedTicket && (
-                              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                                <span
-                                  onClick={() => setShowTicketPicker(true)}
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    padding: "4px 10px",
-                                    borderRadius: 100,
-                                    background: `${A}12`,
-                                    border: `1px solid ${A}28`,
-                                    color: A,
-                                    fontSize: 10,
-                                    fontWeight: 800,
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
-                                    width: "fit-content",
-                                    cursor: "pointer"
-                                  }}
-                                >
-                                  🏷 Ticket : {selectedTicket.ticketName || selectedTicket.name} — ₹{Number(eventPrice || 0).toFixed(2)} (Change)
-                                </span>
                               </div>
                             )}
                           </div>

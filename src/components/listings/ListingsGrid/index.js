@@ -10,6 +10,7 @@ import Favorite from "../../Favorite";
 import { transformListingToCard } from "../../../screens/FleetHome/CardStyles";
 import { getWishlistConfig } from "../../Card";
 import { getStayCardMetadata } from "../../../utils/api";
+import { isEventCardClosed } from "../../../utils/eventCardStatus";
 
 // Redesigned horizontal split-layout list view card
 const ListCard = ({ item, listing }) => {
@@ -35,10 +36,6 @@ const ListCard = ({ item, listing }) => {
 
   const isClosedEvent = (() => {
     const raw = listing || item?.rawListing || {};
-    if (item.isClosed === true || raw.isClosed === true) return true;
-    if (typeof item.badge === "string" && item.badge.trim().toLowerCase() === "closed") return true;
-    if (typeof raw.badge === "string" && raw.badge.trim().toLowerCase() === "closed") return true;
-
     const isEventCheck =
       isEvent ||
       wishlistConfig?.itemType === "event" ||
@@ -47,27 +44,7 @@ const ListCard = ({ item, listing }) => {
       raw.event_id != null ||
       String(raw.businessInterestCode || raw.businessInterest || "").toUpperCase().includes("EVENT") ||
       (typeof window !== "undefined" && window.location.search.toUpperCase().includes("EVENT"));
-    if (!isEventCheck) return false;
-
-    const now = new Date();
-    const statusVal = item.status || raw.status;
-    if (statusVal && String(statusVal).trim().toLowerCase() === "closed") return true;
-    const badgeVal = item.badge || raw.badge;
-    if (badgeVal && String(badgeVal).trim().toLowerCase() === "closed") return true;
-    const eventStatusVal = item.eventStatus || raw.eventStatus;
-    if (eventStatusVal && String(eventStatusVal).trim().toLowerCase() === "closed") return true;
-
-    const bookingEndDateVal = item.bookingEndDate || raw.bookingEndDate || item.bookingClosedDate || raw.bookingClosedDate;
-    if (bookingEndDateVal && new Date(bookingEndDateVal) < now) return true;
-    const endDateVal = item.endDate || raw.endDate || raw.eventEndDate;
-    if (endDateVal && new Date(endDateVal) < now) return true;
-    const eventDateVal = item.eventDate || raw.eventDate || item.startDate || raw.startDate || item.date || raw.date;
-    if (eventDateVal) {
-      const parsedDate = new Date(eventDateVal);
-      if (!isNaN(parsedDate.getTime()) && parsedDate < now) return true;
-    }
-
-    return false;
+    return isEventCardClosed(item, raw, isEventCheck);
   })();
 
   return (

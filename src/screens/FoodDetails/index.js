@@ -1104,6 +1104,54 @@ function CulinaryHero({ food, galleryItems }) {
 }
 
 
+const RATING_PROVIDERS = {
+  lkp: { name: "LKP", logo: "/images/littleplanet-logo.svg" },
+  zomato: { name: "Zomato", logo: "/images/zomato-logo.png" },
+  google: { name: "Google", logo: "/images/google-logo.svg" },
+};
+
+function FoodRatings({ ratings }) {
+  const { tokens: { FG, B, W } } = useTheme();
+  const entries = Array.isArray(ratings) ? ratings.filter((entry) => {
+    const provider = String(entry?.provider || "").trim().toLowerCase();
+    return RATING_PROVIDERS[provider] && entry?.rating !== null && entry?.rating !== undefined &&
+      String(entry.rating).trim() !== "" && Number.isFinite(Number(entry.rating)) &&
+      Number(entry.rating) >= 0 && Number(entry.rating) <= 5;
+  }) : [];
+
+  if (!entries.length) return null;
+
+  return (
+    <div role="group" aria-label="Food ratings" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginTop: 22 }}>
+      {entries.map((entry, index) => {
+        const provider = RATING_PROVIDERS[String(entry.provider).trim().toLowerCase()];
+        const score = Number(entry.rating).toFixed(1);
+        const rawLink = entry.link || entry.url;
+        let href;
+        if (typeof rawLink === "string" && rawLink.trim()) {
+          try {
+            const url = new URL(rawLink.trim());
+            if (["https:", "http:"].includes(url.protocol)) href = url.href;
+          } catch {
+            // Keep the rating non-interactive when its URL is invalid.
+          }
+        }
+        const Badge = href ? "a" : "div";
+        return (
+          <Badge href={href} key={`${entry.provider}-${index}`} title={`${provider.name}: ${score} out of 5`} aria-label={`${provider.name}: ${score} out of 5`} style={{ display: "flex", alignItems: "center", gap: 7, padding: "3px 10px 3px 3px", borderRadius: 999, border: `1px solid ${B}`, background: W, textDecoration: "none", color: "inherit", cursor: href ? "pointer" : "default" }}>
+              <span style={{ width: 30, height: 30, flexShrink: 0, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: provider.name === "Zomato" ? "#E23744" : "#FFFFFF", boxShadow: provider.name === "Zomato" ? "none" : "inset 0 0 0 1px rgba(0,0,0,0.06)" }}>
+                <img src={provider.logo} alt={provider.name} style={{ width: provider.name === "Google" ? 16 : 24, height: provider.name === "Google" ? 16 : 14, objectFit: "contain" }} />
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 12, fontWeight: 700, lineHeight: 1, color: FG }}>
+                {score}<Star size={10} fill="#E9AA24" color="#E9AA24" aria-hidden="true" />
+              </span>
+          </Badge>
+        );
+      })}
+    </div>
+  );
+}
+
 function CulinaryNarrative({ food, hostData, hostAvatar }) {
   const { isMobile } = useWindowSize();
   const { tokens } = useTheme();
@@ -1259,6 +1307,7 @@ function CulinaryNarrative({ food, hostData, hostAvatar }) {
             </Rev>
           )}
         </div>
+        <FoodRatings ratings={food?.ratings} />
       </div>
     </section>
   );

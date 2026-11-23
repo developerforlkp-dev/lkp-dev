@@ -538,10 +538,11 @@ const FleetHome = () => {
             const sectionTitle = sectionInfo?.sectionTitle || section?.sectionTitle || "";
             const isEventsSection = activeFilter === "events" || (typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("event"));
             const isStaysSection = activeFilter === "stays" || (typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("stay"));
-            const isFoodSection = activeFilter === "food" || (typeof sectionTitle === "string" && (sectionTitle.toLowerCase().includes("food") || sectionTitle.toLowerCase().includes("menu")));
+            const isFoodSection = !isEventsSection && (activeFilter === "food" || (typeof sectionTitle === "string" && (sectionTitle.toLowerCase().includes("food") || sectionTitle.toLowerCase().includes("menu"))));
             const isPlacesSection = activeFilter === "places" || (typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("place"));
 
-            if (isEventsSection && (!listings || listings.length === 0)) {
+            const hasSelectedCategories = (sectionInfo.selectedCategories?.length ?? 0) > 0;
+            if (isEventsSection && !hasSelectedCategories && (!listings || listings.length === 0)) {
               try {
                 const eventResult = await getEventListings(12, 0);
                 if (!isCancelled) {
