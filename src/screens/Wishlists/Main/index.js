@@ -1,22 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import cn from "classnames";
-import { Link } from "react-router-dom";
 import styles from "./Main.module.sass";
 import Card from "../../../components/Card";
-import { getCustomerWishlistItems, normalizePublicImageUrl } from "../../../utils/api";
+import { getCustomerWishlistItems } from "../../../utils/api";
 import { buildExperienceUrl } from "../../../utils/experienceUrl";
 import { primeWishlistCache } from "../../../hooks/useWishlist";
 import LoadingSkeleton from "../../../components/LoadingSkeleton";
-
-const breadcrumbs = [
-  {
-    title: "Home",
-    url: "/",
-  },
-  {
-    title: "Wishlists",
-  },
-];
 
 const WISHLIST_EVENT_NAME = "lkp:wishlist-changed";
 
@@ -36,6 +25,7 @@ const getWishlistItemUrl = (itemType, itemId, title) => {
 
 const getWishlistLocation = (location) => {
   if (!location) return null;
+  if (typeof location === "string") return location;
   if (location.label) return location.label;
   return [location.city, location.state, location.country].filter(Boolean).join(", ") || null;
 };
@@ -53,12 +43,14 @@ const formatImageUrl = (url) => {
 };
 
 const transformWishlistItemToCard = (item) => {
-  const imageUrl =
-    formatImageUrl(item?.display?.imageUrl) ||
-    formatImageUrl(item?.display?.imageBlobName) ||
-    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-  const title = item?.display?.title || "Saved item";
-  const pricingLabel = item?.display?.pricing?.label || null;
+  const display = item?.display;
+  if (!display?.title || item?.itemId == null || !item?.itemType) return null;
+  const imageUrl = formatImageUrl(display.imageUrl) || formatImageUrl(display.imageBlobName);
+  const title = display.title;
+  const pricingLabel = display.pricing?.label || null;
+  const rating = display.averageRating ?? display.rating;
+  const reviews = display.totalReviews ?? display.reviewCount;
+  const category = display.primaryCategoryName || display.primaryCategory?.name || display.categoryName || display.category?.name || display.categoryText;
 
   return {
     id: `wishlist-${item?.itemType}-${item?.itemId}`,
@@ -72,9 +64,12 @@ const transformWishlistItemToCard = (item) => {
     hasPrice: Boolean(pricingLabel),
     cost: pricingLabel,
     priceActual: pricingLabel,
-    rating: 0,
-    reviews: 0,
-    hideRating: true,
+    rating,
+    reviews,
+    hideRating: !(Number(rating) > 0),
+    categoryText: category || null,
+    badgeColor: "teal",
+    apiDataOnly: true,
     options: [],
     wishlistItemType: item?.itemType,
     wishlistItemId: item?.itemId,
@@ -114,6 +109,7 @@ const Main = () => {
           if (status === 401 || status === 403) {
             setItems([]);
           } else {
+            setItems([]);
             setError("We couldn't load your wishlist right now.");
           }
         }
@@ -153,7 +149,7 @@ const Main = () => {
   }, [reloadTick]);
 
   const cardItems = useMemo(
-    () => items.map(transformWishlistItemToCard),
+    () => items.map(transformWishlistItemToCard).filter(Boolean),
     [items]
   );
 
@@ -215,31 +211,7 @@ const Main = () => {
             </div>
           </>
         ) : (
-          <div className={styles.emptyWrapper} style={{ textAlign: "center", padding: "120px 0", maxWidth: "540px", margin: "0 auto" }}>
-            <div style={{ fontSize: "12px", marginBottom: "16px", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0097B2" }}>
-              YOUR COLLECTION
-            </div>
-            <h1 className={cn("h2", styles.title)} style={{ 
-              marginBottom: "24px", 
-              fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
-              fontSize: "52px",
-              lineHeight: "1.1"
-            }}>
-              {isAuthenticated() ? (
-                <>Curate your perfect <span style={{ fontStyle: "italic", color: "#0097B2" }}>escape</span></>
-              ) : (
-                <>Sign in to save <span style={{ fontStyle: "italic", color: "#0097B2" }}>memories</span></>
-              )}
-            </h1>
-            <p style={{ marginBottom: "40px", fontSize: "18px", color: "var(--n4)", lineHeight: "1.6" }}>
-              {isAuthenticated()
-                ? "Your wishlist is currently empty. Discover the most extraordinary moments waiting to be lived and start building your dream itinerary."
-                : "Save experiences, events, and stays to your wishlist to build your dream itinerary."}
-            </p>
-            <Link to="/" className={cn("button", styles.button)} style={{ minWidth: "220px", borderRadius: "32px" }}>
-              Explore All
-            </Link>
-          </div>
+          null
         )}
       </div>
     </div>

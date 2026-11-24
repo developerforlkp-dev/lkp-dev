@@ -1,3 +1,4 @@
+import { getCategoryFilterParams } from "../utils/listingFilters";
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getFilteredListings,
@@ -201,12 +202,7 @@ export const useListings = ({
             sortBy: sortBy,
           };
 
-          if (categoryFilter?.categoryType) {
-            filterPayload.categoryType = categoryFilter.categoryType;
-          }
-          if (Array.isArray(categoryFilter?.categoryValues) && categoryFilter.categoryValues.length > 0) {
-            filterPayload.categoryValues = categoryFilter.categoryValues.join(",");
-          }
+          Object.assign(filterPayload, getCategoryFilterParams(categoryFilter, filters.tags || []));
           if (hasRatingFilter) {
             const maxRatingVal = Math.max(...filters.ratings);
             filterPayload.ratingFilter = maxRatingVal;
@@ -231,25 +227,6 @@ export const useListings = ({
           }
 
           if (mappedNearbyInterest === "FOOD" || mappedNearbyInterest === "PLACES") {
-            delete filterPayload.categoryValues;
-
-            if (categoryFilter?.categoryType === "Primary Category") {
-              filterPayload.primaryCategoryId = categoryFilter.categoryValues.join(",");
-            } else if (categoryFilter?.categoryType === "Sub Category") {
-              filterPayload.subcategoryId = categoryFilter.categoryValues.join(",");
-            } else if (
-              categoryFilter?.categoryType === "Tags" ||
-              categoryFilter?.categoryType === "Special Labels"
-            ) {
-              filterPayload.tags = categoryFilter.categoryValues.join(",");
-            }
-
-            if (hasTagFilter) {
-              filterPayload.tags = filterPayload.tags
-                ? `${filterPayload.tags},${filters.tags.join(",")}`
-                : filters.tags.join(",");
-            }
-
             const response = mappedNearbyInterest === "FOOD"
               ? await filterFoodMenus(filterPayload)
               : await filterPlaces(filterPayload);
@@ -273,8 +250,7 @@ export const useListings = ({
           } else {
             const response = await getFilteredListings({
               businessInterestId: mappedBusinessInterestId,
-              categoryType: categoryFilter?.categoryType,
-              categoryValues: categoryFilter?.categoryValues || [],
+              ...getCategoryFilterParams(categoryFilter, filters.tags || []),
               ratingFilter: hasRatingFilter ? Math.max(...filters.ratings) : undefined,
               minPrice: effectiveMinPrice,
               maxPrice: effectiveMaxPrice,

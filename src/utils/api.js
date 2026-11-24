@@ -408,6 +408,9 @@ export const getFilteredListings = async ({
   businessInterestId,
   categoryType,
   categoryValues = [],
+  primaryCategoryId,
+  subcategoryId,
+  tags,
   ratingFilter,
   minPrice,
   maxPrice,
@@ -422,7 +425,7 @@ export const getFilteredListings = async ({
 
     const normalizedCategoryValues = Array.isArray(categoryValues)
       ? categoryValues.filter((value) => value != null && String(value).trim() !== "")
-      : [];
+      : (typeof categoryValues === "string" ? categoryValues.split(",").filter(Boolean) : []);
 
     const params = {
       businessInterestId,
@@ -430,6 +433,10 @@ export const getFilteredListings = async ({
       offset,
       sortBy,
     };
+
+    Object.entries({ primaryCategoryId, subcategoryId, tags }).forEach(([key, value]) => {
+      if (value != null && String(value).trim()) params[key] = Array.isArray(value) ? value.join(",") : value;
+    });
 
     if (categoryType) {
       params.categoryType = categoryType;

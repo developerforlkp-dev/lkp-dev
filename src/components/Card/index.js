@@ -103,8 +103,8 @@ const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
       target={isMobile ? "_self" : "_blank"}
       rel="noopener noreferrer"
     >
-      <div className={cn(styles.preview, { [styles.loaded]: imageLoaded })}>
-        <img 
+      <div className={cn(styles.preview, { [styles.loaded]: imageLoaded || (item.apiDataOnly && !item.src) })}>
+        {(!item.apiDataOnly || (item.src && !imageError)) && <img
           srcSet={finalSrcSet}
           src={finalSrc} 
           alt={item.title || "Listing"}
@@ -116,7 +116,7 @@ const Item = ({ className, item, row, car, hidePrice, hideWishlist }) => {
             }
             setImageLoaded(true);
           }}
-        />
+        />}
         {isClosedEvent && (
           <div className={styles.closedBadge}>
             <div className={styles.closedDot} />

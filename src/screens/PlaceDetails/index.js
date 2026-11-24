@@ -1,3 +1,4 @@
+import { getInstagramReelUrls } from "../../utils/socialMedia";
 import React, { useEffect, useState, useMemo, createContext, useContext, useRef } from "react";
 import useDarkMode from "../../hooks/useDarkMode";
 import { useLocation, Link, useHistory, useParams } from "react-router-dom";
@@ -13,7 +14,7 @@ import Browse from "../../components/Browse";
 import { browse2 } from "../../mocks/browse";
 import { Footer } from "../../components/JUI/Footer";
 import RelatedListingsStrip from "../../components/RelatedListingsStrip";
-import ExperienceReelsCarousel, { extractInstagramReelId } from "../../components/ExperienceReelsCarousel";
+import ExperienceReelsCarousel from "../../components/ExperienceReelsCarousel";
 import { getPlaceDetails, getHost, getHostContent } from "../../utils/api";
 import ShareButton from "../../components/ShareButton";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -4272,6 +4273,7 @@ function MobilePlaceDetails({
       <LocationSection place={place} />
 
       <ExperienceReelsCarousel
+        socialSources={[place]}
         reelUrls={placeReels}
         title="Place Reels"
         subtitle="Watch real moments & highlights from this place"
@@ -4321,45 +4323,7 @@ const PlaceDetails = () => {
   const { theme, tokens } = useTheme();
   const { FG, BG, M, A, B, W } = tokens || {};
 
-  // Reels / Social media links from place details
-  const placeReels = useMemo(() => {
-    const candidates = [
-      place?.socialMediaLinks,
-      place?.social_media_links,
-      place?.data?.socialMediaLinks,
-      place?.data?.social_media_links,
-      place?.reelUrls,
-      place?.reels,
-    ];
-
-    const allItems = [];
-    candidates.forEach((cand) => {
-      if (!cand) return;
-      if (Array.isArray(cand)) {
-        allItems.push(...cand);
-      } else if (typeof cand === "string" && cand.trim()) {
-        try {
-          const parsed = JSON.parse(cand);
-          if (Array.isArray(parsed)) allItems.push(...parsed);
-          else allItems.push(cand);
-        } catch (_) {
-          cand.split(",").forEach((s) => allItems.push(s.trim()));
-        }
-      }
-    });
-
-    return Array.from(
-      new Set(
-        allItems
-          .map((link) => {
-            if (!link) return null;
-            const urlStr = typeof link === "string" ? link : link?.url || link?.link || link?.href || "";
-            return extractInstagramReelId(urlStr) || urlStr;
-          })
-          .filter(Boolean)
-      )
-    );
-  }, [place]);
+  const placeReels = useMemo(() => getInstagramReelUrls(place), [place]);
 
   // Dynamic browser tab title
   useDocumentTitle(place?.placeName || place?.title, "Places");
@@ -4617,6 +4581,7 @@ const PlaceDetails = () => {
       <LocationSection place={place} />
 
       <ExperienceReelsCarousel
+        socialSources={[place]}
         reelUrls={placeReels}
         title="Place Reels"
         subtitle="Watch real moments & highlights from this place"

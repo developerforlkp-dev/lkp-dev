@@ -1,3 +1,4 @@
+import { createCategoryFilter, getCategorySelections, toggleCategorySelection } from "../../../utils/listingFilters";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import cn from "classnames";
 import styles from "./FilterSidebar.module.sass";
@@ -264,19 +265,16 @@ const FilterSidebar = ({
 
     // API Category Filter
     if (filters?.apiCategoryFilter) {
-      const { activeKeys, selectedCategoryLabels, categoryType, categoryValues } = filters.apiCategoryFilter;
+      const { activeKeys, selectedCategoryLabels, categoryValues } = filters.apiCategoryFilter;
+      const selections = getCategorySelections(filters.apiCategoryFilter);
       if (Array.isArray(activeKeys) && Array.isArray(selectedCategoryLabels)) {
         activeKeys.forEach((key, idx) => {
           let label = selectedCategoryLabels[idx];
           
           if (businessInterestFilters && categoryValues) {
-            let options = [
-              ...(businessInterestFilters.primaryCategories || []),
-              ...(businessInterestFilters.secondaryCategories || []),
-              ...(businessInterestFilters.tags || []),
-              ...(businessInterestFilters.specialLabels || [])
-            ];
-            
+            const group = { "Primary Category": "primaryCategories", "Sub Category": "secondaryCategories", Tags: "tags", "Special Labels": "specialLabels" }[selections[idx]?.categoryType];
+            const options = businessInterestFilters[group] || [];
+
             const val = categoryValues[idx];
             if (val !== undefined && options.length > 0) {
               const found = options.find(opt => {
@@ -338,27 +336,9 @@ const FilterSidebar = ({
       const updated = (filters.mealPlan || []).filter((x) => x !== chip.value);
       onFilterChange("mealPlan", updated);
     } else if (chip.type === "apiCategoryFilter") {
-      const current = filters.apiCategoryFilter;
-      if (current && Array.isArray(current.activeKeys)) {
-        const idx = current.activeKeys.indexOf(chip.value);
-        if (idx > -1) {
-          const nextKeys = current.activeKeys.filter((k) => k !== chip.value);
-          const nextLabels = current.selectedCategoryLabels.filter((_, i) => i !== idx);
-          const nextValues = (current.categoryValues || []).filter((_, i) => i !== idx);
-
-          if (nextKeys.length === 0) {
-            onFilterChange("apiCategoryFilter", null);
-          } else {
-            onFilterChange("apiCategoryFilter", {
-              ...current,
-              activeKeys: nextKeys,
-              selectedCategoryLabels: nextLabels,
-              selectedCategoryLabel: nextLabels.join(", "),
-              categoryValues: nextValues,
-            });
-          }
-        }
-      }
+      onFilterChange("apiCategoryFilter", createCategoryFilter(
+        getCategorySelections(filters.apiCategoryFilter).filter((item) => item.key !== chip.value)
+      ));
     } else if (chip.type === "dateRange") {
       const current = filters.dateRange || { startDate: "", endDate: "" };
       onFilterChange("dateRange", {
@@ -566,54 +546,7 @@ const FilterSidebar = ({
   };
 
   const handleApiFilterChange = (option) => {
-    const current = filters.apiCategoryFilter || null;
-    const isSameType = current?.categoryType === option.categoryType;
-
-    let nextFilter;
-
-    if (!current || !isSameType) {
-      nextFilter = {
-        activeKeys: [option.key],
-        selectedCategoryLabels: [option.label],
-        selectedCategoryLabel: option.label,
-        categoryType: option.categoryType,
-        categoryValues: [option.value],
-      };
-    } else {
-      const currentKeys = Array.isArray(current.activeKeys)
-        ? current.activeKeys
-        : (current.activeKey ? [current.activeKey] : []);
-      const currentLabels = Array.isArray(current.selectedCategoryLabels)
-        ? current.selectedCategoryLabels
-        : (current.selectedCategoryLabel ? [current.selectedCategoryLabel] : []);
-      const currentValues = Array.isArray(current.categoryValues) ? current.categoryValues : [];
-
-      const isSelected = currentKeys.includes(option.key);
-      const nextKeys = isSelected
-        ? currentKeys.filter((key) => key !== option.key)
-        : [...currentKeys, option.key];
-      const nextLabels = isSelected
-        ? currentLabels.filter((label) => label !== option.label)
-        : [...currentLabels, option.label];
-      const nextValues = isSelected
-        ? currentValues.filter((value) => String(value) !== String(option.value))
-        : [...currentValues, option.value];
-
-      if (nextValues.length === 0) {
-        nextFilter = null;
-      } else {
-        nextFilter = {
-          activeKeys: nextKeys,
-          selectedCategoryLabels: nextLabels,
-          selectedCategoryLabel: nextLabels.join(", "),
-          categoryType: option.categoryType,
-          categoryValues: nextValues,
-        };
-      }
-    }
-
-    //console.log("[FilterSidebar] Category filter selected:", nextFilter);
-    onFilterChange("apiCategoryFilter", nextFilter);
+    onFilterChange("apiCategoryFilter", toggleCategorySelection(filters.apiCategoryFilter, option));
   };
 
   const getRefineTitle = () => {

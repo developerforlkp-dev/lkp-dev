@@ -1,3 +1,4 @@
+import { getInstagramReelUrls } from "../../utils/socialMedia";
 import React, { useState, useRef, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -1216,13 +1217,8 @@ export default function MobileExperienceView({
           ╚═══════════════════════════════════╝ */}
       {!isDirectBooking && (
         <ExperienceReelsCarousel
-          reelUrls={
-            listing?.reelUrls ||
-            listing?.reels ||
-            (Array.isArray(listing?.socialMediaLinks) ? listing.socialMediaLinks : null) ||
-            (Array.isArray(reviews?.socialMediaLinks) ? reviews.socialMediaLinks : null) ||
-            (Array.isArray(reviews?.data?.socialMediaLinks) ? reviews.data.socialMediaLinks : null)
-          }
+          socialSources={[listing, reviews]}
+          reelUrls={getInstagramReelUrls(listing, reviews)}
           theme={theme}
           tokens={{ FG, BG, M, A, B, W }}
         />

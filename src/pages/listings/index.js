@@ -1,3 +1,4 @@
+import { countActiveFilters, getCategorySelections, readCategoryFilterParams, writeCategoryFilterParams } from "../../utils/listingFilters";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { useLocation, useHistory } from "react-router-dom";
@@ -43,7 +44,7 @@ const buildCategoryFilterState = ({
       : categoryValues.map((value) => String(value));
 
   return {
-    activeKeys: categoryValues.map((value) => `${categoryType}-${value}`),
+    activeKeys: getCategorySelections({ categoryType, categoryValues }).map((item) => item.key),
     selectedCategoryLabels: normalizedLabels,
     selectedCategoryLabel: normalizedLabels.join(", "),
     categoryType,
@@ -138,21 +139,11 @@ const Listings = () => {
     );
   }, [location.search, locationState.location]);
 
-  const categoryFilter = useMemo(() => {
-    if (!categoryTypeParam || categoryValues.length === 0) return null;
-    return {
-      businessInterestId: businessInterestIdParam ? Number(businessInterestIdParam) : null,
-      categoryType: categoryTypeParam,
-      categoryValues,
-      sortBy: "newest",
-    };
-  }, [businessInterestIdParam, categoryTypeParam, categoryValues]);
-
-  const routeCategoryFilterState = useMemo(() => buildCategoryFilterState({
+  const routeCategoryFilterState = useMemo(() => readCategoryFilterParams(location.search, buildCategoryFilterState({
     categoryType: categoryTypeParam,
     categoryValues,
     selectedCategoryLabel,
-  }), [categoryTypeParam, categoryValues, selectedCategoryLabel]);
+  })), [location.search, categoryTypeParam, categoryValues, selectedCategoryLabel]);
 
   const resolvedBusinessInterestId = useMemo(() => {
     if (businessInterestIdParam) return Number(businessInterestIdParam);
@@ -289,22 +280,7 @@ const Listings = () => {
 
   useEffect(() => {
     setFilters((prev) => {
-      const currentCategoryType = prev.apiCategoryFilter?.categoryType || null;
-      const currentCategoryValues = Array.isArray(prev.apiCategoryFilter?.categoryValues)
-        ? prev.apiCategoryFilter.categoryValues.map(String)
-        : [];
-      const nextCategoryType = routeCategoryFilterState?.categoryType || null;
-      const nextCategoryValues = Array.isArray(routeCategoryFilterState?.categoryValues)
-        ? routeCategoryFilterState.categoryValues.map(String)
-        : [];
-
-      if (
-        currentCategoryType === nextCategoryType &&
-        currentCategoryValues.length === nextCategoryValues.length &&
-        currentCategoryValues.every((value, index) => value === nextCategoryValues[index])
-      ) {
-        return prev;
-      }
+      if (JSON.stringify(getCategorySelections(prev.apiCategoryFilter)) === JSON.stringify(getCategorySelections(routeCategoryFilterState))) return prev;
 
       return {
         ...prev,
@@ -354,18 +330,7 @@ const Listings = () => {
   ];
 
   // Count active filters for badge
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.pricePresetMax) count++;
-    if (filters.priceRange?.min || filters.priceRange?.max) count++;
-    if (filters.propertyTypes?.length) count++;
-    if (filters.amenities?.length) count++;
-    if (filters.mealPlan?.length) count++;
-    if (filters.ratings?.length) count++;
-    if (filters.apiCategoryFilter) count++;
-    if (filters.dateRange?.startDate) count++;
-    return count;
-  }, [filters]);
+  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
 
   const getListingTerm = (interest, count) => {
     const normalized = String(interest || "").toUpperCase();
@@ -387,28 +352,10 @@ const Listings = () => {
     ? "No events in this date."
     : `No ${getListingTerm(businessInterest, 2)} found. Try adjusting your filters.`;
 
-  const effectiveCategoryFilter = useMemo(() => {
-    if (
-      filters.apiCategoryFilter?.categoryType &&
-      Array.isArray(filters.apiCategoryFilter?.categoryValues) &&
-      filters.apiCategoryFilter.categoryValues.length > 0
-    ) {
-      return {
-        businessInterestId: resolvedBusinessInterestId,
-        categoryType: filters.apiCategoryFilter.categoryType,
-        categoryValues: filters.apiCategoryFilter.categoryValues,
-      };
-    }
-
-    if (categoryFilter) {
-      return {
-        ...categoryFilter,
-        businessInterestId: categoryFilter.businessInterestId || resolvedBusinessInterestId,
-      };
-    }
-
-    return null;
-  }, [categoryFilter, filters.apiCategoryFilter, resolvedBusinessInterestId]);
+  const effectiveCategoryFilter = useMemo(() => filters.apiCategoryFilter ? {
+    ...filters.apiCategoryFilter,
+    businessInterestId: resolvedBusinessInterestId,
+  } : null, [filters.apiCategoryFilter, resolvedBusinessInterestId]);
 
   // Use listings hook - only re-renders when activeSearch or other filters change
   const { data: listings, loading, error, hasMore, fetchMore, totalCount: apiTotalCount } = useListings({
@@ -472,11 +419,7 @@ const Listings = () => {
     })();
     params.set("businessInterestId", String(resolvedIdByInterest));
 
-    if (includeRouteCategoryFilter && categoryTypeParam && categoryValues.length > 0) {
-      params.set("categoryType", categoryTypeParam);
-      categoryValues.forEach((value) => params.append("categoryValues", value));
-      if (selectedCategoryLabel) params.set("selectedCategoryLabel", selectedCategoryLabel);
-    }
+    if (includeRouteCategoryFilter) writeCategoryFilterParams(params, filters.apiCategoryFilter);
 
     return params;
   };
@@ -503,20 +446,7 @@ const Listings = () => {
       includeRouteCategoryFilter: false,
     });
 
-    if (
-      nextCategoryFilter?.categoryType &&
-      Array.isArray(nextCategoryFilter?.categoryValues) &&
-      nextCategoryFilter.categoryValues.length > 0
-    ) {
-      params.set("categoryType", nextCategoryFilter.categoryType);
-      nextCategoryFilter.categoryValues.forEach((value) => {
-        params.append("categoryValues", String(value));
-      });
-
-      if (nextCategoryFilter.selectedCategoryLabel) {
-        params.set("selectedCategoryLabel", nextCategoryFilter.selectedCategoryLabel);
-      }
-    }
+    writeCategoryFilterParams(params, nextCategoryFilter);
 
     history.replace({
       pathname: "/listings",
@@ -623,13 +553,7 @@ const Listings = () => {
     })();
     params.set("businessInterestId", String(resolvedIdByInterest));
 
-    if (routeCategoryFilterState) {
-      params.set("categoryType", routeCategoryFilterState.categoryType);
-      routeCategoryFilterState.categoryValues.forEach((value) => params.append("categoryValues", value));
-      if (routeCategoryFilterState.selectedCategoryLabel) {
-        params.set("selectedCategoryLabel", routeCategoryFilterState.selectedCategoryLabel);
-      }
-    }
+    writeCategoryFilterParams(params, filters.apiCategoryFilter);
 
     history.replace({
       pathname: "/listings",
@@ -788,41 +712,15 @@ const Listings = () => {
   };
 
   const displayCategoryTitle = useMemo(() => {
-    const defaultTitle = filters.apiCategoryFilter?.selectedCategoryLabel || selectedCategoryLabel;
-    
-    if (!filters.apiCategoryFilter?.categoryValues || filters.apiCategoryFilter.categoryValues.length === 0) {
-      return defaultTitle;
-    }
-    
-    if (businessInterestFilters) {
-      const type = filters.apiCategoryFilter.categoryType;
-      let options = [
-        ...(businessInterestFilters.primaryCategories || []),
-        ...(businessInterestFilters.secondaryCategories || []),
-        ...(businessInterestFilters.tags || []),
-        ...(businessInterestFilters.specialLabels || []),
-        ...(businessInterestFilters.propertyTypes || []),
-      ];
-      
-      if (options.length > 0) {
-        const labels = filters.apiCategoryFilter.categoryValues.map(val => {
-          const found = options.find(opt => {
-            const optId = opt.id ?? opt.name ?? opt;
-            return String(optId) === String(val);
-          });
-          return found ? (found.name || found) : val;
-        });
-        return labels.join(", ");
-      }
-    }
-    
-    // Prevent flashing raw numeric IDs before business interest filters are loaded
-    if (!businessInterestFilters && /^\d+(,\s*\d+)*$/.test(defaultTitle)) {
-      return null;
-    }
-    
-    return defaultTitle;
-  }, [filters.apiCategoryFilter, businessInterestFilters, selectedCategoryLabel]);
+    const selections = getCategorySelections(filters.apiCategoryFilter);
+    const groups = { "Primary Category": "primaryCategories", "Sub Category": "secondaryCategories", Tags: "tags", "Special Labels": "specialLabels" };
+    return selections.map((selection) => {
+      const options = businessInterestFilters?.[groups[selection.categoryType]] || [];
+      const found = options.find((option) => String(option.id ?? option.name ?? option) === String(selection.value));
+      const label = found?.name || (typeof found === "string" ? found : selection.label);
+      return !businessInterestFilters && /^\d+$/.test(label) ? null : label;
+    }).filter(Boolean).join(", ");
+  }, [filters.apiCategoryFilter, businessInterestFilters]);
 
   return (
     <div className={cn("section", styles.section)}>

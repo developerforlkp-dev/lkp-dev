@@ -1,3 +1,4 @@
+import { getInstagramReelUrls } from "../../utils/socialMedia";
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import moment from "moment";
@@ -2743,14 +2744,8 @@ const ExperienceProduct = () => {
 
         {!isDirectBooking && (
           <ExperienceReelsCarousel
-            reelUrls={
-              listing?.reelUrls ||
-              listing?.reels ||
-              (Array.isArray(listing?.socialMediaLinks) ? listing.socialMediaLinks : null) ||
-              (Array.isArray(reviews?.socialMediaLinks) ? reviews.socialMediaLinks : null) ||
-              (Array.isArray(reviews?.data?.socialMediaLinks) ? reviews.data.socialMediaLinks : null) ||
-              (Array.isArray(reviewSummary?.socialMediaLinks) ? reviewSummary.socialMediaLinks : null)
-            }
+            socialSources={[listing, reviews, reviewSummary]}
+            reelUrls={getInstagramReelUrls(listing, reviews, reviewSummary)}
             theme={theme}
             tokens={{ FG, BG, M, A, B, W }}
           />

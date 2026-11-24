@@ -1,3 +1,4 @@
+import { getInstagramReelUrls } from "../../utils/socialMedia";
 import React, { useEffect, useState, useMemo, createContext, useContext, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { useLocation, useHistory, Link } from "react-router-dom";
@@ -2846,39 +2847,7 @@ const StayDetails = () => {
   const [unavailablePopupOpen, setUnavailablePopupOpen] = useState(false);
   const unavailableRedirectRef = useRef(false);
 
-  // Reels / Social media links from stay reviews or stay details
-  const stayReels = useMemo(() => {
-    const candidates = [
-      reviews?.socialMediaLinks,
-      reviews?.social_media_links,
-      reviews?.data?.socialMediaLinks,
-      reviews?.data?.social_media_links,
-      stay?.socialMediaLinks,
-      stay?.social_media_links,
-      stay?.data?.socialMediaLinks,
-      stay?.data?.social_media_links,
-      stay?.reelUrls,
-      stay?.reels,
-    ];
-
-    const allItems = [];
-    candidates.forEach((cand) => {
-      if (!cand) return;
-      if (Array.isArray(cand)) {
-        allItems.push(...cand);
-      } else if (typeof cand === "string" && cand.trim()) {
-        try {
-          const parsed = JSON.parse(cand);
-          if (Array.isArray(parsed)) allItems.push(...parsed);
-          else allItems.push(cand);
-        } catch (_) {
-          cand.split(",").forEach((s) => allItems.push(s.trim()));
-        }
-      }
-    });
-
-    return allItems;
-  }, [reviews, stay]);
+  const stayReels = useMemo(() => getInstagramReelUrls(stay, reviews), [reviews, stay]);
 
   // Dynamic browser tab title
   useDocumentTitle(stay?.propertyName || stay?.title, "Stays");
@@ -3666,6 +3635,7 @@ const StayDetails = () => {
       />
 
       <ExperienceReelsCarousel
+        socialSources={[stay, reviews]}
         reelUrls={stayReels}
         title="Stay Reels"
         subtitle="Watch real moments & highlights from this stay"

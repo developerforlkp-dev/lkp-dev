@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Play, ExternalLink, Instagram, Facebook, Youtube } from "lucide-react";
 import { getPublicReelMedia } from "../../utils/api";
+import SocialProfileLinks from "../SocialProfileLinks";
 
 /**
  * Helper to extract Instagram reel/post ID from various URL formats or raw ID.
@@ -362,6 +363,7 @@ function ReelCard({ item, isDark = false, accentColor = "#0097B2" }) {
  */
 export default function ExperienceReelsCarousel({
   reelUrls = [],
+  socialSources = [],
   title = "Experience Reels",
   subtitle = "Watch real moments & highlights from this experience",
   theme = "light",
@@ -424,10 +426,12 @@ export default function ExperienceReelsCarousel({
   };
 
   if (!items || items.length === 0) {
-    return null;
+    return <SocialProfileLinks sources={socialSources} theme={theme} tokens={tokens} />;
   }
 
   return (
+    <>
+    <SocialProfileLinks sources={socialSources} theme={theme} tokens={tokens} />
     <section
       className="experience-reels-section"
       style={{
@@ -604,5 +608,6 @@ export default function ExperienceReelsCarousel({
         </div>
       </div>
     </section>
+    </>
   );
 }
