@@ -1,39 +1,76 @@
 @import ../../../../styles/helpers
 
-.title
-    margin-bottom: 24px
-    +body-bold-1
-   
-.content
-    margin-bottom: 24px
-    color: $n4
+.details
+    padding: 32px 40px
+    background: $n8
+    border: 1px solid $n6
+    border-radius: 24px
+    +t
+        padding: 28px
+    +dark
+        background: $n2
+        border-color: $n3
 
-.option
-    display: flex
-    align-items: flex-start
-    .text
-        font-weight: 500
-    &:not(:last-child)
-        margin-bottom: 20px
+.title
+    margin-bottom: 20px
+    +dm-sans
+    font-size: 28px
+    font-weight: 700
+    line-height: 1.25
+    letter-spacing: -.02em
+
+.layout
+    display: grid
+    gap: 24px
+
+.content
+    line-height: 1.75
+    color: $n3
+    white-space: pre-line
+    overflow-wrap: anywhere
+    +dark
+        color: $n6
+
+.options
+    margin: 0
+    padding: 20px 24px
+    border-radius: 16px
+    background: $n7
+    +dark
+        background: $n1
 
 .category
     display: flex
     align-items: center
-    flex-shrink: 0
-    width: 152px
-    padding-right: 24px
+    gap: 8px
+    margin-bottom: 6px
+    +caption-bold-2
     color: $n4
-    +m
-        width: 130px
     svg
-        margin-right: 12px
-        fill: $n4
+        flex-shrink: 0
+        fill: $p4
+    +dark
+        color: $n6
 
-.link
-    color: $p1
-    transition: color .2s
-    &:hover
-        color: darken($p1, 10)
+.text
+    margin: 0
+    padding-left: 28px
+    font-weight: 500
+    overflow-wrap: anywhere
 
-
-
+.interests
+    display: flex
+    flex-wrap: wrap
+    gap: 6px
+    margin: 0
+    padding: 0
+    list-style: none
+    li
+        padding: 3px 10px
+        border: 1px solid $n6
+        border-radius: 16px
+        background: $n8
+        +caption-2
+        +dark
+            border-color: $n3
+            background: $n2

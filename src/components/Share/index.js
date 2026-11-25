@@ -4,7 +4,7 @@ import styles from "./Share.module.sass";
 import Icon from "../Icon";
 import OutsideClickHandler from "react-outside-click-handler";
 
-const Share = ({ className, openUp, darkButton }) => {
+const Share = ({ className, openUp, darkButton, alignRight }) => {
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -65,7 +65,8 @@ const Share = ({ className, openUp, darkButton }) => {
           className,
           styles.share,
           { [styles.openUp]: openUp },
-          { [styles.darkButton]: darkButton }
+          { [styles.darkButton]: darkButton },
+          { [styles.alignRight]: alignRight }
         )}
       >
         <button

@@ -6,58 +6,36 @@ import Icon from "../../../../components/Icon";
 const Details = ({ className, host, businessInterests }) => {
   const hostBio = typeof host?.bio === "string" ? host.bio.trim() : "";
 
-  // Build options from host data
-  const options = [];
-  
-  if (host?.location) {
-    options.push({
-      title: "Lives in",
-      content: host.location,
-      icon: "home",
-    });
-  }
-  
   const formattedInterests = Array.isArray(businessInterests)
     ? businessInterests
         .map((item) => (typeof item === "string" ? item : item?.name || item?.businessInterestName || item?.code || ""))
         .filter(Boolean)
     : [];
 
-  if (formattedInterests.length > 0) {
-    options.push({
-      title: "Interests",
-      content: formattedInterests.join(", "),
-      icon: "route",
-    });
-  }
-
-  // If no options, provide defaults
-  if (options.length === 0) {
-    options.push({
-      title: "Location",
-      content: "Location not specified",
-      icon: "home",
-    });
-  }
+  if (!hostBio && formattedInterests.length === 0) return null;
 
   return (
-    <div className={cn(className, styles.details)}>
-      <div className={styles.title}>About Host</div>
-      {hostBio && <div className={styles.content}>{hostBio}</div>}
-      {options.length > 0 && (
-        <div className={styles.options}>
-          {options.map((x, index) => (
-            <div className={styles.option} key={index}>
-              <div className={styles.category}>
-                <Icon name={x.icon} size="20" />
-                {x.title}
-              </div>
-              <div className={styles.text}>{x.content}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <section className={cn(className, styles.details)} aria-labelledby="about-host-heading">
+      <h2 className={styles.title} id="about-host-heading">About Host</h2>
+      <div className={styles.layout}>
+        {hostBio && <p className={styles.content}>{hostBio}</p>}
+        {formattedInterests.length > 0 && (
+          <dl className={styles.options}>
+            <dt className={styles.category}>
+              <Icon name="route" size="20" />
+              Interests
+            </dt>
+            <dd className={styles.text}>
+              <ul className={styles.interests}>
+                {formattedInterests.map((interest, index) => (
+                  <li key={index}>{interest}</li>
+                ))}
+              </ul>
+            </dd>
+          </dl>
+        )}
+      </div>
+    </section>
   );
 };
 

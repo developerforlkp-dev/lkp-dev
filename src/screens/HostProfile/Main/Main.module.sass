@@ -11,7 +11,10 @@
 
 .hero
     position: relative
-    overflow: hidden
+    display: flex
+    align-items: center
+    gap: 32px
+    padding: 32px 48px
     border-radius: 24px
     border: 1px solid $n6
     background: linear-gradient(140deg, rgba(55,114,255,0.08) 0%, rgba(183,228,255,0.22) 45%, rgba(255,255,255,0.85) 100%)
@@ -24,9 +27,40 @@
 .heroContent
     position: relative
     z-index: 2
-    padding: 30px 36px
-    +m
-        padding: 22px 18px
+    flex: 1
+    min-width: 0
+    overflow-wrap: anywhere
+
+.heroShare
+    position: relative
+    z-index: 3
+    align-self: flex-start
+    margin-left: auto
+
+.heroLocation
+    position: relative
+    z-index: 2
+    display: flex
+    align-items: flex-start
+    gap: 12px
+    flex: 0 1 28%
+    min-width: 0
+    padding: 12px 16px
+    border-radius: 14px
+    background: rgba(255, 255, 255, .55)
+    overflow-wrap: anywhere
+    font-weight: 600
+    svg
+        flex-shrink: 0
+        fill: $p4
+    +dark
+        background: rgba(255, 255, 255, .06)
+
+.heroLocationLabel
+    +caption-2
+    color: $n3
+    +dark
+        color: $n6
 
 .heroEyebrow
     +caption-bold-2
@@ -48,13 +82,18 @@
         color: $n8
 
 .heroMeta
-    display: inline-flex
-    align-items: center
-    gap: 10px
-    +button-2
+    margin-top: 10px
+    +caption-2
     color: $n3
     +dark
         color: $n6
+
+.heroGlows
+    position: absolute
+    inset: 0
+    overflow: hidden
+    border-radius: inherit
+    pointer-events: none
 
 .heroGlowOne,
 .heroGlowTwo
@@ -86,30 +125,6 @@
         transform: translateY(-12px) translateX(10px)
     100%
         transform: translateY(0) translateX(0)
-
-.row
-    display: flex
-    align-items: flex-start
-    +t
-        display: block
-
-.profile
-    position: sticky
-    top: 120px
-    z-index: 3
-    flex-shrink: 0
-    width: 352px
-    margin-top: 0
-    +d
-        width: 300px
-        padding: 32px 16px 
-    +t
-        position: relative
-        top: auto
-        width: auto
-        margin: 0 0 48px
-    +m
-        margin: 0 -16px 32px
 
 .headStack
     display: flex
@@ -215,22 +230,8 @@
     white-space: nowrap
     flex-shrink: 0
 
-.wrapper
-    flex: 0 0 calc(100% - 352px)
-    width: calc(100% - 352px)
-    padding: 80px 0 0 80px
-    +x
-        padding-left: 48px
-    +d
-        flex: 0 0 calc(100% - 300px)
-        width: calc(100% - 300px)
-        padding: 48px 0 0 32px
-    +t
-        width: 100%
-        padding: 0
-
 .details
-    margin-bottom: 64px
+    margin-bottom: 40px
 
 .list
     margin-bottom: 104px

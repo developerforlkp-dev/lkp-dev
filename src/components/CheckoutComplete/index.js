@@ -463,7 +463,7 @@ const CheckoutComplete = ({
                 />
               )}
             </div>
-            <div className={styles.man}>{hostName || normalizedHostName}</div>
+            <div className={styles.man}>{normalizedHostName}</div>
           </div>
         )}
       </div>

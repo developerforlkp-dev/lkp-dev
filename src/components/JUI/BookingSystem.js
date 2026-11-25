@@ -16,6 +16,7 @@ import { clearPendingCheckoutState, persistPendingCheckout, isAuthOrTokenError }
 import { StayInlineCalendar } from "../../screens/StayDetails/StayBookingSystem";
 import { calculateExperienceGuestPricing, getExperienceCommissionRate } from "../../utils/experiencePricing";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
+import { getEventHost } from "../../utils/eventHost";
 
 
 const asNumber = (value) => {
@@ -4244,12 +4245,14 @@ export function BookingSystem({ listing, type = "experience", selectedAddOns = [
       showInCheckout: true
     });
 
+    const eventHost = isEventBooking ? getEventHost(listing) : {};
     const bookingData = {
       listingId: listingId,
       listingTitle: listing?.title || listing?.name || "Experience",
       listingImage: listing?.coverPhotoUrl || listing?.listingMedia?.[0]?.url || "",
-      hostName: externalHostName || (listing?.host?.firstName ? `${listing?.host?.firstName} ${listing?.host?.lastName || ""}`.trim() : "Host"),
-      hostAvatar: externalHostAvatar || listing?.host?.profilePhotoUrl || "/images/content/avatar.jpg",
+      hostName: eventHost.hostName || externalHostName || (listing?.host?.firstName ? `${listing?.host?.firstName} ${listing?.host?.lastName || ""}`.trim() : "Host"),
+      hostAvatar: eventHost.hostAvatar || externalHostAvatar || listing?.host?.profilePhotoUrl || "/images/content/avatar.jpg",
+      hostLeadUserId: eventHost.hostLeadUserId,
       selectedDate: dateStr,
       selectedTimeSlot: startTime,
       guests: guestsObj,

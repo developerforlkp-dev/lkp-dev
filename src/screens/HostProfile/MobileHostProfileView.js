@@ -308,14 +308,6 @@ export default function MobileHostProfileView({
                 {hostName}
               </h1>
 
-              {host?.location && (
-                <div style={{ display: "flex", alignItems: "center", gap: 4, color: M, fontSize: 12 }}>
-                  <MapPin size={12} color={A} style={{ flexShrink: 0 }} />
-                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {host.location}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Share Button Icon */}
@@ -343,6 +335,13 @@ export default function MobileHostProfileView({
               {copiedShare ? <Check size={18} /> : <Share2 size={18} />}
             </button>
           </div>
+
+          {host?.location && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, color: FG, fontSize: 13, lineHeight: 1.5 }}>
+              <MapPin size={16} color={A} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span style={{ overflowWrap: "anywhere" }}>Lives in {host.location}</span>
+            </div>
+          )}
 
           {/* Stat Badges Strip */}
           <div
@@ -442,6 +441,8 @@ export default function MobileHostProfileView({
                 margin: 0,
                 fontWeight: 400,
                 opacity: 0.9,
+                whiteSpace: "pre-line",
+                overflowWrap: "anywhere",
               }}
             >
               {displayedBio}
@@ -474,8 +475,7 @@ export default function MobileHostProfileView({
           </p>
         )}
 
-        {/* Info Chips: Location & Interests */}
-        {(host?.location || formattedInterests.length > 0) && (
+        {formattedInterests.length > 0 && (
           <div
             style={{
               display: "flex",
@@ -485,25 +485,6 @@ export default function MobileHostProfileView({
               borderTop: `1px solid ${B}`,
             }}
           >
-            {host?.location && (
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "6px 12px",
-                  borderRadius: 100,
-                  background: S,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: FG,
-                }}
-              >
-                <MapPin size={13} color={A} />
-                <span>Lives in {host.location}</span>
-              </div>
-            )}
-
             {formattedInterests.map((interest, idx) => (
               <div
                 key={idx}

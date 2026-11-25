@@ -5,7 +5,8 @@ import styles from "./ExperienceCheckoutComplete.module.sass";
 import Control from "../../components/Control";
 import CheckoutSlider from "./CheckoutSlider";
 import CheckoutComplete from "../../components/CheckoutComplete";
-import { getStayDetails } from "../../utils/api";
+import { getEventDetails, getHostContent, getStayDetails } from "../../utils/api";
+import { getEventHost } from "../../utils/eventHost";
 import { buildExperienceUrl } from "../../utils/experienceUrl";
 import { isDirectBookingPathOrState } from "../../utils/directBooking";
 
@@ -53,6 +54,33 @@ const ExperienceCheckoutComplete = ({ isDirectBooking: isDirectBookingProp = fal
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [stayImageUrl, setStayImageUrl] = useState(null);
   const [allStayImages, setAllStayImages] = useState([]);
+  const [resolvedEventHost, setResolvedEventHost] = useState(null);
+
+  const eventId = booking?.eventId;
+  const savedHostId = booking?.hostLeadUserId;
+  const hasHostName = Boolean(booking?.hostName?.trim()) && booking.hostName.trim().toLowerCase() !== "host";
+  const savedHostAvatar = formatImageUrl(booking?.hostAvatarUrl || booking?.hostAvatar);
+  const hasHostAvatar = Boolean(savedHostAvatar && !savedHostAvatar.includes("/images/content/avatar.jpg"));
+
+  useEffect(() => {
+    if (!eventId || (savedHostId && hasHostName && hasHostAvatar)) return;
+
+    let active = true;
+    const loadEventHost = async () => {
+      const event = await getEventDetails(eventId);
+      if (!active) return;
+      const { hostLeadUserId } = getEventHost(event);
+      const profileId = savedHostId || hostLeadUserId;
+      const profile = profileId ? await getHostContent(profileId).catch(() => null) : null;
+      if (active) {
+        setResolvedEventHost({ eventId, ...getEventHost(event, profile || event?.hostProfile) });
+      }
+    };
+    loadEventHost().catch(() => {});
+    return () => { active = false; };
+  }, [eventId, savedHostId, hasHostName, hasHostAvatar]);
+
+  const eventHost = resolvedEventHost?.eventId === eventId ? resolvedEventHost : null;
 
   const isDirectBooking = useMemo(() => {
     return (
@@ -607,8 +635,9 @@ const ExperienceCheckoutComplete = ({ isDirectBooking: isDirectBookingProp = fal
               items={items}
               booking={booking}
               mobileImage={mobileThumbnailImage}
-              hostName={booking?.hostName || booking?.officialName || booking?.leadName || booking?.directBooking?.leadName}
+              hostName={eventHost?.hostName || booking?.hostName || booking?.officialName || booking?.leadName || booking?.directBooking?.leadName}
               avatarUrl={formatImageUrl(
+                eventHost?.hostAvatar ||
                 booking?.hostAvatarUrl ||
                 booking?.hostAvatar ||
                 booking?.listing?.host?.profilePhotoUrl ||

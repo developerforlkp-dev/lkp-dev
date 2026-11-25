@@ -24,6 +24,7 @@ import { getShareText } from "../../../utils/shareUtils";
 import { isDirectBookingPathOrState } from "../../../utils/directBooking";
 import DetailMarquee from "../../../components/DetailMarquee";
 import ReviewRatingSummary from "../../../components/ReviewRatingSummary";
+import { formatHostName, getEventHost } from "../../../utils/eventHost";
 
 const formatImageUrl = (url) => {
   if (!url) return "";
@@ -37,12 +38,6 @@ const formatImageUrl = (url) => {
   const normalizedPath = String(pathPart).replaceAll("%2F", "/");
   const encodedPath = encodeURI(normalizedPath);
   return `https://lkpleadstoragedev.blob.core.windows.net/lead-documents/${encodedPath}${queryPart ? `?${queryPart}` : ""}`;
-};
-
-const formatHostName = (hostPayload) => {
-  const host = hostPayload?.host || hostPayload;
-  const fullName = [host?.firstName, host?.lastName].filter(Boolean).join(" ").trim();
-  return host?.displayName || host?.name || fullName || host?.businessName || "";
 };
 
 const getHostListingTitle = (listing) => (
@@ -2628,15 +2623,10 @@ function HostDetails({ event, hostName }) {
   const isDirect = isDirectBookingPathOrState(location);
   const isMobile = useMobileView();
   const isDark = theme === "dark" || (typeof BG === 'string' && BG.toLowerCase().includes('000'));
-  const displayHostName = hostName || event?.host?.displayName || event?.host?.name || event?.host?.firstName || event?.organizerName;
+  const { hostName: eventHostName, hostAvatar, hostLeadUserId } = getEventHost(event);
+  const displayHostName = hostName || eventHostName;
   const hostProfile = event?.hostProfile;
   const host = hostProfile?.host || hostProfile || event?.host || {};
-  const hostLeadUserId =
-    host?.leadUserId ||
-    hostProfile?.leadUserId ||
-    event?.leadUserId ||
-    event?.host?.leadUserId ||
-    event?.hostId;
   const hostDescription = host?.bio || host?.description || host?.about || host?.summary || "";
   const hostSubtitle = host?.tagline || host?.businessName || host?.companyName || host?.role || "Host";
   const hostPhone = host?.phone || host?.phoneNumber || event?.host?.phone || event?.host?.phoneNumber || "";
@@ -2656,7 +2646,7 @@ function HostDetails({ event, hostName }) {
         <div className="mob-host-card" style={{ borderColor: B, background: isDark ? "#111" : W }}>
           <div className="mob-host-avatar" style={{ background: `linear-gradient(135deg, ${A}20, ${A}08)`, color: A, border: `2px solid ${A}40` }}>
             <img
-              src={formatImageUrl(hostProfile?.profilePhotoUrl || hostProfile?.profileImageUrl || hostProfile?.host?.profilePhotoUrl || hostProfile?.host?.profileImageUrl || host?.profilePhotoUrl || host?.profileImageUrl || host?.avatar || host?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+              src={formatImageUrl(hostAvatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
               alt={displayHostName}
               style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
               onError={(e) => { e.target.onerror = null; e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`; }}
@@ -2766,7 +2756,7 @@ function HostDetails({ event, hostName }) {
                         padding: "1px"
                       }}>
                         <img
-                          src={formatImageUrl(hostProfile?.profilePhotoUrl || hostProfile?.profileImageUrl || hostProfile?.host?.profilePhotoUrl || hostProfile?.host?.profileImageUrl || host?.profilePhotoUrl || host?.profileImageUrl || host?.avatar || host?.host?.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
+                          src={formatImageUrl(hostAvatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayHostName)}&backgroundColor=0097B2&color=ffffff`}
                           style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
                           alt={displayHostName}
                           onError={(e) => {
@@ -3499,8 +3489,7 @@ function EventBookingPopup({ event, selectedAddOns, onUpdateAddonQuantity, onCle
     ticketTypes,
     eventSlots: timeSlots,
     slots: timeSlots,
-    timeSlots,
-    host: event?.hostProfile?.host || event?.host || {}
+    timeSlots
   };
 
   const isFree = event?.eventType?.toLowerCase() === 'free' || event?.event_type?.toLowerCase() === 'free';

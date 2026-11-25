@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import cn from "classnames";
 import styles from "./Main.module.sass";
-import Profile from "../../../components/Profile";
 import Icon from "../../../components/Icon";
+import Share from "../../../components/Share";
 import Details from "./Details";
 import List from "./List";
-import Loader from "../../../components/Loader";
 import LoadingSkeleton from "../../../components/LoadingSkeleton";
 import {
   getHost,
@@ -217,9 +216,6 @@ const Main = ({ hostId, onLoadingChange }) => {
     hostData?.emailAddress ||
     "";
 
-  // Build parametersUser from host data
-  const parametersUser = [];
-
   // Loading state
   if (loading && hostId) {
     return (
@@ -260,9 +256,11 @@ const Main = ({ hostId, onLoadingChange }) => {
   return (
     <div className={cn("section", styles.section)}>
       <div className={cn("container", styles.container)}>
-        <div className={styles.hero} style={{ display: 'flex', alignItems: 'center', padding: '32px 48px', gap: '32px' }}>
-          <div className={styles.heroGlowOne} />
-          <div className={styles.heroGlowTwo} />
+        <div className={styles.hero}>
+          <div className={styles.heroGlows} aria-hidden="true">
+            <div className={styles.heroGlowOne} />
+            <div className={styles.heroGlowTwo} />
+          </div>
           <div className={styles.avatar} style={{ width: '120px', height: '120px', margin: 0, border: '4px solid #fff', borderRadius: '50%', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', position: 'relative', zIndex: 2 }}>
             {host?.profilePhotoUrl || host?.profileImageUrl || hostData?.profilePhotoUrl || hostData?.profileImageUrl || host?.avatar ? (
               <img 
@@ -285,32 +283,30 @@ const Main = ({ hostId, onLoadingChange }) => {
               <Icon name="tick" size="20" />
             </div>
           </div>
-          <div className={styles.heroContent} style={{ padding: 0, position: 'relative', zIndex: 2 }}>
+          <div className={styles.heroContent}>
             <div className={styles.heroEyebrow}>Host Profile</div>
             <h1 className={styles.heroTitle} style={{ margin: 0 }}>{hostName}</h1>
+            <div className={styles.heroMeta}>Member since {joinedDate}</div>
+          </div>
+          {host?.location && (
+            <div className={styles.heroLocation}>
+              <Icon name="home" size="20" />
+              <div>
+                <div className={styles.heroLocationLabel}>Lives in</div>
+                <div>{host.location}</div>
+              </div>
+            </div>
+          )}
+          <div className={styles.heroShare}>
+            <Share alignRight />
           </div>
         </div>
-        <div className={styles.row}>
-          <Profile
-            className={styles.profile}
-            parametersUser={parametersUser}
-            hideContactButton={true}
-            hideReportButton={true}
-            joinedDate={joinedDate}
-            siteUrl={null}
-            phoneNumber={hostPhone}
-            email={hostEmail}
-          >
-          </Profile>
-          <div className={styles.wrapper}>
-            <Details
-              className={styles.details}
-              host={host}
-              businessInterests={businessInterests}
-            />
-            <List className={styles.list} listingsByType={tabListings} hostName={hostName} />
-          </div>
-        </div>
+        <Details
+          className={styles.details}
+          host={host}
+          businessInterests={businessInterests}
+        />
+        <List className={styles.list} listingsByType={tabListings} hostName={hostName} />
       </div>
     </div>
   );
