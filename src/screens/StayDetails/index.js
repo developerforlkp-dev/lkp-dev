@@ -3420,9 +3420,9 @@ const StayDetails = () => {
                           }}
                         >
                           {/* Left side: Image */}
-                          <div style={{ width: isMobile ? "64px" : "160px", margin: isMobile ? "16px 0 16px 16px" : 0, borderRadius: isMobile ? "8px" : 0, flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
+                          <div style={{ width: isMobile ? "64px" : "160px", minHeight: isMobile ? "64px" : "160px", alignSelf: "stretch", margin: isMobile ? "16px 0 16px 16px" : 0, borderRadius: isMobile ? "8px" : 0, flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
                             {addonImages.length ? (
-                              <div style={{ display: "flex", width: "100%", height: "100%", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+                              <div style={{ display: "flex", position: "absolute", inset: 0, overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
                                 {addonImages.map((imageUrl, imageIndex) => (
                                   <img
                                     key={`${imageUrl}-${imageIndex}`}

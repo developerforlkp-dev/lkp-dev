@@ -1807,9 +1807,9 @@ const ExperienceProduct = () => {
                           }}
                         >
                           {/* Left side: ONLY image */}
-                          <div style={{ width: "160px", flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
+                          <div style={{ width: "160px", minHeight: "160px", alignSelf: "stretch", flexShrink: 0, overflow: "hidden", background: W, position: "relative" }}>
                             {addonImages.length ? (
-                              <div style={{ display: "flex", width: "100%", height: "100%", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+                              <div style={{ display: "flex", position: "absolute", inset: 0, overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
                                 {addonImages.map((imageUrl, imageIndex) => (
                                   <img
                                     key={`${imageUrl}-${imageIndex}`}

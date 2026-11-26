@@ -5,7 +5,7 @@ import moment from "moment";
 import styles from "./FleetHome.module.sass";
 import Icon from "../../components/Icon";
 import CategoryCard from "../../components/CategoryCard";
-import { getHomepageSections, getHomepageSectionListings, getEventListings, getStayListings, getFoodMenus, getPlaces, filterPlaces, getBusinessInterests, getFilteredListings, filterEventListings } from "../../utils/api";
+import { getHomepageSections, getHomepageSectionListings, filterPlaces, getBusinessInterests, getFilteredListings, filterEventListings } from "../../utils/api";
 import { HomepageSectionCard } from "./CardStyles";
 import InlineDatePicker from "../../components/InlineDatePicker";
 import GuestPicker from "../../components/GuestPicker";
@@ -534,54 +534,9 @@ const FleetHome = () => {
                 fallbackBusinessInterestCode,
             };
 
-            // Fallback: if the section listings endpoint returns empty, try the dedicated public endpoints.
             const sectionTitle = sectionInfo?.sectionTitle || section?.sectionTitle || "";
-            const isEventsSection = activeFilter === "events" || (typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("event"));
-            const isStaysSection = activeFilter === "stays" || (typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("stay"));
-            const isFoodSection = !isEventsSection && (activeFilter === "food" || (typeof sectionTitle === "string" && (sectionTitle.toLowerCase().includes("food") || sectionTitle.toLowerCase().includes("menu"))));
             const isPlacesSection = activeFilter === "places" || (typeof sectionTitle === "string" && sectionTitle.toLowerCase().includes("place"));
-
-            const hasSelectedCategories = (sectionInfo.selectedCategories?.length ?? 0) > 0;
-            if (isEventsSection && !hasSelectedCategories && (!listings || listings.length === 0)) {
-              try {
-                const eventResult = await getEventListings(12, 0);
-                if (!isCancelled) {
-                  const eventListingsArray = Array.isArray(eventResult?.listings) ? eventResult.listings : (Array.isArray(eventResult?.events) ? eventResult.events : (Array.isArray(eventResult) ? eventResult : []));
-                  if (eventListingsArray.length > 0) {
-                    listings = eventListingsArray;
-                  }
-                }
-              } catch (eventErr) {
-                console.warn("⚠️ Failed to fetch event listings fallback:", eventErr);
-              }
-            }
-            if (isStaysSection && (!listings || listings.length === 0)) {
-              try {
-                const stayResult = await getStayListings(12, 0);
-                if (!isCancelled) {
-                  const stayListings = Array.isArray(stayResult?.listings) ? stayResult.listings : (Array.isArray(stayResult?.stays) ? stayResult.stays : (Array.isArray(stayResult) ? stayResult : []));
-                  if (stayListings.length > 0) {
-                    listings = stayListings;
-                  }
-                }
-              } catch (stayErr) {
-                console.warn("⚠️ Failed to fetch stay listings fallback:", stayErr);
-              }
-            }
-            if (isFoodSection && (!listings || listings.length === 0)) {
-              try {
-                const foodResult = await getFoodMenus(12, 0);
-                if (!isCancelled) {
-                  const foodListings = Array.isArray(foodResult?.listings) ? foodResult.listings : (Array.isArray(foodResult?.menus) ? foodResult.menus : (Array.isArray(foodResult) ? foodResult : []));
-                  if (foodListings.length > 0) {
-                    listings = foodListings;
-                  }
-                }
-              } catch (foodErr) {
-                console.warn("⚠️ Failed to fetch food listings fallback:", foodErr);
-              }
-            }
-            if (isPlacesSection) {
+            if (isPlacesSection && Array.isArray(listings) && listings.length > 0) {
               const selectedCategories = Array.isArray(sectionInfo?.selectedCategories) ? sectionInfo.selectedCategories : (Array.isArray(section?.selectedCategories) ? section.selectedCategories : []);
               const categoryType = sectionInfo?.categoryType || section?.categoryType;
               const normalizedCategoryType = String(categoryType || "").toUpperCase();
@@ -602,22 +557,8 @@ const FleetHome = () => {
                 } catch (err) {
                   console.warn("⚠️ Failed to filter places fallback:", err);
                 }
-              } else if (!listings || listings.length === 0) {
-                try {
-                  const placeResult = await getPlaces(50, 0);
-                  if (!isCancelled) {
-                    const placeListingsArray = Array.isArray(placeResult?.places) ? placeResult.places : (Array.isArray(placeResult?.listings) ? placeResult.listings : (Array.isArray(placeResult) ? placeResult : []));
-                    if (placeListingsArray.length > 0) {
-                      listings = placeListingsArray;
-                    }
-                  }
-                } catch (placeErr) {
-                  console.warn("⚠️ Failed to fetch place listings fallback:", placeErr);
-                }
               }
             }
-
-
 
             return {
               section: sectionInfo,
